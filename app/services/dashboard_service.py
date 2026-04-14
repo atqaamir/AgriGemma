@@ -1,5 +1,5 @@
 from app.services.weather_service import get_weather
-from app.services.recommendation_service import generate_recommendations
+from app.services.recommendation_service import get_recommendations
 from app.services.task_service import generate_tasks
 from app.services.alert_service import generate_alerts
 from app.services.gemma_prompt_service import (
@@ -14,7 +14,7 @@ def build_dashboard_data(location: str, crop_name: str, field_name: str) -> dict
     soil = get_mock_soil_data(field_name)
     crop = get_mock_crop_data(crop_name, field_name)
 
-    recommendations = generate_recommendations(weather, soil, crop)
+    recommendations = get_recommendations(weather, soil, crop)
     tasks = generate_tasks(weather, crop, soil)
     alerts = generate_alerts(weather, crop, soil)
 

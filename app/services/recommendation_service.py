@@ -1,10 +1,14 @@
 def get_recommendations(weather, soil, crop):
     recommendations = []
 
-    if weather.get("temperature") > 35:
+    print("Generating recommendations based on:",soil)
+
+    print(weather.get("temperature"))
+
+    if weather['current'].get("temperature_c") > 35:
         recommendations.append("Irrigate early morning")
 
-    if soil.get("moisture") < 30:
+    if soil.get("moisture_percent") < 30:
         recommendations.append("Increase watering")
 
     return recommendations

@@ -3,3 +3,9 @@ from .field import Field
 from .crop import Crop
 from .task import Task
 from .alert import Alert
+from .climate import ClimateProfile
+from .farming_rules import FarmingRule
+from .farm_map import FarmMap
+from .field_boundary import FieldBoundary
+from .pesticide import Pesticide
+from .pesticide_use import PesticideUse
