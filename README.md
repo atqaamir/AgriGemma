@@ -123,6 +123,7 @@ climate-adaptation-advisor/
 ├── run.py
 ├── requirements.txt
 └── README.md
+```
 
 
 ## 📁 Installation & Setup
@@ -132,10 +133,17 @@ Follow these steps to run the project locally.
 ### 1. Clone the Repository
 
 ```bash
-git clone http://github.com/your-username/climate-adaptation-advisor.git
+git clone http://github.com/your-username/smart-farming.git
 cd climate-adaptation-advisor
+```
 
-### 2. Create a virtual enviroment
+### 2. Create a virtual env
 ```bash
 python -m venv venv
+```
 
+### 3. Activate the virtual env
+
+```bash
+venv\Scripts\activate
+```
