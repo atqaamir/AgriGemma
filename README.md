@@ -13,6 +13,7 @@ Due to **climate change and global warming**, traditional farming calendars and 
 
 This creates economic risk and uncertainty.
 
+---
 
 ## 💡 Solution
 
@@ -32,6 +33,7 @@ A **mobile-first, multilingual farming assistant** that:
 - Tasks, alerts, and notifications
 - Chatbot support for farmer questions
 
+---
 
 ## 👨‍🌾 Target Users
 
@@ -41,7 +43,7 @@ A **mobile-first, multilingual farming assistant** that:
 - Mobile users (especially Android)
 - Need simple, visual, multilingual tools
 
-
+---
 
 ## ⚙️ Core Features
 
@@ -81,7 +83,7 @@ A **mobile-first, multilingual farming assistant** that:
 - Get farming advice
 - Handle "what-if" scenarios
 
-
+---
 
 ## 🧠 Key Value
 
@@ -91,6 +93,7 @@ This app transforms:
 
 It acts as a **daily farming companion**, not just a data dashboard.
 
+---
 
 ## 🛠️ Tech Stack
 
@@ -101,7 +104,8 @@ It acts as a **daily farming companion**, not just a data dashboard.
 - **AI:**
   - Recommendation engine
   - Chatbot integration
-
+    
+---
 
 ## 📁 Project Structure
 
@@ -124,6 +128,7 @@ climate-adaptation-advisor/
 └── README.md
 ```
 
+---
 
 ## 📁 Installation & Setup
 
@@ -197,6 +202,7 @@ http://127.0.0.1:5000/
 python -m venv venv && source venv/bin/activate && pip install -r requirements.txt && python run.py
 ```
 
+---
 
 ## 🌍 Hackathon Context
 
