@@ -9,3 +9,4 @@ def ask_gemma(prompt):
     )
 
     return response.json()
+
