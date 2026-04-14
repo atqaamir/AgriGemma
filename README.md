@@ -123,3 +123,19 @@ climate-adaptation-advisor/
 ├── run.py
 ├── requirements.txt
 └── README.md
+
+
+## 📁 Installation & Setup
+
+Follow these steps to run the project locally.
+
+### 1. Clone the Repository
+
+```bash
+git clone http://github.com/your-username/climate-adaptation-advisor.git
+cd climate-adaptation-advisor
+
+### 2. Create a virtual enviroment
+```bash
+python -m venv venv
+
