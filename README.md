@@ -188,9 +188,9 @@ http://127.0.0.1:5000/
 
 
 ## 📦 Requirements
-Python 3.8+
-pip
-Virtualenv (recommended)
+- Python 3.8+
+- pip
+- Virtualenv (recommended)
 
 ## ⚡ Quick Start
 ```bash
