@@ -98,8 +98,7 @@ It acts as a **daily farming companion**, not just a data dashboard.
 - **Frontend:** JavaScript (mobile-friendly)
 - **Database:**  PostgreSQL 
 - **APIs:** Weather APIs, agriculture data APIs
-- **AI (optional):**
-  - Crop image analysis
+- **AI:**
   - Recommendation engine
   - Chatbot integration
 
@@ -134,7 +133,7 @@ Follow these steps to run the project locally.
 
 ```bash
 git clone http://github.com/your-username/smart-farming.git
-cd climate-adaptation-advisor
+cd smart-farming
 ```
 
 ### 2. Create a virtual env
@@ -147,3 +146,172 @@ python -m venv venv
 ```bash
 venv\Scripts\activate
 ```
+### 4. Install Dependencies
+
+```bash
+pip install -r requirements.txt
+```
+
+### 5. Set Up Environment Variables
+Create a .env file in the root directory:
+
+```env
+FLASK_APP=run.py
+FLASK_ENV=development
+SECRET_KEY=your_secret_key
+WEATHER_API_KEY=your_weather_api_key
+DATABASE_URL=sqlite:///app.db
+```
+
+### 6. Initialize the Database (Optional)
+```bash
+flask db init
+flask db migrate
+flask db upgrade
+```
+Skip this step if database migrations are not configured.
+
+### 7. Run the Application
+```bash
+python run.py
+```
+OR
+
+```bash
+flask run
+```
+
+### 8. Open in Browser
+```bash
+http://127.0.0.1:5000/
+```
+
+
+## 📦 Requirements
+Python 3.8+
+pip
+Virtualenv (recommended)
+
+## ⚡ Quick Start
+```bash
+python -m venv venv && source venv/bin/activate && pip install -r requirements.txt && python run.py
+```
+
+
+## 🌍 Hackathon Context
+
+This project is developed as part of the:
+
+### 🏆 Gemma 4 Good Hackathon (Kaggle)
+
+The hackathon focuses on building impactful AI-powered solutions that address real-world problems and create social good.
+
+---
+
+## 🎯 Our Contribution
+
+We are tackling a critical global issue:
+
+- Climate change disrupting traditional farming practices  
+- Increasing uncertainty in crop planning and yields  
+- Economic risk for small and medium-scale farmers  
+
+### 💡 What We Built
+
+A **Climate Adaptation Advisor for Farmers** — a mobile-first, multilingual assistant that:
+
+- Converts weather and climate data into actionable farming decisions  
+- Helps farmers plan, adapt, and respond in real time  
+- Provides simple, easy-to-understand guidance for non-technical users  
+
+---
+
+## 🧠 Key Innovation
+
+- Combines **climate data + farm data + AI**
+- Supports **multimodal inputs** (text, weather, images)
+- Provides **real-time adaptive recommendations**
+- Focuses on **low-literacy, accessibility-first design**
+
+---
+
+## 🧪 Example Workflow
+
+1. Farmer inputs:
+   - Farm location  
+   - Land size  
+   - Crop type  
+   - Planting date  
+   - Soil details  
+
+2. System processes:
+   - Weather and forecast data  
+   - Soil and crop conditions  
+   - Climate risks  
+
+3. Application outputs:
+   - Season plan and timeline  
+   - Recommended farming actions  
+   - Tasks and alerts  
+   - Real-time adaptive suggestions  
+
+4. Farmer interacts:
+   - Completes tasks  
+   - Receives alerts  
+   - Uses chatbot for assistance  
+
+---
+
+## 🎯 Design Principles
+
+This application is built with:
+
+- **Simplicity first** — designed for non-technical users  
+- **Mobile-first UI** — optimized for smartphones  
+- **Visual communication** — icons, colors, minimal text  
+- **Action-driven** — every insight leads to a clear task  
+- **Multilingual-ready** — adaptable to local languages  
+
+---
+
+## 🔮 Future Improvements
+
+- Voice assistant for low-literacy users  
+- Regional language support  
+- Offline functionality for rural areas  
+- Satellite-based crop monitoring  
+- Advanced crop disease detection  
+- SMS / WhatsApp alert system  
+- Yield prediction and economic insights  
+
+---
+
+## 🤝 Contributing
+
+Contributions are welcome!
+
+1. Fork the repository  
+2. Create a new branch  
+3. Make your changes  
+4. Commit your updates  
+5. Open a pull request  
+
+---
+
+## 📄 License
+
+This project is licensed under the MIT License.
+
+---
+
+## ✨ Authors
+
+Atqa R. Amir
+Amna Bukhari
+Syed Faizan
+
+Built to support **climate-resilient farming** through simple, practical, and accessible technology.
+Developed for the **Gemma 4 Good Hackathon (Kaggle)**.
+
+
+
