@@ -276,7 +276,8 @@ This application is built with:
 
 ## 🔮 Future Improvements
 
-- Voice assistant for low-literacy users  
+- Voice assistant for low-literacy users
+- Crop Image Analysis 
 - Regional language support  
 - Offline functionality for rural areas  
 - Satellite-based crop monitoring  
