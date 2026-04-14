@@ -313,9 +313,7 @@ This project is licensed under the MIT License.
 
 ## ✨ Authors
 
-Atqa R. Amir
-Amna Bukhari
-Syed Faizan
+Atqa R. Amir, Amna Bukhari, Syed Faizan
 
 Built to support **climate-resilient farming** through simple, practical, and accessible technology.
 Developed for the **Gemma 4 Good Hackathon (Kaggle)**.
