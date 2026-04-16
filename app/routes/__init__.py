@@ -11,8 +11,8 @@ from .pesticides import pesticides_bp
 def register_routes(app):
     app.register_blueprint(main_bp)
     app.register_blueprint(dashboard_bp)
-    app.register_blueprint(fields_bp, url_prefix="/fields")
-    app.register_blueprint(crops_bp, url_prefix="/crops")
+    app.register_blueprint(fields_bp, url_prefix="/myfields")
+    app.register_blueprint(crops_bp, url_prefix="/mycrops")
     app.register_blueprint(tasks_bp, url_prefix="/tasks")
     app.register_blueprint(weather_bp, url_prefix="/weather")
     app.register_blueprint(chatbot_bp, url_prefix="/chatbot")
