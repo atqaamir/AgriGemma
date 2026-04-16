@@ -12,7 +12,7 @@ class FieldRepository:
 
     @staticmethod
     def get_all():
-        return Field.query.all()
+        return Field.query
 
     @staticmethod
     def get_by_id(field_id):
