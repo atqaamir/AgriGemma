@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html class="light" lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+  <title>Terra Firma - Fields</title>
+  <link rel="stylesheet" href="/static/css/fields.css"/>
+</head>
+<body class="bg-surface text-on-surface min-h-screen pb-32">
+<!-- TopAppBar Section -->
+<header class="bg-[#fcf9f0] dark:bg-[#1c1c17] flex justify-between items-center w-full px-6 py-4 sticky top-0 z-50">
+  <div class="flex items-center gap-3">
+    <span class="material-symbols-outlined text-[#47573b] dark:text-[#d5e9c1]" style="font-size: 28px;">agriculture</span>
+    <h1 class="text-2xl font-semibold text-[#47573b] dark:text-[#d5e9c1] font-['Manrope'] tracking-tight">Terra Firma</h1>
+  </div>
+  <div class="flex gap-4">
+    <button class="hover:bg-[#f1eee5] dark:hover:bg-[#2a2a24] transition-colors p-2 rounded-full active:scale-95 duration-150" onclick="showNotifications()">
+      <span class="material-symbols-outlined text-[#47573b] dark:text-[#d5e9c1]">notifications</span>
+    </button>
+    <button class="hover:bg-[#f1eee5] dark:hover:bg-[#2a2a24] transition-colors p-2 rounded-full active:scale-95 duration-150" onclick="openSearch()">
+      <span class="material-symbols-outlined text-[#47573b] dark:text-[#d5e9c1]">search</span>
+    </button>
+  </div>
+</header>
+
+<main class="px-4 pt-4 space-y-8">
+  <!-- Map Summary Chip / Mini Card -->
+  <section class="relative overflow-hidden rounded-3xl h-44 flex flex-col justify-end p-6 bg-surface-container" data-location="Iowa Farm Lands">
+    <div class="absolute inset-0 z-0 opacity-40 bg-cover bg-center" style="background-image: url('/static/images/fields_map.jpg')"></div>
+    <div class="absolute inset-0 bg-gradient-to-t from-surface-container via-transparent to-transparent z-10"></div>
+    <div class="relative z-20 flex justify-between items-end">
+      <div>
+        <span class="text-xs font-medium tracking-[0.03em] text-primary uppercase mb-1 block">Property Overview</span>
+        <h2 class="text-3xl font-bold text-on-surface tracking-tight"><span id="total-acreage">248.5</span> <span class="text-lg font-medium opacity-70">Total AC</span></h2>
+      </div>
+      <button onclick="openMap()" class="bg-primary px-4 py-2 rounded-full flex items-center gap-2 shadow-lg hover:shadow-xl transition-shadow">
+        <span class="material-symbols-outlined text-on-primary text-sm" style="font-variation-settings: 'FILL' 1;">map</span>
+        <span class="text-on-primary text-xs font-bold">Interactive Map</span>
+      </button>
+    </div>
+  </section>
+
+  <!-- Active Fields Section -->
+  <div class="space-y-4">
+    <div class="flex justify-between items-center px-2">
+      <h3 class="text-xl font-bold text-on-surface tracking-tight">Active Fields</h3>
+      <button class="text-primary text-sm font-semibold flex items-center gap-1" onclick="openFilterModal()">
+        Filter <span class="material-symbols-outlined text-sm">filter_list</span>
+      </button>
+    </div>
+    <!-- Horizontal Scrollable Grid -->
+    <div id="fields-container" class="flex overflow-x-auto gap-4 pb-4 no-scrollbar px-2 -mx-2">
+      <!-- Fields will be loaded dynamically from API -->
+      <div class="flex-none w-[200px] h-48 bg-surface-container-low rounded-[24px] flex items-center justify-center">
+        <span class="text-on-surface-variant">Loading fields...</span>
+      </div>
+    </div>
+    <div class="flex justify-center">
+      <button onclick="viewAllFields()" class="flex items-center gap-2 px-6 py-2.5 rounded-full border border-outline-variant text-primary font-bold text-xs hover:bg-surface-variant transition-colors active:scale-95">
+        View All Field Inventory
+        <span class="material-symbols-outlined text-sm">arrow_forward</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Overall Health Check Section -->
+  <section class="space-y-4">
+    <div class="bg-[#5F6F52] rounded-[32px] p-6 text-white flex flex-col items-center sm:flex-row gap-6">
+      <div class="relative flex-shrink-0">
+        <div class="circular-progress w-24 h-24 rounded-full flex items-center justify-center" style="--progress: 78;">
+          <div class="text-center">
+            <div class="text-xl font-bold leading-none">78%</div>
+            <div class="text-[8px] font-bold uppercase tracking-wider opacity-80 mt-1">Moisture</div>
+          </div>
+        </div>
+      </div>
+      <div class="flex-1 space-y-2 text-center sm:text-left">
+        <h3 class="text-xl font-bold tracking-tight text-[#d6e8c5]">Overall Health Check</h3>
+        <p class="text-xs leading-relaxed opacity-90 text-[#d6e8c5]/80">Average soil moisture levels across the property are within optimal range for current growth stages. No urgent irrigation intervention required today.</p>
+      </div>
+    </div>
+    <div class="grid grid-cols-3 gap-3">
+      <div class="bg-[#5F6F52] p-4 rounded-2xl flex flex-col items-center justify-center text-center">
+        <span class="material-symbols-outlined text-[#d6e8c5] mb-2" style="font-variation-settings: 'FILL' 1;">thermostat</span>
+        <span class="text-lg font-bold text-white leading-none">28°C</span>
+        <span class="text-[8px] font-bold uppercase tracking-wider text-[#d6e8c5]/70 mt-1">Heat</span>
+      </div>
+      <div class="bg-[#5F6F52] p-4 rounded-2xl flex flex-col items-center justify-center text-center">
+        <span class="material-symbols-outlined text-[#d6e8c5] mb-2" style="font-variation-settings: 'FILL' 1;">psychology</span>
+        <span class="text-lg font-bold text-white leading-none">Low</span>
+        <span class="text-[8px] font-bold uppercase tracking-wider text-[#d6e8c5]/70 mt-1">Stress</span>
+      </div>
+      <div class="bg-[#5F6F52] p-4 rounded-2xl flex flex-col items-center justify-center text-center">
+        <span class="material-symbols-outlined text-[#d6e8c5] mb-2" style="font-variation-settings: 'FILL' 1;">shield_health</span>
+        <span class="text-xs font-bold text-white leading-tight">Clear</span>
+        <span class="text-[8px] font-bold uppercase tracking-wider text-[#d6e8c5]/70 mt-1">Threats</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- Pending Tasks Section -->
+  <section class="bg-[#d6e8c5]/40 dark:bg-[#5f6f52]/20 rounded-[32px] p-6 space-y-5">
+    <div class="flex justify-between items-center">
+      <div class="flex items-center gap-2 text-[#47573b] dark:text-[#d5e9c1]">
+        <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">assignment</span>
+        <h3 class="font-bold tracking-tight text-lg">Pending Tasks</h3>
+      </div>
+      <span class="bg-[#47573b] text-white text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-wide">3 DUE TODAY</span>
+    </div>
+    <div class="space-y-3">
+      <!-- Tasks will be populated here -->
+      <div class="bg-white dark:bg-stone-900 p-4 rounded-[20px] flex items-center gap-4 shadow-sm">
+        <div class="w-12 h-12 rounded-full bg-[#f1f3ee] dark:bg-stone-800 flex items-center justify-center text-[#47573b] dark:text-[#d5e9c1]">
+          <span class="material-symbols-outlined" style="font-size: 20px;">sprinkler</span>
+        </div>
+        <div class="flex-1">
+          <h5 class="text-sm font-bold text-on-surface">Irrigation Check</h5>
+          <p class="text-[11px] text-on-surface-variant font-medium">East Creek Basin • Irrigation required</p>
+        </div>
+        <span class="material-symbols-outlined text-outline-variant">chevron_right</span>
+      </div>
+      <div class="bg-white dark:bg-stone-900 p-4 rounded-[20px] flex items-center gap-4 shadow-sm">
+        <div class="w-12 h-12 rounded-full bg-[#f1f3ee] dark:bg-stone-800 flex items-center justify-center text-[#47573b] dark:text-[#d5e9c1]">
+          <span class="material-symbols-outlined" style="font-size: 20px;">monitoring</span>
+        </div>
+        <div class="flex-1">
+          <h5 class="text-sm font-bold text-on-surface">Soil pH Testing</h5>
+          <p class="text-[11px] text-on-surface-variant font-medium">North Field Alpha • Quarterly review</p>
+        </div>
+        <span class="material-symbols-outlined text-outline-variant">chevron_right</span>
+      </div>
+    </div>
+    <button onclick="viewAllTasks()" class="w-full py-3.5 text-center text-xs font-bold text-[#47573b] dark:text-[#d5e9c1] bg-[#f1f3ee]/60 dark:bg-white/5 rounded-xl hover:bg-white/80 dark:hover:bg-white/10 transition-colors active:scale-95">
+      View All Field Tasks
+    </button>
+  </section>
+</main>
+
+<!-- Floating Action Button -->
+<button onclick="createNewField()" class="fixed bottom-28 right-6 w-16 h-16 bg-[#5F6F52] rounded-full shadow-2xl flex items-center justify-center text-white active:scale-90 transition-transform z-40 hover:shadow-xl">
+  <span class="material-symbols-outlined text-3xl" style="font-variation-settings: 'wght' 600;">add</span>
+</button>
+
+<!-- BottomNavBar Section -->
+<nav class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-4 pb-6 pt-3 bg-[#fcf9f0]/80 dark:bg-stone-950/80 backdrop-blur-md rounded-t-3xl border-t border-[#1c1c17]/5 dark:border-stone-800 shadow-[0_-8px_24px_rgba(28,28,23,0.06)]">
+  <a class="flex flex-col items-center justify-center text-[#1c1c17]/70 dark:text-stone-400 px-4 py-2 hover:text-[#47573b] transition-all tap-highlight-transparent active:scale-95" href="/">
+    <span class="material-symbols-outlined">dashboard</span>
+    <span class="font-['Work_Sans'] text-[11px] font-medium tracking-[0.03em] uppercase mt-1">Dashboard</span>
+  </a>
+  <a class="flex flex-col items-center justify-center bg-[#47573b] dark:bg-[#5f6f52] text-white rounded-full px-5 py-2 transition-all tap-highlight-transparent active:scale-95" href="/fields">
+    <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">potted_plant</span>
+    <span class="font-['Work_Sans'] text-[11px] font-medium tracking-[0.03em] uppercase mt-1">Fields</span>
+  </a>
+  <a class="flex flex-col items-center justify-center text-[#1c1c17]/70 dark:text-stone-400 px-4 py-2 hover:text-[#47573b] transition-all tap-highlight-transparent active:scale-95" href="/crops">
+    <span class="material-symbols-outlined">Psychology</span>
+    <span class="font-['Work_Sans'] text-[11px] font-medium tracking-[0.03em] uppercase mt-1">Crops</span>
+  </a>
+  <a class="flex flex-col items-center justify-center text-[#1c1c17]/70 dark:text-stone-400 px-4 py-2 hover:text-[#47573b] transition-all tap-highlight-transparent active:scale-95" href="/tasks">
+    <span class="material-symbols-outlined">assignment_turned_in</span>
+    <span class="font-['Work_Sans'] text-[11px] font-medium tracking-[0.03em] uppercase mt-1">Tasks</span>
+  </a>
+  <a class="flex flex-col items-center justify-center text-[#1c1c17]/70 dark:text-stone-400 px-4 py-2 hover:text-[#47573b] transition-all tap-highlight-transparent active:scale-95" href="/planner">
+    <span class="material-symbols-outlined">event_note</span>
+    <span class="font-['Work_Sans'] text-[11px] font-medium tracking-[0.03em] uppercase mt-1">Planner</span>
+  </a>
+</nav>
+
+<script>
+// ===== API ENDPOINTS INTEGRATION =====
+const API_BASE = '/api';
+
+// Load all fields on page load
+document.addEventListener('DOMContentLoaded', function() {
+  loadFields();
+});
+
+// Get all fields from API
+async function loadFields() {
+  try {
+    const response = await fetch(`${API_BASE}/fields`);
+    if (!response.ok) throw new Error('Failed to fetch fields');
+
+    const fields = await response.json();
+    renderFieldCards(fields);
+    updateTotalAcreage(fields);
+  } catch (error) {
+    console.error('Error loading fields:', error);
+    showError('Failed to load fields');
+  }
+}
+
+// Render field cards dynamically
+function renderFieldCards(fields) {
+  const container = document.getElementById('fields-container');
+
+  if (fields.length === 0) {
+    container.innerHTML = '<div class="flex-1 text-center text-on-surface-variant p-8">No fields found. Create your first field!</div>';
+    return;
+  }
+
+  container.innerHTML = fields.map(field => `
+    <div class="field-card flex-none w-[200px] bg-surface-container-low rounded-[24px] overflow-hidden flex flex-col group active:scale-95 duration-150 cursor-pointer" data-field-id="${field.id}" onclick="viewField(${field.id})">
+      <div class="h-28 relative">
+        <img class="w-full h-full object-cover" alt="${field.name}" src="${getFieldImage(field.crop_type)}" onerror="this.src='/static/images/field_default.jpg'"/>
+        <div class="absolute top-2 right-2 bg-white/90 backdrop-blur rounded-full p-1.5 shadow-sm">
+          <span class="material-symbols-outlined ${getStatusClass(field.health_status)} text-sm" style="font-variation-settings: 'FILL' 1;">${getStatusIcon(field.health_status)}</span>
+        </div>
+      </div>
+      <div class="p-4 space-y-3">
+        <div>
+          <h4 class="font-bold text-on-surface text-sm truncate">${field.name}</h4>
+          <div class="flex justify-between items-center mt-0.5">
+            <p class="text-[10px] text-on-surface-variant font-medium">${field.crop_type} • ${field.acreage} AC</p>
+            <span class="text-[10px] font-bold ${getHealthColor(field.health_status)}">${field.health_percentage || 0}%</span>
+          </div>
+        </div>
+        <div class="flex items-center gap-2 py-1">
+          <div class="flex-1 h-1.5 bg-surface-variant rounded-full overflow-hidden">
+            <div class="${getHealthProgressColor(field.health_status)} h-full" style="width: ${field.health_percentage || 0}%"></div>
+          </div>
+        </div>
+        <div class="flex justify-between items-center pt-1 border-t border-outline-variant/20">
+          <div class="flex gap-2">
+            <span class="material-symbols-outlined text-xs text-secondary opacity-70">opacity</span>
+            <span class="material-symbols-outlined text-xs text-secondary opacity-70">thermostat</span>
+          </div>
+          <span class="text-[10px] font-bold ${getHealthColor(field.health_status)} uppercase">${field.growth_stage || 'Unknown'}</span>
+        </div>
+      </div>
+    </div>
+  `).join('');
+}
+
+// Update total acreage
+function updateTotalAcreage(fields) {
+  const total = fields.reduce((sum, field) => sum + (parseFloat(field.acreage) || 0), 0);
+  document.getElementById('total-acreage').textContent = total.toFixed(1);
+}
+
+// Helper functions for field rendering
+function getFieldImage(cropType) {
+  const imageMap = {
+    'Corn': '/static/images/field_corn.jpg',
+    'Wheat': '/static/images/field_wheat.jpg',
+    'Soybeans': '/static/images/field_soybeans.jpg',
+    'Sunflower': '/static/images/field_sunflower.jpg',
+  };
+  return imageMap[cropType] || '/static/images/field_default.jpg';
+}
+
+function getStatusIcon(status) {
+  const iconMap = {
+    'healthy': 'check_circle',
+    'alert': 'warning',
+    'critical': 'error'
+  };
+  return iconMap[status] || 'help';
+}
+
+function getStatusClass(status) {
+  const classMap = {
+    'healthy': 'text-primary',
+    'alert': 'text-error',
+    'critical': 'text-error'
+  };
+  return classMap[status] || 'text-primary';
+}
+
+function getHealthColor(status) {
+  const colorMap = {
+    'healthy': 'text-primary',
+    'alert': 'text-error',
+    'critical': 'text-error'
+  };
+  return colorMap[status] || 'text-primary';
+}
+
+function getHealthProgressColor(status) {
+  const colorMap = {
+    'healthy': 'bg-primary',
+    'alert': 'bg-error',
+    'critical': 'bg-error'
+  };
+  return colorMap[status] || 'bg-primary';
+}
+
+// ===== UI INTERACTION FUNCTIONS =====
+function createNewField() {
+  // Show modal or navigate to create field page
+  alert('Create new field feature - navigate to form');
+}
+
+function viewField(fieldId) {
+  // Navigate to field detail page
+  window.location.href = `/field/${fieldId}`;
+}
+
+function viewAllFields() {
+  window.location.href = '/fields/all';
+}
+
+function viewAllTasks() {
+  window.location.href = '/tasks';
+}
+
+function openMap() {
+  alert('Open interactive map');
+}
+
+function openFilterModal() {
+  alert('Open filter modal');
+}
+
+function openSearch() {
+  alert('Open search');
+}
+
+function showNotifications() {
+  alert('Show notifications');
+}
+
+function showError(message) {
+  // Show error notification
+  alert(`Error: ${message}`);
+}
+</script>
+</body>
+</html>

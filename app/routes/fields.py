@@ -1,4 +1,4 @@
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, request, jsonify, render_template
 from app.services.field_service import FieldService
 from app.schemas.field_schema import FieldSchema
 
@@ -6,13 +6,18 @@ fields_bp = Blueprint("fields_bp", __name__)
 
 fields_schema = FieldSchema(many=True)
 
-@fields_bp.route("/api/fields", methods=["GET"])
+@fields_bp.route("/", methods=["GET"])
+def fields_page():
+    """Render the fields UI HTML page"""
+    return render_template("fields_ui.html")
+
+@fields_bp.route("/fields", methods=["GET"])
 def get_fields():
     fields = FieldService.get_all_fields()
     return jsonify(fields_schema.dump(fields)), 200
 
 
-@fields_bp.route("/api/fields/<int:field_id>", methods=["GET"])
+@fields_bp.route("/fields/<int:field_id>", methods=["GET"])
 def get_field(field_id):
     field = FieldService.get_field_by_id(field_id)
 
@@ -22,7 +27,7 @@ def get_field(field_id):
     return jsonify(fields_schema.dump(field)), 200
 
 
-@fields_bp.route("/api/fields", methods=["POST"])
+@fields_bp.route("/fields", methods=["POST"])
 def create_field():
     data = request.get_json()
 
