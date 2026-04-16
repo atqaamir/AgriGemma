@@ -1,5 +1,6 @@
 from marshmallow import Schema, fields
 
+
 class CropSchema(Schema):
     id = fields.Int(dump_only=True)
     name = fields.Str(required=True)
@@ -9,3 +10,7 @@ class CropSchema(Schema):
     health_status = fields.Str(allow_none=True)
     soil_type = fields.Str(allow_none=True)
     water_requirement = fields.Float(allow_none=True)
+
+class CropMiniSchema(Schema):
+    id = fields.Int()
+    name = fields.Str()
