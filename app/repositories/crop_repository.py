@@ -1,6 +1,8 @@
 from app.models.crop import Crop
 from app.extensions import db
 
+USE_FAKE_DB = True
+
 class CropRepository:
 
     @staticmethod
@@ -12,30 +14,12 @@ class CropRepository:
 
     @staticmethod
     def get_all():
-
-        temp_crops = {
-            "crops": [
-                {
-                    "id": 1,
-                    "name": "Wheat",
-                    "field_name": "North Field",
-                    "growth_stage": "Flowering",
-                    "health_status": "Warning"
-                },
-                {
-                    "id": 2,
-                    "name": "Rice",
-                    "field_name": "South Field",
-                    "growth_stage": "Vegetative",
-                    "health_status": "Good"
-                }
+        if USE_FAKE_DB:
+            return [
+                Crop(id=1, name="Wheat"),
+                Crop(id=2, name="Rice"),
             ]
-        }
-
-
-
-        return temp_crops["crops"]
-        # return Crop.query.all()   
+        return Crop.query.all() 
 
     @staticmethod
     def get_by_id(crop_id):
