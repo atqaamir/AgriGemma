@@ -7,3 +7,5 @@ class Crop(db.Model):
     planting_date = db.Column(db.Date)
     growth_stage = db.Column(db.String(50))
     health_status = db.Column(db.String(20))
+    soil_type = db.Column(db.String(50))
+    water_requirement = db.Column(db.Float)
