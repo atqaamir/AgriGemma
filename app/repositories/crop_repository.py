@@ -1,8 +1,6 @@
 from app.models.crop import Crop
 from app.extensions import db
 
-USE_FAKE_DB = True
-
 class CropRepository:
 
     @staticmethod
@@ -14,12 +12,7 @@ class CropRepository:
 
     @staticmethod
     def get_all():
-        if USE_FAKE_DB:
-            return [
-                Crop(id=1, name="Wheat"),
-                Crop(id=2, name="Rice"),
-            ]
-        return Crop.query.all() 
+        return Crop.query.all()
 
     @staticmethod
     def get_by_id(crop_id):
@@ -31,7 +24,7 @@ class CropRepository:
         db.session.commit()
 
 
-"""
+"""       
 DO NOT DO THIS -> AN EXAMPLE OF BUSINESS LOGIC THAT SHOULD BE IN THE SERVICE LAYER, NOT THE REPOSITORY LAYER
 class CropRepository:
     def needs_irrigation(crop):
