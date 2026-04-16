@@ -1,25 +1,23 @@
-from flask import Blueprint, jsonify
+from flask import Blueprint, request, jsonify
+from app.services.crop_service import CropService
+from app.schemas.crop_schema import CropSchema
 
-crops_bp = Blueprint("crops", __name__)
+crop_bp = Blueprint('crops', __name__)
+schema = CropSchema()
+many_schema = CropSchema(many=True)
 
+@crop_bp.route('/crops', methods=['POST'])
+def create_crop():
+    data = schema.load(request.json)
+    crop = CropService.create_crop(data)
+    return schema.dump(crop), 201
 
-@crops_bp.route("/", methods=["GET"])
+@crop_bp.route('/crops', methods=['GET'])
 def get_crops():
-    return jsonify({
-        "crops": [
-            {
-                "id": 1,
-                "name": "Wheat",
-                "field_name": "North Field",
-                "growth_stage": "Flowering",
-                "health_status": "Warning"
-            },
-            {
-                "id": 2,
-                "name": "Rice",
-                "field_name": "South Field",
-                "growth_stage": "Vegetative",
-                "health_status": "Good"
-            }
-        ]
-    }), 200
+    crops = CropService.get_all_crops()
+    return many_schema.dump(crops)
+
+@crop_bp.route('/crops/<int:id>', methods=['GET'])
+def get_crop(id):
+    crop = CropService.get_crop_by_id(id)
+    return schema.dump(crop)
