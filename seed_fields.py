@@ -13,6 +13,9 @@ from app.models.crop import Crop
 app = create_app()
 
 with app.app_context():
+    # Create all tables first (important!)
+    db.create_all()
+
     # Clear existing data
     Field.query.delete()
     Crop.query.delete()
