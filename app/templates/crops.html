@@ -1,0 +1,651 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;700;800&amp;family=Work+Sans:wght@400;500&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="/static/css/crops.css"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "surface": "#fcf9f0",
+                    "secondary-fixed": "#d5e9c1",
+                    "on-error-container": "#93000a",
+                    "inverse-primary": "#bbccaa",
+                    "on-tertiary-fixed": "#1e1c12",
+                    "tertiary-fixed-dim": "#ccc6b6",
+                    "surface-container-high": "#ebe8df",
+                    "primary": "#47573b",
+                    "on-secondary-fixed-variant": "#3b4b2e",
+                    "secondary-fixed-dim": "#bacda7",
+                    "surface-dim": "#dddad1",
+                    "surface-variant": "#e5e2da",
+                    "on-secondary-fixed": "#111f07",
+                    "surface-container-highest": "#e5e2da",
+                    "on-tertiary-container": "#f1ebda",
+                    "on-secondary-container": "#586a4a",
+                    "inverse-on-surface": "#f4f1e8",
+                    "on-primary": "#ffffff",
+                    "on-primary-fixed": "#121f09",
+                    "on-primary-container": "#dff1cd",
+                    "secondary-container": "#d5e9c1",
+                    "background": "#fcf9f0",
+                    "on-surface": "#1c1c17",
+                    "outline": "#75786f",
+                    "error": "#ba1a1a",
+                    "on-error": "#ffffff",
+                    "primary-container": "#5f6f52",
+                    "tertiary-container": "#6e6a5d",
+                    "surface-container-low": "#f7f3ea",
+                    "tertiary": "#555246",
+                    "on-surface-variant": "#444840",
+                    "error-container": "#ffdad6",
+                    "on-tertiary-fixed-variant": "#4a473b",
+                    "primary-fixed": "#d6e8c5",
+                    "primary-fixed-dim": "#bbccaa",
+                    "on-primary-fixed-variant": "#3c4b31",
+                    "tertiary-fixed": "#e8e2d2",
+                    "inverse-surface": "#31312b",
+                    "surface-bright": "#fcf9f0",
+                    "surface-container-lowest": "#ffffff",
+                    "secondary": "#536344",
+                    "surface-container": "#f1eee5",
+                    "on-secondary": "#ffffff",
+                    "on-tertiary": "#ffffff",
+                    "surface-tint": "#536347",
+                    "outline-variant": "#c5c8bd",
+                    "on-background": "#1c1c17"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "1.5rem",
+                    "full": "9999px"
+            },
+            "fontFamily": {
+                    "headline": ["Manrope"],
+                    "body": ["Work Sans"],
+                    "label": ["Work Sans"]
+            }
+          },
+        },
+      }
+    </script>
+</head>
+<body class="bg-surface text-on-surface min-h-screen pb-32">
+<header class="fixed top-0 w-full z-50 bg-[#fcf9f0] dark:bg-stone-950">
+<div class="flex items-center justify-between px-6 h-16 w-full max-w-screen-xl mx-auto">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-[#47573b] dark:text-[#d5e9c1]" style="font-variation-settings: 'FILL' 1;">agriculture</span>
+<span class="font-['Manrope'] font-bold text-[#47573b] dark:text-[#d5e9c1]">Climate Adaptation Advisor</span>
+</div>
+<div class="flex items-center gap-4">
+<button class="p-2 transition-colors duration-200 hover:bg-stone-200/50 dark:hover:bg-stone-800/50 rounded-full">
+<span class="material-symbols-outlined text-[#47573b] dark:text-[#d5e9c1]" style="font-variation-settings: 'FILL' 1;">notifications</span>
+</button>
+</div>
+</div>
+</header>
+<main class="pt-24 px-6 max-w-screen-xl mx-auto">
+<section class="mb-8">
+<h1 class="text-4xl font-medium tracking-tight mb-2">My Crops</h1>
+<p class="text-on-surface-variant font-body">Real-time physiological monitoring and harvest estimations.</p>
+</section>
+<!-- Loading State -->
+<div id="loadingState" class="flex justify-center items-center py-12">
+<div class="flex flex-col items-center gap-3">
+<div class="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+<p class="text-on-surface-variant text-sm">Loading crops...</p>
+</div>
+</div>
+
+<!-- Error State -->
+<div id="errorState" class="hidden bg-error-container rounded-xl p-6 text-center">
+<div class="text-on-error-container">
+<p class="font-bold mb-2">Failed to load crops</p>
+<p class="text-sm mb-4" id="errorMessage">An error occurred while fetching crop data.</p>
+<button onclick="loadCrops()" class="px-4 py-2 bg-error text-on-error rounded-lg hover:opacity-90 transition-opacity text-sm font-medium">Retry</button>
+</div>
+</div>
+
+<!-- Horizontally Scrollable Cards Container -->
+<div id="cropsContainer" class="hidden flex overflow-x-auto gap-6 pb-6 no-scrollbar -mx-6 px-6 snap-x snap-mandatory">
+<!-- Crop cards will be dynamically inserted here -->
+</div>
+
+<!-- Empty State -->
+<div id="emptyState" class="hidden text-center py-12">
+<span class="material-symbols-outlined text-6xl text-on-surface-variant opacity-50 inline-block mb-4">eco</span>
+<p class="text-on-surface-variant text-lg">No crops found</p>
+<p class="text-on-surface-variant text-sm mb-6">Start by creating your first crop to monitor its progress.</p>
+<button onclick="openCreateCropModal()" class="px-6 py-2 bg-primary text-on-primary rounded-lg hover:opacity-90 transition-opacity font-medium">Create Crop</button>
+</div>
+<!-- Pending Tasks Section -->
+<div class="mt-8 mb-12 bg-[#ecf3e6] rounded-3xl p-6">
+<div class="flex items-center justify-between mb-6">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-[#47573b]">assignment</span>
+<h3 class="text-xl font-bold text-[#1c1c17]">Pending Tasks</h3>
+</div>
+<div class="bg-[#47573b] text-white px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider">3 Due Today</div>
+</div>
+<div class="space-y-4 mb-6">
+<!-- Task Row 1 -->
+<div class="bg-white rounded-2xl p-4 flex items-center gap-4 shadow-sm">
+<div class="w-12 h-12 bg-surface-container rounded-full flex items-center justify-center">
+<span class="material-symbols-outlined text-[#47573b]">sprinkler</span>
+</div>
+<div class="flex-1">
+<h4 class="font-bold text-[#1c1c17]">Irrigation Check</h4>
+<p class="text-xs text-on-surface-variant">East Creek Basin • Irrigation required</p>
+</div>
+<span class="material-symbols-outlined text-[#c5c8bd]">chevron_right</span>
+</div>
+<!-- Task Row 2 -->
+<div class="bg-white rounded-2xl p-4 flex items-center gap-4 shadow-sm">
+<div class="w-12 h-12 bg-surface-container rounded-full flex items-center justify-center">
+<span class="material-symbols-outlined text-[#47573b]">monitoring</span>
+</div>
+<div class="flex-1">
+<h4 class="font-bold text-[#1c1c17]">Soil pH Testing</h4>
+<p class="text-xs text-on-surface-variant">North Field Alpha • Quarterly review</p>
+</div>
+<span class="material-symbols-outlined text-[#c5c8bd]">chevron_right</span>
+</div>
+</div>
+<button class="w-full py-4 bg-white/50 text-[#47573b] font-bold rounded-2xl transition-all hover:bg-white/80 active:scale-[0.98]">
+                View All Field Tasks
+            </button>
+</div>
+</main>
+<!-- Crop Details Modal -->
+<div id="cropDetailsModal" class="hidden fixed inset-0 bg-black/50 z-[70] flex items-center justify-center p-4">
+<div class="bg-surface rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-2xl">
+<div class="sticky top-0 flex items-center justify-between p-6 border-b border-surface-variant bg-surface">
+<h2 id="detailsModalTitle" class="text-2xl font-bold text-primary">Crop Details</h2>
+<button onclick="closeCropDetailsModal()" class="p-2 hover:bg-surface-container rounded-full transition-colors">
+<span class="material-symbols-outlined">close</span>
+</button>
+</div>
+<div id="cropDetailsContent" class="p-6 space-y-6">
+<!-- Content will be dynamically inserted -->
+</div>
+</div>
+</div>
+
+<!-- Create/Edit Crop Modal -->
+<div id="createCropModal" class="hidden fixed inset-0 bg-black/50 z-[70] flex items-center justify-center p-4">
+<div class="bg-surface rounded-2xl w-full max-w-md shadow-2xl">
+<div class="flex items-center justify-between p-6 border-b border-surface-variant">
+<h2 class="text-2xl font-bold text-primary">Add New Crop</h2>
+<button onclick="closeCreateCropModal()" class="p-2 hover:bg-surface-container rounded-full transition-colors">
+<span class="material-symbols-outlined">close</span>
+</button>
+</div>
+<form id="createCropForm" class="p-6 space-y-4" onsubmit="submitCreateCropForm(event)">
+<div>
+<label for="cropName" class="block text-sm font-medium text-on-surface mb-2">Crop Name</label>
+<input type="text" id="cropName" name="name" class="w-full px-4 py-2 border border-outline rounded-lg focus:outline-none focus:ring-2 focus:ring-primary" placeholder="e.g., Corn, Soybeans, Wheat" required>
+</div>
+<div>
+<label for="plantingDate" class="block text-sm font-medium text-on-surface mb-2">Planting Date</label>
+<input type="date" id="plantingDate" name="planting_date" class="w-full px-4 py-2 border border-outline rounded-lg focus:outline-none focus:ring-2 focus:ring-primary">
+</div>
+<div>
+<label for="growthStage" class="block text-sm font-medium text-on-surface mb-2">Growth Stage</label>
+<select id="growthStage" name="growth_stage" class="w-full px-4 py-2 border border-outline rounded-lg focus:outline-none focus:ring-2 focus:ring-primary">
+<option value="">Select a stage</option>
+<option value="Germination">Germination</option>
+<option value="Seedling">Seedling</option>
+<option value="Vegetative Stage">Vegetative Stage</option>
+<option value="Flowering">Flowering</option>
+<option value="Fruiting">Fruiting</option>
+<option value="Senescence">Senescence</option>
+<option value="Dormancy">Dormancy</option>
+</select>
+</div>
+<div>
+<label for="healthStatus" class="block text-sm font-medium text-on-surface mb-2">Health Status</label>
+<select id="healthStatus" name="health_status" class="w-full px-4 py-2 border border-outline rounded-lg focus:outline-none focus:ring-2 focus:ring-primary">
+<option value="">Select status</option>
+<option value="Healthy">Healthy</option>
+<option value="Irrigation">Irrigation</option>
+<option value="Harvest">Harvest</option>
+<option value="Disease">Disease</option>
+</select>
+</div>
+<div>
+<label for="soilType" class="block text-sm font-medium text-on-surface mb-2">Soil Type</label>
+<input type="text" id="soilType" name="soil_type" class="w-full px-4 py-2 border border-outline rounded-lg focus:outline-none focus:ring-2 focus:ring-primary" placeholder="e.g., Loamy, Clay, Sandy">
+</div>
+<div>
+<label for="waterRequirement" class="block text-sm font-medium text-on-surface mb-2">Water Requirement (inches/month)</label>
+<input type="number" id="waterRequirement" name="water_requirement" step="0.1" class="w-full px-4 py-2 border border-outline rounded-lg focus:outline-none focus:ring-2 focus:ring-primary" placeholder="e.g., 2.5">
+</div>
+
+<div id="formError" class="hidden bg-error-container text-on-error-container p-3 rounded-lg text-sm"></div>
+<div id="formSuccess" class="hidden bg-secondary-fixed text-on-secondary-fixed p-3 rounded-lg text-sm"></div>
+
+<div class="flex gap-3 pt-4">
+<button type="button" onclick="closeCreateCropModal()" class="flex-1 px-4 py-2 border border-outline rounded-lg hover:bg-surface-container transition-colors text-on-surface font-medium">Cancel</button>
+<button type="submit" id="submitBtn" class="flex-1 px-4 py-2 bg-primary text-on-primary rounded-lg hover:opacity-90 transition-opacity font-medium flex items-center justify-center gap-2">
+<span class="material-symbols-outlined text-base">check</span>
+Create Crop
+</button>
+</div>
+</form>
+</div>
+</div>
+
+<!-- Floating Action Button -->
+<button onclick="openCreateCropModal()" class="fixed right-6 bottom-28 w-16 h-16 bg-[#5f6f52] text-white rounded-full flex items-center justify-center shadow-2xl z-[60] transition-transform hover:scale-110 active:scale-95">
+<span class="material-symbols-outlined text-3xl">add</span>
+</button>
+<nav class="fixed bottom-0 left-0 w-full z-50 bg-[#fcf9f0]/80 dark:bg-stone-950/80 backdrop-blur-md rounded-t-[24px] shadow-[0_-8px_24px_rgba(28,28,23,0.06)] flex justify-around items-center px-4 pb-6 pt-3">
+<a class="flex flex-col items-center justify-center text-stone-500 dark:text-stone-400 px-3 py-1.5 transition-transform hover:scale-105 duration-150" href="/dashboard">
+<span class="material-symbols-outlined" data-icon="dashboard">dashboard</span>
+<span class="font-['Work_Sans'] text-[11px] font-medium tracking-wide">Dashboard</span>
+</a>
+<a class="flex flex-col items-center justify-center text-stone-500 dark:text-stone-400 px-3 py-1.5 transition-transform hover:scale-105 duration-150" href="/myfields">
+<span class="material-symbols-outlined" data-icon="landscape">landscape</span>
+<span class="font-['Work_Sans'] text-[11px] font-medium tracking-wide">Fields</span>
+</a>
+<a class="flex flex-col items-center justify-center bg-[#d5e9c1] dark:bg-[#47573b] text-[#1c1c17] dark:text-[#fcf9f0] rounded-2xl px-3 py-1.5 transition-transform hover:scale-105 duration-150" href="/mycrops">
+<span class="material-symbols-outlined" data-icon="eco" style="font-variation-settings: 'FILL' 1;">eco</span>
+<span class="font-['Work_Sans'] text-[11px] font-medium tracking-wide">Crops</span>
+</a>
+<a class="flex flex-col items-center justify-center text-stone-500 dark:text-stone-400 px-3 py-1.5 transition-transform hover:scale-105 duration-150" href="/mytasks">
+<span class="material-symbols-outlined" data-icon="assignment_turned_in">assignment_turned_in</span>
+<span class="font-['Work_Sans'] text-[11px] font-medium tracking-wide">Tasks</span>
+</a>
+<a class="flex flex-col items-center justify-center text-stone-500 dark:text-stone-400 px-3 py-1.5 transition-transform hover:scale-105 duration-150" href="/myplanner">
+<span class="material-symbols-outlined" data-icon="calendar_today">calendar_today</span>
+<span class="font-['Work_Sans'] text-[11px] font-medium tracking-wide">Planner</span>
+</a>
+<a class="flex flex-col items-center justify-center text-stone-500 dark:text-stone-400 px-3 py-1.5 transition-transform hover:scale-105 duration-150" href="#">
+<span class="material-symbols-outlined" data-icon="chat">chat</span>
+<span class="font-['Work_Sans'] text-[11px] font-medium tracking-wide">Chat</span>
+</a>
+</nav>
+<script>
+// Configuration
+const API_BASE = '/mycrops';
+
+// State management
+let crops = [];
+let isLoading = false;
+
+// Helper functions
+function calculateGrowthProgress(plantingDate, stage) {
+  // Simplified calculation based on stage
+  const stageProgress = {
+    'Germination': 10,
+    'Seedling': 20,
+    'Vegetative Stage': 40,
+    'Flowering': 60,
+    'Fruiting': 80,
+    'Senescence': 95,
+    'Dormancy': 5
+  };
+  return stageProgress[stage] || 50;
+}
+
+function getHealthStatusColor(status) {
+  const colors = {
+    'Healthy': { bg: 'bg-secondary-fixed', text: 'text-on-secondary-fixed', dot: 'bg-primary' },
+    'Irrigation': { bg: 'bg-error-container', text: 'text-on-error-container', dot: 'bg-error' },
+    'Harvest': { bg: 'bg-tertiary-fixed', text: 'text-on-tertiary-fixed', dot: 'bg-tertiary' },
+    'Disease': { bg: 'bg-error-container', text: 'text-on-error-container', dot: 'bg-error' }
+  };
+  return colors[status] || { bg: 'bg-surface-container', text: 'text-on-surface', dot: 'bg-surface-variant' };
+}
+
+function getStageIcon(stage) {
+  const icons = {
+    'Germination': 'grain',
+    'Seedling': 'sprout',
+    'Vegetative Stage': 'eco',
+    'Flowering': 'local_florist',
+    'Fruiting': 'nutrition',
+    'Senescence': 'calendar_today',
+    'Dormancy': 'cloud'
+  };
+  return icons[stage] || 'eco';
+}
+
+function getProgressBarColor(progress) {
+  if (progress < 30) return 'bg-secondary-fixed-dim';
+  if (progress < 60) return 'bg-primary';
+  return 'bg-primary-container';
+}
+
+function generateZoneId(cropId) {
+  // Generate a zone ID based on crop ID
+  const zones = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'];
+  const zone = zones[cropId % zones.length];
+  const number = String(cropId).padStart(2, '0');
+  return `${zone}-${number}`;
+}
+
+function generateYieldEstimate(name) {
+  // Generate realistic yield estimates based on crop type
+  const estimates = {
+    'Corn': '120 bu/ac',
+    'Soybeans': '45 bu/ac',
+    'Wheat': '60 bu/ac',
+    'Rice': '150 bu/ac',
+    'Barley': '50 bu/ac',
+    'Oats': '55 bu/ac'
+  };
+  return estimates[name] || '80 bu/ac';
+}
+
+function generateMetricValue(name, stage) {
+  // Generate metric values based on crop and stage
+  const baseValue = Math.random() * 30 + 50;
+  if (name.toLowerCase().includes('wheat')) return (baseValue + 15).toFixed(1) + '%';
+  if (stage === 'Flowering') return Math.round(baseValue + 20) + '%';
+  return Math.round(baseValue) + '%';
+}
+
+function getMetricLabel(name, stage) {
+  if (name.toLowerCase().includes('wheat')) return 'Grain Moist.';
+  if (stage === 'Flowering') return 'VPD Level';
+  return 'Soil Moist.';
+}
+
+// Modal functions
+function openCreateCropModal() {
+  document.getElementById('createCropModal').classList.remove('hidden');
+  document.getElementById('createCropForm').reset();
+  document.getElementById('formError').classList.add('hidden');
+  document.getElementById('formSuccess').classList.add('hidden');
+}
+
+function closeCreateCropModal() {
+  document.getElementById('createCropModal').classList.add('hidden');
+  document.getElementById('createCropForm').reset();
+  document.getElementById('formError').classList.add('hidden');
+  document.getElementById('formSuccess').classList.add('hidden');
+}
+
+function openCropDetailsModal(crop) {
+  const modal = document.getElementById('cropDetailsModal');
+  const progress = calculateGrowthProgress(crop.planting_date, crop.growth_stage);
+
+  document.getElementById('detailsModalTitle').textContent = crop.name;
+
+  const content = document.getElementById('cropDetailsContent');
+  content.innerHTML = `
+    <div class="space-y-4">
+      <div class="bg-surface-container rounded-lg p-4">
+        <h3 class="text-sm font-medium text-on-surface-variant mb-3">Basic Information</h3>
+        <div class="space-y-3">
+          <div class="flex justify-between">
+            <span class="text-on-surface-variant">Crop Name:</span>
+            <span class="font-medium text-on-surface">${crop.name}</span>
+          </div>
+          <div class="flex justify-between">
+            <span class="text-on-surface-variant">Zone:</span>
+            <span class="font-medium text-on-surface">${generateZoneId(crop.id)}</span>
+          </div>
+          <div class="flex justify-between">
+            <span class="text-on-surface-variant">Planting Date:</span>
+            <span class="font-medium text-on-surface">${crop.planting_date || 'Not set'}</span>
+          </div>
+          <div class="flex justify-between">
+            <span class="text-on-surface-variant">Soil Type:</span>
+            <span class="font-medium text-on-surface">${crop.soil_type || 'Not specified'}</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="bg-surface-container rounded-lg p-4">
+        <h3 class="text-sm font-medium text-on-surface-variant mb-3">Growth Status</h3>
+        <div class="space-y-3">
+          <div class="flex justify-between items-center">
+            <span class="text-on-surface-variant">Stage:</span>
+            <div class="flex items-center gap-1.5 text-primary font-medium">
+              <span class="material-symbols-outlined text-sm" style="font-variation-settings: 'FILL' 1;">${getStageIcon(crop.growth_stage)}</span>
+              <span class="text-xs uppercase tracking-wider">${crop.growth_stage || 'Unknown'}</span>
+            </div>
+          </div>
+          <div class="flex justify-between items-center">
+            <span class="text-on-surface-variant">Health:</span>
+            <div class="flex items-center gap-1 px-2.5 py-1 ${getHealthStatusColor(crop.health_status).bg} ${getHealthStatusColor(crop.health_status).text} rounded-full text-[10px] font-bold">
+              <span class="w-1.5 h-1.5 rounded-full ${getHealthStatusColor(crop.health_status).dot}"></span>
+              ${crop.health_status || 'Unknown'}
+            </div>
+          </div>
+          <div>
+            <div class="flex justify-between mb-1.5 text-xs font-medium">
+              <span>Growth Progress</span>
+              <span class="text-primary">${progress}%</span>
+            </div>
+            <div class="h-2 w-full bg-surface-container-highest rounded-full overflow-hidden">
+              <div class="h-full ${getProgressBarColor(progress)} rounded-full" style="width: ${progress}%"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="bg-surface-container rounded-lg p-4">
+        <h3 class="text-sm font-medium text-on-surface-variant mb-3">Environmental Data</h3>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <span class="text-[9px] uppercase tracking-[0.1em] text-on-surface-variant block mb-1">Yield Estimate</span>
+            <span class="text-base font-bold text-on-surface">${generateYieldEstimate(crop.name)}</span>
+          </div>
+          <div>
+            <span class="text-[9px] uppercase tracking-[0.1em] text-on-surface-variant block mb-1">${getMetricLabel(crop.name, crop.growth_stage)}</span>
+            <span class="text-base font-bold text-on-surface">${generateMetricValue(crop.name, crop.growth_stage)}</span>
+          </div>
+          <div>
+            <span class="text-[9px] uppercase tracking-[0.1em] text-on-surface-variant block mb-1">Water Requirement</span>
+            <span class="text-base font-bold text-on-surface">${crop.water_requirement ? crop.water_requirement.toFixed(1) + ' in/mo' : 'Not set'}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+
+  modal.classList.remove('hidden');
+}
+
+function closeCropDetailsModal() {
+  document.getElementById('cropDetailsModal').classList.add('hidden');
+}
+
+// API functions
+async function loadCrops() {
+  const loadingState = document.getElementById('loadingState');
+  const errorState = document.getElementById('errorState');
+  const cropsContainer = document.getElementById('cropsContainer');
+  const emptyState = document.getElementById('emptyState');
+
+  // Show loading
+  loadingState.classList.remove('hidden');
+  errorState.classList.add('hidden');
+  cropsContainer.classList.add('hidden');
+  emptyState.classList.add('hidden');
+  isLoading = true;
+
+  try {
+    const response = await fetch(`${API_BASE}/crops`);
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    crops = await response.json();
+
+    // Hide loading
+    loadingState.classList.add('hidden');
+
+    if (crops.length === 0) {
+      emptyState.classList.remove('hidden');
+    } else {
+      renderCrops();
+      cropsContainer.classList.remove('hidden');
+    }
+  } catch (error) {
+    console.error('Error loading crops:', error);
+    loadingState.classList.add('hidden');
+    errorState.classList.remove('hidden');
+    document.getElementById('errorMessage').textContent = error.message || 'Failed to load crops. Please try again.';
+  } finally {
+    isLoading = false;
+  }
+}
+
+function renderCrops() {
+  const container = document.getElementById('cropsContainer');
+  container.innerHTML = '';
+
+  crops.forEach(crop => {
+    const progress = calculateGrowthProgress(crop.planting_date, crop.growth_stage);
+    const statusColor = getHealthStatusColor(crop.health_status);
+    const progressBarColor = getProgressBarColor(progress);
+    const stageIcon = getStageIcon(crop.growth_stage);
+    const zoneId = generateZoneId(crop.id);
+    const yieldEstimate = generateYieldEstimate(crop.name);
+    const metricLabel = getMetricLabel(crop.name, crop.growth_stage);
+    const metricValue = generateMetricValue(crop.name, crop.growth_stage);
+
+    const card = document.createElement('div');
+    card.className = 'min-w-[320px] w-[320px] snap-center bg-surface-container-low rounded-xl overflow-hidden shadow-[0_8px_24px_rgba(28,28,23,0.04)] transition-transform hover:scale-[1.02] duration-300 cursor-pointer';
+    card.onclick = () => openCropDetailsModal(crop);
+
+    card.innerHTML = `
+      <div class="h-44 w-full bg-gradient-to-br from-primary/30 to-secondary-fixed/30 relative overflow-hidden flex items-center justify-center">
+        <span class="material-symbols-outlined text-8xl text-primary/30" style="font-variation-settings: 'FILL' 1;">agriculture</span>
+        <div class="absolute top-4 left-4 bg-primary/90 text-on-primary px-3 py-1 rounded-full text-xs font-medium backdrop-blur-md">${zoneId}</div>
+      </div>
+      <div class="p-5">
+        <div class="flex justify-between items-start mb-4">
+          <div>
+            <h2 class="text-xl font-bold text-primary">${crop.name}</h2>
+            <div class="flex items-center gap-1.5 text-primary font-medium mt-0.5">
+              <span class="material-symbols-outlined text-sm" style="font-variation-settings: 'FILL' 1;">${stageIcon}</span>
+              <span class="text-xs uppercase tracking-wider">${crop.growth_stage || 'Unknown'}</span>
+            </div>
+          </div>
+          <div class="flex items-center gap-1 px-2.5 py-1 ${statusColor.bg} ${statusColor.text} rounded-full text-[10px] font-bold">
+            <span class="w-1.5 h-1.5 rounded-full ${statusColor.dot}"></span>${crop.health_status || 'Unknown'}
+          </div>
+        </div>
+        <div class="space-y-4">
+          <div>
+            <div class="flex justify-between mb-1.5 text-xs font-medium">
+              <span>Growth Progress</span>
+              <span class="text-primary">${progress}%</span>
+            </div>
+            <div class="h-2 w-full bg-surface-container-highest rounded-full overflow-hidden">
+              <div class="h-full ${progressBarColor} rounded-full" style="width: ${progress}%"></div>
+            </div>
+          </div>
+          <div class="grid grid-cols-2 gap-3">
+            <div class="bg-surface-container rounded-lg p-3">
+              <span class="text-[9px] uppercase tracking-[0.1em] text-on-surface-variant block mb-0.5">Yield Est.</span>
+              <span class="text-base font-bold text-on-surface">${yieldEstimate}</span>
+            </div>
+            <div class="bg-surface-container rounded-lg p-3">
+              <span class="text-[9px] uppercase tracking-[0.1em] text-on-surface-variant block mb-0.5">${metricLabel}</span>
+              <span class="text-base font-bold text-on-surface">${metricValue}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+
+    container.appendChild(card);
+  });
+}
+
+async function submitCreateCropForm(event) {
+  event.preventDefault();
+
+  const form = document.getElementById('createCropForm');
+  const submitBtn = document.getElementById('submitBtn');
+  const formError = document.getElementById('formError');
+  const formSuccess = document.getElementById('formSuccess');
+
+  // Clear messages
+  formError.classList.add('hidden');
+  formSuccess.classList.add('hidden');
+
+  // Disable submit button
+  submitBtn.disabled = true;
+  const originalText = submitBtn.innerHTML;
+  submitBtn.innerHTML = '<span class="material-symbols-outlined animate-spin">hourglass_top</span>Creating...';
+
+  try {
+    const formData = new FormData(form);
+    const data = Object.fromEntries(formData);
+
+    // Remove empty fields
+    Object.keys(data).forEach(key => {
+      if (data[key] === '') delete data[key];
+    });
+
+    const response = await fetch(`${API_BASE}/crops`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(data)
+    });
+
+    if (response.status === 201) {
+      formSuccess.textContent = 'Crop created successfully!';
+      formSuccess.classList.remove('hidden');
+
+      // Reload crops after 1 second
+      setTimeout(() => {
+        closeCreateCropModal();
+        loadCrops();
+      }, 1000);
+    } else if (response.status === 400) {
+      const errors = await response.json();
+      const errorMessages = Object.values(errors).flat().join(', ');
+      formError.textContent = 'Validation error: ' + errorMessages;
+      formError.classList.remove('hidden');
+    } else {
+      formError.textContent = 'Failed to create crop. Please try again.';
+      formError.classList.remove('hidden');
+    }
+  } catch (error) {
+    console.error('Error creating crop:', error);
+    formError.textContent = error.message || 'An error occurred while creating the crop.';
+    formError.classList.remove('hidden');
+  } finally {
+    submitBtn.disabled = false;
+    submitBtn.innerHTML = originalText;
+  }
+}
+
+// Close modals on escape key
+document.addEventListener('keydown', function(event) {
+  if (event.key === 'Escape') {
+    closeCropDetailsModal();
+    closeCreateCropModal();
+  }
+});
+
+// Close modals on outside click
+document.getElementById('cropDetailsModal').addEventListener('click', function(e) {
+  if (e.target === this) closeCropDetailsModal();
+});
+
+document.getElementById('createCropModal').addEventListener('click', function(e) {
+  if (e.target === this) closeCreateCropModal();
+});
+
+// Load crops on page load
+document.addEventListener('DOMContentLoaded', loadCrops);
+</script>

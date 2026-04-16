@@ -12,7 +12,7 @@ class CropRepository:
 
     @staticmethod
     def get_all():
-        return Crop.query.all()
+        return Crop.query
 
     @staticmethod
     def get_by_id(crop_id):

@@ -1,4 +1,4 @@
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, request, jsonify, render_template
 from app.services.crop_service import CropService
 from app.schemas.crop_schema import CropSchema
 
@@ -8,13 +8,18 @@ crop_schema = CropSchema()
 crops_schema = CropSchema(many=True)
 
 
-@crops_bp.route("/api/crops", methods=["GET"])
+@crops_bp.route("/", methods=["GET"])
+def crops_page():
+    return render_template("crops.html")
+
+
+@crops_bp.route("/crops", methods=["GET"])
 def get_crops():
     crops = CropService.get_all_crops()
     return jsonify(crops_schema.dump(crops)), 200
 
 
-@crops_bp.route("/api/crops/<int:crop_id>", methods=["GET"])
+@crops_bp.route("/crops/<int:crop_id>", methods=["GET"])
 def get_crop(crop_id):
     crop = CropService.get_crop_by_id(crop_id)
 
@@ -24,7 +29,7 @@ def get_crop(crop_id):
     return jsonify(crop_schema.dump(crop)), 200
 
 
-@crops_bp.route("/api/crops", methods=["POST"])
+@crops_bp.route("/crops", methods=["POST"])
 def create_crop():
     data = request.get_json()
 

@@ -21,6 +21,7 @@ class CropService:
             CropRepository.delete(crop)
         return crop
 
+    @staticmethod
     def get_crop_health(crop):
         if crop.health_status == "good":
             return "Healthy"
@@ -28,8 +29,9 @@ class CropService:
             return "Needs attention"
         return "At risk"
 
+    @staticmethod
     def needs_irrigation(crop):
-            return crop.water_requirement > 50
+        return crop.water_requirement > 50
 
 
 
