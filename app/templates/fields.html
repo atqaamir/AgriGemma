@@ -137,6 +137,82 @@
   </section>
 </main>
 
+<!-- Field Details Modal -->
+<div id="fieldDetailsModal" class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 hidden" onclick="closeFieldDetailsModal()">
+  <div class="bg-surface rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-2xl" onclick="event.stopPropagation()">
+    <div class="sticky top-0 flex items-center justify-between p-6 border-b border-surface-variant bg-surface">
+      <h2 id="fieldDetailsModalTitle" class="text-2xl font-bold text-primary">Field Details</h2>
+      <button onclick="closeFieldDetailsModal()" class="p-2 hover:bg-surface-container rounded-full transition-colors">
+        <span class="material-symbols-outlined">close</span>
+      </button>
+    </div>
+    <div class="p-6 space-y-6">
+      <!-- Basic Information -->
+      <div class="bg-surface-container rounded-lg p-4">
+        <h3 class="text-sm font-medium text-on-surface-variant mb-3">Basic Information</h3>
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <span class="text-on-surface-variant">Field Name:</span>
+            <span id="fieldName" class="font-medium text-on-surface block"></span>
+          </div>
+          <div>
+            <span class="text-on-surface-variant">Crop:</span>
+            <span id="fieldCrop" class="font-medium text-on-surface block"></span>
+          </div>
+          <div>
+            <span class="text-on-surface-variant">Acreage:</span>
+            <span id="fieldAcreage" class="font-medium text-on-surface block"></span>
+          </div>
+          <div>
+            <span class="text-on-surface-variant">Growth Stage:</span>
+            <span id="fieldGrowthStage" class="font-medium text-on-surface block"></span>
+          </div>
+        </div>
+      </div>
+      <!-- Health Status -->
+      <div class="bg-surface-container rounded-lg p-4">
+        <h3 class="text-sm font-medium text-on-surface-variant mb-3">Health Status</h3>
+        <div class="space-y-4">
+          <div>
+            <span class="text-on-surface-variant">Status:</span>
+            <div class="flex items-center gap-1.5 text-primary font-medium mt-1">
+              <span id="fieldStatusIcon" class="material-symbols-outlined text-sm" style="font-variation-settings: 'FILL' 1;"></span>
+              <span id="fieldStatusText"></span>
+            </div>
+          </div>
+          <div>
+            <span class="text-on-surface-variant">Health Percentage:</span>
+            <div class="flex items-center gap-2 mt-1">
+              <span id="fieldHealthPercent" class="text-primary font-medium"></span>
+            </div>
+            <div class="h-2 w-full bg-surface-container-highest rounded-full overflow-hidden mt-2">
+              <div id="fieldHealthBar" class="bg-primary h-full"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <!-- Environmental Data -->
+      <div class="bg-surface-container rounded-lg p-4">
+        <h3 class="text-sm font-medium text-on-surface-variant mb-3">Environmental Data</h3>
+        <div class="grid grid-cols-3 gap-4">
+          <div>
+            <span class="text-[9px] uppercase tracking-[0.1em] text-on-surface-variant block mb-1">Moisture</span>
+            <span id="fieldMoisture" class="text-base font-bold text-on-surface"></span>
+          </div>
+          <div>
+            <span class="text-[9px] uppercase tracking-[0.1em] text-on-surface-variant block mb-1">Temperature</span>
+            <span class="text-base font-bold text-on-surface">25°C</span>
+          </div>
+          <div>
+            <span class="text-[9px] uppercase tracking-[0.1em] text-on-surface-variant block mb-1">Stress Level</span>
+            <span id="fieldStress" class="text-base font-bold text-on-surface"></span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- Floating Action Button -->
 <button onclick="createNewField()" class="fixed bottom-28 right-6 w-16 h-16 bg-[#5F6F52] rounded-full shadow-2xl flex items-center justify-center text-white active:scale-90 transition-transform z-40 hover:shadow-xl">
   <span class="material-symbols-outlined text-3xl" style="font-variation-settings: 'wght' 600;">add</span>
@@ -182,6 +258,7 @@ async function loadFields() {
     if (!response.ok) throw new Error('Failed to fetch fields');
 
     const fields = await response.json();
+    window.fields = fields; // Store globally for modal access
     renderFieldCards(fields);
     updateTotalAcreage(fields);
   } catch (error) {
@@ -202,7 +279,7 @@ function renderFieldCards(fields) {
 
   container.innerHTML = fields.map(field => `
   
-    <div class="field-card flex-none w-[200px] bg-surface-container-low rounded-[24px] overflow-hidden flex flex-col group active:scale-95 duration-150 cursor-pointer" data-field-id="${field.id}" onclick="viewField(${field.id})">
+    <div class="field-card flex-none w-[200px] bg-surface-container-low rounded-[24px] overflow-hidden flex flex-col cursor-pointer" data-field-id="${field.id}" onclick="openFieldDetailsModal(${field.id})">
       <div class="h-28 relative">
         <img class="w-full h-full object-cover" alt="${field.name}" src="${getFieldImage(field.crop?.name)}" onerror="this.src='/static/images/field_default.jpg'"/>
         <div class="absolute top-2 right-2 bg-white/90 backdrop-blur rounded-full p-1.5 shadow-sm">
@@ -291,6 +368,41 @@ function getHealthProgressColor(status) {
 function createNewField() {
   // Show modal or navigate to create field page
   alert('Create new field feature - navigate to form');
+}
+
+function openFieldDetailsModal(fieldId) {
+  const field = window.fields.find(f => f.id === fieldId);
+  if (!field) return;
+
+  // Populate modal
+  document.getElementById('fieldDetailsModalTitle').textContent = field.name;
+  document.getElementById('fieldName').textContent = field.name;
+  document.getElementById('fieldCrop').textContent = field.crop?.name || 'Unknown';
+  document.getElementById('fieldAcreage').textContent = `${field.acreage} AC`;
+  document.getElementById('fieldGrowthStage').textContent = field.growth_stage || 'Unknown';
+
+  // Health Status
+  const statusIcon = getStatusIcon(field.health_status);
+  const statusText = field.health_status.charAt(0).toUpperCase() + field.health_status.slice(1);
+  document.getElementById('fieldStatusIcon').textContent = statusIcon;
+  document.getElementById('fieldStatusIcon').className = `material-symbols-outlined text-sm ${getStatusClass(field.health_status)}`;
+  document.getElementById('fieldStatusText').textContent = statusText;
+  document.getElementById('fieldStatusText').className = getHealthColor(field.health_status);
+  document.getElementById('fieldHealthPercent').textContent = `${field.health_percentage || 0}%`;
+  document.getElementById('fieldHealthPercent').className = `text-primary font-medium ${getHealthColor(field.health_status)}`;
+  document.getElementById('fieldHealthBar').style.width = `${field.health_percentage || 0}%`;
+  document.getElementById('fieldHealthBar').className = `h-full ${getHealthProgressColor(field.health_status)}`;
+
+  // Environmental Data
+  document.getElementById('fieldMoisture').textContent = `${field.health_percentage || 0}%`;
+  const stressLevel = field.health_status === 'healthy' ? 'Low' : field.health_status === 'alert' ? 'Medium' : 'High';
+  document.getElementById('fieldStress').textContent = stressLevel;
+
+  document.getElementById('fieldDetailsModal').classList.remove('hidden');
+}
+
+function closeFieldDetailsModal() {
+  document.getElementById('fieldDetailsModal').classList.add('hidden');
 }
 
 function viewField(fieldId) {
