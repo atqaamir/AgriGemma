@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Climate Insights - Tasks &amp; Alerts</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;700;800&amp;family=Work+Sans:wght@300;400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-surface": "#1c1c17",
+                        "on-error-container": "#93000a",
+                        "outline": "#75786f",
+                        "on-secondary-container": "#586a4a",
+                        "on-surface-variant": "#444840",
+                        "on-secondary-fixed-variant": "#3b4b2e",
+                        "surface-tint": "#536347",
+                        "tertiary-fixed-dim": "#ccc6b6",
+                        "surface-container-low": "#f7f3ea",
+                        "error": "#ba1a1a",
+                        "primary-fixed-dim": "#bbccaa",
+                        "inverse-on-surface": "#f4f1e8",
+                        "tertiary": "#555246",
+                        "secondary-fixed-dim": "#bacda7",
+                        "tertiary-container": "#6e6a5d",
+                        "on-tertiary-fixed-variant": "#4a473b",
+                        "surface-container": "#f1eee5",
+                        "on-tertiary": "#ffffff",
+                        "on-primary-fixed": "#121f09",
+                        "surface-bright": "#fcf9f0",
+                        "surface-dim": "#dddad1",
+                        "on-tertiary-container": "#f1ebda",
+                        "on-secondary-fixed": "#111f07",
+                        "error-container": "#ffdad6",
+                        "surface-container-high": "#ebe8df",
+                        "primary-container": "#5f6f52",
+                        "background": "#fcf9f0",
+                        "surface": "#fcf9f0",
+                        "surface-container-lowest": "#ffffff",
+                        "on-secondary": "#ffffff",
+                        "on-primary": "#ffffff",
+                        "surface-container-highest": "#e5e2da",
+                        "on-error": "#ffffff",
+                        "surface-variant": "#e5e2da",
+                        "primary-fixed": "#d6e8c5",
+                        "inverse-primary": "#bbccaa",
+                        "primary": "#47573b",
+                        "secondary-container": "#d5e9c1",
+                        "secondary": "#536344",
+                        "outline-variant": "#c5c8bd",
+                        "tertiary-fixed": "#e8e2d2",
+                        "on-background": "#1c1c17",
+                        "on-primary-fixed-variant": "#3c4b31",
+                        "on-tertiary-fixed": "#1e1c12",
+                        "secondary-fixed": "#d5e9c1",
+                        "on-primary-container": "#dff1cd",
+                        "inverse-surface": "#31312b"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "1.5rem",
+                        "full": "9999px"
+                    },
+                    "fontFamily": {
+                        "headline": ["Manrope"],
+                        "body": ["Work Sans"],
+                        "label": ["Work Sans"]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        body { font-family: 'Work Sans', sans-serif; }
+        h1, h2, h3 { font-family: 'Manrope', sans-serif; }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-surface text-on-surface min-h-screen pb-32">
+<!-- TopAppBar -->
+<header class="fixed top-0 w-full z-50 bg-[#fcf9f0] dark:bg-stone-950 flex justify-between items-center px-6 py-4 w-full">
+<div class="flex items-center gap-4">
+<button class="active:scale-95 duration-150 p-2 rounded-full hover:bg-[#f1eee5] transition-colors">
+<span class="material-symbols-outlined text-[#47573b] dark:text-[#d5e9c1]">menu</span>
+</button>
+<h1 class="text-xl font-bold text-[#47573b] dark:text-[#d5e9c1] font-manrope font-medium tracking-tight">Climate Insights</h1>
+</div>
+<div class="h-10 w-10 rounded-full overflow-hidden border-2 border-primary-fixed">
+<img alt="User Profile" class="h-full w-full object-cover" data-alt="Professional headshot of an agronomist in a sunlit field, wearing a flannel shirt and smiling warmly" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBKfVGI9wUdOdJahGpk7NKoc8TLmrQAr2gEkJXRYp4CJA_AkSBIafMOsSdcwJDM5sJCxa_zMqeYRpI1bOqlo9CGkv8PtHI1Iso3f4LTJCElEfafTrAve8mLqGiwxTe_cgdCU3L5W_lU1KHm9TaqzQmVUZKsRsR9ivpmwyUBQZbdCD-CDznlbn0yn9UPDLOKpZzNOmxH216GGZ5I8BHghMEDJrb0WOn8JCGknfuAZs6z6S372au6hxTdixbng-Jn07LA2LYvd1tNwQ"/>
+</div>
+</header>
+<main class="pt-24 px-6 space-y-10 max-w-5xl mx-auto">
+<!-- Climate Insights Hero Section -->
+<section class="relative overflow-hidden rounded-xl bg-primary-container text-on-primary-container p-8 min-h-[320px] flex flex-col justify-end group">
+<div class="absolute inset-0 z-0">
+<img alt="Dry field forecast" class="w-full h-full object-cover opacity-40 mix-blend-overlay group-hover:scale-105 transition-transform duration-700" data-alt="expansive golden wheat field under a vast, cloudless hazy sky during an afternoon dry spell with warm orange tones" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAPwNodAhEPdvtyZ3zTMsZGgAaoVQRlKTsfKqrMYcPJCrbPN9sXbbRu_pjbZ_UTS4LIYu9eCJaNCsbL2RihKK07CANITE4wQeKOA9ZXOKPXjpAX_Gm8BsDwzRRLn7Mji1vnfQ7xPejL8TRQCetgVHP6-R6G5_2G_2ZeZ-GnDOtDmO_NWp7DEjL4b_R8j3OAf7z4uNvEj9bVA38G-0nd8NnIWXQJkPUAd7MHUlc0CFJlwJ1SMZPwLxxbbVWdmEK6JrHfws4X-Xov4A"/>
+<div class="absolute inset-0 bg-gradient-to-t from-primary/90 via-primary/40 to-transparent"></div>
+</div>
+<div class="relative z-10 space-y-4">
+<div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-secondary-fixed text-on-secondary-fixed text-[11px] font-bold uppercase tracking-widest">
+<span class="material-symbols-outlined text-sm" style="font-variation-settings: 'FILL' 1;">warning</span>
+                    Critical Alert
+                </div>
+<h2 class="text-4xl font-extrabold leading-tight tracking-tight">Extended Dry Spell Forecast</h2>
+<p class="text-lg opacity-90 max-w-xl font-body">Data indicates 14 days of zero precipitation and 35°C peaks. Immediate irrigation adjustments required for the North and East quadrants.</p>
+<div class="flex gap-4 pt-4">
+<button class="bg-secondary-fixed text-on-secondary-fixed px-8 py-3 rounded-full font-bold text-sm flex items-center gap-2 hover:opacity-90 active:scale-95 transition-all">
+<span class="material-symbols-outlined">water_drop</span>
+                        ADJUST IRRIGATION
+                    </button>
+<button class="bg-surface/20 backdrop-blur-md text-white border border-white/20 px-8 py-3 rounded-full font-bold text-sm hover:bg-surface/30 transition-all">
+                        VIEW DATA
+                    </button>
+</div>
+</div>
+</section>
+<!-- Pending Tasks Section -->
+<section class="space-y-6">
+<div class="flex justify-between items-end">
+<div>
+<h3 class="text-2xl font-bold text-primary tracking-tight">Pending Tasks</h3>
+<p class="text-on-surface-variant font-medium">3 actions required today</p>
+</div>
+<button class="text-primary font-bold text-sm flex items-center gap-1 hover:underline">
+                    View All <span class="material-symbols-outlined text-base">arrow_forward</span>
+</button>
+</div>
+<!-- Horizontal Scrollable Row -->
+<div class="flex gap-6 overflow-x-auto no-scrollbar pb-6 -mx-6 px-6">
+<!-- Task Card 1 -->
+<div class="flex-none w-[320px] bg-surface-container-lowest rounded-xl p-6 flex flex-col justify-between shadow-sm border border-outline-variant/10">
+<div class="space-y-4">
+<div class="h-12 w-12 rounded-full bg-secondary-container flex items-center justify-center">
+<span class="material-symbols-outlined text-on-secondary-container" data-icon="opacity">opacity</span>
+</div>
+<div>
+<h4 class="text-xl font-bold text-on-surface">Irrigate North Field</h4>
+<p class="text-on-surface-variant text-sm mt-1">Scheduled: 06:00 AM • 450 Gal</p>
+</div>
+</div>
+<div class="mt-8 flex items-center justify-between">
+<span class="text-xs font-bold uppercase tracking-wider text-primary">High Priority</span>
+<button class="bg-primary text-on-primary h-10 w-10 rounded-full flex items-center justify-center active:scale-90 transition-transform">
+<span class="material-symbols-outlined">check</span>
+</button>
+</div>
+</div>
+<!-- Task Card 2 -->
+<div class="flex-none w-[320px] bg-surface-container-lowest rounded-xl p-6 flex flex-col justify-between shadow-sm border border-outline-variant/10">
+<div class="space-y-4">
+<div class="h-12 w-12 rounded-full bg-secondary-container flex items-center justify-center">
+<span class="material-symbols-outlined text-on-secondary-container" data-icon="bug_report">bug_report</span>
+</div>
+<div>
+<h4 class="text-xl font-bold text-on-surface">Check for Pests</h4>
+<p class="text-on-surface-variant text-sm mt-1">Section B-4 • Manual Inspection</p>
+</div>
+</div>
+<div class="mt-8 flex items-center justify-between">
+<span class="text-xs font-bold uppercase tracking-wider text-outline">Due in 2h</span>
+<button class="bg-primary text-on-primary h-10 w-10 rounded-full flex items-center justify-center active:scale-90 transition-transform">
+<span class="material-symbols-outlined">check</span>
+</button>
+</div>
+</div>
+<!-- Task Card 3 -->
+<div class="flex-none w-[320px] bg-surface-container-lowest rounded-xl p-6 flex flex-col justify-between shadow-sm border border-outline-variant/10">
+<div class="space-y-4">
+<div class="h-12 w-12 rounded-full bg-secondary-container flex items-center justify-center">
+<span class="material-symbols-outlined text-on-secondary-container" data-icon="agriculture">agriculture</span>
+</div>
+<div>
+<h4 class="text-xl font-bold text-on-surface">Apply Fertilizer</h4>
+<p class="text-on-surface-variant text-sm mt-1">Nitrogen Mix • South Perimeter</p>
+</div>
+</div>
+<div class="mt-8 flex items-center justify-between">
+<span class="text-xs font-bold uppercase tracking-wider text-outline">Scheduled</span>
+<button class="bg-primary text-on-primary h-10 w-10 rounded-full flex items-center justify-center active:scale-90 transition-transform">
+<span class="material-symbols-outlined">check</span>
+</button>
+</div>
+</div>
+</div>
+</section>
+
+<!-- Section: Notifications (Tinted Background) -->
+<section class="bg-surface-container-low rounded-[32px] p-6 space-y-6">
+<div class="flex items-center gap-2">
+<span class="w-2 h-6 bg-primary rounded-full"></span>
+<h3 class="text-2xl font-bold font-headline text-on-surface">Notifications</h3>
+</div>
+<!-- Bento Card: Soil Health Pulse -->
+<div class="bg-surface-container-lowest rounded-3xl p-6 shadow-sm flex flex-col md:flex-row gap-6 relative overflow-hidden">
+<div class="absolute -right-8 -bottom-8 w-32 h-32 bg-secondary-fixed/20 rounded-full blur-3xl"></div>
+<div class="flex-1 space-y-4">
+<div class="flex items-center gap-3">
+<div class="p-2 bg-secondary-container rounded-xl">
+<span class="material-symbols-outlined text-primary" style="font-variation-settings: 'FILL' 1;">eco</span>
+</div>
+<h4 class="font-headline font-bold text-lg">Soil Health Pulse</h4>
+</div>
+<p class="text-on-surface-variant leading-relaxed">Nitrogen levels in <span class="font-semibold text-primary">Field 4</span> have dropped by 12% following recent harvest. Soil organic matter remains stable at 4.2%.</p>
+<div class="flex items-center gap-4 pt-2">
+<div class="flex-1">
+<div class="flex justify-between text-xs font-medium mb-1 uppercase tracking-wider text-outline">Nutrients</div>
+<div class="h-2 w-full bg-surface-variant rounded-full overflow-hidden">
+<div class="h-full bg-primary w-[68%]"></div>
+</div>
+</div>
+<div class="flex-1">
+<div class="flex justify-between text-xs font-medium mb-1 uppercase tracking-wider text-outline">Moisture</div>
+<div class="h-2 w-full bg-surface-variant rounded-full overflow-hidden">
+<div class="h-full bg-secondary-fixed-dim w-[45%]"></div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Bento Card: Upcoming Harvest -->
+<div class="bg-surface-container-highest rounded-3xl p-6 shadow-sm border border-outline-variant/10 group cursor-pointer hover:bg-surface-container-high transition-colors">
+<div class="flex justify-between items-start mb-6">
+<div>
+<h4 class="font-headline font-bold text-xl mb-1 text-on-surface">Upcoming Harvest</h4>
+<p class="text-sm text-on-secondary-fixed-variant">Estimated maturity in 12 days.</p>
+</div>
+<div class="bg-surface-container-lowest p-3 rounded-2xl shadow-inner">
+<span class="material-symbols-outlined text-primary text-3xl">calendar_today</span>
+</div>
+</div>
+<div class="grid grid-cols-2 gap-4">
+<div class="bg-surface-container-lowest/60 backdrop-blur-sm p-4 rounded-2xl">
+<span class="text-[10px] uppercase tracking-widest text-outline font-bold block mb-1">Crop Type</span>
+<span class="font-headline font-bold text-primary">Winter Wheat</span>
+</div>
+<div class="bg-surface-container-lowest/60 backdrop-blur-sm p-4 rounded-2xl">
+<span class="text-[10px] uppercase tracking-widest text-outline font-bold block mb-1">Est. Yield</span>
+<span class="font-headline font-bold text-primary">4.2 Tons/Ha</span>
+</div>
+</div>
+</div>
+<!-- Generic Alert -->
+<div class="flex items-center gap-4 p-4 rounded-2xl bg-error-container/30 border border-error/5">
+<div class="w-10 h-10 rounded-full bg-error-container flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-error" style="font-variation-settings: 'FILL' 1;">warning</span>
+</div>
+<div class="flex-1">
+<h5 class="font-bold text-sm text-on-error-container">Low Inventory Alert</h5>
+<p class="text-xs text-on-error-container/80">Bio-fertilizer supply below 5 units.</p>
+</div>
+<span class="material-symbols-outlined text-outline text-xl">chevron_right</span>
+</div>
+</section>
+</main>
+
+<!-- BottomNavBar -->
+<nav class="fixed bottom-0 left-0 w-full flex justify-around items-center px-4 pt-3 pb-8 bg-[#fcf9f0]/80 dark:bg-stone-950/80 backdrop-blur-md rounded-t-[24px] z-50 border-t border-[#47573b]/10 shadow-[0_-8px_24px_rgba(28,28,23,0.06)]">
+<a class="flex flex-col items-center justify-center text-[#5f6f52] dark:text-stone-400 hover:opacity-80 active:scale-90 transition-transform" href="#">
+<span class="material-symbols-outlined" data-icon="Psychology">psychology</span>
+<span class="font-work-sans text-[11px] font-medium tracking-wide uppercase mt-1">Fields</span>
+</a>
+<a class="flex flex-col items-center justify-center bg-[#d5e9c1] dark:bg-[#47573b] text-[#47573b] dark:text-[#d5e9c1] rounded-full px-5 py-1.5 active:scale-90 transition-transform" href="#">
+<span class="material-symbols-outlined" data-icon="assignment" style="font-variation-settings: 'FILL' 1;">assignment</span>
+<span class="font-work-sans text-[11px] font-medium tracking-wide uppercase mt-0.5">Tasks</span>
+</a>
+<a class="flex flex-col items-center justify-center text-[#5f6f52] dark:text-stone-400 hover:opacity-80 active:scale-90 transition-transform" href="#">
+<span class="material-symbols-outlined" data-icon="notifications">notifications</span>
+<span class="font-work-sans text-[11px] font-medium tracking-wide uppercase mt-1">Alerts</span>
+</a>
+<a class="flex flex-col items-center justify-center text-[#5f6f52] dark:text-stone-400 hover:opacity-80 active:scale-90 transition-transform" href="#">
+<span class="material-symbols-outlined" data-icon="wb_sunny">wb_sunny</span>
+<span class="font-work-sans text-[11px] font-medium tracking-wide uppercase mt-1">Insights</span>
+</a>
+</nav>
+</body></html>
