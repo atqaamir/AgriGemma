@@ -1,12 +1,21 @@
 <!DOCTYPE html>
 
-<html class="light" lang="en"><head>
+<html lang="en"><head>
 <meta charset="utf-8"/>
 <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
 <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
 <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;700;800&amp;family=Work+Sans:wght@400;500&amp;display=swap" rel="stylesheet"/>
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
 <link rel="stylesheet" href="/static/css/crops.css"/>
+<script>
+  // Initialize theme immediately to avoid flickering
+  (function() {
+    const theme = localStorage.getItem('theme') || 'light';
+    if (theme === 'dark') {
+      document.documentElement.classList.add('dark');
+    }
+  })();
+</script>
 <script id="tailwind-config">
       tailwind.config = {
         darkMode: "class",
@@ -78,20 +87,24 @@
     </script>
 </head>
 <body class="bg-surface text-on-surface min-h-screen pb-32">
-<header class="fixed top-0 w-full z-50 bg-[#fcf9f0] dark:bg-stone-950">
-<div class="flex items-center justify-between px-6 h-16 w-full max-w-screen-xl mx-auto">
+<header class="bg-[#fcf9f0] dark:bg-[#1c1c17] flex justify-between items-center w-full px-6 py-4 sticky top-0 z-50">
 <div class="flex items-center gap-3">
-<span class="material-symbols-outlined text-[#47573b] dark:text-[#d5e9c1]" style="font-variation-settings: 'FILL' 1;">agriculture</span>
-<span class="font-['Manrope'] font-bold text-[#47573b] dark:text-[#d5e9c1]">Climate Adaptation Advisor</span>
+<span class="material-symbols-outlined text-[#47573b] dark:text-[#d5e9c1]" style="font-size: 28px;">agriculture</span>
+<h1 class="text-2xl font-semibold text-[#47573b] dark:text-[#d5e9c1] font-['Manrope'] tracking-tight">Climate Adaptation Planner</h1>
 </div>
-<div class="flex items-center gap-4">
-<button class="p-2 transition-colors duration-200 hover:bg-stone-200/50 dark:hover:bg-stone-800/50 rounded-full">
-<span class="material-symbols-outlined text-[#47573b] dark:text-[#d5e9c1]" style="font-variation-settings: 'FILL' 1;">notifications</span>
+<div class="flex gap-4">
+<button class="hover:bg-[#f1eee5] dark:hover:bg-[#2a2a24] transition-colors p-2 rounded-full active:scale-95 duration-150" onclick="toggleTheme()" id="themeToggle">
+<span class="material-symbols-outlined text-[#47573b] dark:text-[#d5e9c1]">brightness_4</span>
+</button>
+<button class="hover:bg-[#f1eee5] dark:hover:bg-[#2a2a24] transition-colors p-2 rounded-full active:scale-95 duration-150" onclick="showNotifications()">
+<span class="material-symbols-outlined text-[#47573b] dark:text-[#d5e9c1]">notifications</span>
+</button>
+<button class="hover:bg-[#f1eee5] dark:hover:bg-[#2a2a24] transition-colors p-2 rounded-full active:scale-95 duration-150" onclick="openSearch()">
+<span class="material-symbols-outlined text-[#47573b] dark:text-[#d5e9c1]">search</span>
 </button>
 </div>
-</div>
 </header>
-<main class="pt-24 px-6 max-w-screen-xl mx-auto">
+<main class="pt-4 px-6 max-w-screen-xl mx-auto">
 <section class="mb-8">
 <h1 class="text-4xl font-medium tracking-tight mb-2">My Crops</h1>
 <p class="text-on-surface-variant font-body">Real-time physiological monitoring and harvest estimations.</p>
@@ -126,42 +139,41 @@
 <button onclick="openCreateCropModal()" class="px-6 py-2 bg-primary text-on-primary rounded-lg hover:opacity-90 transition-opacity font-medium">Create Crop</button>
 </div>
 <!-- Pending Tasks Section -->
-<div class="mt-8 mb-12 bg-[#ecf3e6] rounded-3xl p-6">
-<div class="flex items-center justify-between mb-6">
-<div class="flex items-center gap-3">
-<span class="material-symbols-outlined text-[#47573b]">assignment</span>
-<h3 class="text-xl font-bold text-[#1c1c17]">Pending Tasks</h3>
-</div>
-<div class="bg-[#47573b] text-white px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider">3 Due Today</div>
-</div>
-<div class="space-y-4 mb-6">
-<!-- Task Row 1 -->
-<div class="bg-white rounded-2xl p-4 flex items-center gap-4 shadow-sm">
-<div class="w-12 h-12 bg-surface-container rounded-full flex items-center justify-center">
-<span class="material-symbols-outlined text-[#47573b]">sprinkler</span>
-</div>
-<div class="flex-1">
-<h4 class="font-bold text-[#1c1c17]">Irrigation Check</h4>
-<p class="text-xs text-on-surface-variant">East Creek Basin • Irrigation required</p>
-</div>
-<span class="material-symbols-outlined text-[#c5c8bd]">chevron_right</span>
-</div>
-<!-- Task Row 2 -->
-<div class="bg-white rounded-2xl p-4 flex items-center gap-4 shadow-sm">
-<div class="w-12 h-12 bg-surface-container rounded-full flex items-center justify-center">
-<span class="material-symbols-outlined text-[#47573b]">monitoring</span>
-</div>
-<div class="flex-1">
-<h4 class="font-bold text-[#1c1c17]">Soil pH Testing</h4>
-<p class="text-xs text-on-surface-variant">North Field Alpha • Quarterly review</p>
-</div>
-<span class="material-symbols-outlined text-[#c5c8bd]">chevron_right</span>
-</div>
-</div>
-<button class="w-full py-4 bg-white/50 text-[#47573b] font-bold rounded-2xl transition-all hover:bg-white/80 active:scale-[0.98]">
-                View All Field Tasks
-            </button>
-</div>
+<section class="bg-[#d6e8c5]/40 dark:bg-[#5f6f52]/20 rounded-[32px] p-6 space-y-5">
+  <div class="flex justify-between items-center">
+    <div class="flex items-center gap-2 text-[#47573b] dark:text-[#d5e9c1]">
+      <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">assignment</span>
+      <h3 class="font-bold tracking-tight text-lg">Pending Tasks</h3>
+    </div>
+    <span class="bg-[#47573b] text-white text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-wide">3 DUE TODAY</span>
+  </div>
+  <div class="space-y-3">
+    <!-- Tasks will be populated here -->
+    <div class="bg-white dark:bg-stone-900 p-4 rounded-[20px] flex items-center gap-4 shadow-sm">
+      <div class="w-12 h-12 rounded-full bg-[#f1f3ee] dark:bg-stone-800 flex items-center justify-center text-[#47573b] dark:text-[#d5e9c1]">
+        <span class="material-symbols-outlined" style="font-size: 20px;">sprinkler</span>
+      </div>
+      <div class="flex-1">
+        <h5 class="text-sm font-bold text-on-surface">Irrigation Check</h5>
+        <p class="text-[11px] text-on-surface-variant font-medium">East Creek Basin • Irrigation required</p>
+      </div>
+      <span class="material-symbols-outlined text-outline-variant">chevron_right</span>
+    </div>
+    <div class="bg-white dark:bg-stone-900 p-4 rounded-[20px] flex items-center gap-4 shadow-sm">
+      <div class="w-12 h-12 rounded-full bg-[#f1f3ee] dark:bg-stone-800 flex items-center justify-center text-[#47573b] dark:text-[#d5e9c1]">
+        <span class="material-symbols-outlined" style="font-size: 20px;">monitoring</span>
+      </div>
+      <div class="flex-1">
+        <h5 class="text-sm font-bold text-on-surface">Soil pH Testing</h5>
+        <p class="text-[11px] text-on-surface-variant font-medium">North Field Alpha • Quarterly review</p>
+      </div>
+      <span class="material-symbols-outlined text-outline-variant">chevron_right</span>
+    </div>
+  </div>
+  <button onclick="viewAllTasks()" class="w-full py-3.5 text-center text-xs font-bold text-[#47573b] dark:text-[#d5e9c1] bg-[#f1f3ee]/60 dark:bg-white/5 rounded-xl hover:bg-white/80 dark:hover:bg-white/10 transition-colors active:scale-95">
+    View All Field Tasks
+  </button>
+</section>
 </main>
 <!-- Crop Details Modal -->
 <div id="cropDetailsModal" class="hidden fixed inset-0 bg-black/50 z-[70] flex items-center justify-center p-4">
@@ -252,10 +264,10 @@ Create Crop
 <span class="font-['Work_Sans'] text-[11px] font-medium tracking-wide">Dashboard</span>
 </a>
 <a class="flex flex-col items-center justify-center text-stone-500 dark:text-stone-400 px-3 py-1.5 transition-transform hover:scale-105 duration-150" href="/myfields">
-<span class="material-symbols-outlined" data-icon="landscape">landscape</span>
+<span class="material-symbols-outlined" data-icon="landscape" style="font-variation-settings: 'FILL' 1;">landscape</span>
 <span class="font-['Work_Sans'] text-[11px] font-medium tracking-wide">Fields</span>
 </a>
-<a class="flex flex-col items-center justify-center bg-[#d5e9c1] dark:bg-[#47573b] text-[#1c1c17] dark:text-[#fcf9f0] rounded-2xl px-3 py-1.5 transition-transform hover:scale-105 duration-150" href="/mycrops">
+<a class="flex flex-col items-center justify-center bg-secondary-fixed dark:bg-primary-container text-on-background dark:text-surface-bright rounded-2xl px-3 py-1.5 transition-transform hover:scale-105 duration-150" href="/mycrops">
 <span class="material-symbols-outlined" data-icon="eco" style="font-variation-settings: 'FILL' 1;">eco</span>
 <span class="font-['Work_Sans'] text-[11px] font-medium tracking-wide">Crops</span>
 </a>
@@ -276,7 +288,31 @@ Create Crop
 // Configuration
 const API_BASE = '/mycrops';
 
-// State management
+// ===== THEME TOGGLE =====
+function initTheme() {
+  const savedTheme = localStorage.getItem('theme') || 'light';
+  if (savedTheme === 'dark') {
+    document.documentElement.classList.add('dark');
+  } else {
+    document.documentElement.classList.remove('dark');
+  }
+}
+
+function toggleTheme() {
+  const html = document.documentElement;
+  if (html.classList.contains('dark')) {
+    html.classList.remove('dark');
+    localStorage.setItem('theme', 'light');
+  } else {
+    html.classList.add('dark');
+    localStorage.setItem('theme', 'dark');
+  }
+}
+
+// Initialize theme on page load
+initTheme();
+
+// ===== STATE MANAGEMENT =====
 let crops = [];
 let isLoading = false;
 
@@ -648,4 +684,13 @@ document.getElementById('createCropModal').addEventListener('click', function(e)
 
 // Load crops on page load
 document.addEventListener('DOMContentLoaded', loadCrops);
+
+// Placeholder functions for header buttons
+function showNotifications() {
+  alert('Show notifications');
+}
+
+function openSearch() {
+  alert('Open search');
+}
 </script>
