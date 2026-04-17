@@ -3,7 +3,7 @@
 /* ==================== IMPORTS ==================== */
 @import url('https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700&family=Work+Sans:wght@400;500;600;700&family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap');
 
-/* ==================== ROOT VARIABLES ==================== */
+/* Light Mode (Default) - Crops Color Scheme */
 :root {
   /* Primary Colors */
   --primary: #47573b;
@@ -95,22 +95,74 @@
   --transition-slow: 500ms ease-in-out;
 }
 
-/* Dark Mode Variables */
-@media (prefers-color-scheme: dark) {
-  :root {
-    --surface: #1c1c17;
-    --surface-dim: #0f0f0a;
-    --surface-bright: #31312b;
-    --surface-container-lowest: #0f0f0a;
-    --surface-container-low: #1c1c17;
-    --surface-container: #25241e;
-    --surface-container-high: #2f2e28;
-    --surface-container-highest: #3a3933;
-    --on-surface: #f4f1e8;
-    --on-surface-variant: #bfbbb3;
-    --background: #1c1c17;
-    --on-background: #f4f1e8;
-  }
+/* Dark Mode Variables (Fields Color Scheme) */
+html.dark {
+  /* Primary Colors - Same across both themes */
+  --primary: #47573b;
+  --primary-fixed: #d6e8c5;
+  --primary-fixed-dim: #bbccaa;
+  --on-primary: #ffffff;
+  --on-primary-fixed: #121f09;
+  --on-primary-fixed-variant: #3c4b31;
+  --primary-container: #5f6f52;
+  --on-primary-container: #dff1cd;
+
+  /* Secondary Colors - Same across both themes */
+  --secondary: #536344;
+  --secondary-fixed: #d5e9c1;
+  --secondary-fixed-dim: #bacda7;
+  --on-secondary: #ffffff;
+  --on-secondary-fixed: #111f07;
+  --on-secondary-fixed-variant: #3b4b2e;
+  --secondary-container: #d5e9c1;
+  --on-secondary-container: #586a4a;
+
+  /* Tertiary Colors - Same across both themes */
+  --tertiary: #555246;
+  --tertiary-fixed: #e8e2d2;
+  --tertiary-fixed-dim: #ccc6b6;
+  --on-tertiary: #ffffff;
+  --on-tertiary-fixed: #1e1c12;
+  --on-tertiary-fixed-variant: #4a473b;
+  --tertiary-container: #6e6a5d;
+  --on-tertiary-container: #f1ebda;
+
+  /* Error Colors - Same across both themes */
+  --error: #ba1a1a;
+  --error-container: #ffdad6;
+  --on-error: #ffffff;
+  --on-error-container: #93000a;
+
+  /* Surface Colors - DIFFERENT for dark mode (fields scheme) */
+  --surface: #1c1c17;
+  --surface-dim: #0f0f0a;
+  --surface-bright: #31312b;
+  --surface-container-lowest: #0f0f0a;
+  --surface-container-low: #1c1c17;
+  --surface-container: #25241e;
+  --surface-container-high: #2f2e28;
+  --surface-container-highest: #3a3933;
+  --surface-variant: #e5e2da;
+  --on-surface: #f4f1e8;
+  --on-surface-variant: #bfbbb3;
+
+  /* Other Colors - DIFFERENT for dark mode */
+  --background: #1c1c17;
+  --on-background: #f4f1e8;
+  --outline: #75786f;
+  --outline-variant: #c5c8bd;
+  --outline-variant-rgb: 197, 200, 189;
+  --inverse-surface: #31312b;
+  --inverse-on-surface: #f4f1e8;
+  --inverse-primary: #bbccaa;
+  --surface-tint: #536347;
+  --tasks-bg: #ecf3e6;
+
+  /* Stone/Gray Palette - Same */
+  --stone-400: #78716c;
+  --stone-500: #6b644f;
+  --stone-800: #292524;
+  --stone-950: #0c0a09;
 }
 
 /* ==================== RESET & BASE STYLES ==================== */
@@ -538,6 +590,14 @@ input::placeholder {
   color: var(--on-surface-variant);
 }
 
+.text-on-background {
+  color: var(--on-background);
+}
+
+.text-surface-bright {
+  color: var(--surface-bright);
+}
+
 .text-primary {
   color: var(--primary);
 }
@@ -623,6 +683,61 @@ button:focus-visible {
   outline: 2px solid var(--primary);
   outline-offset: 2px;
 }
+
+/* ==================== COLOR UTILITY OVERRIDES ==================== */
+/* Light Mode (Default - via removed .dark class) */
+html .bg-surface { background-color: var(--surface) !important; }
+html .text-on-surface { color: var(--on-surface) !important; }
+html .text-on-background { color: var(--on-background) !important; }
+html .text-surface-bright { color: var(--surface-bright) !important; }
+html .bg-primary { background-color: var(--primary) !important; }
+html .text-primary { color: var(--primary) !important; }
+html .bg-primary-container { background-color: var(--primary-container) !important; }
+html .text-primary-container { color: var(--primary-container) !important; }
+html .border-outline-variant { border-color: var(--outline-variant) !important; }
+html .bg-secondary { background-color: var(--secondary) !important; }
+html .text-secondary { color: var(--secondary) !important; }
+html .bg-secondary-container { background-color: var(--secondary-container) !important; }
+html .text-secondary-container { color: var(--secondary-container) !important; }
+html .bg-secondary-fixed { background-color: var(--secondary-fixed) !important; }
+html .bg-tertiary { background-color: var(--tertiary) !important; }
+html .text-tertiary { color: var(--tertiary) !important; }
+html .bg-tertiary-container { background-color: var(--tertiary-container) !important; }
+html .bg-error { background-color: var(--error) !important; }
+html .text-error { color: var(--error) !important; }
+html .bg-surface-dim { background-color: var(--surface-dim) !important; }
+html .bg-surface-bright { background-color: var(--surface-bright) !important; }
+html .bg-surface-container { background-color: var(--surface-container) !important; }
+html .bg-surface-container-high { background-color: var(--surface-container-high) !important; }
+html .bg-surface-container-highest { background-color: var(--surface-container-highest) !important; }
+html .bg-surface-container-low { background-color: var(--surface-container-low) !important; }
+
+/* Dark Mode (via .dark class) */
+html.dark .bg-surface { background-color: var(--surface) !important; }
+html.dark .text-on-surface { color: var(--on-surface) !important; }
+html.dark .text-on-background { color: var(--on-background) !important; }
+html.dark .text-surface-bright { color: var(--surface-bright) !important; }
+html.dark .bg-primary { background-color: var(--primary) !important; }
+html.dark .text-primary { color: var(--primary) !important; }
+html.dark .bg-primary-container { background-color: var(--primary-container) !important; }
+html.dark .text-primary-container { color: var(--primary-container) !important; }
+html.dark .border-outline-variant { border-color: var(--outline-variant) !important; }
+html.dark .bg-secondary { background-color: var(--secondary) !important; }
+html.dark .text-secondary { color: var(--secondary) !important; }
+html.dark .bg-secondary-container { background-color: var(--secondary-container) !important; }
+html.dark .text-secondary-container { color: var(--secondary-container) !important; }
+html.dark .bg-secondary-fixed { background-color: var(--secondary-fixed) !important; }
+html.dark .bg-tertiary { background-color: var(--tertiary) !important; }
+html.dark .text-tertiary { color: var(--tertiary) !important; }
+html.dark .bg-tertiary-container { background-color: var(--tertiary-container) !important; }
+html.dark .bg-error { background-color: var(--error) !important; }
+html.dark .text-error { color: var(--error) !important; }
+html.dark .bg-surface-dim { background-color: var(--surface-dim) !important; }
+html.dark .bg-surface-bright { background-color: var(--surface-bright) !important; }
+html.dark .bg-surface-container { background-color: var(--surface-container) !important; }
+html.dark .bg-surface-container-high { background-color: var(--surface-container-high) !important; }
+html.dark .bg-surface-container-highest { background-color: var(--surface-container-highest) !important; }
+html.dark .bg-surface-container-low { background-color: var(--surface-container-low) !important; }
 
 /* ==================== PRINT STYLES ==================== */
 @media print {
