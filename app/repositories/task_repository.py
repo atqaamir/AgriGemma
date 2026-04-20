@@ -1,4 +1,4 @@
-from app.models.field import Field
+from app.models.task import Task
 from app.extensions import db
 
 class TaskRepository:
