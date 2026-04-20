@@ -192,8 +192,8 @@ Follow these steps to run the project locally.
 ### 1. Clone the Repository
 
 ```bash
-git clone http://github.com/your-username/smart-farming.git
-cd smart-farming
+git clone http://github.com/your-username/AgriGemma.git
+cd AgriGemma
 ```
 
 ### 2. Create a virtual env
@@ -243,7 +243,7 @@ flask run
 
 ### 8. Open in Browser
 ```bash
-http://127.0.0.1:5000/
+http://127.0.0.1:5000/dashboard
 ```
 
 
@@ -277,15 +277,8 @@ We are tackling a critical global issue:
 - Increasing uncertainty in crop planning and yields  
 - Economic risk for small and medium-scale farmers  
 
-### 💡 What We Built
+### 💡 What We Built: **Climate Adaptation Advisor for Farmers** 
 
-A **Climate Adaptation Advisor for Farmers** — a mobile-first, multilingual assistant that:
-
-- Converts weather and climate data into actionable farming decisions  
-- Helps farmers plan, adapt, and respond in real time  
-- Provides simple, easy-to-understand guidance for non-technical users  
-
----
 
 ## 🧠 Key Innovation
 
@@ -331,7 +324,6 @@ This application is built with:
 - **Mobile-first UI** — optimized for smartphones  
 - **Visual communication** — icons, colors, minimal text  
 - **Action-driven** — every insight leads to a clear task  
-- **Multilingual-ready** — adaptable to local languages  
 
 ---
 
@@ -360,18 +352,13 @@ Contributions are welcome!
 
 ---
 
-## 📄 License
-
-This project is licensed under the MIT License.
-
----
 
 ## ✨ Authors
 
 Atqa R. Amir, Amna Bukhari, Syed Faizan
 
 Built to support **climate-resilient farming** through simple, practical, and accessible technology.
-Developed for the **Gemma 4 Good Hackathon (Kaggle)**.
+Developed for the **Gemma 4 Good Hackathon (Kaggle)**, and beyound.
 
 
 
