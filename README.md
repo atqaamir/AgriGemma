@@ -17,13 +17,12 @@ This creates economic risk and uncertainty.
 
 ## 💡 Solution
 
-A **mobile-first, multilingual farming assistant** that:
+A **mobile-first farming assistant** that:
 
 ### 📥 Inputs
 - Weather data (current + forecast)
 - Soil information
 - Farm details (land size, crops, planting dates)
-- Crop photos (for health analysis)
 
 ### 📤 Outputs
 - Season plans and timelines
@@ -44,21 +43,35 @@ AgriGemma uses Gemma 4 to generate crop schedules and adapt them in real time wh
 - Small to medium-scale farmers
 - Low to moderate literacy levels
 - Limited technical experience
-- Mobile users (especially Android)
-- Need simple, visual, multilingual tools
+- Mobile users
+- Need simple, visual tools
 
 ---
 
 ## Limits
 
-prototype uses simplified agronomy rules
-forecast quality affects advice quality
-recommendations should support, not replace, local agronomists
-regional calibration is needed for deployment
+- Prototype uses simplified agronomy rules
+- Forecast quality affects advice quality
+- Recommendations should support, not replace, local agronomists
+- Regional calibration is needed for deployment
 
 ---
 
 ## ⚙️ Core Features
+
+### 📅 Season Planner (Key Feature)
+- Planting → growing → harvesting timeline
+- Adaptive planning based on weather
+
+### ✅ Tasks & Alerts (Key Feature)
+- Daily actionable tasks
+- Climate-based alerts
+- Simple instructions (e.g., irrigate, fertilize)
+
+### 🤖 Chatbot Assistant (Key Feature)
+- Ask questions
+- Get farming advice
+- Handle "what-if" scenarios
 
 ### 🏡 Farm Overview
 - Land size
@@ -82,20 +95,6 @@ regional calibration is needed for deployment
 - Temperature
 - pH (optional)
 
-### ✅ Tasks & Alerts (Key Feature)
-- Daily actionable tasks
-- Climate-based alerts
-- Simple instructions (e.g., irrigate, fertilize)
-
-### 📅 Season Planner
-- Planting → growing → harvesting timeline
-- Adaptive planning based on weather
-
-### 🤖 Chatbot Assistant
-- Ask questions
-- Get farming advice
-- Handle "what-if" scenarios
-
 ---
 
 ## 🧠 Key Value
@@ -117,6 +116,7 @@ It acts as a **daily farming companion**, not just a data dashboard.
 - **AI:**
   - Recommendation engine
   - Chatbot integration
+  - Gemma4
     
 ---
 
