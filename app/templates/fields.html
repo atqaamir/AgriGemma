@@ -916,7 +916,7 @@
 
       try {
         console.log('Fetching task details for task ID:', taskId);
-        const response = await fetch(`/tasks/tasks/${taskId}`);
+        const response = await fetch(`/mytasks/tasks/${taskId}`);
         if (!response.ok) throw new Error('Failed to fetch task');
         const task = await response.json();
         populateTaskModal(task);
