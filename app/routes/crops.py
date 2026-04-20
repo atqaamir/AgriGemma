@@ -1,11 +1,20 @@
 from flask import Blueprint, request, jsonify, render_template
+from marshmallow import ValidationError
+
 from app.services.crop_service import CropService
-from app.schemas.crop_schema import CropSchema
+from app.schemas.crop_schema import (
+    CropCardSchema,
+    CropDetailSchema,
+    CreateCropSchema,
+)
+from app.schemas.task_schema import TaskCardSchema
 
 crops_bp = Blueprint("crops_bp", __name__)
 
-crop_schema = CropSchema()
-crops_schema = CropSchema(many=True)
+crop_card_schema = CropCardSchema(many=True)
+crop_detail_schema = CropDetailSchema()
+crop_create_schema = CreateCropSchema()
+task_card_schema = TaskCardSchema(many=True)
 
 
 @crops_bp.route("/", methods=["GET"])
@@ -16,7 +25,19 @@ def crops_page():
 @crops_bp.route("/crops", methods=["GET"])
 def get_crops():
     crops = CropService.get_all_crops()
-    return jsonify(crops_schema.dump(crops)), 200
+
+    all_tasks = []
+    for crop in crops:
+        all_tasks.extend(crop.tasks)
+
+    unique_tasks = list({task.id: task for task in all_tasks}.values())
+
+    result = {
+        "crop_cards": crop_card_schema.dump(crops),
+        "crop_task_cards": task_card_schema.dump(unique_tasks),
+    }
+
+    return jsonify(result), 200
 
 
 @crops_bp.route("/crops/<int:crop_id>", methods=["GET"])
@@ -26,18 +47,17 @@ def get_crop(crop_id):
     if not crop:
         return jsonify({"error": "Crop not found"}), 404
 
-    return jsonify(crop_schema.dump(crop)), 200
+    return jsonify(crop_detail_schema.dump(crop)), 200
 
 
 @crops_bp.route("/crops", methods=["POST"])
 def create_crop():
-    data = request.get_json()
+    data = request.get_json() or {}
 
-    errors = crop_schema.validate(data)
-    if errors:
-        return jsonify(errors), 400
+    try:
+        valid_data = crop_create_schema.load(data)
+    except ValidationError as err:
+        return jsonify({"errors": err.messages}), 400
 
-    crop = CropService.create_crop(data)
-    return jsonify(crop_schema.dump(crop)), 201
-
-    
+    crop = CropService.create_crop(valid_data)
+    return jsonify(crop_detail_schema.dump(crop)), 201

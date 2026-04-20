@@ -1,0 +1,828 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+  <title>Terra Firma - Tasks</title>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;700;800&family=Work+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+
+  <script>
+    (function () {
+      const theme = localStorage.getItem('theme') || 'light';
+      if (theme === 'dark') document.documentElement.classList.add('dark');
+    })();
+  </script>
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            surface: "#fcf9f0",
+            "surface-container-lowest": "#ffffff",
+            "surface-container-low": "#f7f3ea",
+            "surface-container": "#f1eee5",
+            "surface-container-high": "#ebe8df",
+            "surface-container-highest": "#e5e2da",
+            "surface-variant": "#e5e2da",
+            "surface-dim": "#dddad1",
+            "surface-bright": "#fcf9f0",
+            "on-surface": "#1c1c17",
+            "on-surface-variant": "#444840",
+            "inverse-surface": "#31312b",
+            "inverse-on-surface": "#f4f1e8",
+            primary: "#47573b",
+            "primary-container": "#5f6f52",
+            "primary-fixed": "#d6e8c5",
+            "primary-fixed-dim": "#bbccaa",
+            "on-primary": "#ffffff",
+            "on-primary-container": "#dff1cd",
+            "on-primary-fixed": "#121f09",
+            "on-primary-fixed-variant": "#3c4b31",
+            "inverse-primary": "#bbccaa",
+            secondary: "#536344",
+            "secondary-container": "#d5e9c1",
+            "secondary-fixed": "#d5e9c1",
+            "secondary-fixed-dim": "#bacda7",
+            "on-secondary": "#ffffff",
+            "on-secondary-container": "#586a4a",
+            "on-secondary-fixed": "#111f07",
+            "on-secondary-fixed-variant": "#3b4b2e",
+            tertiary: "#555246",
+            "tertiary-container": "#6e6a5d",
+            "tertiary-fixed": "#e8e2d2",
+            "tertiary-fixed-dim": "#ccc6b6",
+            "on-tertiary": "#ffffff",
+            "on-tertiary-container": "#f1ebda",
+            "on-tertiary-fixed": "#1e1c12",
+            "on-tertiary-fixed-variant": "#4a473b",
+            background: "#fcf9f0",
+            "on-background": "#1c1c17",
+            outline: "#75786f",
+            "outline-variant": "#c5c8bd",
+            error: "#ba1a1a",
+            "error-container": "#ffdad6",
+            "on-error": "#ffffff",
+            "on-error-container": "#93000a",
+            "surface-tint": "#536347",
+          },
+          borderRadius: { DEFAULT: "0.25rem", lg: "0.5rem", xl: "1.5rem", full: "9999px" },
+          fontFamily: { headline: ["Manrope"], body: ["Work Sans"], label: ["Work Sans"] }
+        }
+      }
+    };
+  </script>
+
+  <style>
+    .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+    body { font-family: 'Work Sans', sans-serif; }
+    h1, h2, h3, h4 { font-family: 'Manrope', sans-serif; }
+    .no-scrollbar::-webkit-scrollbar { display: none; }
+    .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+  </style>
+</head>
+
+<body class="bg-surface text-on-surface min-h-screen pb-32">
+
+  <!-- Header -->
+  <header class="bg-[#fcf9f0] dark:bg-[#1c1c17] flex justify-between items-center w-full px-6 py-4 sticky top-0 z-50">
+    <div class="flex items-center gap-3">
+      <span class="material-symbols-outlined text-[#47573b] dark:text-[#d5e9c1]" style="font-size:28px;">agriculture</span>
+      <h1 class="text-2xl font-semibold text-[#47573b] dark:text-[#d5e9c1] tracking-tight">Climate Adaptation Planner</h1>
+    </div>
+    <div class="flex gap-4">
+      <button onclick="toggleTheme()" class="hover:bg-[#f1eee5] dark:hover:bg-[#2a2a24] transition-colors p-2 rounded-full active:scale-95 duration-150">
+        <span class="material-symbols-outlined text-[#47573b] dark:text-[#d5e9c1]">brightness_4</span>
+      </button>
+      <button onclick="openNotificationsPanel()" class="hover:bg-[#f1eee5] dark:hover:bg-[#2a2a24] transition-colors p-2 rounded-full active:scale-95 duration-150">
+        <span class="material-symbols-outlined text-[#47573b] dark:text-[#d5e9c1]">notifications</span>
+      </button>
+    </div>
+  </header>
+
+  <main class="px-4 pt-4 space-y-8 max-w-5xl mx-auto">
+
+    <!-- Critical Alert Hero -->
+    <section id="critical-alert-section" class="hidden relative overflow-hidden rounded-3xl bg-[#5F6F52] text-white p-8 min-h-[260px] flex flex-col justify-end">
+      <div class="absolute inset-0 z-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent"></div>
+      <div class="relative z-10 space-y-3">
+        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-error text-white text-[11px] font-bold uppercase tracking-widest">
+          <span class="material-symbols-outlined text-sm" style="font-variation-settings:'FILL' 1;">warning</span>
+          Critical Alert
+        </div>
+        <h2 id="alert-title" class="text-3xl font-extrabold leading-tight tracking-tight"></h2>
+        <p id="alert-detail" class="text-sm opacity-90 max-w-xl leading-relaxed"></p>
+        <div class="flex gap-3 pt-2 flex-wrap">
+          <button id="alert-action-btn" class="bg-secondary-fixed text-on-secondary-fixed px-6 py-2.5 rounded-full font-bold text-sm flex items-center gap-2 hover:opacity-90 active:scale-95 transition-all">
+            <span class="material-symbols-outlined text-sm">water_drop</span>
+            <span id="alert-action-label">Take Action</span>
+          </button>
+          <button class="bg-white/15 backdrop-blur-md text-white border border-white/20 px-6 py-2.5 rounded-full font-bold text-sm hover:bg-white/25 transition-all">
+            View Data
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Tasks Section -->
+    <section class="space-y-4">
+      <div class="flex justify-between items-end px-1">
+        <div>
+          <h3 id="tasks-section-title" class="text-2xl font-bold text-primary tracking-tight">Pending Tasks</h3>
+          <p id="tasks-section-subtitle" class="text-on-surface-variant text-sm font-medium">Loading...</p>
+        </div>
+        <button id="tasks-view-toggle-btn" onclick="viewAllTasks()" class="text-primary font-bold text-sm flex items-center gap-1 hover:underline active:scale-95 transition-transform">
+          View All <span class="material-symbols-outlined text-base">arrow_forward</span>
+        </button>
+      </div>
+
+      <!-- Pending: horizontal scroll -->
+      <div id="tasks-pending-container" class="flex gap-5 overflow-x-auto no-scrollbar pb-4 -mx-4 px-4">
+        <div class="flex-none w-[280px] h-44 bg-surface-container-low rounded-2xl flex items-center justify-center">
+          <span class="text-on-surface-variant text-sm">Loading tasks...</span>
+        </div>
+      </div>
+
+      <!-- All tasks: vertical list (hidden by default) -->
+      <div id="tasks-all-container" class="hidden space-y-3"></div>
+    </section>
+
+    <!-- Notifications Section -->
+    <section class="bg-surface-container-low rounded-[32px] p-6 space-y-5">
+      <div class="flex items-center gap-2">
+        <span class="w-2 h-6 bg-primary rounded-full"></span>
+        <h3 class="text-2xl font-bold text-on-surface">Notifications</h3>
+      </div>
+
+      <!-- Danger -->
+      <div class="space-y-2">
+        <div class="flex items-center gap-2">
+          <span class="material-symbols-outlined text-error" style="font-size:18px; font-variation-settings:'FILL' 1;">error</span>
+          <h4 class="text-xs font-bold uppercase tracking-widest text-error">Danger</h4>
+        </div>
+        <div id="notif-danger-list" class="space-y-2 max-h-48 overflow-y-auto no-scrollbar">
+          <p id="notif-danger-empty" class="text-xs text-on-surface-variant px-1">No danger alerts.</p>
+        </div>
+      </div>
+
+      <div class="h-px bg-outline-variant/30"></div>
+
+      <!-- Warning -->
+      <div class="space-y-2">
+        <div class="flex items-center gap-2">
+          <span class="material-symbols-outlined text-amber-600" style="font-size:18px; font-variation-settings:'FILL' 1;">warning</span>
+          <h4 class="text-xs font-bold uppercase tracking-widest text-amber-600">Warning</h4>
+        </div>
+        <div id="notif-warning-list" class="space-y-2 max-h-48 overflow-y-auto no-scrollbar">
+          <p id="notif-warning-empty" class="text-xs text-on-surface-variant px-1">No warnings.</p>
+        </div>
+      </div>
+
+      <div class="h-px bg-outline-variant/30"></div>
+
+      <!-- Reminders -->
+      <div class="space-y-2">
+        <div class="flex items-center gap-2">
+          <span class="material-symbols-outlined text-primary" style="font-size:18px; font-variation-settings:'FILL' 1;">alarm</span>
+          <h4 class="text-xs font-bold uppercase tracking-widest text-primary">Reminders</h4>
+        </div>
+        <div id="notif-reminder-list" class="space-y-2 max-h-48 overflow-y-auto no-scrollbar">
+          <p id="notif-reminder-empty" class="text-xs text-on-surface-variant px-1">No reminders.</p>
+        </div>
+      </div>
+
+      <div class="h-px bg-outline-variant/30"></div>
+
+      <!-- Info -->
+      <div class="space-y-2">
+        <div class="flex items-center gap-2">
+          <span class="material-symbols-outlined text-on-surface-variant" style="font-size:18px; font-variation-settings:'FILL' 1;">info</span>
+          <h4 class="text-xs font-bold uppercase tracking-widest text-on-surface-variant">Info</h4>
+        </div>
+        <div id="notif-info-list" class="space-y-2 max-h-48 overflow-y-auto no-scrollbar">
+          <p id="notif-info-empty" class="text-xs text-on-surface-variant px-1">No info updates.</p>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- FAB: Create Task -->
+  <button onclick="openCreateTaskModal()" class="fixed bottom-28 right-6 w-16 h-16 bg-[#5F6F52] rounded-full shadow-2xl flex items-center justify-center text-white active:scale-90 transition-transform z-40 hover:shadow-xl">
+    <span class="material-symbols-outlined text-3xl" style="font-variation-settings:'wght' 600;">add</span>
+  </button>
+
+  <!-- BottomNavBar -->
+  <nav class="fixed bottom-0 left-0 w-full z-50 bg-[#fcf9f0]/80 dark:bg-stone-950/80 backdrop-blur-md rounded-t-[24px] shadow-[0_-8px_24px_rgba(28,28,23,0.06)] flex justify-around items-center px-4 pb-6 pt-3">
+    <a class="flex flex-col items-center justify-center text-stone-500 dark:text-stone-400 px-3 py-1.5 transition-transform hover:scale-105 duration-150" href="/dashboard">
+      <span class="material-symbols-outlined">dashboard</span>
+      <span class="text-[11px] font-medium tracking-wide">Dashboard</span>
+    </a>
+    <a class="flex flex-col items-center justify-center text-stone-500 dark:text-stone-400 px-3 py-1.5 transition-transform hover:scale-105 duration-150" href="/myfields">
+      <span class="material-symbols-outlined">landscape</span>
+      <span class="text-[11px] font-medium tracking-wide">Fields</span>
+    </a>
+    <a class="flex flex-col items-center justify-center text-stone-500 dark:text-stone-400 px-3 py-1.5 transition-transform hover:scale-105 duration-150" href="/mycrops">
+      <span class="material-symbols-outlined">eco</span>
+      <span class="text-[11px] font-medium tracking-wide">Crops</span>
+    </a>
+    <a class="flex flex-col items-center justify-center bg-secondary-fixed dark:bg-primary-container text-on-background dark:text-surface-bright rounded-2xl px-3 py-1.5 transition-transform hover:scale-105 duration-150" href="/tasks">
+      <span class="material-symbols-outlined" style="font-variation-settings:'FILL' 1;">assignment_turned_in</span>
+      <span class="text-[11px] font-medium tracking-wide">Tasks</span>
+    </a>
+    <a class="flex flex-col items-center justify-center text-stone-500 dark:text-stone-400 px-3 py-1.5 transition-transform hover:scale-105 duration-150" href="/myplanner">
+      <span class="material-symbols-outlined">calendar_today</span>
+      <span class="text-[11px] font-medium tracking-wide">Planner</span>
+    </a>
+    <a class="flex flex-col items-center justify-center text-stone-500 dark:text-stone-400 px-3 py-1.5 transition-transform hover:scale-105 duration-150" href="#">
+      <span class="material-symbols-outlined">chat</span>
+      <span class="text-[11px] font-medium tracking-wide">Chat</span>
+    </a>
+  </nav>
+
+  <!-- Task Detail Modal -->
+  <div id="taskDetailModal" class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 hidden" onclick="closeTaskDetailModal()">
+    <div class="bg-surface rounded-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto shadow-2xl" onclick="event.stopPropagation()">
+      <div class="sticky top-0 flex items-center justify-between p-6 border-b border-surface-variant bg-surface">
+        <h2 id="taskDetailTitle" class="text-xl font-bold text-primary truncate pr-4">Task Details</h2>
+        <button onclick="closeTaskDetailModal()" class="flex-shrink-0 p-2 hover:bg-surface-container rounded-full transition-colors">
+          <span class="material-symbols-outlined">close</span>
+        </button>
+      </div>
+      <div class="p-6 space-y-5">
+        <div class="flex items-center gap-2 flex-wrap">
+          <span id="taskDetailType" class="text-xs font-bold px-3 py-1 rounded-full bg-surface-container-high text-on-surface-variant uppercase tracking-wide"></span>
+          <span id="taskDetailPriority" class="text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wide"></span>
+          <span id="taskDetailStatus" class="text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wide"></span>
+        </div>
+        <div class="bg-surface-container rounded-xl p-4">
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <span class="text-[10px] uppercase tracking-widest text-on-surface-variant block mb-1">Field</span>
+              <span id="taskDetailField" class="text-sm font-medium text-on-surface">—</span>
+            </div>
+            <div>
+              <span class="text-[10px] uppercase tracking-widest text-on-surface-variant block mb-1">Crop</span>
+              <span id="taskDetailCrop" class="text-sm font-medium text-on-surface">—</span>
+            </div>
+            <div>
+              <span class="text-[10px] uppercase tracking-widest text-on-surface-variant block mb-1">Due Date</span>
+              <span id="taskDetailDue" class="text-sm font-medium text-on-surface">—</span>
+            </div>
+            <div>
+              <span class="text-[10px] uppercase tracking-widest text-on-surface-variant block mb-1">Assigned To</span>
+              <span id="taskDetailAssigned" class="text-sm font-medium text-on-surface">—</span>
+            </div>
+          </div>
+        </div>
+        <div id="taskDetailDescBlock" class="bg-surface-container rounded-xl p-4 hidden">
+          <span class="text-[10px] uppercase tracking-widest text-on-surface-variant block mb-2">Description</span>
+          <p id="taskDetailDesc" class="text-sm text-on-surface leading-relaxed"></p>
+        </div>
+        <div id="taskDetailNotesBlock" class="bg-surface-container rounded-xl p-4 hidden">
+          <span class="text-[10px] uppercase tracking-widest text-on-surface-variant block mb-2">Notes</span>
+          <p id="taskDetailNotes" class="text-sm text-on-surface leading-relaxed"></p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Create Task Modal -->
+  <div id="createTaskModal" class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 hidden" onclick="closeCreateTaskModal()">
+    <div class="bg-surface rounded-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto shadow-2xl" onclick="event.stopPropagation()">
+      <div class="sticky top-0 flex items-center justify-between p-6 border-b border-surface-variant bg-surface">
+        <h2 class="text-xl font-bold text-primary">New Task</h2>
+        <button onclick="closeCreateTaskModal()" class="p-2 hover:bg-surface-container rounded-full transition-colors">
+          <span class="material-symbols-outlined">close</span>
+        </button>
+      </div>
+      <form id="createTaskForm" class="p-6 space-y-4" onsubmit="submitCreateTask(event)">
+        <div>
+          <label class="text-[10px] uppercase tracking-widest text-on-surface-variant block mb-1">Title *</label>
+          <input type="text" name="title" required class="w-full bg-surface-container rounded-lg px-4 py-3 text-sm text-on-surface outline-none focus:ring-2 focus:ring-primary" placeholder="e.g. Irrigate North Field">
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="text-[10px] uppercase tracking-widest text-on-surface-variant block mb-1">Priority *</label>
+            <select name="priority" required class="w-full bg-surface-container rounded-lg px-4 py-3 text-sm text-on-surface outline-none focus:ring-2 focus:ring-primary">
+              <option value="high">High</option>
+              <option value="medium" selected>Medium</option>
+              <option value="low">Low</option>
+            </select>
+          </div>
+          <div>
+            <label class="text-[10px] uppercase tracking-widest text-on-surface-variant block mb-1">Task Type</label>
+            <select name="task_type" class="w-full bg-surface-container rounded-lg px-4 py-3 text-sm text-on-surface outline-none focus:ring-2 focus:ring-primary">
+              <option value="">— None —</option>
+              <option value="irrigation">Irrigation</option>
+              <option value="spraying">Spraying</option>
+              <option value="inspection">Inspection</option>
+              <option value="harvesting">Harvesting</option>
+              <option value="fertilizing">Fertilizing</option>
+              <option value="maintenance">Maintenance</option>
+              <option value="planning">Planning</option>
+              <option value="monitoring">Monitoring</option>
+            </select>
+          </div>
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="text-[10px] uppercase tracking-widest text-on-surface-variant block mb-1">Due Date</label>
+            <input type="date" name="due_date" class="w-full bg-surface-container rounded-lg px-4 py-3 text-sm text-on-surface outline-none focus:ring-2 focus:ring-primary">
+          </div>
+          <div>
+            <label class="text-[10px] uppercase tracking-widest text-on-surface-variant block mb-1">Assigned To</label>
+            <input type="text" name="assigned_to" class="w-full bg-surface-container rounded-lg px-4 py-3 text-sm text-on-surface outline-none focus:ring-2 focus:ring-primary" placeholder="Name">
+          </div>
+        </div>
+        <div>
+          <label class="text-[10px] uppercase tracking-widest text-on-surface-variant block mb-1">Description</label>
+          <textarea name="description" rows="3" class="w-full bg-surface-container rounded-lg px-4 py-3 text-sm text-on-surface outline-none focus:ring-2 focus:ring-primary resize-none" placeholder="Optional details..."></textarea>
+        </div>
+        <p id="createTaskError" class="text-error text-xs hidden"></p>
+        <div class="flex gap-3 pt-2">
+          <button type="button" onclick="closeCreateTaskModal()" class="flex-1 py-3 rounded-xl border border-outline-variant text-on-surface-variant text-sm font-bold hover:bg-surface-container transition-colors">Cancel</button>
+          <button type="submit" id="createTaskSubmitBtn" class="flex-1 py-3 rounded-xl bg-primary text-on-primary text-sm font-bold hover:opacity-90 transition-opacity">Create Task</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    const USER_ID = 1;
+    const API_BASE = '/mytasks';
+
+    let allTasks = [];
+    let isViewingAll = false;
+
+    // ─── Theme ───────────────────────────────────────────────────────────────
+    function toggleTheme() {
+      const html = document.documentElement;
+      if (html.classList.contains('dark')) {
+        html.classList.remove('dark');
+        localStorage.setItem('theme', 'light');
+      } else {
+        html.classList.add('dark');
+        localStorage.setItem('theme', 'dark');
+      }
+    }
+
+    // ─── Boot ─────────────────────────────────────────────────────────────────
+    document.addEventListener('DOMContentLoaded', () => {
+      loadCriticalAlert();
+      loadTasks();
+      loadNotifications();
+    });
+
+    // ─── Critical Alert ───────────────────────────────────────────────────────
+    async function loadCriticalAlert() {
+      try {
+        const res = await fetch(`${API_BASE}/tasks/${USER_ID}/critical-alert`);
+        console.log('Critical alert response:', res);
+        if (!res.ok) return;
+        const alert = await res.json();
+        console.log('Critical alert data:', alert);
+        if (!alert || !alert.alert_title) return;
+
+        document.getElementById('alert-title').textContent = alert.alert_title;
+        document.getElementById('alert-detail').textContent = alert.alert_detail || '';
+        document.getElementById('alert-action-label').textContent = alert.recommended_action || 'Take Action';
+        document.getElementById('critical-alert-section').classList.remove('hidden');
+      } catch (e) {
+        console.error('Failed to load critical alert:', e);
+      }
+    }
+
+    // ─── Tasks ────────────────────────────────────────────────────────────────
+    async function loadTasks() {
+      try {
+        const res = await fetch(`${API_BASE}/tasks`);
+        if (!res.ok) throw new Error('Failed to fetch tasks');
+        const data = await res.json();
+        allTasks = Array.isArray(data.task_cards) ? data.task_cards : [];
+
+        const pending = allTasks.filter(t => !t.completed);
+        const dueToday = pending.filter(t => isDueToday(t.due_date)).length;
+
+        document.getElementById('tasks-section-subtitle').textContent =
+          pending.length === 0
+            ? 'No pending tasks'
+            : `${pending.length} pending${dueToday > 0 ? ` • ${dueToday} due today` : ''}`;
+
+        renderPendingCards(sortByPriority(pending));
+      } catch (e) {
+        console.error('Error loading tasks:', e);
+        document.getElementById('tasks-section-subtitle').textContent = 'Failed to load tasks';
+      }
+    }
+
+    function sortByPriority(tasks) {
+      const order = { high: 0, medium: 1, low: 2 };
+      return [...tasks].sort((a, b) => (order[a.priority] ?? 2) - (order[b.priority] ?? 2));
+    }
+
+    function renderPendingCards(tasks) {
+      const container = document.getElementById('tasks-pending-container');
+      if (!tasks.length) {
+        container.innerHTML = `
+          <div class="flex-none w-full text-center text-on-surface-variant py-10">
+            All tasks are done — nice work!
+          </div>`;
+        return;
+      }
+
+      container.innerHTML = tasks.map(task => `
+        <div
+          class="flex-none w-[280px] bg-surface-container-lowest rounded-2xl p-5 flex flex-col gap-4 cursor-pointer hover:shadow-md transition-shadow border border-outline-variant/10 active:scale-[0.98]"
+          onclick="openTaskDetailModal(${task.id})"
+        >
+          <div class="flex justify-between items-start">
+            <div class="h-11 w-11 rounded-full bg-secondary-container flex items-center justify-center flex-shrink-0">
+              <span class="material-symbols-outlined text-on-secondary-container" style="font-variation-settings:'FILL' 1; font-size:20px;">
+                ${getTaskIcon(task.task_type)}
+              </span>
+            </div>
+            <button
+              onclick="deleteTask(${task.id}, event)"
+              class="p-1.5 rounded-full hover:bg-error/10 transition-colors"
+              title="Delete task"
+            >
+              <span class="material-symbols-outlined text-error" style="font-size:18px;">delete</span>
+            </button>
+          </div>
+
+          <div class="flex-1">
+            <h4 class="font-bold text-on-surface text-base leading-tight line-clamp-2">${escapeHtml(task.title || 'Untitled')}</h4>
+            <p class="text-on-surface-variant text-xs mt-1 truncate">${escapeHtml(getTaskSubtitle(task))}</p>
+            ${task.due_date ? `<p class="text-xs text-outline mt-0.5">${formatDate(task.due_date)}</p>` : ''}
+          </div>
+
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-bold uppercase tracking-wider ${getPriorityColor(task.priority)}">
+              ${capitalize(task.priority || 'low')} Priority
+            </span>
+            <button
+              onclick="markTaskDone(${task.id}, event)"
+              class="h-9 w-9 rounded-full border-2 border-primary flex items-center justify-center hover:bg-primary hover:text-on-primary transition-colors text-primary active:scale-90"
+              title="Mark as done"
+            >
+              <span class="material-symbols-outlined" style="font-size:18px;">check</span>
+            </button>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function renderAllTasksList(tasks) {
+      const container = document.getElementById('tasks-all-container');
+      if (!tasks.length) {
+        container.innerHTML = `<div class="text-center text-on-surface-variant py-8">No tasks found.</div>`;
+        return;
+      }
+
+      container.innerHTML = tasks.map(task => `
+        <div
+          onclick="openTaskDetailModal(${task.id})"
+          class="flex items-center gap-4 p-4 bg-surface-container-lowest rounded-2xl cursor-pointer hover:shadow-sm transition-shadow border border-outline-variant/10 active:scale-[0.99] ${task.completed ? 'opacity-60' : ''}"
+        >
+          <div class="h-10 w-10 rounded-full bg-secondary-container flex items-center justify-center flex-shrink-0">
+            <span class="material-symbols-outlined text-on-secondary-container" style="font-variation-settings:'FILL' 1; font-size:20px;">
+              ${task.completed ? 'check_circle' : getTaskIcon(task.task_type)}
+            </span>
+          </div>
+          <div class="flex-1 min-w-0">
+            <h5 class="font-bold text-sm text-on-surface truncate ${task.completed ? 'line-through text-on-surface-variant' : ''}">
+              ${escapeHtml(task.title || 'Untitled')}
+            </h5>
+            <p class="text-xs text-on-surface-variant truncate">${escapeHtml(getTaskSubtitle(task))}</p>
+          </div>
+          <span class="text-[10px] font-bold uppercase flex-shrink-0 ${task.completed ? 'text-primary' : getPriorityColor(task.priority)}">
+            ${task.completed ? 'Done' : capitalize(task.priority || 'low')}
+          </span>
+          <button
+            onclick="deleteTask(${task.id}, event)"
+            class="p-1.5 rounded-full hover:bg-error/10 transition-colors flex-shrink-0"
+          >
+            <span class="material-symbols-outlined text-error" style="font-size:18px;">delete</span>
+          </button>
+        </div>
+      `).join('');
+    }
+
+    // ─── View toggle ──────────────────────────────────────────────────────────
+    function viewAllTasks() {
+      isViewingAll = true;
+      document.getElementById('tasks-pending-container').classList.add('hidden');
+      document.getElementById('tasks-all-container').classList.remove('hidden');
+      document.getElementById('tasks-section-title').textContent = 'All Tasks';
+      document.getElementById('tasks-section-subtitle').textContent = `${allTasks.length} total`;
+
+      const toggleBtn = document.getElementById('tasks-view-toggle-btn');
+      toggleBtn.innerHTML = `<span class="material-symbols-outlined text-base">arrow_back</span> Pending Only`;
+      toggleBtn.onclick = viewPendingTasks;
+
+      renderAllTasksList(allTasks);
+    }
+
+    function viewPendingTasks() {
+      isViewingAll = false;
+      document.getElementById('tasks-all-container').classList.add('hidden');
+      document.getElementById('tasks-pending-container').classList.remove('hidden');
+
+      const pending = allTasks.filter(t => !t.completed);
+      const dueToday = pending.filter(t => isDueToday(t.due_date)).length;
+      document.getElementById('tasks-section-title').textContent = 'Pending Tasks';
+      document.getElementById('tasks-section-subtitle').textContent =
+        pending.length === 0
+          ? 'No pending tasks'
+          : `${pending.length} pending${dueToday > 0 ? ` • ${dueToday} due today` : ''}`;
+
+      const toggleBtn = document.getElementById('tasks-view-toggle-btn');
+      toggleBtn.innerHTML = `View All <span class="material-symbols-outlined text-base">arrow_forward</span>`;
+      toggleBtn.onclick = viewAllTasks;
+
+      renderPendingCards(sortByPriority(pending));
+    }
+
+    // ─── Task actions ─────────────────────────────────────────────────────────
+    async function markTaskDone(taskId, event) {
+      event.stopPropagation();
+      try {
+        const res = await fetch(`${API_BASE}/tasks/${taskId}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ completed: true })
+        });
+        if (!res.ok) throw new Error('Failed to update task');
+
+        const idx = allTasks.findIndex(t => t.id === taskId);
+        if (idx !== -1) allTasks[idx].completed = true;
+
+        if (isViewingAll) {
+          renderAllTasksList(allTasks);
+        } else {
+          const pending = allTasks.filter(t => !t.completed);
+          renderPendingCards(sortByPriority(pending));
+          const dueToday = pending.filter(t => isDueToday(t.due_date)).length;
+          document.getElementById('tasks-section-subtitle').textContent =
+            pending.length === 0 ? 'No pending tasks' :
+            `${pending.length} pending${dueToday > 0 ? ` • ${dueToday} due today` : ''}`;
+        }
+      } catch (e) {
+        console.error('Error marking task done:', e);
+      }
+    }
+
+    async function deleteTask(taskId, event) {
+      event.stopPropagation();
+      if (!confirm('Delete this task? This action cannot be undone.')) return;
+      try {
+        const res = await fetch(`${API_BASE}/tasks/${taskId}`, { method: 'DELETE' });
+        if (!res.ok) throw new Error('Failed to delete task');
+
+        allTasks = allTasks.filter(t => t.id !== taskId);
+
+        if (isViewingAll) {
+          renderAllTasksList(allTasks);
+        } else {
+          renderPendingCards(sortByPriority(allTasks.filter(t => !t.completed)));
+        }
+      } catch (e) {
+        console.error('Error deleting task:', e);
+      }
+    }
+
+    // ─── Task Detail Modal ────────────────────────────────────────────────────
+    async function openTaskDetailModal(taskId) {
+      document.getElementById('taskDetailModal').classList.remove('hidden');
+      document.getElementById('taskDetailTitle').textContent = 'Loading...';
+      try {
+        const res = await fetch(`${API_BASE}/tasks/${taskId}`);
+        if (!res.ok) throw new Error('Not found');
+        const task = await res.json();
+        populateTaskModal(task);
+      } catch (e) {
+        console.error('Error loading task:', e);
+        closeTaskDetailModal();
+      }
+    }
+
+    function closeTaskDetailModal() {
+      document.getElementById('taskDetailModal').classList.add('hidden');
+    }
+
+    function populateTaskModal(task) {
+      document.getElementById('taskDetailTitle').textContent = task.title || 'Untitled Task';
+
+      document.getElementById('taskDetailType').textContent = formatTaskType(task.task_type);
+
+      const priorityEl = document.getElementById('taskDetailPriority');
+      const priorityColors = { high: 'bg-red-100 text-error', medium: 'bg-amber-100 text-amber-700', low: 'bg-primary/10 text-primary' };
+      priorityEl.textContent = capitalize(task.priority || 'low');
+      priorityEl.className = `text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wide ${priorityColors[task.priority] || priorityColors.low}`;
+
+      const statusEl = document.getElementById('taskDetailStatus');
+      statusEl.textContent = task.completed ? 'Completed' : 'Pending';
+      statusEl.className = `text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wide ${task.completed ? 'bg-primary/10 text-primary' : 'bg-amber-100 text-amber-700'}`;
+
+      document.getElementById('taskDetailField').textContent = task.field_name || '—';
+      document.getElementById('taskDetailCrop').textContent = task.crop_name || '—';
+      document.getElementById('taskDetailDue').textContent = task.due_date ? String(task.due_date) : '—';
+      document.getElementById('taskDetailAssigned').textContent = task.assigned_to || '—';
+
+      const descBlock = document.getElementById('taskDetailDescBlock');
+      if (task.description) {
+        document.getElementById('taskDetailDesc').textContent = task.description;
+        descBlock.classList.remove('hidden');
+      } else {
+        descBlock.classList.add('hidden');
+      }
+
+      const notesBlock = document.getElementById('taskDetailNotesBlock');
+      if (task.notes) {
+        document.getElementById('taskDetailNotes').textContent = task.notes;
+        notesBlock.classList.remove('hidden');
+      } else {
+        notesBlock.classList.add('hidden');
+      }
+    }
+
+    // ─── Create Task Modal ────────────────────────────────────────────────────
+    function openCreateTaskModal() {
+      document.getElementById('createTaskForm').reset();
+      document.getElementById('createTaskError').classList.add('hidden');
+      document.getElementById('createTaskModal').classList.remove('hidden');
+    }
+
+    function closeCreateTaskModal() {
+      document.getElementById('createTaskModal').classList.add('hidden');
+    }
+
+    async function submitCreateTask(event) {
+      event.preventDefault();
+      const form = event.target;
+      const submitBtn = document.getElementById('createTaskSubmitBtn');
+      const errorEl = document.getElementById('createTaskError');
+      errorEl.classList.add('hidden');
+
+      const formData = new FormData(form);
+      const body = {};
+      for (const [key, value] of formData.entries()) {
+        if (value !== '') body[key] = value;
+      }
+
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Creating...';
+
+      try {
+        const res = await fetch(`${API_BASE}/tasks`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body)
+        });
+        if (!res.ok) {
+          const err = await res.json();
+          throw new Error(err.errors ? JSON.stringify(err.errors) : 'Failed to create task');
+        }
+        const newTask = await res.json();
+        // Add minimal card shape to local cache
+        allTasks.unshift({
+          id: newTask.id,
+          title: newTask.title,
+          priority: newTask.priority,
+          due_date: newTask.due_date,
+          completed: newTask.completed,
+          task_type: newTask.task_type,
+          task_category: newTask.task_category,
+          field_name: newTask.field_name,
+          crop_name: newTask.crop_name,
+        });
+
+        closeCreateTaskModal();
+
+        if (isViewingAll) {
+          renderAllTasksList(allTasks);
+        } else {
+          renderPendingCards(sortByPriority(allTasks.filter(t => !t.completed)));
+        }
+      } catch (e) {
+        errorEl.textContent = e.message;
+        errorEl.classList.remove('hidden');
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Create Task';
+      }
+    }
+
+    // ─── Notifications ────────────────────────────────────────────────────────
+    async function loadNotifications() {
+      try {
+        const res = await fetch(`${API_BASE}/tasks/${USER_ID}/notifications`);
+        console.log('Notifications response:', res);
+        if (!res.ok) throw new Error('Failed to fetch notifications');
+        const data = await res.json();
+        console.log('Notifications data:', data);
+        const notifications = Array.isArray(data.notifications) ? data.notifications : [];
+        renderNotifications(notifications);
+      } catch (e) {
+        console.error('Error loading notifications:', e);
+      }
+    }
+
+    function renderNotifications(notifications) {
+      const groups = { danger: [], warning: [], reminder: [], info: [] };
+
+      for (const n of notifications) {
+        const raw = String(n.type || '').toLowerCase();
+        const type = raw.includes('info') ? 'info' : (groups[raw] !== undefined ? raw : 'info');
+        groups[type].push(n.message);
+      }
+
+      const styleMap = {
+        danger:   { bg: 'bg-error-container/30',  border: 'border-error/20',          text: 'text-on-error-container' },
+        warning:  { bg: 'bg-amber-50',            border: 'border-amber-200',          text: 'text-amber-900' },
+        reminder: { bg: 'bg-primary/5',           border: 'border-primary/20',         text: 'text-on-surface' },
+        info:     { bg: 'bg-surface-container',   border: 'border-outline-variant/30', text: 'text-on-surface' },
+      };
+
+      for (const [type, messages] of Object.entries(groups)) {
+        const list = document.getElementById(`notif-${type}-list`);
+        const emptyEl = document.getElementById(`notif-${type}-empty`);
+
+        if (!messages.length) {
+          if (emptyEl) emptyEl.classList.remove('hidden');
+          continue;
+        }
+
+        if (emptyEl) emptyEl.classList.add('hidden');
+        const s = styleMap[type];
+        list.innerHTML = messages.map(msg => `
+          <div class="flex items-start p-3 rounded-xl border ${s.bg} ${s.border}">
+            <p class="text-sm ${s.text} leading-relaxed">${escapeHtml(msg)}</p>
+          </div>
+        `).join('');
+      }
+    }
+
+    function openNotificationsPanel() {
+      document.querySelector('section.bg-surface-container-low')?.scrollIntoView({ behavior: 'smooth' });
+    }
+
+    // ─── Helpers ──────────────────────────────────────────────────────────────
+    function getTaskIcon(type) {
+      const map = {
+        irrigation: 'water_drop', spraying: 'science', inspection: 'monitoring',
+        harvesting: 'agriculture', fertilizing: 'eco', maintenance: 'build',
+        planning: 'event_note', monitoring: 'monitoring'
+      };
+      return map[String(type || '').toLowerCase()] || 'assignment';
+    }
+
+    function getTaskSubtitle(task) {
+      if (task.field_name) return `${task.field_name}${task.task_category ? ' • ' + capitalize(task.task_category) : ''}`;
+      if (task.crop_name)  return `${task.crop_name}${task.task_type ? ' • ' + formatTaskType(task.task_type) : ''}`;
+      if (task.task_type)  return formatTaskType(task.task_type);
+      return '';
+    }
+
+    function getPriorityColor(priority) {
+      return { high: 'text-error', medium: 'text-amber-600', low: 'text-primary' }[priority] || 'text-primary';
+    }
+
+    function formatTaskType(type) {
+      if (!type) return 'Task';
+      return capitalize(String(type).replace(/_/g, ' '));
+    }
+
+    function formatDate(dateStr) {
+      if (!dateStr) return '';
+      const d = new Date(String(dateStr));
+      if (isNaN(d)) return String(dateStr);
+      return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+    }
+
+    function isDueToday(dateStr) {
+      if (!dateStr) return false;
+      const today = new Date().toISOString().split('T')[0];
+      return String(dateStr).split('T')[0] === today;
+    }
+
+    function capitalize(text) {
+      const s = String(text || '');
+      return s.charAt(0).toUpperCase() + s.slice(1);
+    }
+
+    function escapeHtml(text) {
+      return String(text ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+  </script>
+</body>
+</html>
