@@ -6,8 +6,8 @@
   <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
   <title>Terra Firma - Fields</title>
   <link rel="stylesheet" href="/static/css/fields.css"/>
+
   <script>
-    // Initialize theme immediately to avoid flickering
     (function() {
       const theme = localStorage.getItem('theme') || 'light';
       if (theme === 'dark') {
@@ -15,20 +15,21 @@
       }
     })();
   </script>
+
   <script id="tailwind-config">
     tailwind.config = {
       darkMode: "class",
       theme: {
         extend: {
-          "colors": {
-            "surface": "#fcf9f0",
+          colors: {
+            surface: "#fcf9f0",
             "secondary-fixed": "#d5e9c1",
             "on-error-container": "#93000a",
             "inverse-primary": "#bbccaa",
             "on-tertiary-fixed": "#1e1c12",
             "tertiary-fixed-dim": "#ccc6b6",
             "surface-container-high": "#ebe8df",
-            "primary": "#47573b",
+            primary: "#47573b",
             "on-secondary-fixed-variant": "#3b4b2e",
             "secondary-fixed-dim": "#bacda7",
             "surface-dim": "#dddad1",
@@ -42,15 +43,15 @@
             "on-primary-fixed": "#121f09",
             "on-primary-container": "#dff1cd",
             "secondary-container": "#d5e9c1",
-            "background": "#fcf9f0",
+            background: "#fcf9f0",
             "on-surface": "#1c1c17",
-            "outline": "#75786f",
-            "error": "#ba1a1a",
+            outline: "#75786f",
+            error: "#ba1a1a",
             "on-error": "#ffffff",
             "primary-container": "#5f6f52",
             "tertiary-container": "#6e6a5d",
             "surface-container-low": "#f7f3ea",
-            "tertiary": "#555246",
+            tertiary: "#555246",
             "on-surface-variant": "#444840",
             "error-container": "#ffdad6",
             "on-tertiary-fixed-variant": "#4a473b",
@@ -61,7 +62,7 @@
             "inverse-surface": "#31312b",
             "surface-bright": "#fcf9f0",
             "surface-container-lowest": "#ffffff",
-            "secondary": "#536344",
+            secondary: "#536344",
             "surface-container": "#f1eee5",
             "on-secondary": "#ffffff",
             "on-tertiary": "#ffffff",
@@ -69,483 +70,682 @@
             "outline-variant": "#c5c8bd",
             "on-background": "#1c1c17"
           },
-          "borderRadius": {
-            "DEFAULT": "0.25rem",
-            "lg": "0.5rem",
-            "xl": "1.5rem",
-            "full": "9999px"
+          borderRadius: {
+            DEFAULT: "0.25rem",
+            lg: "0.5rem",
+            xl: "1.5rem",
+            full: "9999px"
           },
-          "fontFamily": {
-            "headline": ["Manrope"],
-            "body": ["Work Sans"],
-            "label": ["Work Sans"]
+          fontFamily: {
+            headline: ["Manrope"],
+            body: ["Work Sans"],
+            label: ["Work Sans"]
           }
-        },
-      },
+        }
+      }
     }
   </script>
 </head>
+
 <body class="bg-surface text-on-surface min-h-screen pb-32">
-<!-- TopAppBar Section -->
-<header class="bg-[#fcf9f0] dark:bg-[#1c1c17] flex justify-between items-center w-full px-6 py-4 sticky top-0 z-50">
-  <div class="flex items-center gap-3">
-    <span class="material-symbols-outlined text-[#47573b] dark:text-[#d5e9c1]" style="font-size: 28px;">agriculture</span>
-    <h1 class="text-2xl font-semibold text-[#47573b] dark:text-[#d5e9c1] font-['Manrope'] tracking-tight">Climate Adaptation Planner</h1>
-  </div>
-  <div class="flex gap-4">
-    <button class="hover:bg-[#f1eee5] dark:hover:bg-[#2a2a24] transition-colors p-2 rounded-full active:scale-95 duration-150" onclick="toggleTheme()" id="themeToggle">
-      <span class="material-symbols-outlined text-[#47573b] dark:text-[#d5e9c1]">brightness_4</span>
-    </button>
-    <button class="hover:bg-[#f1eee5] dark:hover:bg-[#2a2a24] transition-colors p-2 rounded-full active:scale-95 duration-150" onclick="showNotifications()">
-      <span class="material-symbols-outlined text-[#47573b] dark:text-[#d5e9c1]">notifications</span>
-    </button>
-    <button class="hover:bg-[#f1eee5] dark:hover:bg-[#2a2a24] transition-colors p-2 rounded-full active:scale-95 duration-150" onclick="openSearch()">
-      <span class="material-symbols-outlined text-[#47573b] dark:text-[#d5e9c1]">search</span>
-    </button>
-  </div>
-</header>
-
-<main class="px-4 pt-4 space-y-8">
-  <!-- Map Summary Chip / Mini Card -->
-  <section class="relative overflow-hidden rounded-3xl h-44 flex flex-col justify-end p-6 bg-surface-container" data-location="Iowa Farm Lands">
-    <div class="absolute inset-0 z-0 opacity-40 bg-cover bg-center" style="background-image: url('/static/images/fields_map.jpg')"></div>
-    <div class="absolute inset-0 bg-gradient-to-t from-surface-container via-transparent to-transparent z-10"></div>
-    <div class="relative z-20 flex justify-between items-end">
-      <div>
-        <span class="text-xs font-medium tracking-[0.03em] text-primary uppercase mb-1 block">Property Overview</span>
-        <h2 class="text-3xl font-bold text-on-surface tracking-tight"><span id="total-acreage">248.5</span> <span class="text-lg font-medium opacity-70">Total AC</span></h2>
-      </div>
-      <button onclick="openMap()" class="bg-primary px-4 py-2 rounded-full flex items-center gap-2 shadow-lg hover:shadow-xl transition-shadow">
-        <span class="material-symbols-outlined text-on-primary text-sm" style="font-variation-settings: 'FILL' 1;">map</span>
-        <span class="text-on-primary text-xs font-bold">Interactive Map</span>
+  <!-- TopAppBar Section -->
+  <header class="bg-[#fcf9f0] dark:bg-[#1c1c17] flex justify-between items-center w-full px-6 py-4 sticky top-0 z-50">
+    <div class="flex items-center gap-3">
+      <span class="material-symbols-outlined text-[#47573b] dark:text-[#d5e9c1]" style="font-size: 28px;">agriculture</span>
+      <h1 class="text-2xl font-semibold text-[#47573b] dark:text-[#d5e9c1] font-['Manrope'] tracking-tight">Climate Adaptation Planner</h1>
+    </div>
+    <div class="flex gap-4">
+      <button class="hover:bg-[#f1eee5] dark:hover:bg-[#2a2a24] transition-colors p-2 rounded-full active:scale-95 duration-150" onclick="toggleTheme()" id="themeToggle">
+        <span class="material-symbols-outlined text-[#47573b] dark:text-[#d5e9c1]">brightness_4</span>
+      </button>
+      <button class="hover:bg-[#f1eee5] dark:hover:bg-[#2a2a24] transition-colors p-2 rounded-full active:scale-95 duration-150" onclick="showNotifications()">
+        <span class="material-symbols-outlined text-[#47573b] dark:text-[#d5e9c1]">notifications</span>
+      </button>
+      <button class="hover:bg-[#f1eee5] dark:hover:bg-[#2a2a24] transition-colors p-2 rounded-full active:scale-95 duration-150" onclick="openSearch()">
+        <span class="material-symbols-outlined text-[#47573b] dark:text-[#d5e9c1]">search</span>
       </button>
     </div>
-  </section>
+  </header>
 
-  <!-- Active Fields Section -->
-  <div class="space-y-4">
-    <div class="flex justify-between items-center px-2">
-      <h3 class="text-xl font-bold text-on-surface tracking-tight">Active Fields</h3>
-      <button class="text-primary text-sm font-semibold flex items-center gap-1" onclick="openFilterModal()">
-        Filter <span class="material-symbols-outlined text-sm">filter_list</span>
-      </button>
-    </div>
-    <!-- Horizontal Scrollable Grid -->
-    <div id="fields-container" class="flex overflow-x-auto gap-4 pb-4 no-scrollbar px-2 -mx-2">
-      <!-- Fields will be loaded dynamically from API -->
-      <div class="flex-none w-[200px] h-48 bg-surface-container-low rounded-[24px] flex items-center justify-center">
-        <span class="text-on-surface-variant">Loading fields...</span>
-      </div>
-    </div>
-    <div class="flex justify-center">
-      <button onclick="viewAllFields()" class="flex items-center gap-2 px-6 py-2.5 rounded-full border border-outline-variant text-primary font-bold text-xs hover:bg-surface-variant transition-colors active:scale-95">
-        View All Field Inventory
-        <span class="material-symbols-outlined text-sm">arrow_forward</span>
-      </button>
-    </div>
-  </div>
-
-  <!-- Overall Health Check Section -->
-  <section class="space-y-4">
-    <div class="bg-[#5F6F52] rounded-[32px] p-6 text-white flex flex-col items-center sm:flex-row gap-6">
-      <div class="relative flex-shrink-0">
-        <div class="circular-progress w-24 h-24 rounded-full flex items-center justify-center" style="--progress: 78;">
-          <div class="text-center">
-            <div class="text-xl font-bold leading-none">78%</div>
-            <div class="text-[8px] font-bold uppercase tracking-wider opacity-80 mt-1">Moisture</div>
-          </div>
-        </div>
-      </div>
-      <div class="flex-1 space-y-2 text-center sm:text-left">
-        <h3 class="text-xl font-bold tracking-tight text-[#d6e8c5]">Overall Health Check</h3>
-        <p class="text-xs leading-relaxed opacity-90 text-[#d6e8c5]/80">Average soil moisture levels across the property are within optimal range for current growth stages. No urgent irrigation intervention required today.</p>
-      </div>
-    </div>
-    <div class="grid grid-cols-3 gap-3">
-      <div class="bg-[#5F6F52] p-4 rounded-2xl flex flex-col items-center justify-center text-center">
-        <span class="material-symbols-outlined text-[#d6e8c5] mb-2" style="font-variation-settings: 'FILL' 1;">thermostat</span>
-        <span class="text-lg font-bold text-white leading-none">28°C</span>
-        <span class="text-[8px] font-bold uppercase tracking-wider text-[#d6e8c5]/70 mt-1">Heat</span>
-      </div>
-      <div class="bg-[#5F6F52] p-4 rounded-2xl flex flex-col items-center justify-center text-center">
-        <span class="material-symbols-outlined text-[#d6e8c5] mb-2" style="font-variation-settings: 'FILL' 1;">psychology</span>
-        <span class="text-lg font-bold text-white leading-none">Low</span>
-        <span class="text-[8px] font-bold uppercase tracking-wider text-[#d6e8c5]/70 mt-1">Stress</span>
-      </div>
-      <div class="bg-[#5F6F52] p-4 rounded-2xl flex flex-col items-center justify-center text-center">
-        <span class="material-symbols-outlined text-[#d6e8c5] mb-2" style="font-variation-settings: 'FILL' 1;">shield_health</span>
-        <span class="text-xs font-bold text-white leading-tight">Clear</span>
-        <span class="text-[8px] font-bold uppercase tracking-wider text-[#d6e8c5]/70 mt-1">Threats</span>
-      </div>
-    </div>
-  </section>
-
-  <!-- Pending Tasks Section -->
-  <section class="bg-[#d6e8c5]/40 dark:bg-[#5f6f52]/20 rounded-[32px] p-6 space-y-5">
-    <div class="flex justify-between items-center">
-      <div class="flex items-center gap-2 text-[#47573b] dark:text-[#d5e9c1]">
-        <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">assignment</span>
-        <h3 class="font-bold tracking-tight text-lg">Pending Tasks</h3>
-      </div>
-      <span class="bg-[#47573b] text-white text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-wide">3 DUE TODAY</span>
-    </div>
-    <div class="space-y-3">
-      <!-- Tasks will be populated here -->
-      <div class="bg-white dark:bg-stone-900 p-4 rounded-[20px] flex items-center gap-4 shadow-sm">
-        <div class="w-12 h-12 rounded-full bg-[#f1f3ee] dark:bg-stone-800 flex items-center justify-center text-[#47573b] dark:text-[#d5e9c1]">
-          <span class="material-symbols-outlined" style="font-size: 20px;">sprinkler</span>
-        </div>
-        <div class="flex-1">
-          <h5 class="text-sm font-bold text-on-surface">Irrigation Check</h5>
-          <p class="text-[11px] text-on-surface-variant font-medium">East Creek Basin • Irrigation required</p>
-        </div>
-        <span class="material-symbols-outlined text-outline-variant">chevron_right</span>
-      </div>
-      <div class="bg-white dark:bg-stone-900 p-4 rounded-[20px] flex items-center gap-4 shadow-sm">
-        <div class="w-12 h-12 rounded-full bg-[#f1f3ee] dark:bg-stone-800 flex items-center justify-center text-[#47573b] dark:text-[#d5e9c1]">
-          <span class="material-symbols-outlined" style="font-size: 20px;">monitoring</span>
-        </div>
-        <div class="flex-1">
-          <h5 class="text-sm font-bold text-on-surface">Soil pH Testing</h5>
-          <p class="text-[11px] text-on-surface-variant font-medium">North Field Alpha • Quarterly review</p>
-        </div>
-        <span class="material-symbols-outlined text-outline-variant">chevron_right</span>
-      </div>
-    </div>
-    <button onclick="viewAllTasks()" class="w-full py-3.5 text-center text-xs font-bold text-[#47573b] dark:text-[#d5e9c1] bg-[#f1f3ee]/60 dark:bg-white/5 rounded-xl hover:bg-white/80 dark:hover:bg-white/10 transition-colors active:scale-95">
-      View All Field Tasks
-    </button>
-  </section>
-</main>
-
-<!-- Field Details Modal -->
-<div id="fieldDetailsModal" class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 hidden" onclick="closeFieldDetailsModal()">
-  <div class="bg-surface rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-2xl" onclick="event.stopPropagation()">
-    <div class="sticky top-0 flex items-center justify-between p-6 border-b border-surface-variant bg-surface">
-      <h2 id="fieldDetailsModalTitle" class="text-2xl font-bold text-primary">Field Details</h2>
-      <button onclick="closeFieldDetailsModal()" class="p-2 hover:bg-surface-container rounded-full transition-colors">
-        <span class="material-symbols-outlined">close</span>
-      </button>
-    </div>
-    <div class="p-6 space-y-6">
-      <!-- Basic Information -->
-      <div class="bg-surface-container rounded-lg p-4">
-        <h3 class="text-sm font-medium text-on-surface-variant mb-3">Basic Information</h3>
-        <div class="grid grid-cols-2 gap-4">
-          <div>
-            <span class="text-on-surface-variant">Field Name:</span>
-            <span id="fieldName" class="font-medium text-on-surface block"></span>
-          </div>
-          <div>
-            <span class="text-on-surface-variant">Crop:</span>
-            <span id="fieldCrop" class="font-medium text-on-surface block"></span>
-          </div>
-          <div>
-            <span class="text-on-surface-variant">Acreage:</span>
-            <span id="fieldAcreage" class="font-medium text-on-surface block"></span>
-          </div>
-          <div>
-            <span class="text-on-surface-variant">Growth Stage:</span>
-            <span id="fieldGrowthStage" class="font-medium text-on-surface block"></span>
-          </div>
-        </div>
-      </div>
-      <!-- Health Status -->
-      <div class="bg-surface-container rounded-lg p-4">
-        <h3 class="text-sm font-medium text-on-surface-variant mb-3">Health Status</h3>
-        <div class="space-y-4">
-          <div>
-            <span class="text-on-surface-variant">Status:</span>
-            <div class="flex items-center gap-1.5 text-primary font-medium mt-1">
-              <span id="fieldStatusIcon" class="material-symbols-outlined text-sm" style="font-variation-settings: 'FILL' 1;"></span>
-              <span id="fieldStatusText"></span>
-            </div>
-          </div>
-          <div>
-            <span class="text-on-surface-variant">Health Percentage:</span>
-            <div class="flex items-center gap-2 mt-1">
-              <span id="fieldHealthPercent" class="text-primary font-medium"></span>
-            </div>
-            <div class="h-2 w-full bg-surface-container-highest rounded-full overflow-hidden mt-2">
-              <div id="fieldHealthBar" class="bg-primary h-full"></div>
-            </div>
-          </div>
-        </div>
-      </div>
-      <!-- Environmental Data -->
-      <div class="bg-surface-container rounded-lg p-4">
-        <h3 class="text-sm font-medium text-on-surface-variant mb-3">Environmental Data</h3>
-        <div class="grid grid-cols-3 gap-4">
-          <div>
-            <span class="text-[9px] uppercase tracking-[0.1em] text-on-surface-variant block mb-1">Moisture</span>
-            <span id="fieldMoisture" class="text-base font-bold text-on-surface"></span>
-          </div>
-          <div>
-            <span class="text-[9px] uppercase tracking-[0.1em] text-on-surface-variant block mb-1">Temperature</span>
-            <span class="text-base font-bold text-on-surface">25°C</span>
-          </div>
-          <div>
-            <span class="text-[9px] uppercase tracking-[0.1em] text-on-surface-variant block mb-1">Stress Level</span>
-            <span id="fieldStress" class="text-base font-bold text-on-surface"></span>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- Floating Action Button -->
-<button onclick="createNewField()" class="fixed bottom-28 right-6 w-16 h-16 bg-[#5F6F52] rounded-full shadow-2xl flex items-center justify-center text-white active:scale-90 transition-transform z-40 hover:shadow-xl">
-  <span class="material-symbols-outlined text-3xl" style="font-variation-settings: 'wght' 600;">add</span>
-</button>
-
-<!-- BottomNavBar Section -->
-<nav class="fixed bottom-0 left-0 w-full z-50 bg-[#fcf9f0]/80 dark:bg-stone-950/80 backdrop-blur-md rounded-t-[24px] shadow-[0_-8px_24px_rgba(28,28,23,0.06)] flex justify-around items-center px-4 pb-6 pt-3">
-<a class="flex flex-col items-center justify-center text-stone-500 dark:text-stone-400 px-3 py-1.5 transition-transform hover:scale-105 duration-150" href="/dashboard">
-<span class="material-symbols-outlined" data-icon="dashboard">dashboard</span>
-<span class="font-['Work_Sans'] text-[11px] font-medium tracking-wide">Dashboard</span>
-</a>
-<a class="flex flex-col items-center justify-center bg-secondary-fixed dark:bg-primary-container text-on-background dark:text-surface-bright rounded-2xl px-3 py-1.5 transition-transform hover:scale-105 duration-150" href="/myfields">
-<span class="material-symbols-outlined" data-icon="landscape" style="font-variation-settings: 'FILL' 1;">landscape</span>
-<span class="font-['Work_Sans'] text-[11px] font-medium tracking-wide">Fields</span>
-</a>
-<a class="flex flex-col items-center justify-center text-stone-500 dark:text-stone-400 px-3 py-1.5 transition-transform hover:scale-105 duration-150" href="/mycrops">
-<span class="material-symbols-outlined" data-icon="eco" style="font-variation-settings: 'FILL' 1;">eco</span>
-<span class="font-['Work_Sans'] text-[11px] font-medium tracking-wide">Crops</span>
-</a>
-<a class="flex flex-col items-center justify-center text-stone-500 dark:text-stone-400 px-3 py-1.5 transition-transform hover:scale-105 duration-150" href="/mytasks">
-<span class="material-symbols-outlined" data-icon="assignment_turned_in">assignment_turned_in</span>
-<span class="font-['Work_Sans'] text-[11px] font-medium tracking-wide">Tasks</span>
-</a>
-<a class="flex flex-col items-center justify-center text-stone-500 dark:text-stone-400 px-3 py-1.5 transition-transform hover:scale-105 duration-150" href="/myplanner">
-<span class="material-symbols-outlined" data-icon="calendar_today">calendar_today</span>
-<span class="font-['Work_Sans'] text-[11px] font-medium tracking-wide">Planner</span>
-</a>
-<a class="flex flex-col items-center justify-center text-stone-500 dark:text-stone-400 px-3 py-1.5 transition-transform hover:scale-105 duration-150" href="#">
-<span class="material-symbols-outlined" data-icon="chat">chat</span>
-<span class="font-['Work_Sans'] text-[11px] font-medium tracking-wide">Chat</span>
-</a>
-</nav>
-
-<script>
-// ===== THEME TOGGLE =====
-function initTheme() {
-  const savedTheme = localStorage.getItem('theme') || 'light';
-  if (savedTheme === 'dark') {
-    document.documentElement.classList.add('dark');
-  } else {
-    document.documentElement.classList.remove('dark');
-  }
-}
-
-function toggleTheme() {
-  const html = document.documentElement;
-  if (html.classList.contains('dark')) {
-    html.classList.remove('dark');
-    localStorage.setItem('theme', 'light');
-  } else {
-    html.classList.add('dark');
-    localStorage.setItem('theme', 'dark');
-  }
-}
-
-// Initialize theme on page load
-initTheme();
-
-// ===== API ENDPOINTS INTEGRATION =====
-const API_BASE = '/myfields';
-
-// Load all fields on page load
-document.addEventListener('DOMContentLoaded', function() {
-  loadFields();
-});
-
-// Get all fields from API
-async function loadFields() {
-  try {
-    const response = await fetch(`${API_BASE}/fields/active`);
-    if (!response.ok) throw new Error('Failed to fetch fields');
-
-    const fields = await response.json();
-    window.fields = fields; // Store globally for modal access
-    renderFieldCards(fields);
-    updateTotalAcreage(fields);
-  } catch (error) {
-    console.error('Error loading fields:', error);
-    showError('Failed to load fields');
-  }
-}
-
-// Render field cards dynamically
-function renderFieldCards(fields) {
-  const container = document.getElementById('fields-container');
-
-  if (fields.length === 0) {
-    container.innerHTML = '<div class="flex-1 text-center text-on-surface-variant p-8">No fields found. Create your first field!</div>';
-    return;
-  }
-  console.log("FIELDS:", fields);   // 🔥 add this
-
-  container.innerHTML = fields.map(field => `
-  
-    <div class="field-card flex-none w-[200px] bg-surface-container-low rounded-[24px] overflow-hidden flex flex-col cursor-pointer" data-field-id="${field.id}" onclick="openFieldDetailsModal(${field.id})">
-      <div class="h-28 relative">
-        <img class="w-full h-full object-cover" alt="${field.name}" src="${getFieldImage(field.crop?.name)}" onerror="this.src='/static/images/field_default.jpg'"/>
-        <div class="absolute top-2 right-2 bg-white/90 backdrop-blur rounded-full p-1.5 shadow-sm">
-          <span class="material-symbols-outlined ${getStatusClass(field.health_status)} text-sm" style="font-variation-settings: 'FILL' 1;">${getStatusIcon(field.health_status)}</span>
-        </div>
-      </div>
-      <div class="p-4 space-y-3">
+  <main class="px-4 pt-4 space-y-8">
+    <!-- Map Summary Chip / Mini Card -->
+    <section class="relative overflow-hidden rounded-3xl h-44 flex flex-col justify-end p-6 bg-surface-container" data-location="Iowa Farm Lands">
+      <div class="absolute inset-0 z-0 opacity-40 bg-cover bg-center" style="background-image: url('/static/images/fields_map.jpg')"></div>
+      <div class="absolute inset-0 bg-gradient-to-t from-surface-container via-transparent to-transparent z-10"></div>
+      <div class="relative z-20 flex justify-between items-end">
         <div>
-          <h4 class="font-bold text-on-surface text-sm truncate">${field.name}</h4>
-          <div class="flex justify-between items-center mt-0.5">
-            <p class="text-[10px] text-on-surface-variant font-medium">${field.crop.name} • ${field.acreage} AC</p>
-            <span class="text-[10px] font-bold ${getHealthColor(field.health_status)}">${field.health_percentage || 0}%</span>
+          <span class="text-xs font-medium tracking-[0.03em] text-primary uppercase mb-1 block">Property Overview</span>
+          <h2 class="text-3xl font-bold text-on-surface tracking-tight">
+            <span id="total-acreage">0.0</span>
+            <span class="text-lg font-medium opacity-70">Total AC</span>
+          </h2>
+        </div>
+        <button onclick="openMap()" class="bg-primary px-4 py-2 rounded-full flex items-center gap-2 shadow-lg hover:shadow-xl transition-shadow">
+          <span class="material-symbols-outlined text-on-primary text-sm" style="font-variation-settings: 'FILL' 1;">map</span>
+          <span class="text-on-primary text-xs font-bold">Interactive Map</span>
+        </button>
+      </div>
+    </section>
+
+    <!-- Active Fields Section -->
+    <div class="space-y-4">
+      <div class="flex justify-between items-center px-2">
+        <h3 class="text-xl font-bold text-on-surface tracking-tight">Active Fields</h3>
+        <button class="text-primary text-sm font-semibold flex items-center gap-1" onclick="openFilterModal()">
+          Filter <span class="material-symbols-outlined text-sm">filter_list</span>
+        </button>
+      </div>
+
+      <div id="fields-container" class="flex overflow-x-auto gap-4 pb-4 no-scrollbar px-2 -mx-2">
+        <div class="flex-none w-[200px] h-48 bg-surface-container-low rounded-[24px] flex items-center justify-center">
+          <span class="text-on-surface-variant">Loading fields...</span>
+        </div>
+      </div>
+
+      <div class="flex justify-center">
+        <button onclick="viewAllFields()" class="flex items-center gap-2 px-6 py-2.5 rounded-full border border-outline-variant text-primary font-bold text-xs hover:bg-surface-variant transition-colors active:scale-95">
+          View All Field Inventory
+          <span class="material-symbols-outlined text-sm">arrow_forward</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Overall Health Check Section -->
+    <section class="space-y-4">
+      <div class="bg-[#5F6F52] rounded-[32px] p-6 text-white flex flex-col items-center sm:flex-row gap-6">
+        <div class="relative flex-shrink-0">
+          <div class="circular-progress w-24 h-24 rounded-full flex items-center justify-center" id="overall-progress-ring" style="--progress: 0;">
+            <div class="text-center">
+              <div id="overall-moisture-value" class="text-xl font-bold leading-none">0%</div>
+              <div class="text-[8px] font-bold uppercase tracking-wider opacity-80 mt-1">Moisture</div>
+            </div>
           </div>
         </div>
-        <div class="flex items-center gap-2 py-1">
-          <div class="flex-1 h-1.5 bg-surface-variant rounded-full overflow-hidden">
-            <div class="${getHealthProgressColor(field.health_status)} h-full" style="width: ${field.health_percentage || 0}%"></div>
+        <div class="flex-1 space-y-2 text-center sm:text-left">
+          <h3 class="text-xl font-bold tracking-tight text-[#d6e8c5]">Overall Health Check</h3>
+          <p id="overall-health-message" class="text-xs leading-relaxed opacity-90 text-[#d6e8c5]/80">
+            Loading property health summary...
+          </p>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-3 gap-3">
+        <div class="bg-[#5F6F52] p-4 rounded-2xl flex flex-col items-center justify-center text-center">
+          <span class="material-symbols-outlined text-[#d6e8c5] mb-2" style="font-variation-settings: 'FILL' 1;">thermostat</span>
+          <span id="avg-heat" class="text-lg font-bold text-white leading-none">0°C</span>
+          <span class="text-[8px] font-bold uppercase tracking-wider text-[#d6e8c5]/70 mt-1">Heat</span>
+        </div>
+        <div class="bg-[#5F6F52] p-4 rounded-2xl flex flex-col items-center justify-center text-center">
+          <span class="material-symbols-outlined text-[#d6e8c5] mb-2" style="font-variation-settings: 'FILL' 1;">psychology</span>
+          <span id="avg-stress" class="text-lg font-bold text-white leading-none">Low</span>
+          <span class="text-[8px] font-bold uppercase tracking-wider text-[#d6e8c5]/70 mt-1">Stress</span>
+        </div>
+        <div class="bg-[#5F6F52] p-4 rounded-2xl flex flex-col items-center justify-center text-center">
+          <span class="material-symbols-outlined text-[#d6e8c5] mb-2" style="font-variation-settings: 'FILL' 1;">shield_health</span>
+          <span id="overall-threats" class="text-xs font-bold text-white leading-tight">Clear</span>
+          <span class="text-[8px] font-bold uppercase tracking-wider text-[#d6e8c5]/70 mt-1">Threats</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Pending Tasks Section -->
+    <section class="bg-[#d6e8c5]/40 dark:bg-[#5f6f52]/20 rounded-[32px] p-6 space-y-5">
+      <div class="flex justify-between items-center">
+        <div class="flex items-center gap-2 text-[#47573b] dark:text-[#d5e9c1]">
+          <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">assignment</span>
+          <h3 class="font-bold tracking-tight text-lg">Pending Tasks</h3>
+        </div>
+        <span id="tasks-due-today" class="bg-[#47573b] text-white text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-wide">
+          0 DUE TODAY
+        </span>
+      </div>
+
+      <div id="tasks-container" class="space-y-3">
+        <div class="text-center text-on-surface-variant py-4">Loading tasks...</div>
+      </div>
+
+      <button onclick="viewAllTasks()" class="w-full py-3.5 text-center text-xs font-bold text-[#47573b] dark:text-[#d5e9c1] bg-[#f1f3ee]/60 dark:bg-white/5 rounded-xl hover:bg-white/80 dark:hover:bg-white/10 transition-colors active:scale-95">
+        View All Field Tasks
+      </button>
+    </section>
+  </main>
+
+  <!-- Field Details Modal -->
+  <div id="fieldDetailsModal" class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 hidden" onclick="closeFieldDetailsModal()">
+    <div class="bg-surface rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-2xl" onclick="event.stopPropagation()">
+      <div class="sticky top-0 flex items-center justify-between p-6 border-b border-surface-variant bg-surface">
+        <h2 id="fieldDetailsModalTitle" class="text-2xl font-bold text-primary">Field Details</h2>
+        <button onclick="closeFieldDetailsModal()" class="p-2 hover:bg-surface-container rounded-full transition-colors">
+          <span class="material-symbols-outlined">close</span>
+        </button>
+      </div>
+
+      <div class="p-6 space-y-6">
+        <div class="bg-surface-container rounded-lg p-4">
+          <h3 class="text-sm font-medium text-on-surface-variant mb-3">Basic Information</h3>
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <span class="text-on-surface-variant">Field Name:</span>
+              <span id="fieldName" class="font-medium text-on-surface block"></span>
+            </div>
+            <div>
+              <span class="text-on-surface-variant">Crop:</span>
+              <span id="fieldCrop" class="font-medium text-on-surface block"></span>
+            </div>
+            <div>
+              <span class="text-on-surface-variant">Acreage:</span>
+              <span id="fieldAcreage" class="font-medium text-on-surface block"></span>
+            </div>
+            <div>
+              <span class="text-on-surface-variant">Growth Stage:</span>
+              <span id="fieldGrowthStage" class="font-medium text-on-surface block"></span>
+            </div>
           </div>
         </div>
-        <div class="flex justify-between items-center pt-1 border-t border-outline-variant/20">
-          <div class="flex gap-2">
-            <span class="material-symbols-outlined text-xs text-secondary opacity-70">opacity</span>
-            <span class="material-symbols-outlined text-xs text-secondary opacity-70">thermostat</span>
+
+        <div class="bg-surface-container rounded-lg p-4">
+          <h3 class="text-sm font-medium text-on-surface-variant mb-3">Health Status</h3>
+          <div class="space-y-4">
+            <div>
+              <span class="text-on-surface-variant">Status:</span>
+              <div class="flex items-center gap-1.5 text-primary font-medium mt-1">
+                <span id="fieldStatusIcon" class="material-symbols-outlined text-sm" style="font-variation-settings: 'FILL' 1;"></span>
+                <span id="fieldStatusText"></span>
+              </div>
+            </div>
+            <div>
+              <span class="text-on-surface-variant">Health Percentage:</span>
+              <div class="flex items-center gap-2 mt-1">
+                <span id="fieldHealthPercent" class="text-primary font-medium"></span>
+              </div>
+              <div class="h-2 w-full bg-surface-container-highest rounded-full overflow-hidden mt-2">
+                <div id="fieldHealthBar" class="bg-primary h-full"></div>
+              </div>
+            </div>
           </div>
-          <span class="text-[10px] font-bold ${getHealthColor(field.health_status)} uppercase">${field.growth_stage || 'Unknown'}</span>
+        </div>
+
+        <div class="bg-surface-container rounded-lg p-4">
+          <h3 class="text-sm font-medium text-on-surface-variant mb-3">Environmental Data</h3>
+          <div class="grid grid-cols-3 gap-4">
+            <div>
+              <span class="text-[9px] uppercase tracking-[0.1em] text-on-surface-variant block mb-1">Moisture</span>
+              <span id="fieldMoisture" class="text-base font-bold text-on-surface"></span>
+            </div>
+            <div>
+              <span class="text-[9px] uppercase tracking-[0.1em] text-on-surface-variant block mb-1">Temperature</span>
+              <span id="fieldTemperature" class="text-base font-bold text-on-surface"></span>
+            </div>
+            <div>
+              <span class="text-[9px] uppercase tracking-[0.1em] text-on-surface-variant block mb-1">Stress Level</span>
+              <span id="fieldStress" class="text-base font-bold text-on-surface"></span>
+            </div>
+          </div>
+        </div>
+
+        <div class="bg-surface-container rounded-lg p-4">
+          <h3 class="text-sm font-medium text-on-surface-variant mb-3">Disease Risk</h3>
+          <div id="fieldDiseaseRisk" class="font-medium text-on-surface"></div>
+        </div>
+
+        <div class="bg-surface-container rounded-lg p-4">
+          <h3 class="text-sm font-medium text-on-surface-variant mb-3">Field Tasks</h3>
+          <div id="fieldTasksList" class="space-y-3">
+            <div class="text-sm text-on-surface-variant">No tasks found.</div>
+          </div>
         </div>
       </div>
     </div>
-  `).join('');
-}
+  </div>
 
-// Update total acreage
-function updateTotalAcreage(fields) {
-  const total = fields.reduce((sum, field) => sum + (parseFloat(field.acreage) || 0), 0);
-  document.getElementById('total-acreage').textContent = total.toFixed(1);
-}
+  <!-- Floating Action Button -->
+  <button onclick="createNewField()" class="fixed bottom-28 right-6 w-16 h-16 bg-[#5F6F52] rounded-full shadow-2xl flex items-center justify-center text-white active:scale-90 transition-transform z-40 hover:shadow-xl">
+    <span class="material-symbols-outlined text-3xl" style="font-variation-settings: 'wght' 600;">add</span>
+  </button>
 
-// Helper functions for field rendering
-function getFieldImage(cropType) {
-  const imageMap = {
-    'Corn': '/static/images/field_corn.jpg',
-    'Wheat': '/static/images/field_wheat.jpg',
-    'Soybeans': '/static/images/field_soybeans.jpg',
-    'Sunflower': '/static/images/field_sunflower.jpg',
-  };
-  return imageMap[cropType] || '/static/images/field_default.jpg';
-}
+  <!-- BottomNavBar Section -->
+  <nav class="fixed bottom-0 left-0 w-full z-50 bg-[#fcf9f0]/80 dark:bg-stone-950/80 backdrop-blur-md rounded-t-[24px] shadow-[0_-8px_24px_rgba(28,28,23,0.06)] flex justify-around items-center px-4 pb-6 pt-3">
+    <a class="flex flex-col items-center justify-center text-stone-500 dark:text-stone-400 px-3 py-1.5 transition-transform hover:scale-105 duration-150" href="/dashboard">
+      <span class="material-symbols-outlined" data-icon="dashboard">dashboard</span>
+      <span class="font-['Work_Sans'] text-[11px] font-medium tracking-wide">Dashboard</span>
+    </a>
+    <a class="flex flex-col items-center justify-center bg-secondary-fixed dark:bg-primary-container text-on-background dark:text-surface-bright rounded-2xl px-3 py-1.5 transition-transform hover:scale-105 duration-150" href="/myfields">
+      <span class="material-symbols-outlined" data-icon="landscape" style="font-variation-settings: 'FILL' 1;">landscape</span>
+      <span class="font-['Work_Sans'] text-[11px] font-medium tracking-wide">Fields</span>
+    </a>
+    <a class="flex flex-col items-center justify-center text-stone-500 dark:text-stone-400 px-3 py-1.5 transition-transform hover:scale-105 duration-150" href="/mycrops">
+      <span class="material-symbols-outlined" data-icon="eco" style="font-variation-settings: 'FILL' 1;">eco</span>
+      <span class="font-['Work_Sans'] text-[11px] font-medium tracking-wide">Crops</span>
+    </a>
+    <a class="flex flex-col items-center justify-center text-stone-500 dark:text-stone-400 px-3 py-1.5 transition-transform hover:scale-105 duration-150" href="/mytasks">
+      <span class="material-symbols-outlined" data-icon="assignment_turned_in">assignment_turned_in</span>
+      <span class="font-['Work_Sans'] text-[11px] font-medium tracking-wide">Tasks</span>
+    </a>
+    <a class="flex flex-col items-center justify-center text-stone-500 dark:text-stone-400 px-3 py-1.5 transition-transform hover:scale-105 duration-150" href="/myplanner">
+      <span class="material-symbols-outlined" data-icon="calendar_today">calendar_today</span>
+      <span class="font-['Work_Sans'] text-[11px] font-medium tracking-wide">Planner</span>
+    </a>
+    <a class="flex flex-col items-center justify-center text-stone-500 dark:text-stone-400 px-3 py-1.5 transition-transform hover:scale-105 duration-150" href="#">
+      <span class="material-symbols-outlined" data-icon="chat">chat</span>
+      <span class="font-['Work_Sans'] text-[11px] font-medium tracking-wide">Chat</span>
+    </a>
+  </nav>
 
-function getStatusIcon(status) {
-  const iconMap = {
-    'healthy': 'check_circle',
-    'alert': 'warning',
-    'critical': 'error'
-  };
-  return iconMap[status] || 'help';
-}
+  <script>
+    function initTheme() {
+      const savedTheme = localStorage.getItem('theme') || 'light';
+      if (savedTheme === 'dark') {
+        document.documentElement.classList.add('dark');
+      } else {
+        document.documentElement.classList.remove('dark');
+      }
+    }
 
-function getStatusClass(status) {
-  const classMap = {
-    'healthy': 'text-primary',
-    'alert': 'text-error',
-    'critical': 'text-error'
-  };
-  return classMap[status] || 'text-primary';
-}
+    function toggleTheme() {
+      const html = document.documentElement;
+      if (html.classList.contains('dark')) {
+        html.classList.remove('dark');
+        localStorage.setItem('theme', 'light');
+      } else {
+        html.classList.add('dark');
+        localStorage.setItem('theme', 'dark');
+      }
+    }
 
-function getHealthColor(status) {
-  const colorMap = {
-    'healthy': 'text-primary',
-    'alert': 'text-error',
-    'critical': 'text-error'
-  };
-  return colorMap[status] || 'text-primary';
-}
+    initTheme();
 
-function getHealthProgressColor(status) {
-  const colorMap = {
-    'healthy': 'bg-primary',
-    'alert': 'bg-error',
-    'critical': 'bg-error'
-  };
-  return colorMap[status] || 'bg-primary';
-}
+    const API_BASE = '/myfields';
 
-// ===== UI INTERACTION FUNCTIONS =====
-function createNewField() {
-  // Show modal or navigate to create field page
-  alert('Create new field feature - navigate to form');
-}
+    document.addEventListener('DOMContentLoaded', function() {
+      loadFieldsPage();
+    });
 
-function openFieldDetailsModal(fieldId) {
-  const field = window.fields.find(f => f.id === fieldId);
-  if (!field) return;
+    async function loadFieldsPage() {
+      try {
+        const response = await fetch(`${API_BASE}/fields/active`);
+        if (!response.ok) throw new Error('Failed to fetch active fields');
 
-  // Populate modal
-  document.getElementById('fieldDetailsModalTitle').textContent = field.name;
-  document.getElementById('fieldName').textContent = field.name;
-  document.getElementById('fieldCrop').textContent = field.crop?.name || 'Unknown';
-  document.getElementById('fieldAcreage').textContent = `${field.acreage} AC`;
-  document.getElementById('fieldGrowthStage').textContent = field.growth_stage || 'Unknown';
+        const data = await response.json();
+        const fields = Array.isArray(data.field_cards) ? data.field_cards : [];
+        const tasks = Array.isArray(data.field_task_cards) ? data.field_task_cards : [];
 
-  // Health Status
-  const statusIcon = getStatusIcon(field.health_status);
-  const statusText = field.health_status.charAt(0).toUpperCase() + field.health_status.slice(1);
-  document.getElementById('fieldStatusIcon').textContent = statusIcon;
-  document.getElementById('fieldStatusIcon').className = `material-symbols-outlined text-sm ${getStatusClass(field.health_status)}`;
-  document.getElementById('fieldStatusText').textContent = statusText;
-  document.getElementById('fieldStatusText').className = getHealthColor(field.health_status);
-  document.getElementById('fieldHealthPercent').textContent = `${field.health_percentage || 0}%`;
-  document.getElementById('fieldHealthPercent').className = `text-primary font-medium ${getHealthColor(field.health_status)}`;
-  document.getElementById('fieldHealthBar').style.width = `${field.health_percentage || 0}%`;
-  document.getElementById('fieldHealthBar').className = `h-full ${getHealthProgressColor(field.health_status)}`;
+        renderFieldCards(fields);
+        renderTasks(tasks);
+        updateTotalAcreage(fields);
+        updateOverallStats(fields);
+      } catch (error) {
+        console.error('Error loading fields page:', error);
+        showError('Failed to load fields');
+      }
+    }
 
-  // Environmental Data
-  document.getElementById('fieldMoisture').textContent = `${field.health_percentage || 0}%`;
-  const stressLevel = field.health_status === 'healthy' ? 'Low' : field.health_status === 'alert' ? 'Medium' : 'High';
-  document.getElementById('fieldStress').textContent = stressLevel;
+    function renderFieldCards(fields) {
+      const container = document.getElementById('fields-container');
 
-  document.getElementById('fieldDetailsModal').classList.remove('hidden');
-}
+      if (!fields.length) {
+        container.innerHTML = `
+          <div class="flex-none w-full text-center text-on-surface-variant py-10">
+            No active fields found.
+          </div>
+        `;
+        return;
+      }
 
-function closeFieldDetailsModal() {
-  document.getElementById('fieldDetailsModal').classList.add('hidden');
-}
+      container.innerHTML = fields.map(field => {
+        const cropName = field.crop?.name || 'No Crop';
+        const score = clampScore(field.field_score);
 
-function viewField(fieldId) {
-  window.location.href = `${API_BASE}/fields/${fieldId}`;
-}
+        return `
+          <div
+            class="field-card flex-none w-[200px] bg-surface-container-low rounded-[24px] overflow-hidden flex flex-col cursor-pointer hover:shadow-md transition-shadow"
+            data-field-id="${field.id}"
+            onclick="openFieldDetailsModal(${field.id})"
+          >
+            <div class="h-28 relative">
+              <img
+                class="w-full h-full object-cover"
+                alt="${escapeHtml(field.name || 'Field')}"
+                src="${getFieldImage(cropName)}"
+                onerror="this.src='/static/images/field_default.jpg'"
+              />
+              <div class="absolute top-2 right-2 bg-white/90 backdrop-blur rounded-full p-1.5 shadow-sm">
+                <span class="material-symbols-outlined ${getStatusClass(field.health_status)} text-sm" style="font-variation-settings: 'FILL' 1;">
+                  ${getStatusIcon(field.health_status)}
+                </span>
+              </div>
+            </div>
 
-function viewAllFields() {
-  window.location.href = `${API_BASE}/fields`;
-}
+            <div class="p-4 space-y-3">
+              <div>
+                <h4 class="font-bold text-on-surface text-sm truncate">${escapeHtml(field.name || 'Unnamed Field')}</h4>
+                <div class="flex justify-between items-center mt-0.5 gap-2">
+                  <p class="text-[10px] text-on-surface-variant font-medium truncate">
+                    ${escapeHtml(cropName)} • ${field.acreage ?? 0} AC
+                  </p>
+                  <span class="text-[10px] font-bold ${getHealthColor(field.health_status)}">${score}%</span>
+                </div>
+              </div>
 
-function viewAllTasks() {
-  window.location.href = '/tasks';
-}
+              <div class="flex items-center gap-2 py-1">
+                <div class="flex-1 h-1.5 bg-surface-variant rounded-full overflow-hidden">
+                  <div class="${getHealthProgressColor(field.health_status)} h-full" style="width: ${score}%"></div>
+                </div>
+              </div>
 
-function openMap() {
-  alert('Open interactive map');
-}
+              <div class="flex justify-between items-center pt-1 border-t border-outline-variant/20">
+                <div class="flex gap-2">
+                  <span class="material-symbols-outlined text-xs text-secondary opacity-70">opacity</span>
+                  <span class="material-symbols-outlined text-xs text-secondary opacity-70">thermostat</span>
+                </div>
+                <span class="text-[10px] font-bold ${getHealthColor(field.health_status)} uppercase">
+                  ${escapeHtml(field.growth_stage || 'Unknown')}
+                </span>
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
 
-function openFilterModal() {
-  alert('Open filter modal');
-}
+    async function openFieldDetailsModal(fieldId) {
+      try {
+        const response = await fetch(`${API_BASE}/fields/${fieldId}`);
+        if (!response.ok) throw new Error('Failed to fetch field details');
 
-function openSearch() {
-  alert('Open search');
-}
+        const field = await response.json();
+        populateFieldModal(field);
+        document.getElementById('fieldDetailsModal').classList.remove('hidden');
+      } catch (error) {
+        console.error('Error loading field details:', error);
+        showError('Failed to load field details');
+      }
+    }
 
-function showNotifications() {
-  alert('Show notifications');
-}
+    function populateFieldModal(field) {
+      const cropName = field.crop?.name || 'Unknown';
+      const score = clampScore(field.field_score);
+      const normalizedStatus = normalizeStatus(field.health_status);
 
-function showError(message) {
-  // Show error notification
-  alert(`Error: ${message}`);
-}
-</script>
+      document.getElementById('fieldDetailsModalTitle').textContent = field.name || 'Field Details';
+      document.getElementById('fieldName').textContent = field.name || 'Unknown';
+      document.getElementById('fieldCrop').textContent = cropName;
+      document.getElementById('fieldAcreage').textContent = `${field.acreage ?? 0} AC`;
+      document.getElementById('fieldGrowthStage').textContent = field.growth_stage || 'Unknown';
+
+      document.getElementById('fieldStatusIcon').textContent = getStatusIcon(normalizedStatus);
+      document.getElementById('fieldStatusIcon').className = `material-symbols-outlined text-sm ${getStatusClass(normalizedStatus)}`;
+      document.getElementById('fieldStatusText').textContent = capitalize(normalizedStatus);
+      document.getElementById('fieldStatusText').className = getHealthColor(normalizedStatus);
+
+      document.getElementById('fieldHealthPercent').textContent = `${score}%`;
+      document.getElementById('fieldHealthPercent').className = `font-medium ${getHealthColor(normalizedStatus)}`;
+      document.getElementById('fieldHealthBar').style.width = `${score}%`;
+      document.getElementById('fieldHealthBar').className = `h-full ${getHealthProgressColor(normalizedStatus)}`;
+
+      document.getElementById('fieldMoisture').textContent = `${Math.round(Number(field.moisture_level || 0))}%`;
+      document.getElementById('fieldTemperature').textContent = `${Math.round(Number(field.heat_level || 0))}°C`;
+      document.getElementById('fieldStress').textContent = getStressLabel(field.stress_risk);
+      document.getElementById('fieldDiseaseRisk').textContent = field.disease_risk || 'Unknown';
+
+      renderFieldTasks(field.tasks || []);
+    }
+
+    function renderFieldTasks(tasks) {
+      const container = document.getElementById('fieldTasksList');
+
+      if (!tasks.length) {
+        container.innerHTML = `<div class="text-sm text-on-surface-variant">No tasks found.</div>`;
+        return;
+      }
+
+      container.innerHTML = tasks.map(task => `
+        <div class="bg-white dark:bg-stone-900 p-4 rounded-[20px] flex items-center gap-4 shadow-sm">
+          <div class="w-12 h-12 rounded-full bg-[#f1f3ee] dark:bg-stone-800 flex items-center justify-center text-[#47573b] dark:text-[#d5e9c1]">
+            <span class="material-symbols-outlined" style="font-size: 20px;">
+              ${getTaskIcon(task.task_type)}
+            </span>
+          </div>
+          <div class="flex-1 min-w-0">
+            <h5 class="text-sm font-bold text-on-surface truncate">${escapeHtml(task.title || 'Untitled Task')}</h5>
+            <p class="text-[11px] text-on-surface-variant font-medium truncate">
+              ${escapeHtml(getTaskSubtitle(task))}
+            </p>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function closeFieldDetailsModal() {
+      document.getElementById('fieldDetailsModal').classList.add('hidden');
+    }
+
+    function renderTasks(tasks) {
+      const container = document.getElementById('tasks-container');
+
+      const pendingTasks = tasks.filter(task => !task.completed);
+
+      if (!pendingTasks.length) {
+        container.innerHTML = `
+          <div class="text-center text-on-surface-variant py-4">
+            No pending tasks found.
+          </div>
+        `;
+        updateDueToday([]);
+        return;
+      }
+
+      container.innerHTML = pendingTasks.map(task => `
+        <div class="bg-white dark:bg-stone-900 p-4 rounded-[20px] flex items-center gap-4 shadow-sm">
+          <div class="w-12 h-12 rounded-full bg-[#f1f3ee] dark:bg-stone-800 flex items-center justify-center text-[#47573b] dark:text-[#d5e9c1]">
+            <span class="material-symbols-outlined" style="font-size: 20px;">
+              ${getTaskIcon(task.task_type)}
+            </span>
+          </div>
+          <div class="flex-1 min-w-0">
+            <h5 class="text-sm font-bold text-on-surface truncate">${escapeHtml(task.title || 'Untitled Task')}</h5>
+            <p class="text-[11px] text-on-surface-variant font-medium truncate">
+              ${escapeHtml(getTaskSubtitle(task))}
+            </p>
+          </div>
+          <span class="material-symbols-outlined text-outline-variant">chevron_right</span>
+        </div>
+      `).join('');
+
+      updateDueToday(pendingTasks);
+    }
+
+    function updateDueToday(tasks) {
+      const today = new Date().toISOString().split('T')[0];
+      const dueToday = tasks.filter(task => {
+        if (!task.due_date) return false;
+        return String(task.due_date).split('T')[0] === today;
+      }).length;
+
+      document.getElementById('tasks-due-today').textContent = `${dueToday} DUE TODAY`;
+    }
+
+    function updateTotalAcreage(fields) {
+      const total = fields.reduce((sum, field) => sum + (parseFloat(field.acreage) || 0), 0);
+      document.getElementById('total-acreage').textContent = total.toFixed(1);
+    }
+
+    function updateOverallStats(fields) {
+      if (!fields.length) {
+        document.getElementById('overall-moisture-value').textContent = '0%';
+        document.getElementById('overall-progress-ring').style.setProperty('--progress', 0);
+        document.getElementById('avg-heat').textContent = '0°C';
+        document.getElementById('avg-stress').textContent = 'Low';
+        document.getElementById('overall-threats').textContent = 'Clear';
+        document.getElementById('overall-health-message').textContent = 'No active fields available.';
+        return;
+      }
+
+      const avgMoisture = average(fields.map(f => Number(f.moisture_level || 0)));
+      const avgHeat = average(fields.map(f => Number(f.heat_level || 0)));
+      const avgStress = average(fields.map(f => Number(f.stress_risk || 0)));
+
+      const criticalCount = fields.filter(f => normalizeStatus(f.health_status) === 'critical').length;
+      const alertCount = fields.filter(f => normalizeStatus(f.health_status) === 'alert').length;
+
+      document.getElementById('overall-moisture-value').textContent = `${Math.round(avgMoisture)}%`;
+      document.getElementById('overall-progress-ring').style.setProperty('--progress', Math.round(avgMoisture));
+      document.getElementById('avg-heat').textContent = `${Math.round(avgHeat)}°C`;
+      document.getElementById('avg-stress').textContent = getStressLabel(avgStress);
+      document.getElementById('overall-threats').textContent =
+        criticalCount > 0 ? 'Critical' :
+        alertCount > 0 ? 'Watch' :
+        'Clear';
+
+      document.getElementById('overall-health-message').textContent =
+        criticalCount > 0
+          ? 'One or more active fields need urgent attention. Review moisture, stress, and disease indicators immediately.'
+          : alertCount > 0
+          ? 'Some active fields show early warning signs. Monitor health trends and pending tasks closely.'
+          : 'Average soil moisture and temperature levels across active fields are within a stable range.';
+    }
+
+    function getTaskSubtitle(task) {
+      if (task.field_name) return `${task.field_name} • ${formatTaskType(task.task_type)}`;
+      if (task.crop_name) return `${task.crop_name} • ${formatTaskType(task.task_type)}`;
+      if (task.task_category) return `${capitalize(task.task_category)} • ${formatTaskType(task.task_type)}`;
+      return formatTaskType(task.task_type);
+    }
+
+    function getTaskIcon(type) {
+      const iconMap = {
+        irrigation: 'water_drop',
+        spraying: 'science',
+        inspection: 'monitoring',
+        harvesting: 'agriculture',
+        fertilizing: 'eco',
+        maintenance: 'build',
+        planning: 'event_note',
+        monitoring: 'monitoring'
+      };
+      return iconMap[String(type || '').toLowerCase()] || 'assignment';
+    }
+
+    function formatTaskType(type) {
+      if (!type) return 'Task';
+      return capitalize(String(type).replace(/_/g, ' '));
+    }
+
+    function getFieldImage(cropType) {
+      const imageMap = {
+        Corn: '/static/images/field_corn.jpg',
+        Wheat: '/static/images/field_wheat.jpg',
+        Soybeans: '/static/images/field_soybeans.jpg',
+        Sunflower: '/static/images/field_sunflower.jpg'
+      };
+      return imageMap[cropType] || '/static/images/field_default.jpg';
+    }
+
+    function normalizeStatus(status) {
+      const value = String(status || '').toLowerCase();
+      if (value === 'healthy') return 'healthy';
+      if (value === 'alert') return 'alert';
+      if (value === 'critical') return 'critical';
+      return 'healthy';
+    }
+
+    function getStatusIcon(status) {
+      const iconMap = {
+        healthy: 'check_circle',
+        alert: 'warning',
+        critical: 'error'
+      };
+      return iconMap[normalizeStatus(status)] || 'help';
+    }
+
+    function getStatusClass(status) {
+      const classMap = {
+        healthy: 'text-primary',
+        alert: 'text-amber-600',
+        critical: 'text-error'
+      };
+      return classMap[normalizeStatus(status)] || 'text-primary';
+    }
+
+    function getHealthColor(status) {
+      const colorMap = {
+        healthy: 'text-primary',
+        alert: 'text-amber-600',
+        critical: 'text-error'
+      };
+      return colorMap[normalizeStatus(status)] || 'text-primary';
+    }
+
+    function getHealthProgressColor(status) {
+      const colorMap = {
+        healthy: 'bg-primary',
+        alert: 'bg-amber-500',
+        critical: 'bg-error'
+      };
+      return colorMap[normalizeStatus(status)] || 'bg-primary';
+    }
+
+    function clampScore(value) {
+      const num = Number(value || 0);
+      return Math.max(0, Math.min(100, Math.round(num)));
+    }
+
+    function getStressLabel(value) {
+      const num = Number(value || 0);
+      if (num >= 60) return 'High';
+      if (num >= 25) return 'Medium';
+      return 'Low';
+    }
+
+    function average(arr) {
+      if (!arr.length) return 0;
+      return arr.reduce((sum, n) => sum + n, 0) / arr.length;
+    }
+
+    function capitalize(text) {
+      const str = String(text || '');
+      return str.charAt(0).toUpperCase() + str.slice(1);
+    }
+
+    function escapeHtml(text) {
+      return String(text ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+
+    function createNewField() {
+      alert('Create new field feature - navigate to form');
+    }
+
+    function viewAllFields() {
+      window.location.href = `${API_BASE}/fields`;
+    }
+
+    function viewAllTasks() {
+      window.location.href = '/mytasks';
+    }
+
+    function openMap() {
+      alert('Open interactive map');
+    }
+
+    function openFilterModal() {
+      alert('Open filter modal');
+    }
+
+    function openSearch() {
+      alert('Open search');
+    }
+
+    function showNotifications() {
+      alert('Show notifications');
+    }
+
+    function showError(message) {
+      alert(`Error: ${message}`);
+    }
+  </script>
 </body>
 </html>
