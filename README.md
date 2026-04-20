@@ -261,7 +261,7 @@ python -m venv venv && source venv/bin/activate && pip install -r requirements.t
 
 ## 🌍 Hackathon Context
 
-This project is developed as part of the:
+This project started as part of the:
 
 ### 🏆 Gemma 4 Good Hackathon (Kaggle)
 
@@ -358,7 +358,7 @@ Contributions are welcome!
 Atqa R. Amir, Amna Bukhari, Syed Faizan
 
 Built to support **climate-resilient farming** through simple, practical, and accessible technology.
-Developed for the **Gemma 4 Good Hackathon (Kaggle)**, and beyound.
+Developed for the **Gemma 4 Good Hackathon (Kaggle)**, and beyond.
 
 
 
