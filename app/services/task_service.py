@@ -62,7 +62,7 @@ def generate_tasks(weather, crop, soil):
 
 
 
-    from app.repositories.task_repository import TaskRepository
+from app.repositories.task_repository import TaskRepository
 
 class TaskService:
     def __init__(self):
@@ -75,6 +75,7 @@ class TaskService:
         return self.repository.get_all()
 
     def get_task_by_id(self, task_id):
+        print (f"Fetching task with ID: {task_id} from repository")
         return self.repository.get_by_id(task_id)
 
     def delete_task(self, task):

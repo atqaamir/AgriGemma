@@ -63,6 +63,14 @@ def create_field():
     return jsonify(field_detail_schema.dump(field)), 201
 
 
+@fields_bp.route("/fields/<int:field_id>", methods=["DELETE"])
+def delete_field(field_id):
+    field = FieldService.delete_field(field_id)
+    if not field:
+        return jsonify({"error": "Field not found"}), 404
+    return jsonify({"message": "Field deleted successfully"}), 200
+
+
 @fields_bp.route("/fields/active", methods=["GET"])
 def get_active_fields():
     result = FieldService.get_active_fields_with_tasks()

@@ -38,7 +38,9 @@ def get_tasks():
 
 @tasks_bp.route("/tasks/<int:task_id>", methods=["GET"])
 def get_task(task_id):
-    task = TaskService.get_task_by_id(task_id)
+    print(f"Received request for task ID: {task_id}")
+    task_service = TaskService()
+    task = task_service.get_task_by_id(task_id=task_id)
 
     if not task:
         return jsonify({"error": "Task not found"}), 404
@@ -55,13 +57,15 @@ def create_task():
     except ValidationError as err:
         return jsonify({"errors": err.messages}), 400
 
-    task = TaskService.create_task(valid_data)
+    task_service = TaskService()
+    task = task_service.create_task(valid_data)
     return jsonify(task_detail_schema.dump(task)), 201
 
 
 @tasks_bp.route("/tasks/<int:task_id>", methods=["PUT"])
 def update_task(task_id):
-    task = TaskService.get_task_by_id(task_id)
+    task_service = TaskService()
+    task = task_service.get_task_by_id(task_id=task_id)
 
     if not task:
         return jsonify({"error": "Task not found"}), 404

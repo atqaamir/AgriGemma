@@ -7,6 +7,8 @@ class TaskCardSchema(Schema):
     priority = fields.Str()
     due_date = fields.Date(allow_none=True)
     completed = fields.Bool()
+    task_type = fields.Str(allow_none=True)
+    task_category = fields.Str(allow_none=True)
     field_name = fields.Method("get_field_name")
     crop_name = fields.Method("get_crop_name")
 
