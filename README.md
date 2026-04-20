@@ -1,4 +1,4 @@
-# SmartFarming; Climate Adaptation Advisor for Farmers
+# AgriGemma: A Climate-Smart Seasonal Planner for Smallholder Farmers
 
 A smart farming assistant that helps farmers adapt to climate change using weather data, soil conditions, crop monitoring, and AI-driven recommendations.
 
