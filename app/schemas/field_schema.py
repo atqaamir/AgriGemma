@@ -1,20 +1,82 @@
-from marshmallow import Schema, fields
-from .crop_schema import CropMiniSchema
+from marshmallow import Schema, fields, validate
+from app.schemas.task_schema import TaskCardSchema
 
-class FieldSchema(Schema):
-    id = fields.Int(dump_only=True)
-    crop = fields.Nested(CropMiniSchema)
 
-    name = fields.Str(required=True)
+class CreateFieldSchema(Schema):
+    name = fields.Str(required=True, validate=validate.Length(min=1, max=100))
+    acreage = fields.Float(allow_none=True)
+    growth_stage = fields.Str(allow_none=True)
+    health_status = fields.Str(allow_none=True)
+    field_score = fields.Float(allow_none=True)
+    health_percentage = fields.Float(allow_none=True)
+    moisture_level = fields.Float(allow_none=True)
+    heat_level = fields.Float(allow_none=True)
+    stress_risk = fields.Float(allow_none=True)
+    disease_risk = fields.Str(allow_none=True)
+    currently_active = fields.Bool(load_default=True)
+    crop_id = fields.Int(allow_none=True)
+    user_id = fields.Int(allow_none=True)
+
+
+class FieldCardSchema(Schema):
+    id = fields.Int()
+    name = fields.Str()
     acreage = fields.Float()
     growth_stage = fields.Str()
     health_status = fields.Str()
     field_score = fields.Float()
-    moisture_level = fields.Float()
-    heat_level = fields.Float()
-    stress_risk = fields.Float()
-    disease_risk = fields.Str()
 
+    crop = fields.Method("get_crop")
+
+
+    def get_crop(self, obj):
+        if obj.crop:
+            return {
+                "id": obj.crop.id,
+                "name": obj.crop.name
+            }
+        return None
+
+    def get_task_count(self, obj):
+        return len(obj.tasks)
+
+    def get_pending_task_count(self, obj):
+        return len([task for task in obj.tasks if not task.completed])
+
+    def get_tasks_preview(self, obj):
+        pending_tasks = [task for task in obj.tasks if not task.completed][:3]
+        return TaskCardSchema(many=True).dump(pending_tasks)
+
+
+class FieldDetailSchema(Schema):
+    id = fields.Int()
+    name = fields.Str()
+    acreage = fields.Float(allow_none=True)
+    growth_stage = fields.Str(allow_none=True)
+    health_status = fields.Str(allow_none=True)
+    field_score = fields.Float(allow_none=True)
+    health_percentage = fields.Float(allow_none=True)
+    moisture_level = fields.Float(allow_none=True)
+    heat_level = fields.Float(allow_none=True)
+    stress_risk = fields.Float(allow_none=True)
+    disease_risk = fields.Str(allow_none=True)
     currently_active = fields.Bool()
 
-    user_id = fields.Int()
+    crop = fields.Method("get_crop")
+    tasks = fields.Method("get_tasks")
+
+    def get_crop(self, obj):
+        if obj.crop:
+            return {
+                "id": obj.crop.id,
+                "name": obj.crop.name
+            }
+        return None
+
+    def get_tasks(self, obj):
+        return TaskCardSchema(many=True).dump(obj.tasks)
+
+
+class MyFieldsPageSchema(Schema):
+    field_cards = fields.List(fields.Nested(FieldCardSchema))
+    field_task_cards = fields.List(fields.Nested(TaskCardSchema))

@@ -59,3 +59,26 @@ def generate_tasks(weather, crop, soil):
             seen.add(task["title"])
 
     return unique_tasks
+
+
+
+    from app.repositories.task_repository import TaskRepository
+
+class TaskService:
+    def __init__(self):
+        self.repository = TaskRepository()
+
+    def create_tasks(self, data):
+        return self.repository.create(data)
+
+    def get_all_tasks(self):
+        return self.repository.get_all()
+
+    def get_task_by_id(self, task_id):
+        return self.repository.get_by_id(task_id)
+
+    def delete_task(self, task):
+        self.repository.delete(task)
+
+    def update_tasks(self, task, data):
+        return self.repository.update(task, data)

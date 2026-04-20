@@ -7,7 +7,7 @@ class PesticideUse(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
 
-    pesticide_id = db.Column(db.Integer, db.ForeignKey("pesticides.id"), nullable=False)
+    pesticide_id = db.Column(db.Integer, db.ForeignKey("pesticide.id"), nullable=False)
     field_id = db.Column(db.Integer, db.ForeignKey("field.id"), nullable=False)
     crop_id = db.Column(db.Integer, db.ForeignKey("crop.id"), nullable=True)
     user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=True)
@@ -15,6 +15,15 @@ class PesticideUse(db.Model):
     use_date = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
     dosage_used = db.Column(db.String(100), nullable=True)
     notes = db.Column(db.Text, nullable=True)
+
+    
+    tasks = db.relationship(
+        "Task",
+        back_populates="pesticide",
+        foreign_keys="Task.pesticide_id",
+        lazy="select",
+    )
+
 
     def to_dict(self):
         return {
