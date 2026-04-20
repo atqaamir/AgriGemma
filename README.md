@@ -49,6 +49,15 @@ AgriGemma uses Gemma 4 to generate crop schedules and adapt them in real time wh
 
 ---
 
+## Limits
+
+prototype uses simplified agronomy rules
+forecast quality affects advice quality
+recommendations should support, not replace, local agronomists
+regional calibration is needed for deployment
+
+---
+
 ## ⚙️ Core Features
 
 ### 🏡 Farm Overview
