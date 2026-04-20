@@ -35,7 +35,7 @@ A **mobile-first, multilingual farming assistant** that:
 
 AgriGemma uses Gemma 4 to generate crop schedules and adapt them in real time when climate conditions change, helping farmers make safer planting, irrigation, and harvest decisions. Gemma 4 acts as the decision explainer and planner orchestrator, not as a raw weather predictor. 
 
-# Gemma 4 as an adaptive climate-planning agent for agriculture.
+###### Gemma 4 as an adaptive climate-planning agent for agriculture.
 
 ---
 
