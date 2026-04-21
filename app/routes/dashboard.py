@@ -1,5 +1,5 @@
 from flask import Blueprint, jsonify, render_template, request
-from app.services.dashboard_service import build_dashboard_data, chat_with_advisor, generate_seasonal_plan
+from app.services.dashboard_service import DashboardService
 
 dashboard_bp = Blueprint("dashboard", __name__)
 
@@ -8,9 +8,9 @@ def dashboard_page():
     return render_template("dashboard.html")
 
 
-@dashboard_bp.route("/dashboard", methods=["GET"])
-def get_dashboard():
-    dashboard_data = build_dashboard_data()
+@dashboard_bp.route("/<int:user_id>/dashboard", methods=["GET"])
+def get_dashboard(user_id):
+    dashboard_data = DashboardService().build_dashboard_data(user_id=user_id)
     return jsonify(dashboard_data), 200 
 
 @dashboard_bp.route("/<int:user_id>/advisor", methods=["GET"])
@@ -19,10 +19,10 @@ def get_advisor(user_id):
     if not user_message:
         return jsonify({"error": "Message parameter is required"}), 400
 
-    response = chat_with_advisor(user_id=user_id, message=user_message)
+    response = DashboardService().chat_with_advisor(user_id=user_id, message=user_message)
     return jsonify({"response": response}), 200
     
 @dashboard_bp.route("/<int:user_id>/seasonal-plan", methods=["GET"])
 def get_seasonal_plan(user_id):
-    plan = generate_seasonal_plan(user_id=user_id)
+    plan = DashboardService().generate_seasonal_plan(user_id=user_id)
     return jsonify(plan), 200
