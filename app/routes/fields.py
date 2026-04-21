@@ -1,4 +1,5 @@
 from flask import Blueprint, request, jsonify, render_template
+from marshmallow import ValidationError
 
 from app.services.field_service import FieldService
 from app.schemas.field_schema import (
