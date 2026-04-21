@@ -10,7 +10,7 @@ from .pesticides import pesticides_bp
 
 def register_routes(app):
     app.register_blueprint(main_bp)
-    app.register_blueprint(dashboard_bp)
+    app.register_blueprint(dashboard_bp,  url_prefix="/mydashboard")
     app.register_blueprint(fields_bp, url_prefix="/myfields")
     app.register_blueprint(crops_bp, url_prefix="/mycrops")
     app.register_blueprint(tasks_bp, url_prefix="/mytasks")

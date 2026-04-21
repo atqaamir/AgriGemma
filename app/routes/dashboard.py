@@ -1,19 +1,28 @@
-from flask import Blueprint, jsonify, request
-from app.services.dashboard_service import build_dashboard_data
+from flask import Blueprint, jsonify, render_template, request
+from app.services.dashboard_service import DashboardService
 
 dashboard_bp = Blueprint("dashboard", __name__)
 
+@dashboard_bp.route("/", methods=["GET"])
+def dashboard_page():
+    return render_template("dashboard.html")
 
-@dashboard_bp.route("/dashboard", methods=["GET"])
-def get_dashboard():
-    location = request.args.get("location", "Lahore")
-    crop_name = request.args.get("crop", "Wheat")
-    field_name = request.args.get("field", "North Field")
 
-    dashboard_data = build_dashboard_data(
-        location=location,
-        crop_name=crop_name,
-        field_name=field_name
-    )
+@dashboard_bp.route("/<int:user_id>/dashboard", methods=["GET"])
+def get_dashboard(user_id):
+    dashboard_data = DashboardService().build_dashboard_data(user_id=user_id)
+    return jsonify(dashboard_data), 200 
 
-    return jsonify(dashboard_data), 200
+@dashboard_bp.route("/<int:user_id>/advisor", methods=["GET"])
+def get_advisor(user_id):
+    user_message = request.args.get("message", "")
+    if not user_message:
+        return jsonify({"error": "Message parameter is required"}), 400
+
+    response = DashboardService().chat_with_advisor(user_id=user_id, message=user_message)
+    return jsonify({"response": response}), 200
+    
+@dashboard_bp.route("/<int:user_id>/seasonal-plan", methods=["GET"])
+def get_seasonal_plan(user_id):
+    plan = DashboardService().generate_seasonal_plan(user_id=user_id)
+    return jsonify(plan), 200

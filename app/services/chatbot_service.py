@@ -1,13 +1,16 @@
 from .gemma_service import ask_gemma
 
-def get_chat_response(user_message):
-    prompt = f"""
-    You are a farming assistant.
+class ChatbotService:
 
-    Farmer question:
-    {user_message}
+    @staticmethod
+    def get_chat_response(user_message):
+        prompt = f"""
+        You are a farming assistant.
 
-    Give simple, clear advice.
-    """
+        Farmer question:
+        {user_message}
 
-    return ask_gemma(prompt)
+        Give simple, clear advice.
+        """
+
+        return ask_gemma(prompt)
