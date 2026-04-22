@@ -13,6 +13,8 @@ class Crop(db.Model):
     soil_type = db.Column(db.String(50), nullable=True)
     water_requirement = db.Column(db.Float, nullable=True)
 
+    currently_active = db.Column(db.Boolean, default=True, nullable=False)
+
     fields = db.relationship(
         "Field",
         back_populates="crop",

@@ -14,3 +14,15 @@ class ChatbotService:
         """
 
         return ask_gemma(prompt)
+    
+
+    
+    """
+    NOTE:
+    The only thing I’d keep firm is:
+
+        chatbot should use planner/recommendation services
+        not bypass them to read rules directly
+    
+    
+    """
