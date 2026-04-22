@@ -32,6 +32,11 @@ class CropService:
     @staticmethod
     def needs_irrigation(crop):
         return crop.water_requirement > 50
+    
+    @staticmethod
+    def get_active_crop_for_field(crop, field_id):
+        crops = CropRepository.get_all().filter(crop.fields.any(id=field_id), crop.currently_active == True).all()
+        return crops[0] if crops else None
 
 
 
