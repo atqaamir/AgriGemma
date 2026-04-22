@@ -78,3 +78,31 @@ class FieldService:
             "fields": fields,
             "tasks": all_tasks,
         }
+    
+    @staticmethod
+    def get_field_summary(field_id):    
+        field = FieldRepository.get_by_id(field_id)
+        if not field:
+            return None
+
+        summary = {
+            "id": field.id,
+            "name": field.name,
+            "acreage": field.acreage,
+            "growth_stage": field.growth_stage,
+            "health_status": field.health_status,
+            "field_score": field.field_score,
+            "health_percentage": field.health_percentage,
+            "moisture_level": field.moisture_level,
+            "heat_level": field.heat_level,
+            "stress_risk": field.stress_risk,
+            "disease_risk": field.disease_risk,
+            "currently_active": field.currently_active,
+            "crop": {
+                "id": field.crop.id if field.crop else None,
+                "name": field.crop.name if field.crop else None
+            },
+            "task_count": len(field.tasks),
+            "pending_task_count": len([t for t in field.tasks if not t.completed]),
+        }
+        return summary

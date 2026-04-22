@@ -27,6 +27,7 @@ with app.app_context():
             "health_status": "Healthy",
             "soil_type": "Loamy",
             "water_requirement": 25.5,
+            "currently_active": True,
         },
         {
             "name": "Wheat",
@@ -35,6 +36,8 @@ with app.app_context():
             "health_status": "Irrigation",
             "soil_type": "Clay",
             "water_requirement": 18.0,
+            "currently_active": True,
+
         },
         {
             "name": "Soybeans",
@@ -43,6 +46,7 @@ with app.app_context():
             "health_status": "Healthy",
             "soil_type": "Loamy",
             "water_requirement": 22.0,
+            "currently_active": True,
         },
         {
             "name": "Sunflower",
@@ -51,6 +55,7 @@ with app.app_context():
             "health_status": "Healthy",
             "soil_type": "Sandy",
             "water_requirement": 20.5,
+            "currently_active": False,
         },
     ]
 
