@@ -5,7 +5,7 @@ from app.repositories.task_repository import TaskRepository
 
 class TaskUpdateService:
     @staticmethod
-    def update_task_status(task_id, new_status):
+    def update_task_status(self, task_id: str, new_status: str):
         task = TaskRepository.get_by_id(task_id)
         if not task:
             raise ValueError("Task not found")
@@ -14,7 +14,7 @@ class TaskUpdateService:
         TaskRepository.update(task)
         return task
 
-    def evaluate_daily_update(field_id, seasonal_plan,weekly_plan,daily_forecast,weekly_forecast,soil_condition,crop_health,):
+    def evaluate_daily_update(self, field_id: str, seasonal_plan: dict, weekly_plan: dict, daily_forecast: dict, weekly_forecast: dict, soil_condition: dict, crop_health: dict):
        
         # Placeholder logic for determining if a task update is needed
         # In a real implementation, this would involve complex logic and possibly ML models

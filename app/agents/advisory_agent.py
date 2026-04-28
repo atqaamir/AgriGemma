@@ -1,4 +1,4 @@
-from app.services.advisory_service import advisory_service
+from app.services.advisory_service import AdvisoryService as advisory_service
 
 
 class AdvisoryAgent:

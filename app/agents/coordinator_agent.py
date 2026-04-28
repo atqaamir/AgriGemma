@@ -6,8 +6,8 @@ from app.agents.advisory_agent import AdvisoryAgent
 
 class CoordinatorAgent:
     @staticmethod
-    def handle_daily_system_update(field_id: str) -> dict:
-        context = ContextAgent.get_context(field_id)
+    def handle_daily_system_update( crop_id: str, field_id: str) -> dict:
+        context = ContextAgent.get_context(crop_id, field_id)
         risk_context = RiskAgent.get_risk_context(field_id)
 
         update_result = PlanningAgent.evaluate_daily_update(
@@ -25,10 +25,12 @@ class CoordinatorAgent:
 
         if update_result.get("needs_plan_revision"):
             proposed_revision = PlanningAgent.create_proposed_revision(
+
                 field_id=field_id,
                 update_result=update_result,
             )
             advisory = AdvisoryAgent.build_plan_change_advisory(
+   
                 field_id=field_id,
                 context=context,
                 proposed_revision=proposed_revision,
@@ -37,6 +39,7 @@ class CoordinatorAgent:
             response["advisory"] = advisory
         else:
             advisory = AdvisoryAgent.build_daily_advisory(
+
                 field_id=field_id,
                 context=context,
                 risk_context=risk_context,
@@ -47,10 +50,10 @@ class CoordinatorAgent:
         return response
 
     @staticmethod
-    def handle_weekly_planning(field_id: str) -> dict:
-        context = ContextAgent.get_context(field_id)
-        weekly_plan = PlanningAgent.generate_weekly_plan(field_id, context)
-        daily_tasks = PlanningAgent.generate_daily_tasks(field_id, weekly_plan)
+    def handle_weekly_planning(crop_id: str, field_id: str) -> dict:
+        context = ContextAgent.get_context(crop_id, field_id)
+        weekly_plan = PlanningAgent().generate_weekly_plan( field_id, context)
+        daily_tasks = PlanningAgent().generate_daily_tasks( field_id, weekly_plan)
 
         return {
             "field_id": field_id,
@@ -60,8 +63,8 @@ class CoordinatorAgent:
         }
 
     @staticmethod
-    def handle_chat(field_id: str, user_message: str) -> dict:
-        context = ContextAgent.get_context(field_id)
+    def handle_chat(self,field_id: str, user_message: str) -> dict:
+        context = ContextAgent.get_context( field_id)    
         risk_context = RiskAgent.get_risk_context(field_id)
 
         return {
