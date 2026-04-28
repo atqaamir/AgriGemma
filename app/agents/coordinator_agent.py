@@ -1,75 +1,85 @@
-from app.agents.context_agent import ContextAgent
+from app.agents.dashboard_agent import DashboardAgent
 from app.agents.risk_agent import RiskAgent
 from app.agents.planning_agent import PlanningAgent
 from app.agents.advisory_agent import AdvisoryAgent
+from app.agents.alert_agent import AlertAgent
+from SmartFarming.app.utils import enums_
+from flask import jsonify
+y
 
 
 class CoordinatorAgent:
-    @staticmethod
-    def handle_daily_system_update( crop_id: str, field_id: str) -> dict:
-        context = ContextAgent.get_context(crop_id, field_id)
-        risk_context = RiskAgent.get_risk_context(field_id)
 
-        update_result = PlanningAgent.evaluate_daily_update(
-            field_id=field_id,
-            context=context,
-            risk_context=risk_context,
-        )
+    def __init__(self):
+        self.planning_agent = PlanningAgent()
+        self.risk_agent = RiskAgent()
+        self.advisory_agent = AdvisoryAgent()
+        self.alert_agent = AlertAgent()
+        self.dashboard_agent = DashboardAgent()
+        self.alert_agent = AlertAgent()
 
-        response = {
-            "field_id": field_id,
-            "context": context,
-            "risk_context": risk_context,
-            "update_result": update_result,
-        }
-
-        if update_result.get("needs_plan_revision"):
-            proposed_revision = PlanningAgent.create_proposed_revision(
-
-                field_id=field_id,
-                update_result=update_result,
-            )
-            advisory = AdvisoryAgent.build_plan_change_advisory(
-   
-                field_id=field_id,
-                context=context,
-                proposed_revision=proposed_revision,
-            )
-            response["proposed_revision"] = proposed_revision
-            response["advisory"] = advisory
+    def seasonal_planning(self, user_id):
+        seasonal_planner_status = self.planning_agent.generate_seasonal_plan(user_id, tag="seasonal_planning ")
+        if seasonal_planner_status == enums_.Status.SUCCESS:
+            return jsonify({"message": "Seasonal planning completed"}), 200
         else:
-            advisory = AdvisoryAgent.build_daily_advisory(
+            return jsonify({"message": "Seasonal planning failed"}), 500
+        
+    def weekly_planning(self, user_id):
+        weekly_planner_status = self.planning_agent.generate_weekly_plan(user_id, tag="weekly_planning ")
+        if weekly_planner_status == enums_.Status.SUCCESS:
+            return jsonify({"message": "Weekly planning completed"}), 200
+        else:
+            return jsonify({"message": "Weekly planning failed"}), 500
+        
+    def task_generation(self, user_id):
+        daily_planner_status = self.planning_agent.generate_daily_tasks(user_id, tag="daily_planning ")
+        if daily_planner_status == enums_.Status.SUCCESS:
+            return jsonify({"message": "Daily planning completed"}), 200
+        else:
+            return jsonify({"message": "Daily planning failed"}), 500
 
-                field_id=field_id,
-                context=context,
-                risk_context=risk_context,
-                update_result=update_result,
-            )
-            response["advisory"] = advisory
+    def daily_update(self, user_id):
+        risk_assessment_status, change = self.risk_agent.assess_risk(user_id, tag="risk_assessment ")
+        
+        if change == enums_.ChangeStatus.NO_CHANGE:
+            # No change, proceed with existing plans
+            pass
+        elif change == enums_.ChangeStatus.NO_IMPACT:
+            self.send_alert(user_id)
+            pass
+        else:
+            # Change detected with impact, trigger re-planning and advisory
+            self.weekly_planning(user_id)
+            self.task_generation(user_id)
+            self.call_advisor(user_id)
+            self.send_alert(user_id)
 
-        return response
+        if risk_assessment_status == enums_.Status.SUCCESS:
+            return jsonify({"message": "Risk assessment completed"}), 200
+        else:
+            return jsonify({"message": "Risk assessment failed"}), 500
 
-    @staticmethod
-    def handle_weekly_planning(crop_id: str, field_id: str) -> dict:
-        context = ContextAgent.get_context(crop_id, field_id)
-        weekly_plan = PlanningAgent().generate_weekly_plan( field_id, context)
-        daily_tasks = PlanningAgent().generate_daily_tasks( field_id, weekly_plan)
+    def dashboard_refresh(self, user_id):
+        dashboard_refresh_status =  self.dashboard_agent.refresh_dashboard(user_id)
+        if dashboard_refresh_status == enums_.Status.SUCCESS:
+            return jsonify({"message": "Risk assessment completed"}), 200
+        else:
+            return jsonify({"message": "Risk assessment failed"}), 500
 
-        return {
-            "field_id": field_id,
-            "context": context,
-            "weekly_plan": weekly_plan,
-            "daily_tasks": daily_tasks,
-        }
+    def call_advisor(self, user_id):
+        advisor_call_status = self.advisory_agent.generate_advisory(user_id, tag="advisory_generation ")
+        if advisor_call_status == enums_.Status.SUCCESS:
+            return jsonify({"message": "Advisory generation completed"}), 200
+        else:
+            return jsonify({"message": "Advisory generation failed"}), 500
 
-    @staticmethod
-    def handle_chat(self,field_id: str, user_message: str) -> dict:
-        context = ContextAgent.get_context( field_id)    
-        risk_context = RiskAgent.get_risk_context(field_id)
+    def send_alert(self, user_id):
+        alert_status = self.alert_agent.generate_alerts(user_id)
+        if alert_status == enums_.Status.SUCCESS:
+            return jsonify({"message": "Alert generation completed"}), 200
+        else:
+            return jsonify({"message": "Alert generation failed"}), 500
 
-        return {
-            "field_id": field_id,
-            "user_message": user_message,
-            "context": context,
-            "risk_context": risk_context,
-        }
+
+        
