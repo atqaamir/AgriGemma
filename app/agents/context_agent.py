@@ -1,7 +1,7 @@
-from app.services.field_service import FieldService
-from app.services.crop_service import CropService
+from app.services.context_service.field_service import FieldService
+from app.services.context_service.crop_service import CropService
 from app.services.seasonal_planner_service import SeasonalPlannerService
-from app.services.weekly_planner_service import WeeklyPlannerService
+from app.services.weather_service.weekly_planner_service import WeeklyPlannerService
 
 
 class ContextAgent:
