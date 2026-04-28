@@ -1,5 +1,5 @@
-from app.services.forecast_service import ForecastService
-from app.services.soil_service import SoilService
+from app.services.weather_service.forecast_service import ForecastService
+from app.services.context_service.soil_service import SoilService
 from app.services.crop_health_service import CropHealthService
 from app.services.alert_service import AlertService 
 
