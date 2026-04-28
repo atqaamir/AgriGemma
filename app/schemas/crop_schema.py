@@ -9,13 +9,8 @@ class CreateCropSchema(Schema):
     planting_date = fields.Date(allow_none=True)
     soil_type = fields.Str(allow_none=True)
     water_requirement = fields.Float(allow_none=True)
-<<<<<<< HEAD
     currently_active = fields.Bool(allow_none=False)
 
-=======
-    currently_active = fields.Bool(load_default=True)
-    
->>>>>>> main
 
 
 class CropCardSchema(Schema):
