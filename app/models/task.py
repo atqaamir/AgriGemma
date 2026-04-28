@@ -21,7 +21,6 @@ class Task(db.Model):
 
     crop_id = db.Column(db.Integer, db.ForeignKey("crop.id"), nullable=True)
     field_id = db.Column(db.Integer, db.ForeignKey("field.id"), nullable=True)
-    pesticide_id = db.Column(db.Integer, db.ForeignKey("pesticide_use.pesticide_id"), nullable=True)
     user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=True)
 
     crop = db.relationship(
@@ -38,12 +37,7 @@ class Task(db.Model):
         lazy="select",
     )
 
-    pesticide = db.relationship(
-        "PesticideUse",
-        back_populates="tasks",
-        foreign_keys=[pesticide_id],
-        lazy="select",
-    )
+
 
     def __repr__(self):
         return f"<Task {self.id} - {self.title}>"
