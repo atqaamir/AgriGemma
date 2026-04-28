@@ -29,7 +29,7 @@ def get_fields():
 
     all_tasks = []
     for field in fields:
-        all_tasks.extend(field.tasks)
+        all_tasks.extend([t for t in field.tasks if t.task_category == 'field'])
 
     unique_tasks = list({task.id: task for task in all_tasks}.values())
 
@@ -49,6 +49,23 @@ def get_field(field_id):
         return jsonify({"error": "Field not found"}), 404
 
     return jsonify(field_detail_schema.dump(field)), 200
+
+
+@fields_bp.route("/fields/<int:field_id>", methods=["PUT"])
+def update_field(field_id):
+    field = FieldService.get_field_by_id(field_id)
+    if not field:
+        return jsonify({"error": "Field not found"}), 404
+
+    data = request.get_json() or {}
+
+    try:
+        valid_data = field_create_schema.load(data)
+    except ValidationError as err:
+        return jsonify({"errors": err.messages}), 400
+
+    updated_field = FieldService.update_field(field_id, valid_data)
+    return jsonify(field_detail_schema.dump(updated_field)), 200
 
 
 @fields_bp.route("/fields", methods=["POST"])

@@ -1,0 +1,241 @@
+
+    // Modal functions
+    function openCreateCropModal() {
+      document.getElementById('createCropModal').classList.remove('hidden');
+      document.getElementById('createCropForm').reset();
+      document.getElementById('formError').classList.add('hidden');
+      document.getElementById('formSuccess').classList.add('hidden');
+    }
+
+    function closeCreateCropModal() {
+      document.getElementById('createCropModal').classList.add('hidden');
+      document.getElementById('createCropForm').reset();
+      document.getElementById('formError').classList.add('hidden');
+      document.getElementById('formSuccess').classList.add('hidden');
+    }
+
+    async function openCropDetailsModal(cropId) {
+      const modal = document.getElementById('cropDetailsModal');
+
+      try {
+        // Show loading state
+        const content = document.getElementById('cropDetailsContent');
+        content.innerHTML = '<div class="flex justify-center items-center py-8"><div class="w-6 h-6 border-3 border-primary border-t-transparent rounded-full animate-spin"></div></div>';
+        modal.classList.remove('hidden');
+
+        // Fetch crop details from backend
+        const response = await fetch(`${API_BASE}/crops/${cropId}`);
+        if (!response.ok) {
+          throw new Error(`Failed to fetch crop details`);
+        }
+
+        const crop = await response.json();
+        const progress = calculateGrowthProgress(crop.planting_date, crop.growth_stage);
+
+        document.getElementById('detailsModalTitle').textContent = crop.name;
+
+        content.innerHTML = `
+          <div class="space-y-4">
+            <div class="bg-surface-container rounded-lg p-4">
+              <h3 class="text-sm font-medium text-on-surface-variant mb-3">Basic Information</h3>
+              <div class="space-y-3">
+                <div class="flex justify-between">
+                  <span class="text-on-surface-variant">Crop Name:</span>
+                  <span class="font-medium text-on-surface">${crop.name}</span>
+                </div>
+                <div class="flex justify-between">
+                  <span class="text-on-surface-variant">Zone:</span>
+                  <span class="font-medium text-on-surface">${generateZoneId(crop.id)}</span>
+                </div>
+                <div class="flex justify-between">
+                  <span class="text-on-surface-variant">Planting Date:</span>
+                  <span class="font-medium text-on-surface">${crop.planting_date || 'Not set'}</span>
+                </div>
+                <div class="flex justify-between">
+                  <span class="text-on-surface-variant">Soil Type:</span>
+                  <span class="font-medium text-on-surface">${crop.soil_type || 'Not specified'}</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="bg-surface-container rounded-lg p-4">
+              <h3 class="text-sm font-medium text-on-surface-variant mb-3">Growth Status</h3>
+              <div class="space-y-3">
+                <div class="flex justify-between items-center">
+                  <span class="text-on-surface-variant">Stage:</span>
+                  <div class="flex items-center gap-1.5 text-primary font-medium">
+                    <span class="material-symbols-outlined text-sm" style="font-variation-settings: 'FILL' 1;">${getStageIcon(crop.growth_stage)}</span>
+                    <span class="text-xs uppercase tracking-wider">${crop.growth_stage || 'Unknown'}</span>
+                  </div>
+                </div>
+                <div class="flex justify-between items-center">
+                  <span class="text-on-surface-variant">Health:</span>
+                  <div class="flex items-center gap-1 px-2.5 py-1 ${getHealthStatusColor(crop.health_status).bg} ${getHealthStatusColor(crop.health_status).text} rounded-full text-[10px] font-bold">
+                    <span class="w-1.5 h-1.5 rounded-full ${getHealthStatusColor(crop.health_status).dot}"></span>
+                    ${crop.health_status || 'Unknown'}
+                  </div>
+                </div>
+                <div>
+                  <div class="flex justify-between mb-1.5 text-xs font-medium">
+                    <span>Growth Progress</span>
+                    <span class="text-primary">${progress}%</span>
+                  </div>
+                  <div class="h-2 w-full bg-surface-container-highest rounded-full overflow-hidden">
+                    <div class="h-full ${getProgressBarColor(progress)} rounded-full" style="width: ${progress}%"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="bg-surface-container rounded-lg p-4">
+              <h3 class="text-sm font-medium text-on-surface-variant mb-3">Environmental Data</h3>
+              <div class="grid grid-cols-2 gap-3">
+                <div>
+                  <span class="text-[9px] uppercase tracking-[0.1em] text-on-surface-variant block mb-1">Yield Estimate</span>
+                  <span class="text-base font-bold text-on-surface">${generateYieldEstimate(crop.name)}</span>
+                </div>
+                <div>
+                  <span class="text-[9px] uppercase tracking-[0.1em] text-on-surface-variant block mb-1">${getMetricLabel(crop.name, crop.growth_stage)}</span>
+                  <span class="text-base font-bold text-on-surface">${generateMetricValue(crop.name, crop.growth_stage)}</span>
+                </div>
+                <div>
+                  <span class="text-[9px] uppercase tracking-[0.1em] text-on-surface-variant block mb-1">Water Requirement</span>
+                  <span class="text-base font-bold text-on-surface">${crop.water_requirement ? crop.water_requirement.toFixed(1) + ' in/mo' : 'Not set'}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        `;
+      } catch (error) {
+        console.error('Error loading crop details:', error);
+        document.getElementById('cropDetailsContent').innerHTML = `
+          <div class="bg-error-container text-on-error-container p-4 rounded-lg">
+            <p class="font-bold mb-2">Error loading crop details</p>
+            <p class="text-sm">${error.message}</p>
+          </div>
+        `;
+      }
+    }
+
+    function closeCropDetailsModal() {
+      document.getElementById('cropDetailsModal').classList.add('hidden');
+    }
+
+    // API functions
+
+
+    async function openTaskDetailModal(taskId) {
+      // Placeholder for task detail modal
+      console.log('Opening task:', taskId);
+    }
+
+    async function deleteCrop(cropId, event) {
+      event?.stopPropagation?.();
+      
+      if (!confirm('Are you sure you want to delete this crop?')) {
+        return;
+      }
+
+      try {
+        const response = await fetch(`${API_BASE}/crops/${cropId}`, {
+          method: 'DELETE'
+        });
+
+        if (response.ok) {
+          loadCrops();
+        } else {
+          alert('Failed to delete crop. Please try again.');
+        }
+      } catch (error) {
+        console.error('Error deleting crop:', error);
+        alert('Error deleting crop');
+      }
+    }
+
+
+
+    async function loadAllCrops() {
+      const loadingState = document.getElementById('loadingState');
+      const cropsContainer = document.getElementById('cropsContainer');
+
+      cropsContainer.innerHTML = '<div class="flex-none text-center text-on-surface-variant">Loading all crops...</div>';
+
+      try {
+        const response = await fetch(`${API_BASE}/crops`);
+        if (!response.ok) throw new Error('Failed to load crops');
+
+        const data = await response.json();
+        const allCrops = data.crop_cards || [];
+
+        if (allCrops.length === 0) {
+          cropsContainer.innerHTML = '<div class="flex-none text-center text-on-surface-variant">No crops found</div>';
+        } else {
+          renderCrops(allCrops);
+        }
+      } catch (error) {
+        console.error('Error loading all crops:', error);
+        cropsContainer.innerHTML = '<div class="flex-none text-center text-error">Error loading crops</div>';
+      }
+    }
+
+    async function submitCreateCropForm(event) {
+      event.preventDefault();
+
+      const form = document.getElementById('createCropForm');
+      const submitBtn = document.getElementById('submitBtn');
+      const formError = document.getElementById('formError');
+      const formSuccess = document.getElementById('formSuccess');
+
+      // Clear messages
+      formError.classList.add('hidden');
+      formSuccess.classList.add('hidden');
+
+      // Disable submit button
+      submitBtn.disabled = true;
+      const originalText = submitBtn.innerHTML;
+      submitBtn.innerHTML = '<span class="material-symbols-outlined animate-spin">hourglass_top</span>Creating...';
+
+      try {
+        const formData = new FormData(form);
+        const data = Object.fromEntries(formData);
+
+        // Remove empty fields
+        Object.keys(data).forEach(key => {
+          if (data[key] === '') delete data[key];
+        });
+
+        const response = await fetch(`${API_BASE}/crops`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(data)
+        });
+
+        if (response.status === 201) {
+          formSuccess.textContent = 'Crop created successfully!';
+          formSuccess.classList.remove('hidden');
+
+          // Reload crops after 1 second
+          setTimeout(() => {
+            closeCreateCropModal();
+            loadCrops();
+          }, 1000);
+        } else if (response.status === 400) {
+          const errors = await response.json();
+          const errorMessages = Object.values(errors).flat().join(', ');
+          formError.textContent = 'Validation error: ' + errorMessages;
+          formError.classList.remove('hidden');
+        } else {
+          formError.textContent = 'Failed to create crop. Please try again.';
+          formError.classList.remove('hidden');
+        }
+      } catch (error) {
+        console.error('Error creating crop:', error);
+        formError.textContent = error.message || 'An error occurred while creating the crop.';
+        formError.classList.remove('hidden');
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = originalText;
+      }
+    }
