@@ -5,6 +5,7 @@ from app.services.crop_service import CropService
 from app.schemas.crop_schema import (
     CropCardSchema,
     CropDetailSchema,
+    MyCropsPageSchema,
     CreateCropSchema,
 )
 from app.schemas.task_schema import TaskCardSchema
@@ -15,7 +16,7 @@ crop_card_schema = CropCardSchema(many=True)
 crop_detail_schema = CropDetailSchema()
 crop_create_schema = CreateCropSchema()
 task_card_schema = TaskCardSchema(many=True)
-
+my_crops_page_schema = MyCropsPageSchema()
 
 @crops_bp.route("/", methods=["GET"])
 def crops_page():
@@ -28,7 +29,7 @@ def get_crops():
 
     all_tasks = []
     for crop in crops:
-        all_tasks.extend(crop.tasks)
+        all_tasks.extend([t for t in crop.tasks if t.task_category == 'crop'])
 
     unique_tasks = list({task.id: task for task in all_tasks}.values())
 
@@ -48,6 +49,18 @@ def get_crop(crop_id):
         return jsonify({"error": "Crop not found"}), 404
 
     return jsonify(crop_detail_schema.dump(crop)), 200
+
+
+@crops_bp.route("/crops/active", methods=["GET"])
+def get_active_crops():
+    result = CropService.get_active_crops_with_tasks()
+
+    response = {
+        "crop_cards": crop_card_schema.dump(result["crops"]),
+        "crop_task_cards": task_card_schema.dump(result["tasks"]),
+    }
+
+    return jsonify(response), 200
 
 
 @crops_bp.route("/crops", methods=["POST"])
