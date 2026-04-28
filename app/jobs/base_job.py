@@ -15,6 +15,8 @@ class BaseJob:
 
     name = "Base Job"
     seperator = "-" * 70
+    padding = 30
+    widthCenter = 70
 
     def get_targets(self):
         """
@@ -33,13 +35,13 @@ class BaseJob:
         started_at = datetime.utcnow()
 
         print("\n" + self.seperator)
-        print(f"{self.name.center(70)}")
+        print(f"{self.name.center(self.widthCenter)}")
         print(self.seperator)
 
         targets = self.get_targets()
 
-        print(f"{'Targets Found:'.ljust(30)} {len(targets)}")
-        print(f"{'Started At:'.ljust(30)} {started_at.isoformat()}")
+        print(f"{'Targets Found:'.ljust(self.padding)} {len(targets)}")
+        print(f"{'Started At:'.ljust(self.padding)} {started_at.isoformat()}")
 
         results = []
 
@@ -48,9 +50,9 @@ class BaseJob:
 
         for target in targets:
 
-            print("\n" + "-" * 70)
+            print("\n" + self.seperator)
 
-            print(f"{'Processing Target ID:'.ljust(30)} {target.id}")
+            print(f"{'Processing Target ID:'.ljust(self.padding)} {target.id}")
 
             try:
 
@@ -64,7 +66,7 @@ class BaseJob:
                     "result": result,
                 })
 
-                print(f"{'Execution Status:'.ljust(30)} SUCCESS")
+                print(f"{'Execution Status:'.ljust(self.padding)} SUCCESS")
 
             except Exception as e:
 
@@ -76,17 +78,17 @@ class BaseJob:
                     "error": str(e),
                 })
 
-                print(f"{'Execution Status:'.ljust(30)} FAILED")
-                print(f"{'Error:'.ljust(30)} {str(e)}")
+                print(f"{'Execution Status:'.ljust(self.padding)} FAILED")
+                print(f"{'Error:'.ljust(self.padding)} {str(e)}")
 
         completed_at = datetime.utcnow()
 
         print("\n" + self.seperator)
 
-        print(f"{'Completed Job:'.ljust(30)} {self.name}")
-        print(f"{'Successful Targets:'.ljust(30)} {successful_targets}")
-        print(f"{'Failed Targets:'.ljust(30)} {failed_targets}")
-        print(f"{'Completed At:'.ljust(30)} {completed_at.isoformat()}")
+        print(f"{'Completed Job:'.ljust(self.padding)} {self.name}")
+        print(f"{'Successful Targets:'.ljust(self.padding)} {successful_targets}")
+        print(f"{'Failed Targets:'.ljust(self.padding)} {failed_targets}")
+        print(f"{'Completed At:'.ljust(self.padding)} {completed_at.isoformat()}")
 
         print(self.seperator)
 
