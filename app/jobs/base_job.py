@@ -1,6 +1,7 @@
 # app/jobs/base_job.py
 
 from datetime import datetime
+from utils.enums_ import Status
 
 from app.services.domain_service.user_service import UserService
 
@@ -59,7 +60,7 @@ class BaseJob:
 
                 results.append({
                     "target_id": target.id,
-                    "execution_status": "success",
+                    "execution_status": Status.SUCCESS,
                     "result": result,
                 })
 
@@ -71,7 +72,7 @@ class BaseJob:
 
                 results.append({
                     "target_id": target.id,
-                    "execution_status": "failed",
+                    "execution_status": Status.FAILED,
                     "error": str(e),
                 })
 
@@ -91,7 +92,7 @@ class BaseJob:
 
         return {
             "job_name": self.name,
-            "execution_status": "completed",
+            "execution_status": Status.COMPLETED,
             "started_at": started_at.isoformat(),
             "completed_at": completed_at.isoformat(),
             "successful_targets": successful_targets,
