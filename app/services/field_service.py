@@ -23,6 +23,13 @@ class FieldService:
         return field
 
     @staticmethod
+    def update_field(field_id, data):
+        field = FieldRepository.get_by_id(field_id)
+        if field:
+            FieldRepository.update(field, data)
+        return field
+
+    @staticmethod
     def get_field_status(field):
         if field.health_status == "good":
             return "Healthy"
@@ -56,10 +63,11 @@ class FieldService:
 
         # If repository returns a SQLAlchemy query
         if hasattr(fields, "filter_by"):
-            return fields.filter_by(currently_active=True).all()
 
-        # If repository returns a Python list
-        return [field for field in fields if field.currently_active]
+            try:
+                return fields.filter_by(currently_active=True).all()
+            except:
+                return fields if isinstance(fields, list) else fields.all()
 
     @staticmethod
     def get_active_fields_with_tasks():
@@ -70,7 +78,7 @@ class FieldService:
 
         for field in fields:
             for task in field.tasks:
-                if task.id not in seen_task_ids:
+                if task.id not in seen_task_ids and task.task_category == 'field':
                     seen_task_ids.add(task.id)
                     all_tasks.append(task)
 
