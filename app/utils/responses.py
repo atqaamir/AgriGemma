@@ -10,7 +10,7 @@ class ExecutionResponse:
         }
 
     @staticmethod
-    def failed(message, error=None):
+    def failure(message, error=None):
 
         return {
             "execution_status": "failed",
