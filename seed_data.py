@@ -36,7 +36,6 @@ with app.app_context():
             "health_status": "alert",
             "soil_type": "Clay",
             "water_requirement": 18.0,
-            "currently_active": True,
         },
         {
             "name": "Soybeans",

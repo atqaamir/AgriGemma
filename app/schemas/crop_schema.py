@@ -9,8 +9,13 @@ class CreateCropSchema(Schema):
     planting_date = fields.Date(allow_none=True)
     soil_type = fields.Str(allow_none=True)
     water_requirement = fields.Float(allow_none=True)
+<<<<<<< HEAD
     currently_active = fields.Bool(allow_none=False)
 
+=======
+    currently_active = fields.Bool(load_default=True)
+    
+>>>>>>> main
 
 
 class CropCardSchema(Schema):
@@ -26,6 +31,8 @@ class CropCardSchema(Schema):
     task_count = fields.Method("get_task_count")
     pending_task_count = fields.Method("get_pending_task_count")
     tasks_preview = fields.Method("get_tasks_preview")
+
+    currently_active = fields.Bool()
 
     def get_field_count(self, obj):
         return len(obj.fields)
@@ -56,6 +63,8 @@ class CropDetailSchema(Schema):
 
     related_fields = fields.Method("get_related_fields")
     tasks = fields.Method("get_tasks")
+
+    currently_active = fields.Bool()
 
 
     def get_related_fields(self, obj):
