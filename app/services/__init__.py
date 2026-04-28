@@ -1,0 +1,1 @@
+from app.scheduler.scheduler import start_scheduler
