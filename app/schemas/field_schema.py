@@ -25,6 +25,8 @@ class FieldCardSchema(Schema):
     growth_stage = fields.Str()
     health_status = fields.Str()
     field_score = fields.Float()
+    moisture_level = fields.Float()
+    heat_level = fields.Float()
 
     crop = fields.Method("get_crop")
 

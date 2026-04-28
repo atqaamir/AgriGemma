@@ -38,5 +38,38 @@ class CropService:
         crops = CropRepository.get_all().filter(crop.fields.any(id=field_id), crop.currently_active == True).all()
         return crops[0] if crops else None
 
+    @staticmethod
+    def get_currently_active_crops():
+        crops = CropRepository.get_all()
+
+        # If repository returns a SQLAlchemy query
+        if hasattr(crops, "filter_by"):
+            # Check if crops have a 'currently_active' field, if not, return all
+            try:
+                return crops.filter_by(currently_active=True).all()
+            except:
+                return crops if isinstance(crops, list) else crops.all()
+
+        # If repository returns a Python list, return all (no filtering available)
+        return crops
+
+    @staticmethod
+    def get_active_crops_with_tasks():
+        crops = CropService.get_currently_active_crops()
+
+        all_tasks = []
+        seen_task_ids = set()
+
+        for crop in crops:
+            for task in crop.tasks:
+                if task.id not in seen_task_ids and task.task_category == 'crop':
+                    seen_task_ids.add(task.id)
+                    all_tasks.append(task)
+
+        return {
+            "crops": crops,
+            "tasks": all_tasks,
+        }
+
 
 

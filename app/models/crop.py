@@ -12,6 +12,7 @@ class Crop(db.Model):
     planting_date = db.Column(db.Date, nullable=True)
     soil_type = db.Column(db.String(50), nullable=True)
     water_requirement = db.Column(db.Float, nullable=True)
+    currently_active = db.Column(db.Boolean, default=True, nullable=False)
 
     currently_active = db.Column(db.Boolean, default=True, nullable=False)
 
