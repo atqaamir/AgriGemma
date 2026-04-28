@@ -5,6 +5,7 @@ from flask_admin.contrib.sqla import ModelView
 from app.models.crop import Crop
 from app.models.field import Field
 from app.routes import register_routes
+from app.jobs.scheduler import start_scheduler
 
 def create_app():
     app = Flask(__name__)
@@ -15,5 +16,7 @@ def create_app():
     admin.add_view(ModelView(Crop, db.session))
     admin.add_view(ModelView(Field, db.session))
     register_routes(app)
+
+    start_scheduler(app)
 
     return app
