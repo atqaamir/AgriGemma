@@ -3,3 +3,4 @@
 - Add rule engine udpate service 
 - Add fertilizers and pesticides
 - Disaster management plan (eg. for each task) -> each task advices on the potential/current growth stage that a crop should be at i.e flowering stage 2 (2 inch petal). If its not, a farmer can report diaster, and our diaster control service  checks prvious tasks, rules, stages, and tells where it might have gone wrong and what to do next.
+- complete and detailed change history
