@@ -1,7 +1,7 @@
 from flask import Blueprint, request, jsonify, render_template
 from marshmallow import ValidationError
 
-from app.services.field_service import FieldService
+from app.services.domain_service.field_service import FieldService
 from app.schemas.field_schema import (
     FieldDetailSchema,
     FieldCardSchema,

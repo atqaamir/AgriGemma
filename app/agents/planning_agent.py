@@ -1,7 +1,7 @@
-from app.services.weekly_planner_service import WeeklyPlannerService
+from app.services.weather_service.weekly_planner_service import WeeklyPlannerService
 from app.services.task_generation_service import TaskGenerationService
-from app.services.task_update_service import TaskUpdateService
-from app.services.plan_revision_service import PlanRevisionService
+from app.services.weekly_planning_service.weekly_update_service import TaskUpdateService
+
 
 
 class PlanningAgent:
@@ -33,11 +33,3 @@ class PlanningAgent:
             crop_health=risk_context["crop_health"],
         )
 
-    @staticmethod
-    def create_proposed_revision(self, field_id: str, update_result: dict) -> dict:
-
-        planrevise = PlanRevisionService()
-        return planrevise.create_proposed_revision(
-            field_id=field_id,
-            update_result=update_result,
-        )

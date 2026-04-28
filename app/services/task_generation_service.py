@@ -1,5 +1,5 @@
-from app.services.field_service import FieldService
-from app.services.crop_service import CropService
+from app.services.context.field_service import FieldService
+from app.services.context.crop_service import CropService
 class TaskGenerationService:
     def __init__(self):
         pass
