@@ -6,3 +6,4 @@
 - complete and detailed change history
 - Unfinished tasks ki bases par future weekly plan change/tasks regeneration.
 - Farmer rejects future change
+- Jobs failure fallbacks & retries
