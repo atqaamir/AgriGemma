@@ -34,6 +34,7 @@ class CoordinatorAgent:
         
     def task_generation(self, user_id):
         daily_planner_status = self.planning_agent.generate_daily_tasks(user_id, tag="daily_planning ")
+        self.dashboard_agent.refresh_dashboard(user_id)
         if daily_planner_status == enums_.Status.SUCCESS:
             return jsonify({"message": "Daily planning completed"}), 200
         else:
@@ -46,15 +47,23 @@ class CoordinatorAgent:
             # No change, proceed with existing plans
             pass
         elif change == enums_.ChangeStatus.NO_IMPACT:
-            self.send_alert(user_id)
+            self.call_advisor(user_id)
+            self.send_alert(user_id, tag = "weather_only") # Type = notification
             pass
-        else:
+        elif change == enums_.ChangeStatus.IMPACT_PLAN:
             # Change detected with impact, trigger re-planning and advisory
             self.weekly_planning(user_id)
             self.task_generation(user_id)
             self.call_advisor(user_id)
-            self.send_alert(user_id)
+            self.send_alert(user_id, "weekly") # Type = warning
+        else: # change == enums_.ChangeStatus.IMPACT_TASKS
+            self.weekly_planning(user_id)
+            self.task_generation(user_id)
+            self.call_advisor(user_id)
+            self.send_alert(user_id, "daily") # Type = alert
 
+        self.dashboard_agent.refresh_dashboard(user_id)
+        
         if risk_assessment_status == enums_.Status.SUCCESS:
             return jsonify({"message": "Risk assessment completed"}), 200
         else:
@@ -74,8 +83,8 @@ class CoordinatorAgent:
         else:
             return jsonify({"message": "Advisory generation failed"}), 500
 
-    def send_alert(self, user_id):
-        alert_status = self.alert_agent.generate_alerts(user_id)
+    def send_alert(self, user_id, tag):
+        alert_status = self.alert_agent.generate_alerts(user_id, tag=tag)
         if alert_status == enums_.Status.SUCCESS:
             return jsonify({"message": "Alert generation completed"}), 200
         else:
