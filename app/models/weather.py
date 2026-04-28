@@ -1,3 +1,8 @@
+""" Keep historical data records of the weather forecasts fechted from the API for analysis 
+This can help in understanding trends and making informed decisions for weekly planning.
+Fetched weekly """
+
+
 from datetime import datetime
 from app.extensions import db
 
@@ -15,13 +20,6 @@ class ClimateProfile(db.Model):
     avg_temperature_c = db.Column(db.Float, nullable=True)
     avg_rainfall_mm = db.Column(db.Float, nullable=True)
     avg_humidity = db.Column(db.Float, nullable=True)
-
-    drought_risk = db.Column(db.String(20), nullable=True)      # low, medium, high
-    flood_risk = db.Column(db.String(20), nullable=True)
-    heatwave_risk = db.Column(db.String(20), nullable=True)
-
-    planting_window_start = db.Column(db.String(20), nullable=True)
-    planting_window_end = db.Column(db.String(20), nullable=True)
 
     notes = db.Column(db.Text, nullable=True)
 
