@@ -9,4 +9,5 @@ class ChangeStatus(Enum):
     NO_CHANGE = "No Change"
     # Weather change detected
     NO_IMPACT = "Change_No_Impact"
-    IMPACT  = "Change_Impact"
+    IMPACT_PLAN  = "Change_Impact_Plan"
+    IMPACT_TASKS = "Change_Impact_Tasks"
