@@ -45,24 +45,26 @@ class CoordinatorAgent:
         
         if change == enums_.ChangeStatus.NO_CHANGE:
             # No change, proceed with existing plans
-            pass
+            return 
         elif change == enums_.ChangeStatus.NO_IMPACT:
             self.call_advisor(user_id)
             self.send_alert(user_id, tag = "weather_only") # Type = notification
             pass
-        elif change == enums_.ChangeStatus.IMPACT_PLAN:
+        else:
             # Change detected with impact, trigger re-planning and advisory
             self.weekly_planning(user_id)
             self.task_generation(user_id)
             self.call_advisor(user_id)
-            self.send_alert(user_id, "weekly") # Type = warning
-        else: # change == enums_.ChangeStatus.IMPACT_TASKS
-            self.weekly_planning(user_id)
-            self.task_generation(user_id)
-            self.call_advisor(user_id)
-            self.send_alert(user_id, "daily") # Type = alert
+            self.send_alert(user_id,  tag=(
+                    "weekly" # Type = warning
+                    if change == enums_.ChangeStatus.IMPACT_PLAN
+                    else "daily"
+                ))  # Type = danger
+       
 
         self.dashboard_agent.refresh_dashboard(user_id)
+
+        
         
         if risk_assessment_status == enums_.Status.SUCCESS:
             return jsonify({"message": "Risk assessment completed"}), 200
