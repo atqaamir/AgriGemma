@@ -9,7 +9,7 @@ class Task(db.Model):
     id = db.Column(db.Integer, primary_key=True)
 
     title = db.Column(db.String(200), nullable=False)
-    priority = db.Column(db.String(20), nullable=False)  # high, medium, low
+    priority = db.Column(db.String(20), nullable=False)  # critical, high, medium, low
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
     due_date = db.Column(db.Date, nullable=True)
     completed = db.Column(db.Boolean, default=False, nullable=False)

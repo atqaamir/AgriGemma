@@ -1,9 +1,9 @@
 # app/services/context_service.py
-from field_service import FieldService
-from crop_service import CropService
-from seasonal_planner_service import SeasonalPlannerService
-from weekly_planner_service import WeeklyPlannerService
-from task_service import TaskService
+from app.services.domain_service.field_service import FieldService
+from app.services.domain_service.crop_service import CropService
+from app.services.seasonal_planner_service import SeasonalPlannerService
+from app.services.weekly_planning_service.weekly_planner_service import WeeklyPlannerService
+from app.services.domain_service.task_service import TaskService
 
 
 class ContextService:

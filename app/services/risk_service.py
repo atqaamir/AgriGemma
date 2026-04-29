@@ -1,5 +1,5 @@
 from app.services.context_service import ContextService
-class RiskAgent:
+class RiskService:
     @staticmethod
     def get_risk_context(field_id: str) -> dict:
         daily_forecast = ContextService().get_latest_daily_forecast(field_id)

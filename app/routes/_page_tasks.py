@@ -1,7 +1,7 @@
 from flask import Blueprint, request, jsonify, render_template
 from marshmallow import ValidationError
 
-from app.services.task_service import TaskService
+from app.services.domain_service.task_service import TaskService
 from app.schemas.task_schema import (
     TaskCardSchema,
     TaskDetailSchema,

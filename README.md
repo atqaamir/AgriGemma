@@ -162,7 +162,7 @@ DATABASE_URL=sqlite:///app.db
 ### 6. Initialize the Database (Optional)
 ```bash
 flask db init
-flask db migrate
+flask db migrate -m "initial"
 flask db upgrade
 ```
 Skip this step if database migrations are not configured.

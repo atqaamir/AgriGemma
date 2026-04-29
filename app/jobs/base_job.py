@@ -2,10 +2,10 @@
 
 from datetime import datetime
 
-from utils.enums_ import Status
+from app.utils.enums_ import Status
 
 from app.services.domain_service.user_service import UserService
-from SmartFarming.app.utils.execution_responses import ExecutionResponse
+from app.utils.execution_responses import ExecutionResponse
 
 
 """
