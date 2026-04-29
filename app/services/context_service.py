@@ -7,62 +7,29 @@ from app.services.domain_service.task_service import TaskService
 
 
 class ContextService:
+    field = FieldService()
+    seasonal_planner = SeasonalPlannerService()
+    weekly_planner = WeeklyPlannerService()
 
-    @staticmethod
-    def get_context(field_id: int, crop_id: int) -> dict:
-        """
-        Build the current operational context for a field/crop.
+    task = TaskService()
 
-        This service aggregates the current farm state required
-        by planners, advisors, chatbot flows, and update systems.
-        """
+    def get_crop_related_tasks_list(self, crop_id):
+        return self.task.get_pending_tasks_list_by_crop_id(crop_id)
+   
+    
+    def get_crop_related_tasks(self, crop_id):
+        return self.get_pending_tasks_details_by_crop_id(crop_id)
+    
 
-        field = FieldService.get_field_by_id(field_id)
+    def get_field_related_tasks_list(self, field_id):
+        return self.task.get_pending_tasks_list_by_field_id(field_id)
+   
+    
+    def get_field_related_tasks(self, field_id):
+        return self.get_pending_tasks_details_by_field_id(field_id)
+    
+    
 
-        crop = CropService.get_crop_by_id(crop_id)
 
-        seasonal_plan = SeasonalPlannerService.get_active_plan(
-            field_id=field_id
-        )
 
-        weekly_plan = WeeklyPlannerService.get_active_weekly_plan(
-            field_id=field_id
-        )
 
-        today_tasks = TaskService.get_today_tasks(
-            field_id=field_id
-        )
-
-        current_phase = ContextService._determine_current_phase(
-            seasonal_plan=seasonal_plan,
-            weekly_plan=weekly_plan
-        )
-
-        return {
-            "field": field,
-            "crop": crop,
-
-            "seasonal_plan": seasonal_plan,
-            "weekly_plan": weekly_plan,
-
-            "today_tasks": today_tasks,
-
-            "current_phase": current_phase,
-        }
-
-    @staticmethod
-    def _determine_current_phase(
-        seasonal_plan: dict,
-        weekly_plan: dict
-    ) -> str:
-        """
-        Determine current operational farming phase.
-
-        For MVP:
-        Prefer weekly plan phase if available.
-        """
-
-        if weekly_plan and weekly_plan.get("phase"):
-            return weekly_plan["phase"]
-
-        return "unknown"

@@ -1,4 +1,3 @@
-from .main import main_bp
 from ._page_dashboard import dashboard_bp
 from ._page_fields import fields_bp
 from ._page_crops import crops_bp
