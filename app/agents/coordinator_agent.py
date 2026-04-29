@@ -6,7 +6,7 @@ from app.agents.planning_agent import PlanningAgent
 from app.agents.advisory_agent import AdvisoryAgent
 from app.agents.alert_agent import AlertAgent
 from app.utils import enums_
-from SmartFarming.app.utils import execution_responses
+from app.utils import execution_responses
 
 
 

@@ -1,4 +1,4 @@
-from .gemma_service import ask_gemma
+from app.services.ai_model_service.Gemma.gemma_service import ask_gemma
 
 class ChatbotService:
 
