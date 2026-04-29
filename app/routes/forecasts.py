@@ -1,5 +1,4 @@
 from flask import Blueprint, request
-from marshmallow import ValidationError
 
 from app.services.weather_service import ForecastService
 
