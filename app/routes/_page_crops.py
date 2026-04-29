@@ -1,12 +1,13 @@
 from flask import Blueprint, request, jsonify, render_template
 from marshmallow import ValidationError
 
-from app.services.crop_service import CropService
+from app.services.domain_service.crop_service import CropService
 from app.schemas.crop_schema import (
     CropCardSchema,
     CropDetailSchema,
     MyCropsPageSchema,
     CreateCropSchema,
+    UpdateCropSchema
 )
 from app.schemas.task_schema import TaskCardSchema
 
@@ -15,6 +16,7 @@ crops_bp = Blueprint("crops_bp", __name__)
 crop_card_schema = CropCardSchema(many=True)
 crop_detail_schema = CropDetailSchema()
 crop_create_schema = CreateCropSchema()
+crop_update_schema = UpdateCropSchema()
 task_card_schema = TaskCardSchema(many=True)
 my_crops_page_schema = MyCropsPageSchema()
 
@@ -74,3 +76,32 @@ def create_crop():
 
     crop = CropService.create_crop(valid_data)
     return jsonify(crop_detail_schema.dump(crop)), 201
+
+
+
+@crops_bp.route("/crops/<int:crop_id>", methods=["PUT"])
+def update_crop(crop_id):
+    data = request.get_json() or {}
+
+    try:
+        valid_data = crop_update_schema.load(data)
+    except ValidationError as err:
+        return jsonify({"errors": err.messages}), 400
+
+    crop = CropService.update_crop(crop_id, valid_data)
+    return jsonify(crop_detail_schema.dump(crop)), 200  
+
+
+
+@crops_bp.route("/crops/<int:crop_id>", methods=["DELETE"])
+def delete_crop(crop_id):
+
+    if not crop_id:
+        return jsonify({"error": "Crop ID is required"}), 400
+
+    crop = CropService.delete_crop(crop_id)
+
+    if not crop:
+        return jsonify({"error": "Crop not found"}), 404
+
+    return jsonify(crop_detail_schema.dump(crop)), 200
