@@ -11,3 +11,9 @@ class ChangeStatus(Enum):
     NO_IMPACT = "Change_No_Impact"
     IMPACT_PLAN  = "Change_Impact_Plan"
     IMPACT_TASKS = "Change_Impact_Tasks"
+
+class Region(Enum):
+
+    LAHORE = "lahore"
+    KARACHI = "karachi"
+    ISLAMABAD = "islamabad"

@@ -79,3 +79,22 @@ class CropDetailSchema(Schema):
 class MyCropsPageSchema(Schema):
     crop_cards = fields.List(fields.Nested(CropCardSchema))
     crop_task_cards = fields.List(fields.Nested(TaskCardSchema))
+
+
+from marshmallow import Schema, fields, EXCLUDE, RAISE
+
+
+class UpdateCropSchema(Schema):
+
+    class Meta:
+        unknown = RAISE
+
+    growth_stage = fields.Str(allow_none=True)
+
+    health_status = fields.Str(allow_none=True)
+
+    planting_date = fields.Date(allow_none=True)
+
+    water_requirement = fields.Float(allow_none=True)
+
+    currently_active = fields.Bool(required=False)

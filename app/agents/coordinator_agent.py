@@ -47,7 +47,7 @@ class CoordinatorAgent:
         
         if change == enums_.ChangeStatus.NO_CHANGE:
             # No change, proceed with existing plans
-            return 
+            return execution_responses.ExecutionResponse.success("Risk assesment completed with no change")
         elif change == enums_.ChangeStatus.NO_IMPACT:
             self.call_advisor(user_id)
             self.send_alert(user_id, tag = "weather_only") # Type = notification

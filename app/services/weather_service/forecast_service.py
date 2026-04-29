@@ -1,81 +1,125 @@
+from ...repositories.forecast_repository import ForecastRepository
+
+from weather_fetch_api import get_weather
+
+from app.utils.enums_ import Region
+
+from app.schemas.weather.current_weather_profile_schema import (
+    DailyForecastSchema,
+    WeeklyForecastResponseSchema,
+)
+
+
 class ForecastService:
+
     def __init__(self):
-        pass
 
-    def refresh_forecasts(self, field_id):
+        self.forecast_repository = ForecastRepository()
+
+        self.daily_forecast_schema = DailyForecastSchema()
+
+        self.weekly_forecast_schema = WeeklyForecastResponseSchema()
+
+    # =========================================================
+    # DATABASE QUERY METHODS
+    # =========================================================
+
+    def get_latest_daily_forecast(self, region, date):
         """
-        Pull latest weather data from provider and store it locally.
-        Used by scheduled jobs.
-        """
-
-        daily = self._fetch_daily_from_provider(field_id)
-        weekly = self._fetch_weekly_from_provider(field_id)
-
-        # later: save to DB
-        # WeatherRepository.save_daily(field_id, daily)
-        # WeatherRepository.save_weekly(field_id, weekly)
-
-        return {
-            "field_id": field_id,
-            "daily_refreshed": True,
-            "weekly_refreshed": True,
-            "daily": daily,
-            "weekly": weekly
-        }
-
-    def get_latest_daily_forecast(self, field_id):
-        """
-        Return latest stored daily forecast for system usage.
+        Return latest stored daily forecast for database query.
         Used by planner/dashboard.
         """
 
-        return {
-            "field_id": field_id,
-            "location": "Lahore",
-            "date": "2026-06-12",
-            "temperature_c": 25,
-            "rain_mm": 18,
-            "humidity": 82,
-            "condition": "Heavy Rain"
+        forecast = self.forecast_repository.get_latest_daily(
+            region,
+            date
+        )
+
+        return self.daily_forecast_schema.dump(forecast)
+
+    def get_latest_weekly_forecast(self, region, n=7):
+        """
+        Return latest stored weekly forecast for database query.
+        Used by planner/dashboard.
+        """
+
+        forecasts = self.forecast_repository.get_latest_weekly(
+            region,
+            n
+        )
+
+        response = {
+            "region": region,
+            "total_days": len(forecasts),
+            "forecasts": forecasts,
         }
 
-    def get_latest_weekly_forecast(self, field_id):
+        return self.weekly_forecast_schema.dump(response)
+
+    # =========================================================
+    # FETCH + STORE METHODS
+    # =========================================================
+
+    def fetch_and_store_daily_forecast(self, region, n=7):
         """
-        Return latest stored weekly forecast for planning/risk evaluation.
+        Fetch forecast from weather provider,
+        normalize response,
+        then save in DB.
         """
 
-        return {
-            "field_id": field_id,
-            "location": "Lahore",
-            "days": [
-                {"date": "2026-06-12", "rain_mm": 18, "temp_c": 25},
-                {"date": "2026-06-13", "rain_mm": 22, "temp_c": 24},
-                {"date": "2026-06-14", "rain_mm": 5, "temp_c": 28},
-                {"date": "2026-06-15", "rain_mm": 0, "temp_c": 31},
-            ]
-        }
+        raw_weather_data = get_weather(region, n)
 
-    def _fetch_daily_from_provider(self, field_id):
-        """
-        Mock external weather provider call.
-        Replace later with real API call.
-        """
-        return {
-            "date": "2026-06-12",
-            "temperature_c": 25,
-            "rain_mm": 18,
-            "humidity": 82,
-            "condition": "Heavy Rain"
-        }
+        normalized_forecast_data = (
+            self._normalize_weather_api_response(
+                raw_weather_data
+            )
+        )
 
-    def _fetch_weekly_from_provider(self, field_id):
+        return self.forecast_repository.save_forecast(
+            region,
+            normalized_forecast_data
+        )
+
+    # =========================================================
+    # INTERNAL HELPERS
+    # =========================================================
+
+    def _normalize_weather_api_response(
+        self,
+        weather_api_response
+    ):
         """
-        Mock 7-day weather provider call.
-        Replace later with real API call.
-        """
-        return [
-            {"date": "2026-06-12", "rain_mm": 18, "temp_c": 25},
-            {"date": "2026-06-13", "rain_mm": 22, "temp_c": 24},
-            {"date": "2026-06-14", "rain_mm": 5, "temp_c": 28},
-            {"date": "2026-06-15", "rain_mm": 0, "temp_c": 31},
+        Convert external weather API response
+        into internal forecast schema format.
+
+        TODO:
+        Implement provider-specific normalization logic later.
+
+        Expected normalized format:
+
+        [
+            {
+                "date": "2026-06-12",
+                "temperature_c": 25,
+                "precipitation_mm": 18,
+                "wind_speed_kph": 15,
+            }
         ]
+        """
+
+        # -----------------------------------------------------
+        # TEMP DUMMY IMPLEMENTATION
+        # -----------------------------------------------------
+
+        normalized_data = []
+
+        for item in weather_api_response.forecast:
+
+            normalized_data.append({
+                "date": item["date"],
+                "temperature_c": item["temperature_c"],
+                "precipitation_mm": item["precipitation_mm"],
+                "wind_speed_kph": item["wind_speed_kph"],
+            })
+
+        return normalized_data

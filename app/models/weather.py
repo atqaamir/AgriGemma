@@ -1,4 +1,4 @@
-""" Keep historical data records of the weather forecasts fechted from the API for analysis 
+""" Keep historical data records of the weather forecasts for analysis 
 This can help in understanding trends and making informed decisions for weekly planning.
 Fetched weekly """
 
@@ -14,8 +14,7 @@ class ClimateProfile(db.Model):
 
     region = db.Column(db.String(100), nullable=False)
     season = db.Column(db.String(50), nullable=True)   # e.g. Kharif, Rabi, Summer
-    month = db.Column(db.String(20), nullable=True)    # e.g. January, July
-    crop_type = db.Column(db.String(100), nullable=True)
+
 
     avg_temperature_c = db.Column(db.Float, nullable=True)
     avg_rainfall_mm = db.Column(db.Float, nullable=True)
