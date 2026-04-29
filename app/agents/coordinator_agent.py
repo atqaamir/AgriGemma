@@ -1,10 +1,12 @@
+from http.client import responses
+
 from app.agents.dashboard_agent import DashboardAgent
 from app.agents.risk_agent import RiskAgent
 from app.agents.planning_agent import PlanningAgent
 from app.agents.advisory_agent import AdvisoryAgent
 from app.agents.alert_agent import AlertAgent
 from app.utils import enums_
-from flask import jsonify
+from SmartFarming.app.utils import execution_responses
 
 
 
@@ -21,24 +23,24 @@ class CoordinatorAgent:
     def seasonal_planning(self, user_id):
         seasonal_planner_status = self.planning_agent.generate_seasonal_plan(user_id, tag="seasonal_planning ")
         if seasonal_planner_status == enums_.Status.SUCCESS:
-            return jsonify({"message": "Seasonal planning completed"}), 200
+            return execution_responses.ExecutionResponse.success("Seasonal planning completed")
         else:
-            return jsonify({"message": "Seasonal planning failed"}), 500
+            return execution_responses.ExecutionResponse.failure("Seasonal planning failed")
         
     def weekly_planning(self, user_id):
         weekly_planner_status = self.planning_agent.generate_weekly_plan(user_id, tag="weekly_planning ")
         if weekly_planner_status == enums_.Status.SUCCESS:
-            return jsonify({"message": "Weekly planning completed"}), 200
+            return execution_responses.ExecutionResponse.success("Weekly planning completed")
         else:
-            return jsonify({"message": "Weekly planning failed"}), 500
+            return execution_responses.ExecutionResponse.failure("Weekly planning failed")
         
     def task_generation(self, user_id):
         daily_planner_status = self.planning_agent.generate_daily_tasks(user_id, tag="daily_planning ")
         self.dashboard_agent.refresh_dashboard(user_id)
         if daily_planner_status == enums_.Status.SUCCESS:
-            return jsonify({"message": "Daily planning completed"}), 200
+            return execution_responses.ExecutionResponse.success("Daily planning completed")
         else:
-            return jsonify({"message": "Daily planning failed"}), 500
+            return execution_responses.ExecutionResponse.failure("Daily planning failed")
 
     def daily_update(self, user_id):
         risk_assessment_status, change = self.risk_agent.assess_risk(user_id, tag="risk_assessment ")
@@ -67,30 +69,30 @@ class CoordinatorAgent:
         
         
         if risk_assessment_status == enums_.Status.SUCCESS:
-            return jsonify({"message": "Risk assessment completed"}), 200
+            return execution_responses.ExecutionResponse.success("Risk assesment completed")
         else:
-            return jsonify({"message": "Risk assessment failed"}), 500
+            return execution_responses.ExecutionResponse.failure("Risk assessment failed")
 
     def dashboard_refresh(self, user_id):
         dashboard_refresh_status =  self.dashboard_agent.refresh_dashboard(user_id)
         if dashboard_refresh_status == enums_.Status.SUCCESS:
-            return jsonify({"message": "Risk assessment completed"}), 200
+            return execution_responses.ExecutionResponse.success("Dashboard update completed")
         else:
-            return jsonify({"message": "Risk assessment failed"}), 500
+            return execution_responses.ExecutionResponse.failure("Dashboard update failed")
 
     def call_advisor(self, user_id):
         advisor_call_status = self.advisory_agent.generate_advisory(user_id, tag="advisory_generation ")
         if advisor_call_status == enums_.Status.SUCCESS:
-            return jsonify({"message": "Advisory generation completed"}), 200
+            return execution_responses.ExecutionResponse.success("Advisor call completed")
         else:
-            return jsonify({"message": "Advisory generation failed"}), 500
+            return execution_responses.ExecutionResponse.failure("Advisor call failed")
 
     def send_alert(self, user_id, tag):
         alert_status = self.alert_agent.generate_alerts(user_id, tag=tag)
         if alert_status == enums_.Status.SUCCESS:
-            return jsonify({"message": "Alert generation completed"}), 200
+            return execution_responses.ExecutionResponse.success("Alert update completed")
         else:
-            return jsonify({"message": "Alert generation failed"}), 500
+            return execution_responses.ExecutionResponse.failure("Alert update failed")
 
 
         
