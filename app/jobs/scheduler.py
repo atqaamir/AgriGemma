@@ -3,7 +3,7 @@ from apscheduler.schedulers.background import BackgroundScheduler
 from app.jobs.daily_update_job import DailyUpdateJob
 from app.jobs.weekly_plan_job import WeeklyPlanJob
 # from app.jobs.forecast_refresh_job import ForecastRefreshJob
-from app.jobs.task_generator_job import taskGenerator
+from app.jobs.task_generator_job import TaskGeneratorJob
 
 
 scheduler = BackgroundScheduler()

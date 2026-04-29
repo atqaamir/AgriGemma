@@ -60,6 +60,3 @@ class RuleEngine:
             "new_plan": plan,
             "change": "no_change"
         }
-
-
-rule_engine = RuleEngine()

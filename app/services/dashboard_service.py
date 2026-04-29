@@ -1,10 +1,10 @@
 from datetime import date
 
-from app.services.user_service import UserService
-from app.services.field_service import FieldService
-from app.services.crop_service import CropService
-from app.services.task_service import TaskService
-from app.services.chatbot_service import ChatbotService
+from app.services.domain_service.user_service import UserService
+from app.services.domain_service.field_service import FieldService
+from app.services.domain_service.crop_service import CropService
+from app.services.domain_service.task_service import TaskService
+from app.services.intelligence_service.chatbot_service.chatbot_service import ChatbotService
 
 
 def _avg(values: list) -> float:
