@@ -31,7 +31,7 @@ with app.app_context():
             "current_growth_stage": "Vegetative",
             "current_health_status": "healthy",
             "soil_type": "Loamy",
-            "currently_water_requirement": True,
+            "currently_water_requirement": 25.5,
             "currently_active": True,
         },
         {
@@ -41,7 +41,7 @@ with app.app_context():
             "current_growth_stage": "Seedling",
             "current_health_status": "alert",
             "soil_type": "Clay",
-            "currently_water_requirement": True,
+            "currently_water_requirement": 18.0,
             "currently_active": True,
         },
         {
@@ -51,7 +51,7 @@ with app.app_context():
             "current_growth_stage": "Flowering",
             "current_health_status": "critical",
             "soil_type": "Loamy",
-            "currently_water_requirement": True,
+            "currently_water_requirement": 22.0,
             "currently_active": True,
         },
         {
@@ -61,7 +61,7 @@ with app.app_context():
             "current_growth_stage": "Ripening",
             "current_health_status": "healthy",
             "soil_type": "Sandy",
-            "currently_water_requirement": False,
+            "currently_water_requirement": 20.5,
             "currently_active": False,
         },
     ]
