@@ -14,7 +14,6 @@ class CreateFieldSchema(Schema):
     stress_risk = fields.Float(allow_none=True)
     disease_risk = fields.Str(allow_none=True)
     currently_active = fields.Bool(load_default=True)
-    crop_id = fields.Int(allow_none=True)
     user_id = fields.Int(allow_none=True)
 
 
@@ -27,27 +26,27 @@ class FieldCardSchema(Schema):
     field_score = fields.Float()
     moisture_level = fields.Float()
     heat_level = fields.Float()
+    currently_active = fields.Bool()
 
     crop = fields.Method("get_crop")
-
+    task_count = fields.Method("get_task_count")
+    pending_task_count = fields.Method("get_pending_task_count")
+    tasks_preview = fields.Method("get_tasks_preview")
 
     def get_crop(self, obj):
         if obj.crop:
-            return {
-                "id": obj.crop.id,
-                "name": obj.crop.name
-            }
+            return {"id": obj.crop.id, "name": obj.crop.name}
         return None
 
     def get_task_count(self, obj):
         return len(obj.tasks)
 
     def get_pending_task_count(self, obj):
-        return len([task for task in obj.tasks if not task.completed])
+        return len([t for t in obj.tasks if not t.completed])
 
     def get_tasks_preview(self, obj):
-        pending_tasks = [task for task in obj.tasks if not task.completed][:3]
-        return TaskCardSchema(many=True).dump(pending_tasks)
+        pending = [t for t in obj.tasks if not t.completed][:3]
+        return TaskCardSchema(many=True).dump(pending)
 
 
 class FieldDetailSchema(Schema):
@@ -69,10 +68,7 @@ class FieldDetailSchema(Schema):
 
     def get_crop(self, obj):
         if obj.crop:
-            return {
-                "id": obj.crop.id,
-                "name": obj.crop.name
-            }
+            return {"id": obj.crop.id, "name": obj.crop.name}
         return None
 
     def get_tasks(self, obj):

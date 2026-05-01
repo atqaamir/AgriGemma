@@ -15,8 +15,9 @@ class Crop(db.Model):
     currently_water_requirement = db.Column(db.Float, nullable=True)
 
     field_id = db.Column(db.Integer, db.ForeignKey("field.id"), nullable=False)
-    user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)  
+    user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
 
-  
+    tasks = db.relationship("Task", backref="crop", lazy="select", foreign_keys="Task.crop_id")
+
     def __repr__(self):
         return f"<Crop {self.id} - {self.name}>"

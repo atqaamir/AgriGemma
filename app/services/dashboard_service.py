@@ -41,6 +41,10 @@ class DashboardService:
         return ChatbotService.get_chat_response(message) 
 
     @staticmethod
+    def refresh_dashboard(user_id: int) -> dict:
+        return DashboardService.build_dashboard_data(user_id)
+
+    @staticmethod
     def generate_seasonal_plan(user_id: int) -> dict:
         # Placeholder for future implementation
         return {
@@ -112,7 +116,7 @@ class DashboardService:
     def _build_crop_condition(all_crops) -> dict:
         status_counts: dict[str, int] = {}
         for crop in all_crops:
-            key = (crop.health_status or "").lower()
+            key = (crop.current_health_status or "").lower()
             status_counts[key] = status_counts.get(key, 0) + 1
         return {
             "total": len(all_crops),

@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+  <title>Notifications — Smart Farming</title>
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            surface: "#fcf9f0",
+            "surface-container-low": "#f7f3ea",
+            "surface-container": "#f1eee5",
+            "on-surface": "#1c1c17",
+            "on-surface-variant": "#444840",
+            primary: "#47573b",
+            "primary-fixed": "#d6e8c5",
+            "on-primary": "#ffffff",
+            "secondary-fixed": "#d5e9c1",
+            "primary-container": "#5f6f52",
+            "on-background": "#1c1c17",
+            "outline-variant": "#c5c8bd",
+            error: "#ba1a1a",
+            "error-container": "#ffdad6",
+          }
+        }
+      }
+    };
+  </script>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;700;800&family=Work+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+
+  <script>
+    (function () {
+      const t = localStorage.getItem('theme') || 'light';
+      if (t === 'dark') document.documentElement.classList.add('dark');
+    })();
+  </script>
+
+  <style>
+    .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+    body { font-family: 'Work Sans', sans-serif; }
+    h1, h2, h3 { font-family: 'Manrope', sans-serif; }
+    .no-scrollbar::-webkit-scrollbar { display: none; }
+    .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    .notif-in { animation: nIn .2s ease both; }
+    @keyframes nIn { from { opacity:0; transform:translateY(6px); } to { opacity:1; transform:none; } }
+  </style>
+</head>
+
+<body class="bg-surface dark:bg-[#1c1c17] text-on-surface dark:text-[#e5e2da] min-h-screen pb-32">
+
+  <!-- Header -->
+  <header class="sticky top-0 z-40 bg-[#fcf9f0] dark:bg-[#1c1c17] border-b border-outline-variant/20 px-4 py-3 flex items-center gap-3">
+    <a href="javascript:history.back()"
+      class="p-2 rounded-full hover:bg-surface-container dark:hover:bg-[#2a2a24] active:scale-95 transition-transform">
+      <span class="material-symbols-outlined text-primary dark:text-[#d5e9c1]">arrow_back</span>
+    </a>
+    <div class="flex-1">
+      <h1 class="text-lg font-bold text-primary dark:text-[#d5e9c1]">Notifications</h1>
+    </div>
+    <button onclick="markAllRead()"
+      class="text-xs font-semibold text-primary dark:text-[#d5e9c1] px-3 py-1.5 rounded-lg
+             hover:bg-primary-fixed dark:hover:bg-[#3a4a2e] transition-colors active:scale-95">
+      Mark all read
+    </button>
+    <button onclick="toggleTheme()"
+      class="p-2 rounded-full hover:bg-surface-container dark:hover:bg-[#2a2a24] active:scale-95 transition-transform">
+      <span class="material-symbols-outlined text-primary dark:text-[#d5e9c1]">brightness_4</span>
+    </button>
+  </header>
+
+  <!-- Filter tabs -->
+  <div class="sticky top-[57px] z-30 bg-[#fcf9f0] dark:bg-[#1c1c17] border-b border-outline-variant/20 px-4 py-2 flex gap-2 overflow-x-auto no-scrollbar">
+    <button onclick="setFilter('all')" data-filter="all"
+      class="filter-tab active flex-shrink-0 px-4 py-1.5 rounded-full text-sm font-medium transition-colors">All</button>
+    <button onclick="setFilter('unread')" data-filter="unread"
+      class="filter-tab flex-shrink-0 px-4 py-1.5 rounded-full text-sm font-medium transition-colors">Unread</button>
+    <button onclick="setFilter('critical')" data-filter="critical"
+      class="filter-tab flex-shrink-0 px-4 py-1.5 rounded-full text-sm font-medium transition-colors">Critical</button>
+    <button onclick="setFilter('warning')" data-filter="warning"
+      class="filter-tab flex-shrink-0 px-4 py-1.5 rounded-full text-sm font-medium transition-colors">Warnings</button>
+    <button onclick="setFilter('recommendation')" data-filter="recommendation"
+      class="filter-tab flex-shrink-0 px-4 py-1.5 rounded-full text-sm font-medium transition-colors">Tips</button>
+  </div>
+
+  <!-- Main -->
+  <main class="max-w-2xl mx-auto px-4 py-4">
+
+    <!-- Summary row -->
+    <div id="summaryRow" class="flex items-center justify-between mb-3 text-sm text-on-surface-variant dark:text-[#9e9e8e]">
+      <span id="summaryText">Loading…</span>
+      <span id="unreadCount" class="font-semibold text-primary dark:text-[#d5e9c1]"></span>
+    </div>
+
+    <!-- Notification list -->
+    <div id="notifList" class="space-y-2">
+      <div class="flex items-center justify-center gap-2 py-16 text-on-surface-variant/50 dark:text-[#9e9e8e]/50 text-sm">
+        <span class="material-symbols-outlined animate-spin" style="font-size:20px;">progress_activity</span>
+        Loading notifications…
+      </div>
+    </div>
+
+    <!-- Pagination -->
+    <div id="pagination" class="hidden flex items-center justify-center gap-4 mt-6">
+      <button id="prevBtn" onclick="changePage(-1)"
+        class="px-4 py-2 rounded-xl border border-outline-variant text-sm font-semibold
+               hover:bg-surface-container dark:hover:bg-[#2a2a24] disabled:opacity-30 transition-colors">
+        ← Prev
+      </button>
+      <span id="pageLabel" class="text-sm text-on-surface-variant dark:text-[#9e9e8e]"></span>
+      <button id="nextBtn" onclick="changePage(1)"
+        class="px-4 py-2 rounded-xl border border-outline-variant text-sm font-semibold
+               hover:bg-surface-container dark:hover:bg-[#2a2a24] disabled:opacity-30 transition-colors">
+        Next →
+      </button>
+    </div>
+  </main>
+
+  <!-- Detail modal -->
+  <div id="modal" class="hidden fixed inset-0 z-[200] flex items-end sm:items-center justify-center bg-black/40 px-4 pb-4 sm:pb-0">
+    <div class="w-full max-w-lg bg-white dark:bg-[#222219] rounded-2xl shadow-2xl overflow-hidden">
+      <div class="flex items-start justify-between p-5 border-b border-outline-variant/20">
+        <div class="flex items-center gap-3">
+          <span id="modalIcon" class="text-2xl"></span>
+          <h2 id="modalTitle" class="font-bold text-base leading-snug"></h2>
+        </div>
+        <button onclick="closeModal()" class="p-1 rounded-full hover:bg-surface-container dark:hover:bg-[#2a2a24] transition-colors ml-2 flex-shrink-0">
+          <span class="material-symbols-outlined" style="font-size:20px;">close</span>
+        </button>
+      </div>
+      <div id="modalBody" class="p-5 text-sm leading-relaxed whitespace-pre-wrap max-h-64 overflow-y-auto"></div>
+      <div class="p-4 border-t border-outline-variant/20 flex justify-end">
+        <button onclick="closeModal()"
+          class="px-5 py-2 bg-primary text-on-primary rounded-xl text-sm font-semibold hover:bg-primary/90 active:scale-95 transition-all">
+          Done
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bottom nav -->
+  <nav class="fixed bottom-0 left-0 w-full z-50 bg-[#fcf9f0]/80 dark:bg-stone-950/80 backdrop-blur-md
+              rounded-t-[24px] shadow-[0_-8px_24px_rgba(28,28,23,0.06)]
+              flex justify-around items-center px-4 pb-6 pt-3">
+    <a class="flex flex-col items-center text-stone-500 dark:text-stone-400 px-3 py-1.5 transition-transform hover:scale-105 duration-150" href="/">
+      <span class="material-symbols-outlined">dashboard</span>
+      <span class="text-[11px] font-medium tracking-wide">Dashboard</span>
+    </a>
+    <a class="flex flex-col items-center text-stone-500 dark:text-stone-400 px-3 py-1.5 transition-transform hover:scale-105 duration-150" href="/myfields">
+      <span class="material-symbols-outlined" style="font-variation-settings:'FILL' 1;">landscape</span>
+      <span class="text-[11px] font-medium tracking-wide">Fields</span>
+    </a>
+    <a class="flex flex-col items-center text-stone-500 dark:text-stone-400 px-3 py-1.5 transition-transform hover:scale-105 duration-150" href="/mycrops">
+      <span class="material-symbols-outlined" style="font-variation-settings:'FILL' 1;">eco</span>
+      <span class="text-[11px] font-medium tracking-wide">Crops</span>
+    </a>
+    <a class="flex flex-col items-center text-stone-500 dark:text-stone-400 px-3 py-1.5 transition-transform hover:scale-105 duration-150" href="/mytasks">
+      <span class="material-symbols-outlined">assignment_turned_in</span>
+      <span class="text-[11px] font-medium tracking-wide">Tasks</span>
+    </a>
+    <a class="flex flex-col items-center text-stone-500 dark:text-stone-400 px-3 py-1.5 transition-transform hover:scale-105 duration-150" href="/chatbot">
+      <span class="material-symbols-outlined" style="font-variation-settings:'FILL' 1;">chat</span>
+      <span class="text-[11px] font-medium tracking-wide">Chat</span>
+    </a>
+  </nav>
+
+  <style>
+    .filter-tab { color: #444840; background: transparent; }
+    .filter-tab.active { background: #d6e8c5; color: #47573b; font-weight: 600; }
+    .dark .filter-tab { color: #9e9e8e; }
+    .dark .filter-tab.active { background: #3a4a2e; color: #d5e9c1; }
+
+    .notif-card { transition: background .15s; }
+    .notif-card:hover { background: #f1eee5; }
+    .dark .notif-card:hover { background: #2a2a24; }
+    .notif-card.unread { border-left: 3px solid #47573b; }
+
+    .type-critical  { color: #ba1a1a; }
+    .type-warning   { color: #b45309; }
+    .type-info      { color: #1d4ed8; }
+    .type-recommendation { color: #166534; }
+    .bg-critical    { background: #ffdad6; }
+    .bg-warning     { background: #fef3c7; }
+    .bg-info        { background: #dbeafe; }
+    .bg-recommendation { background: #dcfce7; }
+    .dark .bg-critical    { background: #7f1d1d40; }
+    .dark .bg-warning     { background: #78350f40; }
+    .dark .bg-info        { background: #1e3a5f40; }
+    .dark .bg-recommendation { background: #14532d40; }
+  </style>
+
+  <script>
+    const USER_ID = 1;
+    const TYPE_META = {
+      critical:       { icon: '🚨', label: 'Critical' },
+      warning:        { icon: '⚠️', label: 'Warning' },
+      info:           { icon: 'ℹ️', label: 'Info' },
+      recommendation: { icon: '💡', label: 'Tip' },
+    };
+
+    let currentPage = 1;
+    let totalPages = 1;
+    let activeFilter = 'all';
+    let allNotifs = [];
+
+    // ── Filter ─────────────────────────────────────────────────────────────
+
+    function setFilter(f) {
+      activeFilter = f;
+      currentPage = 1;
+      document.querySelectorAll('.filter-tab').forEach(b => {
+        b.classList.toggle('active', b.dataset.filter === f);
+      });
+      if (f === 'all' || f === 'unread') {
+        loadPage();
+      } else {
+        loadByType(f);
+      }
+    }
+
+    // ── Data fetching ──────────────────────────────────────────────────────
+
+    async function loadPage() {
+      showSkeleton();
+      try {
+        const url = activeFilter === 'unread'
+          ? `/notifications/unread?user_id=${USER_ID}`
+          : `/notifications/?user_id=${USER_ID}&page=${currentPage}&per_page=20`;
+        const r = await fetch(url);
+        if (!r.ok) throw 0;
+        const d = await r.json();
+        allNotifs = d.notifications || [];
+        totalPages = d.pages || 1;
+        renderList(allNotifs);
+        updateSummary(d.total ?? allNotifs.length, d.unread_count ?? 0);
+        updatePagination();
+      } catch {
+        showError();
+      }
+    }
+
+    async function loadByType(type) {
+      showSkeleton();
+      try {
+        const r = await fetch(`/notifications/?user_id=${USER_ID}&type=${type}`);
+        if (!r.ok) throw 0;
+        const d = await r.json();
+        allNotifs = d.notifications || [];
+        totalPages = 1;
+        renderList(allNotifs);
+        updateSummary(d.total ?? allNotifs.length, d.unread_count ?? 0);
+        updatePagination();
+      } catch {
+        showError();
+      }
+    }
+
+    function changePage(delta) {
+      const next = currentPage + delta;
+      if (next < 1 || next > totalPages) return;
+      currentPage = next;
+      loadPage();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    // ── Render ─────────────────────────────────────────────────────────────
+
+    function renderList(notifs) {
+      const el = document.getElementById('notifList');
+      if (!notifs.length) {
+        el.innerHTML = `
+          <div class="flex flex-col items-center gap-3 py-20 text-on-surface-variant/50 dark:text-[#9e9e8e]/50">
+            <span class="material-symbols-outlined" style="font-size:40px;">notifications_off</span>
+            <p class="text-sm">No notifications here</p>
+          </div>`;
+        return;
+      }
+
+      el.innerHTML = notifs.map((n, i) => {
+        const meta = TYPE_META[n.notification_type] || TYPE_META.info;
+        const unread = !n.is_read;
+        const hasDetail = n.detail && n.detail !== n.message;
+        return `
+          <div class="notif-card ${unread ? 'unread' : ''} notif-in rounded-xl px-4 py-3.5
+                      bg-surface-container-low dark:bg-[#222219] cursor-pointer"
+               style="animation-delay:${i * 0.03}s"
+               onclick="handleClick(${n.id}, ${hasDetail})">
+            <div class="flex items-start gap-3">
+              <span class="text-xl flex-shrink-0 mt-0.5">${meta.icon}</span>
+              <div class="flex-1 min-w-0">
+                <div class="flex items-start justify-between gap-2">
+                  <p class="font-semibold text-sm leading-snug ${unread ? '' : 'opacity-70'}">${esc(n.title)}</p>
+                  <div class="flex items-center gap-1.5 flex-shrink-0">
+                    ${unread ? '<span class="w-2 h-2 rounded-full bg-primary flex-shrink-0 mt-1"></span>' : ''}
+                    <span class="text-[10px] text-on-surface-variant/60 dark:text-[#9e9e8e]/60 whitespace-nowrap">${timeAgo(n.created_at)}</span>
+                  </div>
+                </div>
+                <p class="text-xs text-on-surface-variant dark:text-[#9e9e8e] mt-1 leading-relaxed line-clamp-2">${esc(n.message)}</p>
+                ${hasDetail ? `<p class="text-xs text-primary dark:text-[#d5e9c1] mt-1.5 font-medium">Tap for details →</p>` : ''}
+              </div>
+            </div>
+          </div>`;
+      }).join('');
+    }
+
+    function updateSummary(total, unread) {
+      document.getElementById('summaryText').textContent = `${total} notification${total !== 1 ? 's' : ''}`;
+      document.getElementById('unreadCount').textContent = unread > 0 ? `${unread} unread` : '';
+    }
+
+    function updatePagination() {
+      const pg = document.getElementById('pagination');
+      if (totalPages <= 1 || activeFilter === 'unread') {
+        pg.classList.add('hidden');
+        return;
+      }
+      pg.classList.remove('hidden');
+      pg.classList.add('flex');
+      document.getElementById('pageLabel').textContent = `Page ${currentPage} of ${totalPages}`;
+      document.getElementById('prevBtn').disabled = currentPage <= 1;
+      document.getElementById('nextBtn').disabled = currentPage >= totalPages;
+    }
+
+    // ── Actions ────────────────────────────────────────────────────────────
+
+    async function handleClick(id, hasDetail) {
+      await markRead(id);
+      if (hasDetail) {
+        const n = allNotifs.find(x => x.id === id);
+        if (n) openModal(n);
+      }
+    }
+
+    async function markRead(id) {
+      const card = document.querySelector(`[onclick="handleClick(${id}, true)"], [onclick="handleClick(${id}, false)"]`);
+      if (card) card.classList.remove('unread');
+      try { await fetch(`/notifications/${id}/read`, { method: 'PUT' }); } catch {}
+      const n = allNotifs.find(x => x.id === id);
+      if (n) n.is_read = true;
+    }
+
+    async function markAllRead() {
+      try {
+        await fetch(`/notifications/read-all?user_id=${USER_ID}`, { method: 'PUT' });
+        document.querySelectorAll('.notif-card.unread').forEach(c => c.classList.remove('unread'));
+        document.getElementById('unreadCount').textContent = '';
+        allNotifs.forEach(n => n.is_read = true);
+      } catch {}
+    }
+
+    // ── Modal ──────────────────────────────────────────────────────────────
+
+    function openModal(n) {
+      const meta = TYPE_META[n.notification_type] || TYPE_META.info;
+      document.getElementById('modalIcon').textContent = meta.icon;
+      document.getElementById('modalTitle').textContent = n.title;
+      document.getElementById('modalBody').textContent = n.detail || n.message;
+      document.getElementById('modal').classList.remove('hidden');
+    }
+
+    function closeModal() {
+      document.getElementById('modal').classList.add('hidden');
+    }
+
+    document.getElementById('modal').addEventListener('click', e => {
+      if (e.target === document.getElementById('modal')) closeModal();
+    });
+
+    // ── Helpers ────────────────────────────────────────────────────────────
+
+    function showSkeleton() {
+      document.getElementById('notifList').innerHTML = Array(5).fill(`
+        <div class="rounded-xl bg-surface-container-low dark:bg-[#222219] px-4 py-4 animate-pulse">
+          <div class="flex gap-3">
+            <div class="w-8 h-8 rounded-full bg-outline-variant/30 dark:bg-[#44484040] flex-shrink-0"></div>
+            <div class="flex-1 space-y-2">
+              <div class="h-3 bg-outline-variant/30 dark:bg-[#44484040] rounded w-3/4"></div>
+              <div class="h-3 bg-outline-variant/20 dark:bg-[#44484030] rounded w-full"></div>
+            </div>
+          </div>
+        </div>`).join('');
+    }
+
+    function showError() {
+      document.getElementById('notifList').innerHTML = `
+        <div class="flex flex-col items-center gap-2 py-16 text-error">
+          <span class="material-symbols-outlined" style="font-size:32px;">error</span>
+          <p class="text-sm font-medium">Failed to load notifications</p>
+          <button onclick="loadPage()" class="mt-1 text-xs underline">Retry</button>
+        </div>`;
+    }
+
+    function timeAgo(iso) {
+      const s = Math.floor((Date.now() - new Date(iso)) / 1000);
+      if (s < 60) return 'just now';
+      const m = Math.floor(s / 60);
+      if (m < 60) return `${m}m ago`;
+      const h = Math.floor(m / 60);
+      if (h < 24) return `${h}h ago`;
+      return `${Math.floor(h / 24)}d ago`;
+    }
+
+    function esc(t) {
+      const d = document.createElement('div');
+      d.textContent = t;
+      return d.innerHTML;
+    }
+
+    function toggleTheme() {
+      const dark = document.documentElement.classList.toggle('dark');
+      localStorage.setItem('theme', dark ? 'dark' : 'light');
+    }
+
+    document.addEventListener('DOMContentLoaded', loadPage);
+  </script>
+</body>
+</html>
