@@ -1,11 +1,13 @@
-from marshmallow import Schema, fields, validate
+from marshmallow import Schema, fields, validate, EXCLUDE
 from app.schemas.task_schema import TaskCardSchema
 
 
 class CreateFieldSchema(Schema):
+    class Meta:
+        unknown = EXCLUDE
+
     name = fields.Str(required=True, validate=validate.Length(min=1, max=100))
     acreage = fields.Float(allow_none=True)
-    growth_stage = fields.Str(allow_none=True)
     health_status = fields.Str(allow_none=True)
     field_score = fields.Float(allow_none=True)
     health_percentage = fields.Float(allow_none=True)

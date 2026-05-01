@@ -9,9 +9,15 @@ def dashboard_page():
     return render_template("dashboard.html")
 
 
-@dashboard_bp.route("/<int:user_id>/dashboard", methods=["GET"])
+@dashboard_bp.route("/<int:user_id>/dashboard")
 def get_dashboard(user_id):
-    dashboard_data = DashboardService().build_dashboard_data(user_id=user_id)
+
+    dashboard_data = (
+        DashboardService.build_dashboard_data(
+            user_id
+        )
+    )
+
     return jsonify(dashboard_data), 200 
 
 @dashboard_bp.route("/<int:user_id>/advisor", methods=["GET"])

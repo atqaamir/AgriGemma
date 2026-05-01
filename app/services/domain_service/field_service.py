@@ -53,6 +53,10 @@ class FieldService:
         return TaskRepository.get_pending_tasks_by_field_id(field_id)
 
     @staticmethod
+    def get_fields_by_user(user_id: int):
+        return FieldRepository.get_by_user_id(user_id)
+
+    @staticmethod
     def get_field_summary(field_id):
         field = FieldRepository.get_by_id(field_id)
         if not field:
@@ -61,7 +65,6 @@ class FieldService:
             "id": field.id,
             "name": field.name,
             "acreage": field.acreage,
-            "growth_stage": field.growth_stage,
             "health_status": field.health_status,
             "field_score": field.field_score,
             "health_percentage": field.health_percentage,
