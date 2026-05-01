@@ -57,6 +57,10 @@ class CropService:
         return all_tasks
 
     @staticmethod
+    def get_crops_by_user(user_id: int) -> list:
+        return CropRepository.get_by_user_id(user_id)
+
+    @staticmethod
     def get_pending_tasks_by_crop_id(crop_id: int) -> list:
         crop = CropRepository.get_by_id(crop_id)
         if not crop:

@@ -1,3 +1,5 @@
+from sqlalchemy.orm import joinedload
+
 from app.models.task import Task
 from app.extensions import db
 
@@ -72,3 +74,12 @@ class TaskRepository:
             setattr(task, key, value)
         db.session.commit()
         return task
+
+    @staticmethod
+    def get_by_user_id(user_id: int) -> list:
+        return (
+            Task.query
+            .options(joinedload(Task.crop), joinedload(Task.field))
+            .filter_by(user_id=user_id)
+            .all()
+        )
