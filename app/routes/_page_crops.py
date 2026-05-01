@@ -42,6 +42,23 @@ def get_crops():
 
     return jsonify(result), 200
 
+@crops_bp.route("/croptasks", methods=["GET"])
+def get_croptasks():
+    crops = CropService.get_all_croptasks()
+
+    all_tasks = []
+    for crop in crops:
+        all_tasks.extend([t for t in crop.tasks if t.task_category == 'crop'])
+
+    unique_tasks = list({task.id: task for task in all_tasks}.values())
+
+    result = {
+        "crop_cards": crop_card_schema.dump(crops),
+        "crop_task_cards": task_card_schema.dump(unique_tasks),
+    }
+
+    return jsonify(result), 200
+
 
 @crops_bp.route("/crops/<int:crop_id>", methods=["GET"])
 def get_crop(crop_id):
@@ -55,11 +72,27 @@ def get_crop(crop_id):
 
 @crops_bp.route("/crops/active", methods=["GET"])
 def get_active_crops():
-    result = CropService.get_active_crops_with_tasks()
 
+    # Get active crops
+    crops = CropService.get_active_crops()
+
+    # Collect all crop-related tasks
+    all_tasks = []
+
+    for crop in crops:
+        if crop.tasks:
+            all_tasks.extend([
+                task for task in crop.tasks
+                if task.task_category == "crop"
+            ])
+
+    # Remove duplicate tasks
+    unique_tasks = list({task.id: task for task in all_tasks}.values())
+
+    # Build response
     response = {
-        "crop_cards": crop_card_schema.dump(result["crops"]),
-        "crop_task_cards": task_card_schema.dump(result["tasks"]),
+        "crop_cards": crop_card_schema.dump(crops),
+        "crop_task_cards": task_card_schema.dump(unique_tasks),
     }
 
     return jsonify(response), 200

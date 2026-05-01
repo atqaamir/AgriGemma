@@ -2,6 +2,7 @@ from datetime import date, datetime
 
 from app import create_app
 from app.extensions import db
+from app.models.notification import Notification
 from app.models.user import User
 from app.models.crop import Crop
 from app.models.field import Field
@@ -10,6 +11,8 @@ from app.models.task import Task
 app = create_app()
 
 with app.app_context():
+    db.create_all()
+
     # Clear existing data in dependency order
     Task.query.delete()
     Field.query.delete()
@@ -22,64 +25,13 @@ with app.app_context():
     db.session.add(user)
     db.session.commit()
 
-    # Add sample crops
-    crop_data = [
-        {
-            "name": "Corn",
-            "user_id": user.id,
-            "planting_date": date.today(),
-            "current_growth_stage": "Vegetative",
-            "current_health_status": "healthy",
-            "soil_type": "Loamy",
-            "currently_water_requirement": 25.5,
-            "currently_active": True,
-        },
-        {
-            "name": "Wheat",
-            "user_id": user.id,
-            "planting_date": date.today(),
-            "current_growth_stage": "Seedling",
-            "current_health_status": "alert",
-            "soil_type": "Clay",
-            "currently_water_requirement": 18.0,
-            "currently_active": True,
-        },
-        {
-            "name": "Soybeans",
-            "user_id": user.id,
-            "planting_date": date.today(),
-            "current_growth_stage": "Flowering",
-            "current_health_status": "critical",
-            "soil_type": "Loamy",
-            "currently_water_requirement": 22.0,
-            "currently_active": True,
-        },
-        {
-            "name": "Sunflower",
-            "user_id": user.id,
-            "planting_date": date.today(),
-            "current_growth_stage": "Ripening",
-            "current_health_status": "healthy",
-            "soil_type": "Sandy",
-            "currently_water_requirement": 20.5,
-            "currently_active": False,
-        },
-    ]
-
-    crops = {}
-    for item in crop_data:
-        crop = Crop(**item)
-        db.session.add(crop)
-        crops[item["name"]] = crop
-
-    db.session.commit()
 
     # Add sample fields
     sample_fields = [
         Field(
             name="North Field Alpha",
             user_id=user.id,
-            crop_id=crops["Corn"].id,
+   
             acreage=12.5,
             health_status="healthy",
             field_score=92.0,
@@ -92,7 +44,7 @@ with app.app_context():
         Field(
             name="East Creek Basin",
             user_id=user.id,
-            crop_id=crops["Wheat"].id,
+         
             acreage=34.2,
             health_status="alert",
             field_score=64.0,
@@ -105,7 +57,7 @@ with app.app_context():
         Field(
             name="South Hill Slope",
             user_id=user.id,
-            crop_id=crops["Soybeans"].id,
+         
             acreage=18.0,
             health_status="critical",
             field_score=88.0,
@@ -118,7 +70,7 @@ with app.app_context():
         Field(
             name="The Reservoir",
             user_id=user.id,
-            crop_id=crops["Sunflower"].id,
+        
             acreage=5.5,
             health_status="healthy",
             field_score=95.0,
@@ -132,6 +84,60 @@ with app.app_context():
 
     db.session.add_all(sample_fields)
     db.session.commit()
+
+    # Add sample crops
+    crop_data = [
+        {
+            "name": "Corn",
+            "user_id": user.id,
+            "planting_date": date.today(),
+            "current_growth_stage": "Vegetative",
+            "current_health_status": "healthy",
+            "currently_water_requirement": 25.5,
+            "currently_active": True,
+            "field_id": sample_fields[0].id,
+        },
+        {
+            "name": "Wheat",
+            "user_id": user.id,
+            "planting_date": date.today(),
+            "current_growth_stage": "Seedling",
+            "current_health_status": "alert",
+            "field_id": sample_fields[1].id,
+            "currently_water_requirement": 18.0,
+            "currently_active": True,
+        },
+        {
+            "name": "Soybeans",
+            "user_id": user.id,
+            "planting_date": date.today(),
+            "current_growth_stage": "Flowering",
+            "current_health_status": "critical",
+            "field_id": sample_fields[2].id,
+            "currently_water_requirement": 22.0,
+            "currently_active": True,
+        },
+        {
+            "name": "Sunflower",
+            "user_id": user.id,
+            "planting_date": date.today(),
+            "current_growth_stage": "Ripening",
+            "current_health_status": "healthy",
+            "field_id": sample_fields[3].id,
+            "currently_water_requirement": 20.5,
+            "currently_active": False,
+        },
+    ]
+
+    crops = {}
+    for item in crop_data:
+        crop = Crop(**item)
+        db.session.add(crop)
+        crops[item["name"]] = crop
+
+    db.session.commit()
+
+  
 
     north_field = sample_fields[0]
     east_field = sample_fields[1]
@@ -258,6 +264,200 @@ with app.app_context():
     ]
 
     db.session.add_all(sample_tasks)
+    db.session.commit()
+
+    # =========================================================
+    # SAMPLE NOTIFICATIONS
+    # =========================================================
+
+    sample_notifications = [
+
+        Notification(
+            user_id=user.id,
+
+            title="Crop Fertilization Required",
+
+            message="Corn requires fertilization today.",
+
+            detail="""
+    Corn in North Field Alpha has entered an aggressive vegetative
+    growth phase. Nitrogen levels may decline rapidly during this
+    stage, which can reduce overall crop performance and leaf
+    development.
+
+    Recommended action:
+    • Apply nitrogen fertilizer within 24 hours
+    • Avoid overwatering after fertilization
+    • Monitor leaf coloration over the next 3 days
+            """,
+
+            notification_type="recommendation",
+
+            is_read=False,
+
+            created_at=datetime.utcnow(),
+
+            entity_type="crop",
+
+            entity_id=crops["Corn"].id,
+        ),
+
+        Notification(
+            user_id=user.id,
+
+            title="Task Due Today",
+
+            message="Inspect Wheat Growth is due today.",
+
+            detail="""
+    The wheat inspection task scheduled for East Creek Basin
+    should be completed today to identify uneven growth,
+    moisture stress, or disease development.
+
+    Suggested checks:
+    • Inspect dry patches
+    • Capture progress photos
+    • Verify irrigation coverage
+            """,
+
+            notification_type="info",
+
+            is_read=False,
+
+            created_at=datetime.utcnow(),
+
+            entity_type="task",
+
+            entity_id=sample_tasks[3].id,
+        ),
+
+        Notification(
+            user_id=user.id,
+
+            title="Field Moisture Warning",
+
+            message="North Field Alpha moisture level is decreasing.",
+
+            detail="""
+    Soil moisture levels have dropped below the recommended
+    threshold for optimal crop performance.
+
+    Potential risks:
+    • Reduced nutrient absorption
+    • Plant stress during afternoon heat
+    • Slower vegetative growth
+
+    Recommended action:
+    Initiate irrigation cycle within the next 12 hours.
+            """,
+
+            notification_type="warning",
+
+            is_read=False,
+
+            created_at=datetime.utcnow(),
+
+            entity_type="field",
+
+            entity_id=north_field.id,
+        ),
+
+        Notification(
+            user_id=user.id,
+
+            title="Critical Crop Health Alert",
+
+            message="Soybeans health status is critical.",
+
+            detail="""
+    The soybean crop in South Hill Slope is showing signs of
+    high stress and declining health metrics.
+
+    Detected indicators:
+    • Elevated stress risk
+    • Irregular flowering pattern
+    • Moisture instability
+
+    Immediate recommendations:
+    • Inspect for pests or fungal infection
+    • Review irrigation schedule
+    • Conduct leaf health assessment
+            """,
+
+            notification_type="critical",
+
+            is_read=False,
+
+            created_at=datetime.utcnow(),
+
+            entity_type="crop",
+
+            entity_id=crops["Soybeans"].id,
+        ),
+
+        Notification(
+            user_id=user.id,
+
+            title="Spraying Reminder",
+
+            message="Preventive spraying task is scheduled for East Creek Basin.",
+
+            detail="""
+    Preventive fungal spraying is recommended early in the morning
+    to minimize evaporation and maximize treatment coverage.
+
+    Safety recommendations:
+    • Wear protective equipment
+    • Avoid spraying during high wind
+    • Keep irrigation paused for several hours after treatment
+            """,
+
+            notification_type="recommendation",
+
+            is_read=True,
+
+            created_at=datetime.utcnow(),
+
+            entity_type="task",
+
+            entity_id=sample_tasks[8].id,
+        ),
+
+        Notification(
+            user_id=user.id,
+
+            title="Weather Heat Advisory",
+
+            message="High temperatures are expected tomorrow afternoon.",
+
+            detail="""
+    Forecast models predict elevated temperatures above normal
+    seasonal averages tomorrow.
+
+    Potential impacts:
+    • Increased evaporation rates
+    • Higher crop water demand
+    • Heat stress risk during midday
+
+    Recommendations:
+    • Irrigate early morning
+    • Avoid fertilizer application during peak heat
+    • Monitor sensitive crops closely
+            """,
+
+            notification_type="warning",
+
+            is_read=False,
+
+            created_at=datetime.utcnow(),
+
+            entity_type="weather",
+
+            entity_id=None,
+        ),
+    ]
+
+    db.session.add_all(sample_notifications)
     db.session.commit()
 
     print("Sample data seeded successfully.")

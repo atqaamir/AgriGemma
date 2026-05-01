@@ -1,5 +1,8 @@
+from sqlalchemy.orm import subqueryload
+
 from app.models.field import Field
 from app.extensions import db
+
 
 class FieldRepository:
 
@@ -12,11 +15,30 @@ class FieldRepository:
 
     @staticmethod
     def get_all():
-        return Field.query
+        # subqueryload prevents N+1 when iterating fields and accessing field.crops or field.tasks
+        return Field.query.options(
+            subqueryload(Field.crops),
+            subqueryload(Field.tasks),
+        ).all()
+
+    @staticmethod
+    def get_all_active():
+        return Field.query.options(
+            subqueryload(Field.crops),
+            subqueryload(Field.tasks),
+        ).filter_by(currently_active=True).all()
 
     @staticmethod
     def get_by_id(field_id):
-        return Field.query.get(field_id)
+        return Field.query.options(
+            subqueryload(Field.crops),
+            subqueryload(Field.tasks),
+        ).get(field_id)
+
+    @staticmethod
+    def get_pending_tasks_by_field_id(field_id):
+        from app.models.task import Task
+        return Task.query.filter_by(field_id=field_id, completed=False).all()
 
     @staticmethod
     def delete(field):
@@ -24,7 +46,7 @@ class FieldRepository:
         db.session.commit()
 
     @staticmethod
-    def update(field, data):    
+    def update(field, data):
         for key, value in data.items():
             setattr(field, key, value)
         db.session.commit()

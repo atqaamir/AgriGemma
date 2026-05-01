@@ -1,4 +1,5 @@
 from app.repositories.field_repository import FieldRepository
+from app.repositories.task_repository import TaskRepository
 
 
 class FieldService:
@@ -30,70 +31,33 @@ class FieldService:
         return field
 
     @staticmethod
-    def get_field_status(field):
-        if field.health_status == "good":
-            return "Healthy"
-        elif field.health_status == "warning":
-            return "Needs attention"
-        return "At risk"
-
-    @staticmethod
-    def get_field_disease_status(field):
-        pass
-
-    @staticmethod
-    def get_field_heat_status(field):
-        pass
-
-    @staticmethod
-    def get_field_moisture_status(field):
-        pass
-
-    @staticmethod
-    def get_field_soil_status(field):
-        pass
-
-    @staticmethod
-    def get_field_health_status(field):
-        pass
-
-    @staticmethod
     def get_currently_active_fields():
-        fields = FieldRepository.get_all()
-
-        # If repository returns a SQLAlchemy query
-        if hasattr(fields, "filter_by"):
-
-            try:
-                return fields.filter_by(currently_active=True).all()
-            except:
-                return fields if isinstance(fields, list) else fields.all()
+        return FieldRepository.get_all_active()
 
     @staticmethod
     def get_active_fields_with_tasks():
-        fields = FieldService.get_currently_active_fields()
+        fields = FieldRepository.get_all_active()
+        tasks = TaskRepository.get_pending_field_tasks()
+        return {"fields": fields, "tasks": tasks}
 
-        all_tasks = []
-        seen_task_ids = set()
-
-        for field in fields:
-            for task in field.tasks:
-                if task.id not in seen_task_ids and task.task_category == 'field':
-                    seen_task_ids.add(task.id)
-                    all_tasks.append(task)
-
-        return {
-            "fields": fields,
-            "tasks": all_tasks,
-        }
-    
     @staticmethod
-    def get_field_summary(field_id):    
+    def get_all_field_tasks():
+        return TaskRepository.get_all_field_tasks()
+
+    @staticmethod
+    def get_pending_field_tasks():
+        return TaskRepository.get_pending_field_tasks()
+
+    @staticmethod
+    def get_pending_tasks_by_field_id(field_id):
+        return TaskRepository.get_pending_tasks_by_field_id(field_id)
+
+    @staticmethod
+    def get_field_summary(field_id):
         field = FieldRepository.get_by_id(field_id)
         if not field:
             return None
-
-        summary = {
+        return {
             "id": field.id,
             "name": field.name,
             "acreage": field.acreage,
@@ -108,9 +72,16 @@ class FieldService:
             "currently_active": field.currently_active,
             "crop": {
                 "id": field.crop.id if field.crop else None,
-                "name": field.crop.name if field.crop else None
+                "name": field.crop.name if field.crop else None,
             },
             "task_count": len(field.tasks),
             "pending_task_count": len([t for t in field.tasks if not t.completed]),
         }
-        return summary
+
+    @staticmethod
+    def get_field_status(field):
+        if field.health_status == "good":
+            return "Healthy"
+        elif field.health_status == "warning":
+            return "Needs attention"
+        return "At risk"
