@@ -46,7 +46,13 @@ class CropDetailSchema(Schema):
     planting_date = fields.Date(allow_none=True)
     currently_active = fields.Bool()
 
+    field = fields.Method("get_field")
     tasks = fields.Method("get_tasks")
+
+    def get_field(self, obj):
+        if obj.field:
+            return {"id": obj.field.id, "name": obj.field.name}
+        return None
 
     def get_tasks(self, obj):
         return TaskCardSchema(many=True).dump(obj.tasks)

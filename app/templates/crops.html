@@ -207,7 +207,7 @@
               <span id="cropGrowthStage" class="font-medium text-on-surface block"></span>
             </div>
             <div>
-              <span class="text-on-surface-variant">Related Fields:</span>
+              <span class="text-on-surface-variant">Related Field:</span>
               <span id="cropRelatedFields" class="font-medium text-on-surface block"></span>
             </div>
           </div>
@@ -439,7 +439,7 @@
                 <h4 class="font-bold text-on-surface text-sm truncate">${escapeHtml(crop.name || 'Unnamed Crop')}</h4>
                 <div class="flex justify-between items-centre mt-0.5 gap-2">
                   <p class="text-[10px] text-on-surface-variant font-medium truncate">
-                    ${escapeHtml(cropName)} • ${escapeHtml(crop.field_name || 'Unknown Field')}
+                    ${escapeHtml(cropName)} • ${escapeHtml(crop.field?.name || 'Unknown Field')}
                   </p>
                   <span class="text-[10px] font-bold ${getHealthColor(crop.health_status)}">${progress}%</span>
                 </div>
@@ -655,7 +655,7 @@
       crop.growth_stage || '—';
 
     document.getElementById('cropRelatedFields').textContent =
-      crop.field_name || '—';
+      crop.field?.name || '—';
 
     // health section
     document.getElementById('cropStatusText').textContent =

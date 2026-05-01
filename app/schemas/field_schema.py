@@ -37,7 +37,11 @@ class FieldCardSchema(Schema):
 
     def get_crop(self, obj):
         if obj.crop:
-            return {"id": obj.crop.id, "name": obj.crop.name}
+            return {
+                "id": obj.crop.id,
+                "name": obj.crop.name,
+                "growth_stage": obj.crop.growth_stage,
+            }
         return None
 
     def get_task_count(self, obj):
@@ -70,7 +74,11 @@ class FieldDetailSchema(Schema):
 
     def get_crop(self, obj):
         if obj.crop:
-            return {"id": obj.crop.id, "name": obj.crop.name}
+            return {
+                "id": obj.crop.id,
+                "name": obj.crop.name,
+                "growth_stage": obj.crop.growth_stage,
+            }
         return None
 
     def get_tasks(self, obj):
