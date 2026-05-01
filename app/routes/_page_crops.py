@@ -98,6 +98,11 @@ def get_active_crops():
     return jsonify(response), 200
 
 
+@crops_bp.route("/vocabulary", methods=["GET"])
+def get_crop_vocabulary():
+    return jsonify(CropService.get_vocabulary()), 200
+
+
 @crops_bp.route("/crops", methods=["POST"])
 def create_crop():
     data = request.get_json() or {}

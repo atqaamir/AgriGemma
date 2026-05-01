@@ -317,22 +317,12 @@
             <input type="number" name="acreage" step="0.1" min="0" class="w-full bg-surface-container rounded-lg px-4 py-3 text-sm text-on-surface outline-none focus:ring-2 focus:ring-primary" placeholder="0.0">
           </div>
           <div>
-            <label class="text-[10px] uppercase tracking-widest text-on-surface-variant block mb-1">Growth Stage</label>
-            <input type="text" name="growth_stage" class="w-full bg-surface-container rounded-lg px-4 py-3 text-sm text-on-surface outline-none focus:ring-2 focus:ring-primary" placeholder="e.g. Seedling">
-          </div>
-        </div>
-        <div class="grid grid-cols-2 gap-3">
-          <div>
             <label class="text-[10px] uppercase tracking-widest text-on-surface-variant block mb-1">Health Status</label>
             <select name="health_status" class="w-full bg-surface-container rounded-lg px-4 py-3 text-sm text-on-surface outline-none focus:ring-2 focus:ring-primary">
               <option value="healthy">Healthy</option>
               <option value="alert">Alert</option>
               <option value="critical">Critical</option>
             </select>
-          </div>
-          <div>
-            <label class="text-[10px] uppercase tracking-widest text-on-surface-variant block mb-1">Field Score (0–100)</label>
-            <input type="number" name="field_score" min="0" max="100" class="w-full bg-surface-container rounded-lg px-4 py-3 text-sm text-on-surface outline-none focus:ring-2 focus:ring-primary" placeholder="0">
           </div>
         </div>
         <div class="grid grid-cols-3 gap-3">
@@ -351,7 +341,11 @@
         </div>
         <div>
           <label class="text-[10px] uppercase tracking-widest text-on-surface-variant block mb-1">Disease Risk</label>
-          <input type="text" name="disease_risk" class="w-full bg-surface-container rounded-lg px-4 py-3 text-sm text-on-surface outline-none focus:ring-2 focus:ring-primary" placeholder="e.g. Low">
+          <select name="disease_risk" class="w-full bg-surface-container rounded-lg px-4 py-3 text-sm text-on-surface outline-none focus:ring-2 focus:ring-primary">
+            <option value="low">Low</option>
+            <option value="medium">Medium</option>
+            <option value="high">High</option>
+          </select>
         </div>
         <p id="createFieldError" class="text-error text-xs hidden"></p>
         <div class="flex gap-3 pt-2">
@@ -382,22 +376,12 @@
             <input type="number" name="acreage" step="0.1" min="0" class="w-full bg-surface-container rounded-lg px-4 py-3 text-sm text-on-surface outline-none focus:ring-2 focus:ring-primary" placeholder="0.0">
           </div>
           <div>
-            <label class="text-[10px] uppercase tracking-widest text-on-surface-variant block mb-1">Growth Stage</label>
-            <input type="text" name="growth_stage" class="w-full bg-surface-container rounded-lg px-4 py-3 text-sm text-on-surface outline-none focus:ring-2 focus:ring-primary" placeholder="e.g. Seedling">
-          </div>
-        </div>
-        <div class="grid grid-cols-2 gap-3">
-          <div>
             <label class="text-[10px] uppercase tracking-widest text-on-surface-variant block mb-1">Health Status</label>
             <select name="health_status" class="w-full bg-surface-container rounded-lg px-4 py-3 text-sm text-on-surface outline-none focus:ring-2 focus:ring-primary">
               <option value="healthy">Healthy</option>
               <option value="alert">Alert</option>
               <option value="critical">Critical</option>
             </select>
-          </div>
-          <div>
-            <label class="text-[10px] uppercase tracking-widest text-on-surface-variant block mb-1">Field Score (0–100)</label>
-            <input type="number" name="field_score" min="0" max="100" class="w-full bg-surface-container rounded-lg px-4 py-3 text-sm text-on-surface outline-none focus:ring-2 focus:ring-primary" placeholder="0">
           </div>
         </div>
         <div class="grid grid-cols-3 gap-3">
@@ -416,7 +400,11 @@
         </div>
         <div>
           <label class="text-[10px] uppercase tracking-widest text-on-surface-variant block mb-1">Disease Risk</label>
-          <input type="text" name="disease_risk" class="w-full bg-surface-container rounded-lg px-4 py-3 text-sm text-on-surface outline-none focus:ring-2 focus:ring-primary" placeholder="e.g. Low">
+          <select name="disease_risk" class="w-full bg-surface-container rounded-lg px-4 py-3 text-sm text-on-surface outline-none focus:ring-2 focus:ring-primary">
+            <option value="low">Low</option>
+            <option value="medium">Medium</option>
+            <option value="high">High</option>
+          </select>
         </div>
         <p id="editFieldError" class="text-error text-xs hidden"></p>
         <div class="flex gap-3 pt-2">
@@ -1086,13 +1074,11 @@
       form.fieldId = field.id;
       form.name.value = field.name || '';
       form.acreage.value = field.acreage ?? '';
-      form.growth_stage.value = field.growth_stage || '';
       form.health_status.value = field.health_status || 'healthy';
-      form.field_score.value = field.field_score ?? '';
       form.moisture_level.value = field.moisture_level ?? '';
       form.heat_level.value = field.heat_level ?? '';
       form.stress_risk.value = field.stress_risk ?? '';
-      form.disease_risk.value = field.disease_risk || '';
+      form.disease_risk.value = (field.disease_risk || 'low').toLowerCase();
       document.getElementById('editFieldError').classList.add('hidden');
     }
 
