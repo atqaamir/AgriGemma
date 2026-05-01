@@ -1,5 +1,7 @@
 from app.repositories.crop_repository import CropRepository
 from app.services.domain_service.task_service import TaskService
+from app.rules.vocabulary.crop_names import CropNames
+from app.rules.vocabulary.growth_stage import GrowthStage
 
 
 class CropService:
@@ -55,6 +57,12 @@ class CropService:
         for crop in CropRepository.get_all():
             all_tasks.extend(TaskService.get_pending_tasks_for_crop(crop.id))
         return all_tasks
+
+    @staticmethod
+    def get_vocabulary() -> dict:
+        crop_names = [c.name for c in CropNames.query.order_by(CropNames.name).all()]
+        growth_stages = [g.name for g in GrowthStage.query.order_by(GrowthStage.id).all()]
+        return {"crop_names": crop_names, "growth_stages": growth_stages}
 
     @staticmethod
     def get_crops_by_user(user_id: int) -> list:
