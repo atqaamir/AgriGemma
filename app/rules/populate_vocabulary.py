@@ -1,8 +1,8 @@
 from app.extensions import db
-from app.rules.Vocubualry.crop_names import CropNames
-from app.rules.Vocubualry.soil_type import Soil_Type
-from app.rules.Vocubualry.growth_stage import GrowthStage
-from app.rules.Vocubualry.water_source import WaterSource
+from app.rules.vocabulary.crop_names import CropNames
+from app.rules.vocabulary.soil_type import Soil_Type
+from app.rules.vocabulary.growth_stage import GrowthStage
+from app.rules.vocabulary.water_source import WaterSource
 
 
 def get_vocabulary():

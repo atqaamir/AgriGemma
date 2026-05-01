@@ -1,6 +1,6 @@
 # This is the ONLY place that reads crop_rules
 
-from app.rules.Predictive.crop_rules import CROP_RULES
+from app.rules.predictive.crop_rules import CROP_RULES
 
 
 class RuleBaseService:

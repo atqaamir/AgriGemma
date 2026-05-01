@@ -46,38 +46,37 @@ def run():
 
     # Crops
     crop_data = [
-        {"name": "Corn", "user_id": user.id, "planting_date": date.today(),
-         "current_growth_stage": "Vegetative", "current_health_status": "healthy",
+        {"crop_name_id": 1, "user_id": user.id, "planting_date": date.today(),
+         "current_growth_stage_id": 1, "current_health_status": "healthy",
          "currently_water_requirement": 25.5, "currently_active": True,
          "field_id": sample_fields[0].id},
 
-        {"name": "Wheat", "user_id": user.id, "planting_date": date.today(),
-         "current_growth_stage": "Seedling", "current_health_status": "alert",
+        {"crop_name_id": 2, "user_id": user.id, "planting_date": date.today(),
+         "current_growth_stage_id": 3, "current_health_status": "alert",
          "currently_water_requirement": 18.0, "currently_active": True,
          "field_id": sample_fields[1].id},
 
-        {"name": "Soybeans", "user_id": user.id, "planting_date": date.today(),
-         "current_growth_stage": "Flowering", "current_health_status": "critical",
+        {"crop_name_id": 3, "user_id": user.id, "planting_date": date.today(),
+         "current_growth_stage_id": 2, "current_health_status": "critical",
          "currently_water_requirement": 22.0, "currently_active": True,
          "field_id": sample_fields[2].id},
 
-        {"name": "Sunflower", "user_id": user.id, "planting_date": date.today(),
-         "current_growth_stage": "Ripening", "current_health_status": "healthy",
+        {"crop_name_id": 1, "user_id": user.id, "planting_date": date.today(),
+         "current_growth_stage_id": 2, "current_health_status": "healthy",
          "currently_water_requirement": 20.5, "currently_active": False,
          "field_id": sample_fields[3].id},
     ]
 
-    crops = {}
+    crops = []
     for item in crop_data:
         crop = Crop(**item)
         db.session.add(crop)
-        crops[item["name"]] = crop
+        crops.append(crop)
 
     db.session.commit()
 
     north_field = sample_fields[0]
-    east_field = sample_fields[1]
-    south_field = sample_fields[2]
+    maize_crop = crops[0]   # crop_name_id=1 (Maize), field=North Field Alpha
 
     # Tasks
     sample_tasks = [
@@ -86,10 +85,10 @@ def run():
              task_category="general", description="Inspect equipment.",
              notes="Focus on irrigation pump.", user_id=user.id),
 
-        Task(title="Fertilize Corn", priority="high", created_at=datetime.utcnow(),
+        Task(title="Fertilize Maize", priority="high", created_at=datetime.utcnow(),
              due_date=date.today(), completed=False, task_type="fertilizing",
              task_category="crop", description="Apply nitrogen fertilizer.",
-             crop_id=crops["Corn"].id, user_id=user.id),
+             crop_id=maize_crop.id, user_id=user.id),
 
         Task(title="Irrigate North Field Alpha", priority="high", created_at=datetime.utcnow(),
              due_date=date.today(), completed=False, task_type="irrigation",
@@ -103,10 +102,10 @@ def run():
     # Notifications
     sample_notifications = [
         Notification(user_id=user.id, title="Crop Fertilization Required",
-                     message="Corn requires fertilization today.",
+                     message="Maize requires fertilization today.",
                      notification_type="recommendation", is_read=False,
                      created_at=datetime.utcnow(), entity_type="crop",
-                     entity_id=crops["Corn"].id),
+                     entity_id=maize_crop.id),
 
         Notification(user_id=user.id, title="Field Moisture Warning",
                      message="Moisture level dropping.",
