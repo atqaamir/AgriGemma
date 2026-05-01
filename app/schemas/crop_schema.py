@@ -21,9 +21,15 @@ class CropCardSchema(Schema):
     planting_date = fields.Date(allow_none=True)
     currently_active = fields.Bool()
 
+    field = fields.Method("get_field")
     task_count = fields.Method("get_task_count")
     pending_task_count = fields.Method("get_pending_task_count")
     tasks_preview = fields.Method("get_tasks_preview")
+
+    def get_field(self, obj):
+        if obj.field:
+            return {"id": obj.field.id, "name": obj.field.name}
+        return None
 
     def get_task_count(self, obj):
         return len(obj.tasks)
