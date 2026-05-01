@@ -27,8 +27,15 @@ class Field(db.Model):
 
     @property
     def crop(self):
+        # Eagerly access crop_name and growth_stage to avoid N+1 queries
+        _ = self.crops  # Ensure crops are loaded
         active = [c for c in self.crops if c.currently_active]
-        return active[0] if active else (self.crops[0] if self.crops else None)
+        result = active[0] if active else (self.crops[0] if self.crops else None)
+        # Access the relationships to ensure they're loaded
+        if result:
+            _ = result.crop_name_rel
+            _ = result.growth_stage_rel
+        return result
 
     def __repr__(self):
         return f"<Field {self.id} - {self.name}>"
