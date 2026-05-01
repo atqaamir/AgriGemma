@@ -1,3 +1,4 @@
+"""Keeps tracks of the tasks geenrated for the user, along with their details and associated crop and field information."""
 from datetime import datetime
 from app.extensions import db
 
@@ -8,15 +9,14 @@ class Task(db.Model):
     id = db.Column(db.Integer, primary_key=True)
 
     title = db.Column(db.String(200), nullable=False)
-    priority = db.Column(db.String(20), nullable=False)  # high, medium, low
+    priority = db.Column(db.String(20), nullable=False)  # critical, high, medium, low
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
     due_date = db.Column(db.Date, nullable=True)
     completed = db.Column(db.Boolean, default=False, nullable=False)
 
-    task_type = db.Column(db.String(50), nullable=True)
+    task_type = db.Column(db.String(50), nullable=True) # planting, irrigation, fertilization, harvesting, maintenance, checkup    
     task_category = db.Column(db.String(50), nullable=True)  # crop, field, general
     description = db.Column(db.Text, nullable=True)
-    assigned_to = db.Column(db.String(100), nullable=True)
     notes = db.Column(db.Text, nullable=True)
 
     crop_id = db.Column(db.Integer, db.ForeignKey("crop.id"), nullable=True)

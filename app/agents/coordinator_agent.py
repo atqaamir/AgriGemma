@@ -1,72 +1,96 @@
-from app.agents.context_agent import ContextAgent
+from http.client import responses
+
+from app.agents.dashboard_agent import DashboardAgent
 from app.agents.risk_agent import RiskAgent
 from app.agents.planning_agent import PlanningAgent
 from app.agents.advisory_agent import AdvisoryAgent
+from app.agents.alert_agent import AlertAgent
+from app.utils import enums_
+from app.utils import execution_responses
+
 
 
 class CoordinatorAgent:
-    @staticmethod
-    def handle_daily_system_update(field_id: str) -> dict:
-        context = ContextAgent.get_context(field_id)
-        risk_context = RiskAgent.get_risk_context(field_id)
 
-        update_result = PlanningAgent.evaluate_daily_update(
-            field_id=field_id,
-            context=context,
-            risk_context=risk_context,
-        )
+    def __init__(self):
+        self.planning_agent = PlanningAgent()
+        self.risk_agent = RiskAgent()
+        self.advisory_agent = AdvisoryAgent()
+        self.alert_agent = AlertAgent()
+        self.dashboard_agent = DashboardAgent()
+        self.alert_agent = AlertAgent()
 
-        response = {
-            "field_id": field_id,
-            "context": context,
-            "risk_context": risk_context,
-            "update_result": update_result,
-        }
-
-        if update_result.get("needs_plan_revision"):
-            proposed_revision = PlanningAgent.create_proposed_revision(
-                field_id=field_id,
-                update_result=update_result,
-            )
-            advisory = AdvisoryAgent.build_plan_change_advisory(
-                field_id=field_id,
-                context=context,
-                proposed_revision=proposed_revision,
-            )
-            response["proposed_revision"] = proposed_revision
-            response["advisory"] = advisory
+    def seasonal_planning(self, user_id):
+        seasonal_planner_status = self.planning_agent.generate_seasonal_plan(user_id, tag="seasonal_planning ")
+        if seasonal_planner_status == enums_.Status.SUCCESS:
+            return execution_responses.ExecutionResponse.success("Seasonal planning completed")
         else:
-            advisory = AdvisoryAgent.build_daily_advisory(
-                field_id=field_id,
-                context=context,
-                risk_context=risk_context,
-                update_result=update_result,
-            )
-            response["advisory"] = advisory
+            return execution_responses.ExecutionResponse.failure("Seasonal planning failed")
+        
+    def weekly_planning(self, user_id):
+        weekly_planner_status = self.planning_agent.generate_weekly_plan(user_id, tag="weekly_planning ")
+        if weekly_planner_status == enums_.Status.SUCCESS:
+            return execution_responses.ExecutionResponse.success("Weekly planning completed")
+        else:
+            return execution_responses.ExecutionResponse.failure("Weekly planning failed")
+        
+    def task_generation(self, user_id):
+        daily_planner_status = self.planning_agent.generate_daily_tasks(user_id, tag="daily_planning ")
+        self.dashboard_agent.refresh_dashboard(user_id)
+        if daily_planner_status == enums_.Status.SUCCESS:
+            return execution_responses.ExecutionResponse.success("Daily planning completed")
+        else:
+            return execution_responses.ExecutionResponse.failure("Daily planning failed")
 
-        return response
+    def daily_update(self, user_id):
+        risk_assessment_status, change = self.risk_agent.assess_risk(user_id, tag="risk_assessment ")
+        
+        if change == enums_.ChangeStatus.NO_CHANGE:
+            # No change, proceed with existing plans
+            pass
+        elif change == enums_.ChangeStatus.NO_IMPACT:
+            self.call_advisor(user_id)
+            self.send_alert(user_id, tag = "weather_only") # Type = notification
+            pass
+        elif change == enums_.ChangeStatus.IMPACT_PLAN:
+            # Change detected with impact, trigger re-planning and advisory
+            self.weekly_planning(user_id)
+            self.task_generation(user_id)
+            self.call_advisor(user_id)
+            self.send_alert(user_id, "weekly") # Type = warning
+        else: # change == enums_.ChangeStatus.IMPACT_TASKS
+            self.weekly_planning(user_id)
+            self.task_generation(user_id)
+            self.call_advisor(user_id)
+            self.send_alert(user_id, "daily") # Type = alert
 
-    @staticmethod
-    def handle_weekly_planning(field_id: str) -> dict:
-        context = ContextAgent.get_context(field_id)
-        weekly_plan = PlanningAgent.generate_weekly_plan(field_id, context)
-        daily_tasks = PlanningAgent.generate_daily_tasks(field_id, weekly_plan)
+        self.dashboard_agent.refresh_dashboard(user_id)
+        
+        if risk_assessment_status == enums_.Status.SUCCESS:
+            return execution_responses.ExecutionResponse.success("Risk assesment completed")
+        else:
+            return execution_responses.ExecutionResponse.failure("Risk assessment failed")
 
-        return {
-            "field_id": field_id,
-            "context": context,
-            "weekly_plan": weekly_plan,
-            "daily_tasks": daily_tasks,
-        }
+    def dashboard_refresh(self, user_id):
+        dashboard_refresh_status =  self.dashboard_agent.refresh_dashboard(user_id)
+        if dashboard_refresh_status == enums_.Status.SUCCESS:
+            return execution_responses.ExecutionResponse.success("Dashboard update completed")
+        else:
+            return execution_responses.ExecutionResponse.failure("Dashboard update failed")
 
-    @staticmethod
-    def handle_chat(field_id: str, user_message: str) -> dict:
-        context = ContextAgent.get_context(field_id)
-        risk_context = RiskAgent.get_risk_context(field_id)
+    def call_advisor(self, user_id):
+        advisor_call_status = self.advisory_agent.generate_advisory(user_id, tag="advisory_generation ")
+        if advisor_call_status == enums_.Status.SUCCESS:
+            return execution_responses.ExecutionResponse.success("Advisor call completed")
+        else:
+            return execution_responses.ExecutionResponse.failure("Advisor call failed")
 
-        return {
-            "field_id": field_id,
-            "user_message": user_message,
-            "context": context,
-            "risk_context": risk_context,
-        }
+    def send_alert(self, user_id, tag):
+        alert_status = self.alert_agent.generate_alerts(user_id, tag=tag)
+        if alert_status == enums_.Status.SUCCESS:
+            return execution_responses.ExecutionResponse.success("Alert update completed")
+        else:
+            return execution_responses.ExecutionResponse.failure("Alert update failed")
+
+
+        

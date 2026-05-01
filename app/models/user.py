@@ -4,3 +4,5 @@ class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100))
     location = db.Column(db.String(100))
+    crops = db.relationship('Crop', backref='user', lazy=True)
+    fields = db.relationship('Field', backref='user', lazy=True)
