@@ -1,502 +1,362 @@
 <!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="utf-8"/>
-  <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-  <title>Smart Farming - Dashboard</title>
 
-  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;700;800&family=Work+Sans:wght@400;500&display=swap" rel="stylesheet">
-  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
-
-  <script>
-    (function() {
-      const theme = localStorage.getItem('theme') || 'light';
-      if (theme === 'dark') document.documentElement.classList.add('dark');
-    })();
-  </script>
-
-  <style>
-    .no-scrollbar::-webkit-scrollbar { display: none; }
-    .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-
-    .stat-card {
-      @apply bg-gradient-to-br from-surface to-surface-dim rounded-2xl p-6 shadow-sm border border-outline-variant;
-    }
-
-    .condition-badge {
-      @apply inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm font-medium;
-    }
-
-    .healthy { @apply bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300; }
-    .warning { @apply bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300; }
-    .critical { @apply bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300; }
-    .alert { @apply bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300; }
-    .info { @apply bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300; }
-
-    .progress-ring {
-      transform: rotate(-90deg);
-      transform-origin: 50% 50%;
-    }
-
-    .progress-ring-circle {
-      transition: stroke-dashoffset 0.35s;
-      stroke: currentColor;
-    }
-
-    .metric-item {
-      @apply flex items-center justify-between p-4 rounded-lg bg-gray-50 dark:bg-stone-800/50;
-    }
-
-    .fade-in {
-      animation: fadeIn 0.3s ease-in;
-    }
-
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(10px); }
-      to { opacity: 1; transform: translateY(0); }
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>The Resilient Harvest - Dashboard</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;700;800&amp;family=Work_Sans:wght@300;400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "surface": "#fcf9f0",
+                    "secondary-fixed": "#d5e9c1",
+                    "on-error-container": "#93000a",
+                    "inverse-primary": "#bbccaa",
+                    "on-tertiary-fixed": "#1e1c12",
+                    "tertiary-fixed-dim": "#ccc6b6",
+                    "surface-container-high": "#ebe8df",
+                    "primary": "#47573b",
+                    "on-secondary-fixed-variant": "#3b4b2e",
+                    "secondary-fixed-dim": "#bacda7",
+                    "surface-dim": "#dddad1",
+                    "surface-variant": "#e5e2da",
+                    "on-secondary-fixed": "#111f07",
+                    "surface-container-highest": "#e5e2da",
+                    "on-tertiary-container": "#f1ebda",
+                    "on-secondary-container": "#586a4a",
+                    "inverse-on-surface": "#f4f1e8",
+                    "on-primary": "#ffffff",
+                    "on-primary-fixed": "#121f09",
+                    "on-primary-container": "#dff1cd",
+                    "secondary-container": "#d5e9c1",
+                    "background": "#fcf9f0",
+                    "on-surface": "#1c1c17",
+                    "outline": "#75786f",
+                    "error": "#ba1a1a",
+                    "on-error": "#ffffff",
+                    "primary-container": "#5f6f52",
+                    "tertiary-container": "#6e6a5d",
+                    "surface-container-low": "#f7f3ea",
+                    "tertiary": "#555246",
+                    "on-surface-variant": "#444840",
+                    "error-container": "#ffdad6",
+                    "on-tertiary-fixed-variant": "#4a473b",
+                    "primary-fixed": "#d6e8c5",
+                    "primary-fixed-dim": "#bbccaa",
+                    "on-primary-fixed-variant": "#3c4b31",
+                    "tertiary-fixed": "#e8e2d2",
+                    "inverse-surface": "#31312b",
+                    "surface-bright": "#fcf9f0",
+                    "surface-container-lowest": "#ffffff",
+                    "secondary": "#536344",
+                    "surface-container": "#f1eee5",
+                    "on-secondary": "#ffffff",
+                    "on-tertiary": "#ffffff",
+                    "surface-tint": "#536347",
+                    "outline-variant": "#c5c8bd",
+                    "on-background": "#1c1c17"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "fontFamily": {
+                    "headline": ["Manrope"],
+                    "body": ["Work Sans"],
+                    "label": ["Work Sans"]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        body { font-family: 'Work Sans', sans-serif; background-color: #fcf9f0; }
+        h1, h2, h3 { font-family: 'Manrope', sans-serif; }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .soil-gauge-track { background-color: #d5e9c1; height: 8px; border-radius: 4px; }
+        .soil-gauge-indicator { background-color: #47573b; height: 8px; border-radius: 4px; }
+        .organic-gradient { background: linear-gradient(135deg, #47573b 0%, #5f6f52 100%); }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
     }
   </style>
 </head>
-<body class="bg-white dark:bg-stone-950">
-  <!-- Header -->
-  <header class="sticky top-0 z-40 bg-white dark:bg-stone-900 shadow-sm border-b border-gray-200 dark:border-stone-800">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
-      <div>
-        <h1 class="text-2xl font-bold text-primary">🌾 Smart Farming</h1>
-        <p id="farmerGreeting" class="text-sm text-gray-600 dark:text-gray-400">Welcome back, Farmer</p>
-      </div>
-      <button onclick="toggleTheme()" class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-stone-800 transition-colors">
-        <span class="material-symbols-outlined">brightness_4</span>
-      </button>
-    </div>
-  </header>
+<body class="text-on-surface pb-32">
+<!-- Top Navigation -->
+<nav class="fixed top-0 w-full z-50 bg-[#fcf9f0] dark:bg-stone-950">
+<div class="flex items-center justify-between px-6 h-16 w-full max-w-screen-xl mx-auto">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-[#47573b] dark:text-[#d5e9c1]" data-icon="agriculture">agriculture</span>
+<span class="font-['Manrope'] font-bold text-[#47573b] dark:text-[#d5e9c1] text-lg tracking-tight">Climate Adaptation Advisor</span>
+</div>
+<div class="flex items-center gap-4">
+<button class="p-2 transition-colors duration-200 hover:bg-stone-200/50 dark:hover:bg-stone-800/50 rounded-full">
+<span class="material-symbols-outlined text-stone-500" data-icon="notifications">notifications</span>
+</button>
+</div>
+</div>
+</nav>
+<main class="mt-20 px-6 max-w-screen-xl mx-auto space-y-8">
+<!-- Hero Section: Organic Editorialism -->
+<section class="relative overflow-hidden rounded-[32px] organic-gradient min-h-[340px] flex flex-col justify-end p-8 text-on-primary">
+<div class="absolute top-0 right-0 w-1/2 h-full opacity-40 mix-blend-overlay">
+<img alt="sun-drenched organic corn field" class="w-full h-full object-cover" data-alt="overhead view of healthy rows of green corn crops stretching to the horizon under a bright golden sun" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDspppSFAdqz7pOvzJCuDPdQrGNjsDU17-wgKZTIaEVyZRN2hTPNOdzlWA6zFylN8TURwI2SYqLA9KYcwETTlj6pGS7-PKIppfYstghwGHs-k3EBosMgecHZqCfL9sddlcJDMGzZrrbkgGMwzstTFXna4tmJpCu80PB_00g349xJhlsHiHAMc-9T2izdxtRQCZCr3sYp3cp0Et-w-wxF-Hv3Z9-XJpTWS8Gmm_xOD4-QuqCX10f_ysRSmFt0ELvqAZzqzTfwF8wCg"/>
+</div>
+<div class="relative z-10 grid md:grid-cols-2 gap-8 items-end">
+<div>
+<h1 class="text-4xl md:text-5xl font-medium tracking-tight mb-2">Welcome back, John!</h1>
+<p class="text-on-primary-container/80 text-lg max-w-md">Your fields are thriving. Today's forecast calls for sustained warmth—monitor irrigation carefully.</p>
+</div>
+<div class="bg-white/10 backdrop-blur-xl rounded-3xl p-6 border border-white/10 flex items-center justify-between">
+<div class="flex items-center gap-4">
+<span class="material-symbols-outlined text-5xl" data-icon="sunny" style="font-variation-settings: 'FILL' 1;">sunny</span>
+<div>
+<span class="text-4xl font-bold">32°C</span>
+<p class="text-sm uppercase tracking-widest opacity-80">Sunny</p>
+</div>
+</div>
+<div class="flex gap-4 border-l border-white/20 pl-6">
+<div class="text-center">
+<p class="text-xs opacity-70">Tue</p>
+<span class="material-symbols-outlined block my-1" data-icon="partly_cloudy_day">partly_cloudy_day</span>
+<p class="text-sm font-medium">30°</p>
+</div>
+<div class="text-center">
+<p class="text-xs opacity-70">Wed</p>
+<span class="material-symbols-outlined block my-1" data-icon="rainy">rainy</span>
+<p class="text-sm font-medium">26°</p>
+</div>
+<div class="text-center">
+<p class="text-xs opacity-70">Thu</p>
+<span class="material-symbols-outlined block my-1" data-icon="sunny">sunny</span>
+<p class="text-sm font-medium">31°</p>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Bento Grid Layout -->
+<div class="grid grid-cols-1 md:grid-cols-12 gap-6">
+<!-- Farm Overview -->
+<div class="md:col-span-4 bg-surface-container-low rounded-3xl p-6 flex flex-col h-full">
+  <h2 class="font-headline text-xl font-medium mb-6">Farm Overview</h2>
 
-  <!-- Main Content -->
-  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 pb-32">
+  <div class="flex flex-col space-y-8">
 
-    <!-- Critical Alert Hero Banner -->
-    <div id="criticalAlertBanner" class="hidden mb-8 bg-gradient-to-r from-red-50 to-orange-50 dark:from-red-900/20 dark:to-orange-900/20 border-l-4 border-red-500 rounded-lg p-6 shadow-md fade-in">
-      <div class="flex items-start gap-4">
-        <span class="material-symbols-outlined text-3xl text-red-600 dark:text-red-400">priority_high</span>
-        <div class="flex-1">
-          <h2 class="text-lg font-bold text-red-800 dark:text-red-300 mb-2">⚠️ Critical Alert</h2>
-          <p id="alertMessage" class="text-red-700 dark:text-red-200 mb-3"></p>
-          <div id="alertDetails" class="text-sm text-red-600 dark:text-red-300 space-y-1"></div>
+    <!-- Optimal Range -->
+    <div class="flex flex-col items-center">
+      <div class="relative flex flex-col items-center">
+        <svg class="w-48 h-48 -rotate-90">
+          <circle cx="96" cy="96" r="80" fill="transparent"
+            class="text-surface-container-highest"
+            stroke="currentColor" stroke-width="12" />
+
+          <circle cx="96" cy="96" r="80" fill="transparent"
+            class="text-primary"
+            stroke="currentColor"
+            stroke-width="12"
+            stroke-dasharray="502.4"
+            stroke-dashoffset="125.6" />
+        </svg>
+
+        <div class="absolute inset-0 flex flex-col items-center justify-center">
+          <span class="text-4xl font-headline font-bold">75%</span>
+          <span class="text-xs uppercase tracking-tighter text-outline">Optimal Range</span>
         </div>
       </div>
     </div>
 
-    <!-- Username and Overview -->
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+    <!-- Active Area -->
+	<div class="flex items-center gap-4">
 
-      <!-- Farm Overview Stats -->
-      <div class="stat-card lg:col-span-4 bg-gradient-to-r from-primary/10 to-primary-container/10 dark:from-primary/20 dark:to-primary-container/20">
-        <h2 class="text-2xl font-bold text-on-surface mb-6">Farm Overview</h2>
-        <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
-          <div class="text-center">
-            <p class="text-3xl font-bold text-primary" id="totalFields">0</p>
-            <p class="text-xs text-on-surface-variant uppercase tracking-wide mt-1">Total Fields</p>
-          </div>
-          <div class="text-center">
-            <p class="text-3xl font-bold text-primary" id="activeFields">0</p>
-            <p class="text-xs text-on-surface-variant uppercase tracking-wide mt-1">Active</p>
-          </div>
-          <div class="text-center">
-            <p class="text-3xl font-bold text-primary" id="totalAcreage">0</p>
-            <p class="text-xs text-on-surface-variant uppercase tracking-wide mt-1">Acres</p>
-          </div>
-          <div class="text-center">
-            <p class="text-3xl font-bold text-primary" id="totalCrops">0</p>
-            <p class="text-xs text-on-surface-variant uppercase tracking-wide mt-1">Crops</p>
-          </div>
-          <div class="text-center">
-            <p class="text-3xl font-bold text-primary" id="totalTasks">0</p>
-            <p class="text-xs text-on-surface-variant uppercase tracking-wide mt-1">Tasks</p>
-          </div>
-          <div class="text-center">
-            <p class="text-3xl font-bold text-primary" id="pendingTasks">0</p>
-            <p class="text-xs text-on-surface-variant uppercase tracking-wide mt-1">Pending</p>
-          </div>
-        </div>
-      </div>
-    </div>
+	  <div class="w-12 h-12 bg-secondary-fixed rounded-2xl flex items-center justify-center text-primary">
+		<span class="material-symbols-outlined">texture</span>
+	  </div>
 
-    <!-- Critical Tasks Section -->
-    <div class="mb-8">
-      <div class="flex items-center gap-2 mb-4">
-        <span class="material-symbols-outlined text-2xl text-red-600 dark:text-red-400">error</span>
-        <h2 class="text-xl font-bold text-on-surface">Critical Tasks</h2>
-        <span id="criticalTaskCount" class="bg-red-500 text-white text-xs font-bold px-3 py-1 rounded-full">0</span>
-      </div>
-      <div id="criticalTasksContainer" class="flex gap-4 overflow-x-auto pb-4 no-scrollbar">
-        <div class="flex-none w-full text-center text-on-surface-variant py-8">
-          <span class="material-symbols-outlined text-4xl opacity-30">assignment_turned_in</span>
-          <p class="mt-2">No critical tasks</p>
-        </div>
-      </div>
-    </div>
+	  <div class="flex-1 flex flex-col">
 
-    <!-- Soil Condition Section -->
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-8">
-      <div class="stat-card">
-        <div class="flex items-center justify-between mb-4">
-          <h3 class="font-bold text-on-surface flex items-center gap-2">
-            <span class="material-symbols-outlined">water_drop</span>
-            Soil Moisture
-          </h3>
-          <span id="moistureLevel" class="text-2xl font-bold text-primary">--</span>
-        </div>
-        <div class="w-full bg-gray-200 dark:bg-stone-700 rounded-full h-3">
-          <div id="moistureBar" class="bg-gradient-to-r from-blue-400 to-blue-500 h-3 rounded-full" style="width: 0%"></div>
-        </div>
-        <p class="text-xs text-on-surface-variant mt-3">
-          <span id="lowMoistureCount">0</span> fields with low moisture (&lt;30%)
-        </p>
-      </div>
+		<!-- top row: label + badge -->
+		<div class="flex justify-between items-start">
+		  <p class="text-sm text-on-surface-variant">Active Area</p>
+		  <span class="text-xs bg-primary text-white px-2 py-0.5 rounded-full whitespace-nowrap">
+			3 active
+		  </span>
+		</div>
 
-      <div class="stat-card">
-        <div class="flex items-center justify-between mb-4">
-          <h3 class="font-bold text-on-surface flex items-center gap-2">
-            <span class="material-symbols-outlined">thermostat</span>
-            Heat Level
-          </h3>
-          <span id="heatLevel" class="text-2xl font-bold text-primary">--</span>
-        </div>
-        <div class="w-full bg-gray-200 dark:bg-stone-700 rounded-full h-3">
-          <div id="heatBar" class="bg-gradient-to-r from-orange-400 to-red-500 h-3 rounded-full" style="width: 0%"></div>
-        </div>
-        <p class="text-xs text-on-surface-variant mt-3">
-          Average temperature across fields
-        </p>
-      </div>
+		<p class="text-2xl font-bold">50 Acres</p>
+	  </div>
 
-      <div class="stat-card">
-        <div class="flex items-center justify-between mb-4">
-          <h3 class="font-bold text-on-surface flex items-center gap-2">
-            <span class="material-symbols-outlined">warning</span>
-            Stress Risk
-          </h3>
-          <span id="stressLevel" class="text-2xl font-bold text-primary">--</span>
-        </div>
-        <div class="w-full bg-gray-200 dark:bg-stone-700 rounded-full h-3">
-          <div id="stressBar" class="bg-gradient-to-r from-yellow-400 to-orange-500 h-3 rounded-full" style="width: 0%"></div>
-        </div>
-        <p class="text-xs text-on-surface-variant mt-3">
-          <span id="highStressCount">0</span> fields with high stress (≥60%)
-        </p>
-      </div>
-    </div>
+	</div>
 
-    <!-- Field & Crop Conditions -->
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+    <!-- Crops -->
+    <div class="flex items-center gap-4">
 
-      <!-- Field Condition -->
-      <div class="stat-card">
-        <div class="flex items-center gap-2 mb-6">
-          <span class="material-symbols-outlined text-2xl text-primary">landscape</span>
-          <h3 class="text-lg font-bold text-on-surface">Field Conditions</h3>
-        </div>
+	  <div class="w-12 h-12 bg-secondary-fixed rounded-2xl flex items-center justify-center text-primary">
+		<span class="material-symbols-outlined">potted_plant</span>
+	  </div>
 
-        <div class="space-y-3">
-          <div class="metric-item">
-            <span class="text-sm">Total Fields</span>
-            <span class="font-bold text-on-surface" id="fieldTotal">0</span>
-          </div>
-          <div class="metric-item">
-            <span class="text-sm">Active / Inactive</span>
-            <span class="font-bold text-on-surface"><span id="fieldActive">0</span> / <span id="fieldInactive">0</span></span>
-          </div>
-          <div class="metric-item">
-            <div class="flex-1">
-              <div class="flex items-center justify-between mb-2">
-                <span class="text-sm">Avg. Field Score</span>
-                <span class="font-bold text-on-surface" id="fieldScore">--</span>
-              </div>
-              <div class="w-full bg-gray-200 dark:bg-stone-700 rounded-full h-2">
-                <div id="fieldScoreBar" class="bg-gradient-to-r from-green-400 to-green-500 h-2 rounded-full" style="width: 0%"></div>
-              </div>
-            </div>
-          </div>
-        </div>
+	<div class="flex-1 flex flex-col">
 
-        <div class="mt-6 pt-6 border-t border-outline-variant">
-          <h4 class="text-sm font-bold mb-3 text-on-surface">Health Status Distribution</h4>
-          <div id="fieldHealthDist" class="space-y-2">
-            <div class="flex items-center justify-between text-sm">
-              <div class="flex items-center gap-2">
-                <span class="w-3 h-3 rounded-full bg-green-500"></span>
-                <span>Healthy</span>
-              </div>
-              <span class="font-bold" id="fieldHealthy">0</span>
-            </div>
-            <div class="flex items-center justify-between text-sm">
-              <div class="flex items-center gap-2">
-                <span class="w-3 h-3 rounded-full bg-yellow-500"></span>
-                <span>Alert</span>
-              </div>
-              <span class="font-bold" id="fieldAlert">0</span>
-            </div>
-            <div class="flex items-center justify-between text-sm">
-              <div class="flex items-center gap-2">
-                <span class="w-3 h-3 rounded-full bg-red-500"></span>
-                <span>Critical</span>
-              </div>
-              <span class="font-bold" id="fieldCritical">0</span>
-            </div>
-          </div>
-        </div>
-      </div>
+	<!-- top row: label + badge -->
+	<div class="flex justify-between items-start">
+	  <p class="text-sm text-on-surface-variant">Crops Growing</p>
+	  <span class="text-xs bg-primary text-white px-2 py-0.5 rounded-full whitespace-nowrap">
+		4 active
+	  </span>
+	</div>
 
-      <!-- Crop Condition -->
-      <div class="stat-card">
-        <div class="flex items-center gap-2 mb-6">
-          <span class="material-symbols-outlined text-2xl text-primary">eco</span>
-          <h3 class="text-lg font-bold text-on-surface">Crop Conditions</h3>
-        </div>
+    <p class="text-lg font-semibold">Corn, Soybeans</p>
 
-        <div class="space-y-3">
-          <div class="metric-item">
-            <span class="text-sm">Total Crops</span>
-            <span class="font-bold text-on-surface" id="cropTotal">0</span>
-          </div>
-          <div class="metric-item">
-            <span class="text-sm">Needing Irrigation</span>
-            <span class="font-bold text-on-surface" id="cropIrrigation">0</span>
-          </div>
-          <div class="metric-item">
-            <span class="text-sm">At-Risk Crops</span>
-            <span class="font-bold text-red-600 dark:text-red-400" id="cropAtRisk">0</span>
-          </div>
-        </div>
+		</div>
 
-        <div class="mt-6 pt-6 border-t border-outline-variant">
-          <h4 class="text-sm font-bold mb-3 text-on-surface">Health Status Distribution</h4>
-          <div id="cropHealthDist" class="space-y-2">
-            <div class="flex items-center justify-between text-sm">
-              <div class="flex items-center gap-2">
-                <span class="w-3 h-3 rounded-full bg-green-500"></span>
-                <span>Healthy</span>
-              </div>
-              <span class="font-bold" id="cropHealthy">0</span>
-            </div>
-            <div class="flex items-center justify-between text-sm">
-              <div class="flex items-center gap-2">
-                <span class="w-3 h-3 rounded-full bg-yellow-500"></span>
-                <span>Warning</span>
-              </div>
-              <span class="font-bold" id="cropWarning">0</span>
-            </div>
-            <div class="flex items-center justify-between text-sm">
-              <div class="flex items-center gap-2">
-                <span class="w-3 h-3 rounded-full bg-red-500"></span>
-                <span>At-Risk</span>
-              </div>
-              <span class="font-bold" id="cropRisk">0</span>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
+	</div>
 
-  </main>
+  </div>
+</div>
+<!-- Tasks & Alerts (High Priority) -->
+<div class="md:col-span-8 bg-surface-container rounded-3xl p-6">
+<div class="flex justify-between items-center mb-6">
+  <h2 class="font-headline text-xl font-medium">Critical Tasks</h2>
 
-  <!-- Bottom Navigation -->
-  <nav class="fixed bottom-0 left-0 w-full z-50 bg-[#fcf9f0]/80 dark:bg-stone-950/80 backdrop-blur-md rounded-t-[24px] shadow-[0_-8px_24px_rgba(28,28,23,0.06)] flex justify-around items-center px-4 pb-6 pt-3">
-    <a class="flex flex-col items-center justify-center bg-secondary-fixed dark:bg-primary-container text-on-background dark:text-surface-bright rounded-2xl px-3 py-1.5 transition-transform hover:scale-105 duration-150" href="/dashboard">
-      <span class="material-symbols-outlined" style="font-variation-settings:'FILL' 1;">dashboard</span>
-      <span class="font-['Work_Sans'] text-[11px] font-medium tracking-wide">Dashboard</span>
-    </a>
-    <a class="flex flex-col items-center justify-center text-stone-500 dark:text-stone-400 px-3 py-1.5 transition-transform hover:scale-105 duration-150" href="/myfields">
-      <span class="material-symbols-outlined" data-icon="landscape" style="font-variation-settings: 'FILL' 1;">landscape</span>
-      <span class="font-['Work_Sans'] text-[11px] font-medium tracking-wide">Fields</span>
-    </a>
-    <a class="flex flex-col items-center justify-center text-stone-500 dark:text-stone-400 px-3 py-1.5 transition-transform hover:scale-105 duration-150" href="/mycrops">
-      <span class="material-symbols-outlined" data-icon="eco" style="font-variation-settings: 'FILL' 1;">eco</span>
-      <span class="font-['Work_Sans'] text-[11px] font-medium tracking-wide">Crops</span>
-    </a>
-    <a class="flex flex-col items-center justify-center text-stone-500 dark:text-stone-400 px-3 py-1.5 transition-transform hover:scale-105 duration-150" href="/mytasks">
-      <span class="material-symbols-outlined" data-icon="assignment_turned_in">assignment_turned_in</span>
-      <span class="font-['Work_Sans'] text-[11px] font-medium tracking-wide">Tasks</span>
-    </a>
-    <a class="flex flex-col items-center justify-center text-stone-500 dark:text-stone-400 px-3 py-1.5 transition-transform hover:scale-105 duration-150" href="/chatbot">
-      <span class="material-symbols-outlined" data-icon="chat">chat</span>
-      <span class="font-['Work_Sans'] text-[11px] font-medium tracking-wide">Chat</span>
-    </a>
-  </nav>
-
-  <script>
-    const API_BASE = '';
-    const USER_ID = 1;
-
-    async function loadDashboard() {
-      try {
-        const response = await fetch(`${API_BASE}/${USER_ID}/dashboard`);
-        if (!response.ok) throw new Error('Failed to load dashboard');
-
-        const data = await response.json();
-        renderDashboard(data);
-      } catch (error) {
-        console.error('Error loading dashboard:', error);
-        showError('Failed to load dashboard data');
-      }
-    }
-
-    function renderDashboard(data) {
-      // Greeting
-      const username = data.username || 'Farmer';
-      document.getElementById('farmerGreeting').textContent = `Welcome back, ${username}`;
-
-      const farm = data.farm_overview || {};
-      const soil = data.soil_condition || {};
-      const fields = data.field_condition || {};
-      const crops = data.crop_condition || {};
-      const tasks = data.critical_tasks || [];
-
-      // Farm Overview
-      document.getElementById('totalFields').textContent = farm.total_fields || 0;
-      document.getElementById('activeFields').textContent = farm.active_fields || 0;
-      document.getElementById('totalAcreage').textContent = (farm.total_acreage || 0).toFixed(1);
-      document.getElementById('totalCrops').textContent = farm.total_crops || 0;
-      document.getElementById('totalTasks').textContent = farm.total_tasks || 0;
-      document.getElementById('pendingTasks').textContent = farm.pending_tasks || 0;
-
-      // Soil Conditions
-      document.getElementById('moistureLevel').textContent = `${soil.avg_moisture || 0}%`;
-      document.getElementById('moistureBar').style.width = `${Math.min(soil.avg_moisture || 0, 100)}%`;
-      document.getElementById('lowMoistureCount').textContent = soil.low_moisture_fields || 0;
-
-      document.getElementById('heatLevel').textContent = `${soil.avg_heat || 0}°C`;
-      document.getElementById('heatBar').style.width = `${Math.min((soil.avg_heat || 0) / 50 * 100, 100)}%`;
-
-      document.getElementById('stressLevel').textContent = `${soil.avg_stress || 0}%`;
-      document.getElementById('stressBar').style.width = `${Math.min(soil.avg_stress || 0, 100)}%`;
-      document.getElementById('highStressCount').textContent = soil.high_stress_fields || 0;
-
-      // Field Conditions
-      document.getElementById('fieldTotal').textContent = fields.total || 0;
-      document.getElementById('fieldActive').textContent = fields.active || 0;
-      document.getElementById('fieldInactive').textContent = fields.inactive || 0;
-      document.getElementById('fieldScore').textContent = (fields.avg_score || 0).toFixed(1);
-      document.getElementById('fieldScoreBar').style.width = `${Math.min((fields.avg_score || 0) / 100 * 100, 100)}%`;
-      document.getElementById('fieldHealthy').textContent = fields.healthy || 0;
-      document.getElementById('fieldAlert').textContent = fields.alert || 0;
-      document.getElementById('fieldCritical').textContent = fields.critical || 0;
-
-      // Crop Conditions
-      document.getElementById('cropTotal').textContent = crops.total || 0;
-      document.getElementById('cropHealthy').textContent = crops.healthy || 0;
-      document.getElementById('cropWarning').textContent = crops.warning || 0;
-      document.getElementById('cropRisk').textContent = crops.at_risk || 0;
-      document.getElementById('cropIrrigation').textContent = crops.needing_irrigation || 0;
-
-      // Critical Tasks
-      renderCriticalTasks(tasks);
-
-      // Critical Alert Banner
-      renderCriticalAlert(data);
-    }
-
-    function renderCriticalTasks(tasks) {
-      const container = document.getElementById('criticalTasksContainer');
-      document.getElementById('criticalTaskCount').textContent = tasks.length;
-
-      if (!tasks.length) {
-        container.innerHTML = `
-          <div class="flex-none w-full text-center text-on-surface-variant py-8">
-            <span class="material-symbols-outlined text-4xl opacity-30">assignment_turned_in</span>
-            <p class="mt-2">No critical tasks</p>
-          </div>
-        `;
-        return;
-      }
-
-      container.innerHTML = tasks.map(task => {
-        const overdue = task.overdue ? 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800' : '';
-        const priorityColor = task.priority === 'high' ? 'text-red-600 dark:text-red-400' :
-                             task.priority === 'medium' ? 'text-yellow-600 dark:text-yellow-400' :
-                             'text-green-600 dark:text-green-400';
-
-        return `
-          <div class="flex-none w-80 bg-white dark:bg-stone-800 rounded-2xl p-5 shadow-md border border-outline-variant ${overdue} fade-in">
-            <div class="flex items-start justify-between mb-3">
-              <div>
-                <h4 class="font-bold text-on-surface truncate">${escapeHtml(task.title)}</h4>
-                <p class="text-xs text-on-surface-variant mt-1">${task.field_name || task.crop_name || 'General'}</p>
-              </div>
-              <span class="material-symbols-outlined text-2xl ${priorityColor}">flag</span>
-            </div>
-
-            <div class="flex items-center gap-2 text-xs mb-3">
-              <span class="material-symbols-outlined text-sm">task_alt</span>
-              <span class="capitalize">${task.task_type || 'Task'}</span>
-            </div>
-
-            ${task.due_date ? `
-              <div class="flex items-center gap-2 text-xs ${task.overdue ? 'text-red-600 dark:text-red-400 font-bold' : 'text-on-surface-variant'}">
-                <span class="material-symbols-outlined text-sm">event</span>
-                <span>${new Date(task.due_date).toLocaleDateString()}</span>
-                ${task.overdue ? '<span class="ml-1">OVERDUE</span>' : ''}
-              </div>
-            ` : ''}
-          </div>
-        `;
-      }).join('');
-    }
-
-    function renderCriticalAlert(data) {
-      const soil = data.soil_condition || {};
-      const fields = data.field_condition || {};
-      const crops = data.crop_condition || {};
-
-      const alerts = [];
-
-      if (soil.low_moisture_fields > 0) {
-        alerts.push(`${soil.low_moisture_fields} field(s) with critical low moisture`);
-      }
-      if (soil.high_stress_fields > 0) {
-        alerts.push(`${soil.high_stress_fields} field(s) with high stress risk`);
-      }
-      if (fields.critical > 0) {
-        alerts.push(`${fields.critical} field(s) in critical condition`);
-      }
-      if (crops.at_risk > 0) {
-        alerts.push(`${crops.at_risk} crop(s) at risk`);
-      }
-
-      if (alerts.length === 0) {
-        document.getElementById('criticalAlertBanner').classList.add('hidden');
-        return;
-      }
-
-      document.getElementById('criticalAlertBanner').classList.remove('hidden');
-      document.getElementById('alertMessage').textContent = 'Your farm requires immediate attention';
-      document.getElementById('alertDetails').innerHTML = alerts
-        .map(alert => `<div class="flex items-start gap-2"><span class="material-symbols-outlined text-sm">chevron_right</span><span>${alert}</span></div>`)
-        .join('');
-    }
-
-    function escapeHtml(text) {
-      const div = document.createElement('div');
-      div.textContent = text;
-      return div.innerHTML;
-    }
-
-    function showError(message) {
-      console.error(message);
-      alert(message);
-    }
-
-    function toggleTheme() {
-      const isDark = document.documentElement.classList.toggle('dark');
-      localStorage.setItem('theme', isDark ? 'dark' : 'light');
-    }
-
-    // Initialize on page load
-    document.addEventListener('DOMContentLoaded', loadDashboard);
-
-    // Refresh dashboard every 30 seconds
-    setInterval(loadDashboard, 30000);
-  </script>
-</body>
-</html>
+  <span class="text-xs font-medium bg-primary text-white px-2 py-0.5 rounded-full whitespace-nowrap">
+    2 Urgent
+  </span>
+</div>
+<div class="space-y-4">
+<div class="bg-surface-container-lowest rounded-2xl p-5 flex items-center justify-between group cursor-pointer hover:shadow-sm transition-shadow">
+<div class="flex items-center gap-4">
+<div class="w-10 h-10 bg-error-container text-on-error-container rounded-full flex items-center justify-center">
+<span class="material-symbols-outlined text-xl" data-icon="water_drop" style="font-variation-settings: 'FILL' 1;">water_drop</span>
+</div>
+<div>
+<h3 class="font-medium text-lg">Irrigate Sector B</h3>
+<p class="text-sm text-on-surface-variant">High Priority • Critical for yield maintenance</p>
+</div>
+</div>
+<span class="material-symbols-outlined text-outline group-hover:text-primary" data-icon="chevron_right">chevron_right</span>
+</div>
+<div class="bg-surface-container-lowest rounded-2xl p-5 flex items-center justify-between group cursor-pointer hover:shadow-sm transition-shadow">
+<div class="flex items-center gap-4">
+<div class="w-10 h-10 bg-secondary-fixed text-primary rounded-full flex items-center justify-center">
+<span class="material-symbols-outlined text-xl" data-icon="bug_report">bug_report</span>
+</div>
+<div>
+<h3 class="font-medium text-lg">Scout South Field</h3>
+<p class="text-sm text-on-surface-variant">Scheduled • Early signs of Aphid activity</p>
+</div>
+</div>
+<span class="material-symbols-outlined text-outline group-hover:text-primary" data-icon="chevron_right">chevron_right</span>
+</div>
+<button class="text-primary font-medium text-sm flex items-center gap-1">
+                        View All <span class="material-symbols-outlined text-sm">arrow_forward</span>
+</button>
+</div>
+</div>
+<!-- Crop Monitoring Summary -->
+<div class="md:col-span-7 bg-surface-container-low rounded-3xl p-6">
+<h2 class="font-headline text-xl font-medium mb-6">Crop Health Status</h2>
+<div class="flex items-end gap-1 mb-6">
+<div class="flex-1 bg-primary h-12 rounded-l-xl flex items-center justify-center text-on-primary text-sm font-bold">3 Healthy</div>
+<div class="flex-1 bg-error h-12 rounded-r-xl flex items-center justify-center text-on-error text-sm font-bold">1 Attention</div>
+</div>
+<div class="grid grid-cols-2 gap-4">
+<div class="bg-white/50 p-4 rounded-2xl flex items-center gap-3">
+<span class="material-symbols-outlined text-primary" data-icon="eco" style="font-variation-settings: 'FILL' 1;">eco</span>
+<span class="text-sm font-medium">Corn (Sector A)</span>
+<span class="ml-auto text-primary font-bold">94%</span>
+</div>
+<div class="bg-white/50 p-4 rounded-2xl flex items-center gap-3">
+<span class="material-symbols-outlined text-error" data-icon="warning" style="font-variation-settings: 'FILL' 1;">warning</span>
+<span class="text-sm font-medium">Soy (Sector B)</span>
+<span class="ml-auto text-error font-bold">62%</span>
+</div>
+</div>
+</div>
+<!-- Soil Condition: Gauges -->
+<div class="md:col-span-5 bg-surface-container-highest rounded-3xl p-6">
+<h2 class="font-headline text-xl font-medium mb-6">Soil Conditions</h2>
+<div class="space-y-6">
+<div>
+<div class="flex justify-between mb-2">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary" data-icon="humidity_mid">humidity_mid</span>
+<span class="text-sm font-medium">Soil Moisture</span>
+</div>
+<span class="text-sm text-primary font-bold">Optimal</span>
+</div>
+<div class="soil-gauge-track">
+<div class="soil-gauge-indicator w-[72%]"></div>
+</div>
+</div>
+<div>
+<div class="flex justify-between mb-2">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary" data-icon="compost">compost</span>
+<span class="text-sm font-medium">Nutrients (NPK)</span>
+</div>
+<span class="text-sm text-primary font-bold">Good</span>
+</div>
+<div class="soil-gauge-track">
+<div class="soil-gauge-indicator w-[85%]"></div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Start Your Planning Section -->
+<section class="pt-8 pb-12">
+<div class="bg-surface-container-high rounded-[2.5rem] p-12 text-center relative overflow-hidden">
+<!-- Background Decoration -->
+<div class="absolute top-0 left-0 w-full h-full opacity-10 pointer-events-none">
+<img alt="Harvest Planning" class="w-full h-full object-cover" data-alt="Overhead view of various seeds and agricultural planners arranged neatly on a rustic wooden table" src="https://lh3.googleusercontent.com/aida-public/AB6AXuD3ipJjkKWAxYcf7KI01tRYf59EuPgdtIz-DxALVUegxXC273r9uxiTvhIReP-0st3g0aPluQcZM0-N75rawCoGPmffr3SSLfh9dgbkfv34OrZ_T0EuTyTP3vL_saQTv0YGELcivtRdFH7c9qpiLUi_0oQLqCuFpkESa1FxngzpoWdYr1qbXQ0VmIya1WXc5VbNIp0dCOVvJYgcDgmFm0riOaSUWayml6u-1TAv_PTCTivktvTSwtDBZFLUZ8myGNfeNu86cbnp2A"/>
+</div>
+<div class="relative z-10 space-y-6">
+<h3 class="text-4xl font-bold tracking-tight text-primary max-w-xl mx-auto leading-tight">Ready to map out the season?</h3>
+<p class="text-lg text-on-surface-variant max-w-2xl mx-auto leading-relaxed">Start your seasonal planning with our predictive yield models and soil health projections.</p>
+<div class="pt-4 flex flex-col sm:flex-row gap-4 justify-center">
+<button class="bg-primary text-on-primary px-10 py-4 rounded-full font-medium hover:bg-primary-container transition-colors shadow-md active:scale-95">Create new Plan</button>
+<button class="bg-surface-dim text-on-surface px-10 py-4 rounded-full font-medium hover:bg-surface-variant transition-colors active:scale-95">View Current Plan</button>
+</div>
+</div>
+</div>
+</section>
+</main>
+<!-- Bottom Navigation Bar -->
+<nav class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-4 pb-6 pt-3 bg-[#fcf9f0]/80 dark:bg-stone-950/80 backdrop-blur-md rounded-t-[24px] shadow-[0_-8px_24px_rgba(28,28,23,0.06)] border-t border-[#f1eee5]/20">
+<a class="flex flex-col items-center justify-center bg-[#d5e9c1] dark:bg-[#47573b] text-[#1c1c17] dark:text-[#fcf9f0] rounded-2xl px-3 py-1.5 hover:scale-105 transition-transform duration-150 active:scale-95" href="#">
+<span class="material-symbols-outlined" data-icon="dashboard" style="font-variation-settings: 'FILL' 1;">dashboard</span>
+<span class="font-['Work_Sans'] text-[11px] font-medium tracking-wide">Dashboard</span>
+</a><a class="flex flex-col items-center justify-center text-stone-500 dark:text-stone-400 px-3 py-1.5 hover:scale-105 transition-transform duration-150 active:scale-95" href="#">
+<span class="material-symbols-outlined" data-icon="landscape">landscape</span>
+<span class="font-['Work_Sans'] text-[11px] font-medium tracking-wide">Fields</span>
+</a>
+<a class="flex flex-col items-center justify-center text-stone-500 dark:text-stone-400 px-3 py-1.5 hover:scale-105 transition-transform duration-150 active:scale-95" href="#">
+<span class="material-symbols-outlined" data-icon="eco">eco</span>
+<span class="font-['Work_Sans'] text-[11px] font-medium tracking-wide">Crops</span>
+</a>
+<a class="flex flex-col items-center justify-center text-stone-500 dark:text-stone-400 px-3 py-1.5 hover:scale-105 transition-transform duration-150 active:scale-95" href="#">
+<span class="material-symbols-outlined" data-icon="assignment_turned_in">assignment_turned_in</span>
+<span class="font-['Work_Sans'] text-[11px] font-medium tracking-wide">Tasks</span>
+</a>
+<a class="flex flex-col items-center justify-center text-stone-500 dark:text-stone-400 px-3 py-1.5 hover:scale-105 transition-transform duration-150 active:scale-95" href="#">
+<span class="material-symbols-outlined" data-icon="calendar_today">calendar_today</span>
+<span class="font-['Work_Sans'] text-[11px] font-medium tracking-wide">Planner</span>
+</a>
+<a class="flex flex-col items-center justify-center text-stone-500 dark:text-stone-400 px-3 py-1.5 hover:scale-105 transition-transform duration-150 active:scale-95" href="#">
+<span class="material-symbols-outlined" data-icon="chat">chat</span>
+<span class="font-['Work_Sans'] text-[11px] font-medium tracking-wide">Chat</span>
+</a>
+</nav>
+</body></html>
