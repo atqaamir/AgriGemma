@@ -15,30 +15,126 @@ class DashboardService:
 
     @staticmethod
     def build_dashboard_data(user_id: int) -> dict:
-        user = UserService.get_user_by_id(user_id)
-        username = user.name if user else "Farmer"
 
-        all_fields = list(FieldService.get_all_fields())
-        active_fields = list(FieldService.get_currently_active_fields())
-        all_crops = list(CropService.get_all_crops())
-        all_tasks = list(TaskService.get_all_tasks())
-        pending_tasks = [t for t in all_tasks if not t.completed]
+        user = UserService.get_user_by_id(user_id)
+
+        fields = FieldService.get_fields_by_user(user_id)
+        active_fields = [f for f in fields if f.currently_active]
+
+        # Crops are subqueryloaded on fields — avoid a second round-trip
+        crops = [c for f in fields for c in f.crops if c.currently_active]
+
+        tasks = TaskService.get_tasks_by_user(user_id)
+        pending_tasks = [t for t in tasks if not t.completed]
 
         return {
-            "username": username,
-            "farm_overview": DashboardService._build_farm_overview(
-                all_fields, active_fields, all_crops, all_tasks, pending_tasks
+
+            "user": DashboardService._build_user_section(user),
+
+            "weather": DashboardService._build_weather_section(
+                active_fields
             ),
-            "critical_tasks": DashboardService._get_critical_tasks(pending_tasks),
-            "soil_condition": DashboardService._build_soil_condition(active_fields),
-            "field_condition": DashboardService._build_field_condition(all_fields, active_fields),
-            "crop_condition": DashboardService._build_crop_condition(all_crops),
+
+            "overview": DashboardService._build_farm_overview(
+                fields,
+                active_fields,
+                crops,
+                tasks,
+                pending_tasks,
+            ),
+
+            "critical_tasks": DashboardService._get_critical_tasks(
+                pending_tasks
+            ),
+
+            "soil_condition": DashboardService._build_soil_condition(
+                active_fields
+            ),
+
+            "field_condition": DashboardService._build_field_condition(
+                fields,
+                active_fields
+            ),
+
+            "crop_condition": DashboardService._build_crop_condition(
+                crops
+            ),
+
+            "alerts": DashboardService._build_alerts(
+                pending_tasks
+            ),
+
+            "insights": DashboardService._build_ai_insights(),
+
+            "seasonal_plan": DashboardService._build_plan_summary(
+                user_id
+            ),
         }
     
     @staticmethod
+    def _build_user_section(user):
+        return {
+            "id": user.id,
+            "name": user.name,
+        }
+
+    @staticmethod
+    def _build_weather_section(active_fields):
+
+        if not active_fields:
+
+            return {}
+
+        return {
+            "current": {
+                "temperature_c": 32,
+                "condition": "Sunny",
+            },
+
+            "forecast": [
+                {
+                    "day": "Tue",
+                    "temperature_c": 30,
+                    "condition": "Cloudy",
+                },
+                {
+                    "day": "Wed",
+                    "temperature_c": 26,
+                    "condition": "Rainy",
+                },
+                 {
+                    "day": "Thu",
+                    "temperature_c": 28,
+                    "condition": "Rainy",
+                },
+            ]
+        }
+    
+    @staticmethod
+    def _build_alerts(tasks):
+
+        overdue = [
+            t for t in tasks
+            if t.due_date and t.due_date < date.today()
+        ]
+
+        return {
+            "total": len(overdue),
+            "items": [
+                {
+                    "title": t.title,
+                    "priority": t.priority,
+                }
+                for t in overdue
+            ]
+        }
+                
+    
+
+    @staticmethod
     def chat_with_advisor(user_id: int, message: str) -> str:
-        # use user_id to get context later
-        return ChatbotService.get_chat_response(message) 
+        # TODO: pass user_id context once ChatbotService supports user-scoped sessions
+        return ChatbotService.get_chat_response(message)
 
     @staticmethod
     def refresh_dashboard(user_id: int) -> dict:
@@ -66,7 +162,7 @@ class DashboardService:
 
     @staticmethod
     def _get_critical_tasks(pending_tasks) -> list:
-        high_priority = [t for t in pending_tasks if t.priority == "high"]
+        high_priority = [t for t in pending_tasks if t.priority in ("critical", "high")]
         today = date.today()
 
         def sort_key(task):
@@ -139,4 +235,18 @@ class DashboardService:
             "field_name": task.field.name if task.field else None,
             "crop_name": task.crop.name if task.crop else None,
             "overdue": bool(task.due_date and task.due_date < date.today()),
+        }
+
+    @staticmethod
+    def _build_ai_insights():
+        return {
+            "summary": "Irrigation demand likely to increase over next 3 days due to heat buildup."
+        }
+    @staticmethod
+    def _build_plan_summary(user_id):
+
+        return {
+            "active": True,
+            "current_phase": "Irrigation",
+            "completion_percent": 68,
         }

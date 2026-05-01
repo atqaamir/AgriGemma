@@ -5,6 +5,10 @@ from flask_admin.contrib.sqla import ModelView
 from app.models.crop import Crop
 from app.models.field import Field
 from app.models.notification import Notification
+from app.rules.vocabulary.crop_names import CropNames
+from app.rules.vocabulary.growth_stage import GrowthStage
+from app.rules.vocabulary.soil_type import Soil_Type
+from app.rules.vocabulary.water_source import WaterSource
 from app.routes import register_routes
 from app.jobs.scheduler import start_scheduler
 
