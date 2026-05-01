@@ -74,5 +74,9 @@ class TaskService:
         return TaskRepository.get_all().filter_by(crop_id=crop_id, completed=False).all()
 
     @staticmethod
+    def get_tasks_by_user(user_id: int) -> list:
+        return TaskRepository.get_by_user_id(user_id)
+
+    @staticmethod
     def get_tasks_for_field(field_id: int) -> list:
         return TaskRepository.get_all().filter_by(field_id=field_id, completed=False).all()

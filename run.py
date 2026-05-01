@@ -28,6 +28,7 @@ def bootstrap():
 
 
 if __name__ == "__main__":
+    
     # 1. delete DB
     reset_database()
 
@@ -35,4 +36,4 @@ if __name__ == "__main__":
     app = bootstrap()
 
     # 4. run app
-    app.run(debug=True)
+    app.run(debug=True, host="0.0.0.0", port=5000)

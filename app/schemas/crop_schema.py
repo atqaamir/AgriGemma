@@ -1,16 +1,16 @@
-from marshmallow import Schema, fields, validate
+from marshmallow import Schema, fields, validate, RAISE
 from app.schemas.task_schema import TaskCardSchema
 
 
 class CreateCropSchema(Schema):
-    name = fields.Str(required=True, validate=validate.Length(min=1, max=100))
-    growth_stage = fields.Str(allow_none=True)
-    health_status = fields.Str(allow_none=True)
+    crop_name_id = fields.Int(required=True)
+    current_health_status = fields.Str(allow_none=True)
     planting_date = fields.Date(allow_none=True)
-    soil_type = fields.Str(allow_none=True)
-    water_requirement = fields.Float(allow_none=True)
-    currently_active = fields.Bool(allow_none=False)
-
+    currently_water_requirement = fields.Float(allow_none=True)
+    current_growth_stage_id = fields.Int(allow_none=True)
+    field_id = fields.Int(required=True)
+    user_id = fields.Int(allow_none=True)
+    currently_active = fields.Bool(load_default=True)
 
 
 class CropCardSchema(Schema):
@@ -19,19 +19,11 @@ class CropCardSchema(Schema):
     growth_stage = fields.Str(allow_none=True)
     health_status = fields.Str(allow_none=True)
     planting_date = fields.Date(allow_none=True)
-    currently_active = fields.Bool(allow_none=False)
+    currently_active = fields.Bool()
 
-
-  
     task_count = fields.Method("get_task_count")
     pending_task_count = fields.Method("get_pending_task_count")
     tasks_preview = fields.Method("get_tasks_preview")
-
-    currently_active = fields.Bool()
-
-
-    
-
 
     def get_task_count(self, obj):
         return len(obj.tasks)
@@ -52,34 +44,17 @@ class CropDetailSchema(Schema):
     soil_type = fields.Str(allow_none=True)
     water_requirement = fields.Float(allow_none=True)
     planting_date = fields.Date(allow_none=True)
-    currently_active = fields.Bool(allow_none=False)
-
-    # related_fields = fields.Method("get_related_fields")
-    tasks = fields.Method("get_tasks")
-
     currently_active = fields.Bool()
 
-
-    # def get_related_fields(self, obj):
-    #     return [
-    #         {
-    #             "id": field.id,
-    #             "name": field.name,
-    #             "acreage": field.acreage,
-    #             "currently_active": field.currently_active,
-    #         }
-    #         for field in obj.fields
-    #     ]
+    tasks = fields.Method("get_tasks")
 
     def get_tasks(self, obj):
         return TaskCardSchema(many=True).dump(obj.tasks)
-    
+
+
 class MyCropsPageSchema(Schema):
     crop_cards = fields.List(fields.Nested(CropCardSchema))
     crop_task_cards = fields.List(fields.Nested(TaskCardSchema))
-
-
-from marshmallow import Schema, fields, EXCLUDE, RAISE
 
 
 class UpdateCropSchema(Schema):
@@ -87,12 +62,10 @@ class UpdateCropSchema(Schema):
     class Meta:
         unknown = RAISE
 
-    growth_stage = fields.Str(allow_none=True)
-
-    health_status = fields.Str(allow_none=True)
-
+    crop_name_id = fields.Int(allow_none=True)
+    current_growth_stage_id = fields.Int(allow_none=True)
+    current_health_status = fields.Str(allow_none=True)
     planting_date = fields.Date(allow_none=True)
-
-    water_requirement = fields.Float(allow_none=True)
-
+    currently_water_requirement = fields.Float(allow_none=True)
+    field_id = fields.Int(allow_none=True)
     currently_active = fields.Bool(required=False)
