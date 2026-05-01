@@ -78,7 +78,7 @@ class ContextAggregationService:
                     {
                         "id": c.id,
                         "name": c.name,
-                        "growth_stage": c.current_growth_stage,
+                        "growth_stage": c.growth_stage,
                         "health_status": c.current_health_status,
                         "water_requirement": c.currently_water_requirement,
                     }
