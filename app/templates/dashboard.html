@@ -334,29 +334,27 @@
 </section>
 </main>
 <!-- Bottom Navigation Bar -->
-<nav class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-4 pb-6 pt-3 bg-[#fcf9f0]/80 dark:bg-stone-950/80 backdrop-blur-md rounded-t-[24px] shadow-[0_-8px_24px_rgba(28,28,23,0.06)] border-t border-[#f1eee5]/20">
-<a class="flex flex-col items-center justify-center bg-[#d5e9c1] dark:bg-[#47573b] text-[#1c1c17] dark:text-[#fcf9f0] rounded-2xl px-3 py-1.5 hover:scale-105 transition-transform duration-150 active:scale-95" href="#">
-<span class="material-symbols-outlined" data-icon="dashboard" style="font-variation-settings: 'FILL' 1;">dashboard</span>
-<span class="font-['Work_Sans'] text-[11px] font-medium tracking-wide">Dashboard</span>
-</a><a class="flex flex-col items-center justify-center text-stone-500 dark:text-stone-400 px-3 py-1.5 hover:scale-105 transition-transform duration-150 active:scale-95" href="#">
-<span class="material-symbols-outlined" data-icon="landscape">landscape</span>
-<span class="font-['Work_Sans'] text-[11px] font-medium tracking-wide">Fields</span>
-</a>
-<a class="flex flex-col items-center justify-center text-stone-500 dark:text-stone-400 px-3 py-1.5 hover:scale-105 transition-transform duration-150 active:scale-95" href="#">
-<span class="material-symbols-outlined" data-icon="eco">eco</span>
-<span class="font-['Work_Sans'] text-[11px] font-medium tracking-wide">Crops</span>
-</a>
-<a class="flex flex-col items-center justify-center text-stone-500 dark:text-stone-400 px-3 py-1.5 hover:scale-105 transition-transform duration-150 active:scale-95" href="#">
-<span class="material-symbols-outlined" data-icon="assignment_turned_in">assignment_turned_in</span>
-<span class="font-['Work_Sans'] text-[11px] font-medium tracking-wide">Tasks</span>
-</a>
-<a class="flex flex-col items-center justify-center text-stone-500 dark:text-stone-400 px-3 py-1.5 hover:scale-105 transition-transform duration-150 active:scale-95" href="#">
-<span class="material-symbols-outlined" data-icon="calendar_today">calendar_today</span>
-<span class="font-['Work_Sans'] text-[11px] font-medium tracking-wide">Planner</span>
-</a>
-<a class="flex flex-col items-center justify-center text-stone-500 dark:text-stone-400 px-3 py-1.5 hover:scale-105 transition-transform duration-150 active:scale-95" href="#">
-<span class="material-symbols-outlined" data-icon="chat">chat</span>
-<span class="font-['Work_Sans'] text-[11px] font-medium tracking-wide">Chat</span>
-</a>
-</nav>
+  <!-- BottomNavBar Section -->
+  <nav class="fixed bottom-0 left-0 w-full z-50 bg-[#fcf9f0]/80 dark:bg-stone-950/80 backdrop-blur-md rounded-t-[24px] shadow-[0_-8px_24px_rgba(28,28,23,0.06)] flex justify-around items-center px-4 pb-6 pt-3">
+    <a class="flex flex-col items-center justify-center bg-secondary-fixed dark:bg-primary-container text-on-background dark:text-surface-bright rounded-2xl px-3 py-1.5 transition-transform hover:scale-105 duration-150" href="/">
+      <span class="material-symbols-outlined" data-icon="dashboard">dashboard</span>
+      <span class="font-['Work_Sans'] text-[11px] font-medium tracking-wide">Dashboard</span>
+    </a>
+    <a class="flex flex-col items-center justify-center text-stone-500 dark:text-stone-400 px-3 py-1.5 transition-transform hover:scale-105 duration-150"  href="/myfields">
+      <span class="material-symbols-outlined" data-icon="landscape" style="font-variation-settings: 'FILL' 1;">landscape</span>
+      <span class="font-['Work_Sans'] text-[11px] font-medium tracking-wide">Fields</span>
+    </a>
+    <a class="flex flex-col items-center justify-center text-stone-500 dark:text-stone-400 px-3 py-1.5 transition-transform hover:scale-105 duration-150" href="/mycrops">
+      <span class="material-symbols-outlined" data-icon="eco" style="font-variation-settings: 'FILL' 1;">eco</span>
+      <span class="font-['Work_Sans'] text-[11px] font-medium tracking-wide">Crops</span>
+    </a>
+    <a class="flex flex-col items-center justify-center text-stone-500 dark:text-stone-400 px-3 py-1.5 transition-transform hover:scale-105 duration-150" href="/mytasks">
+      <span class="material-symbols-outlined" data-icon="assignment_turned_in">assignment_turned_in</span>
+      <span class="font-['Work_Sans'] text-[11px] font-medium tracking-wide">Tasks</span>
+    </a>
+    <a class="flex flex-col items-center justify-center text-stone-500 dark:text-stone-400 px-3 py-1.5 transition-transform hover:scale-105 duration-150" href="/chatbot">
+      <span class="material-symbols-outlined" data-icon="chat">chat</span>
+      <span class="font-['Work_Sans'] text-[11px] font-medium tracking-wide">Chat</span>
+    </a>
+  </nav>
 </body></html>
