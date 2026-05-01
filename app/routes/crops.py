@@ -1,7 +1,7 @@
 from flask import Blueprint, request, jsonify, render_template
 from marshmallow import ValidationError
 
-from app.services.crop_service import CropService
+from app.services.domain_service.crop_service import CropService
 from app.schemas.crop_schema import (
     CropCardSchema,
     CropDetailSchema,

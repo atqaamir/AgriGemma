@@ -1,7 +1,7 @@
 from flask import Blueprint, jsonify, request
-from app.services.gemma_prompt_service import build_chat_prompt
-from app.services.mock_data_service import get_mock_soil_data, get_mock_crop_data
-from app.services.weather_service import get_weather
+from app.services.ai_model_service.Gemma.gemma_prompt_service import build_chat_prompt
+from app.services.mock_data_service.mock_data_service import get_mock_soil_data, get_mock_crop_data
+from app.services.weather_service.weather_service import get_weather
 
 chatbot_bp = Blueprint("chatbot", __name__)
 

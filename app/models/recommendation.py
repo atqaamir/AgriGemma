@@ -1,0 +1,1 @@
+"""Keeps recrods of all ai recommendations """

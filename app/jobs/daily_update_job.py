@@ -1,15 +1,23 @@
-from app.services.field_service import field_service
+
+from app.agents.coordinator_agent import CoordinatorAgent
+
+"""
+Runs daily at 5am, performs the following:
+- Invokes the CoordinatorAgent -> daily_update function
+- prints the results to the console (for now, eventually will log to a file or database)
+- eventually add retry logic and error handling
+
+"""
+from app.jobs.base_job import BaseJob
 from app.agents.coordinator_agent import CoordinatorAgent
 
 
-class DailyUpdateJob:
-    @staticmethod
-    def run() -> list[dict]:
-        results = []
-        active_fields = field_service.get_active_fields()
+class DailyUpdateJob(BaseJob):
 
-        for field in active_fields:
-            result = CoordinatorAgent.handle_daily_system_update(field["id"])
-            results.append(result)
+    name = "Daily Update Job"
 
-        return results
+    def process_target(self, user):
+
+        return CoordinatorAgent.daily_update(
+            user_id=user.id
+        )

@@ -1,3 +1,4 @@
+"""Keeps track of the fields that the user has added to the system, along with their details and associated crop information."""
 from app.extensions import db
 
 
@@ -8,15 +9,12 @@ class Field(db.Model):
 
     name = db.Column(db.String(100), nullable=False)
     acreage = db.Column(db.Float, nullable=True)
-
-    growth_stage = db.Column(db.String(100), nullable=True)
     health_status = db.Column(db.String(100), nullable=True)
     field_score = db.Column(db.Float, nullable=True)
     health_percentage = db.Column(db.Float, nullable=True)
     moisture_level = db.Column(db.Float, nullable=True)
     heat_level = db.Column(db.Float, nullable=True)
     stress_risk = db.Column(db.Float, nullable=True)
-    disease_risk = db.Column(db.String(100), nullable=True)
 
     currently_active = db.Column(db.Boolean, default=True, nullable=False)
 

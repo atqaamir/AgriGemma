@@ -1,0 +1,17 @@
+- Farm rules customization -> Along with generic crop rules, a farmer can define his own rules
+- Add more crops
+- Add rule engine udpate service 
+- Add fertilizers and pesticides
+- Disaster management plan (eg. for each task) -> each task advices on the potential/current growth stage that a crop should be at i.e flowering stage 2 (2 inch petal). If its not, a farmer can report diaster, and our diaster control service  checks prvious tasks, rules, stages, and tells where it might have gone wrong and what to do next.
+- complete and detailed change history
+- Unfinished tasks ki bases par future weekly plan change/tasks regeneration.
+- Farmer rejects future change
+- Jobs failure fallbacks & retries
+- Add complete Crop Growth Management:
+    - Irrigation
+    - Pest & Weed control
+    - Fertilization
+- Add Pest Detection thorugh Image Processing and AI analysis
+- Add Seed Selection process 
+- Add other measurements/checks for soil - such as ph, S, EC etc
+- Add Irrigation Need (0/1) check according to growth stage and environment levels

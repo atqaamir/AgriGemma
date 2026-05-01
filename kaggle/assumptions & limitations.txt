@@ -1,0 +1,17 @@
+Day starts at 5am local
+Day ends at 7pm local
+Farmer always finishes all tasks
+Farmer always follows the plan
+Farmer never rejects plan change proposal, so bypassing farmer approval for now
+There is never any damage to the crops, there are no pest risks or weed growth
+There is no fertilizer utility
+There are no sisease or any other risks to the fields
+Request for change history always gives summarized report for given date range
+Only 4 possible scenarios for now:
+    a. No change in Weather forecast
+    b. Weather forecast changed but no impact on weekly plan and today's tasks
+    c. Weather forecast changed but impacts only overall weekly plan not today's tasks
+    d. Weather forecast changed and impacts weekly plan and today's task
+Weekly planner is generated for current week only, and daily tasks are generated for one day only.
+Jobs are always successful so there is no failure fallback, or retries
+Crops always have some Irrigation_need irrespective of environment levels
