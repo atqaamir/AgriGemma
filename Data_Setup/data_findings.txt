@@ -1,0 +1,71 @@
+Crop_RecommendationV1:
+No Wheat Data here - alsmost 100 rows per crop
+Columns in the crop data: Index(['temperature', 'humidity', 'ph', 'water availability', 'season',
+       'label'],
+      dtype='str')
+Data for requested crops:
+label
+cotton    100
+maize     200
+rice      100
+dtype: int64
+Unique crops in the dataset: ['rice', 'maize', 'cotton']
+Unique seasons in the dataset: ['rainy', 'winter', 'spring', 'summer']
+
+Crop_RecommendationV2:
+No Wheat Data here - exact 100 rows per crop
+Columns in the crop data: Index(['N', 'P', 'K', 'temperature', 'humidity', 'ph', 'rainfall', 'label',
+       'soil_moisture', 'soil_type', 'sunlight_exposure', 'wind_speed',
+       'co2_concentration', 'organic_matter', 'irrigation_frequency',
+       'crop_density', 'pest_pressure', 'fertilizer_usage', 'growth_stage',
+       'urban_area_proximity', 'water_source_type', 'frost_risk',
+       'water_usage_efficiency'],
+      dtype='str')
+Data for requested crops:
+label
+cotton    100
+maize     100
+rice      100
+dtype: int64
+Unique crops in the dataset: ['rice', 'maize', 'cotton']
+Unique growth stages in the dataset: [1, 3, 2]
+------------------------------------------------------------------------------------------
+
+Total records diff in both datasets: 800, Crop1 records: 1400, Crop2 records: 2200
+Crop counts in dataset 1: 13
+Crop counts in dataset 2: 22
+Difference in crop_counts: 9
+
+Crops in both datasets: ['blackgram', 'chickpea', 'cotton', 'jute', 'kidneybeans', 'lentil', 'maize', 'mothbeans', 'mungbean', 'muskmelon', 'pigeonpeas', 'rice', 'watermelon']
+Crops only in dataset 1: []
+Crops only in dataset 2: ['apple', 'banana', 'coconut', 'coffee', 'grapes', 'mango', 'orange', 'papaya', 'pomegranate']
+
+Crop: blackgram, Difference: 0
+Crop: chickpea, Difference: 0
+Crop: cotton, Difference: 0
+Crop: jute, Difference: 0
+Crop: kidneybeans, Difference: 0
+Crop: lentil, Difference: 0
+Crop: maize, Difference: -100
+Crop: mothbeans, Difference: 0
+Crop: mungbean, Difference: 0
+Crop: muskmelon, Difference: 0
+Crop: pigeonpeas, Difference: 0
+Crop: rice, Difference: 0
+Crop: watermelon, Difference: 0
+------------------------------------------------------------------------------
+
+Common columns in both datasets: ['humidity', 'label', 'ph', 'temperature']
+Matching columns count between datasets: 0
+------------------------------------------------------------------------------
+
+Crop_RecommendationV3: Merged the 2 datasets
+Per Crop Rows in Merged Data
+label
+cotton    100
+maize     200
+rice      100
+dtype: int64
+
+Water_Availibility always matches Rainfall: True 
+Number of nulls in Season: 0
