@@ -32,19 +32,25 @@ def create_app():
 
 def _register_ai_provider() -> None:
     """
-    Register the AI provider. Set USE_PLACEHOLDER_AI=true in environment to use placeholder.
-    This makes it easy to test without Gemma:
-        export USE_PLACEHOLDER_AI=true
-        flask run
+    Provider selection via environment variables:
+
+        USE_PLACEHOLDER_AI=true   → rule-based placeholder (no model needed)
+        USE_LITERT=true           → Gemma 4 via MediaPipe LiteRT (.task file, mobile/Linux)
+        default                   → Ollama local inference (gemma3:4b)
+                                    Install: https://ollama.com/download
+                                    Then:    ollama pull gemma3:4b
     """
     import os
     from app.services.ai_model_service import ai_model_service
 
-    use_placeholder = os.getenv("USE_PLACEHOLDER_AI", "false").lower() == "true"
-
-    if use_placeholder:
+    if os.getenv("USE_PLACEHOLDER_AI", "false").lower() == "true":
         from app.services.ai_model_service.placeholder_provider import PlaceholderProvider
         ai_model_service.register_provider(PlaceholderProvider())
-    else:
+
+    elif os.getenv("USE_LITERT", "false").lower() == "true":
         from app.services.ai_model_service.Gemma.gemma_provider import GemmaProvider
         ai_model_service.register_provider(GemmaProvider())
+
+    else:
+        from app.services.ai_model_service.ollama_provider import OllamaProvider
+        ai_model_service.register_provider(OllamaProvider())
