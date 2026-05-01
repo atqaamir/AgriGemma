@@ -700,7 +700,7 @@
                   </div>
                 </div>
                 <span class="text-[10px] font-bold ${getHealthColor(field.health_status)} uppercase">
-                  ${escapeHtml(field.growth_stage || 'Unknown')}
+                  ${escapeHtml(field.crop?.growth_stage || 'Unknown')}
                 </span>
               </div>
             </div>
@@ -1312,8 +1312,7 @@
     }
     function resetFilters() {
       document.getElementById('filterForm').reset();
-      cachedActiveFields = cachedAllFields || cachedActiveFields;
-      renderFieldCards(cachedActiveFields);
+      renderFieldCards(isViewingAll ? (cachedAllFields || cachedActiveFields) : cachedActiveFields);
     }
     function applyFilters(event) {
       event.preventDefault();
