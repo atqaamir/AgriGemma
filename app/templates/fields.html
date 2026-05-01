@@ -764,7 +764,7 @@
       document.getElementById('fieldName').textContent = field.name || 'Unknown';
       document.getElementById('fieldCrop').textContent = cropName;
       document.getElementById('fieldAcreage').textContent = `${field.acreage ?? 0} AC`;
-      document.getElementById('fieldGrowthStage').textContent = field.growth_stage || 'Unknown';
+      document.getElementById('fieldGrowthStage').textContent = field.crop?.growth_stage || 'Unknown';
 
       document.getElementById('fieldStatusIcon').textContent = getStatusIcon(normalizedStatus);
       document.getElementById('fieldStatusIcon').className = `material-symbols-outlined text-sm ${getStatusClass(normalizedStatus)}`;
