@@ -92,25 +92,6 @@
   {% include "_header.html" %}
 
   <main class="px-4 pt-4 space-y-8">
-    <!-- Map Summary Chip / Mini Card -->
-    <section class="relative overflow-hidden rounded-3xl h-44 flex flex-col justify-end p-6 bg-surface-container" data-location="Iowa Farm Lands">
-      <div class="absolute inset-0 z-0 opacity-40 bg-cover bg-center" style="background-image: url('/static/images/fields_map.jpg')"></div>
-      <div class="absolute inset-0 bg-gradient-to-t from-surface-container via-transparent to-transparent z-10"></div>
-      <div class="relative z-20 flex justify-between items-end">
-        <div>
-          <span class="text-xs font-medium tracking-[0.03em] text-primary uppercase mb-1 block">Property Overview</span>
-          <h2 class="text-3xl font-bold text-on-surface tracking-tight">
-            <span id="total-acreage">0.0</span>
-            <span class="text-lg font-medium opacity-70">Total AC</span>
-          </h2>
-        </div>
-        <button onclick="openMap()" class="bg-primary px-4 py-2 rounded-full flex items-center gap-2 shadow-lg hover:shadow-xl transition-shadow">
-          <span class="material-symbols-outlined text-on-primary text-sm" style="font-variation-settings: 'FILL' 1;">map</span>
-          <span class="text-on-primary text-xs font-bold">Interactive Map</span>
-        </button>
-      </div>
-    </section>
-
     <!-- Active Fields Section -->
     <div class="space-y-4">
       <div class="flex justify-between items-center px-2">
