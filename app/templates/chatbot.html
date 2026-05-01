@@ -1,0 +1,640 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+  <title>Farm Advisor — Chat</title>
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            surface: "#fcf9f0",
+            "surface-container-lowest": "#ffffff",
+            "surface-container-low": "#f7f3ea",
+            "surface-container": "#f1eee5",
+            "surface-container-high": "#ebe8df",
+            "surface-dim": "#dddad1",
+            "surface-bright": "#fcf9f0",
+            "on-surface": "#1c1c17",
+            "on-surface-variant": "#444840",
+            primary: "#47573b",
+            "primary-container": "#5f6f52",
+            "primary-fixed": "#d6e8c5",
+            "on-primary": "#ffffff",
+            secondary: "#536344",
+            "secondary-fixed": "#d5e9c1",
+            "secondary-container": "#d5e9c1",
+            "on-secondary": "#ffffff",
+            background: "#fcf9f0",
+            "on-background": "#1c1c17",
+            outline: "#75786f",
+            "outline-variant": "#c5c8bd",
+            error: "#ba1a1a",
+            "error-container": "#ffdad6",
+            "on-error": "#ffffff",
+          },
+          fontFamily: { headline: ["Manrope"], body: ["Work Sans"] }
+        }
+      }
+    };
+  </script>
+
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;700;800&family=Work+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+
+  <script>
+    (function () {
+      const t = localStorage.getItem('theme') || 'light';
+      if (t === 'dark') document.documentElement.classList.add('dark');
+    })();
+  </script>
+
+  <style>
+    .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+    body { font-family: 'Work Sans', sans-serif; }
+    h1, h2, h3 { font-family: 'Manrope', sans-serif; }
+
+    .no-scrollbar::-webkit-scrollbar { display: none; }
+    .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+    .msg-in {
+      animation: msgIn .25s cubic-bezier(.22,.68,0,1.18) both;
+    }
+    @keyframes msgIn {
+      from { opacity: 0; transform: translateY(8px) scale(.97); }
+      to   { opacity: 1; transform: none; }
+    }
+
+    /* Typing dots */
+    .dot { width:6px; height:6px; border-radius:50%; background:#47573b; animation: bounce 1.2s infinite ease-in-out; }
+    .dot:nth-child(2) { animation-delay:.2s; }
+    .dot:nth-child(3) { animation-delay:.4s; }
+    @keyframes bounce { 0%,60%,100%{transform:translateY(0);opacity:.4} 30%{transform:translateY(-5px);opacity:1} }
+
+    /* Auto-resize textarea */
+    #msgInput { resize:none; min-height:42px; max-height:120px; overflow-y:auto; }
+
+    /* Bot message paragraphs */
+    .bot-text p { margin-bottom:.4rem; line-height:1.6; }
+    .bot-text p:last-child { margin-bottom:0; }
+
+    /* Toast */
+    #toast { transition: opacity .25s, transform .25s; }
+    #toast.show { opacity:1; transform:translateY(0); }
+    #toast.hide { opacity:0; transform:translateY(12px); pointer-events:none; }
+
+    /* Sidebar slide */
+    #sidebar { transition: transform .28s cubic-bezier(.4,0,.2,1); }
+
+    /* Quick chips */
+    .chip {
+      display:inline-flex; align-items:center; gap:6px;
+      padding:.45rem .9rem; border-radius:999px; font-size:.8rem; font-weight:500;
+      border: 1px solid #c5c8bd; color:#444840;
+      background: #f1eee5;
+      transition: background .15s, color .15s, border-color .15s, transform .1s;
+    }
+    .chip:hover { background:#d6e8c5; color:#47573b; border-color:#47573b40; }
+    .chip:active { transform: scale(.95); }
+    .dark .chip { background:#2a2a24; color:#9e9e8e; border-color:#44484040; }
+    .dark .chip:hover { background:#3a4a2e; color:#d5e9c1; border-color:#d5e9c140; }
+  </style>
+</head>
+
+<body class="bg-surface dark:bg-[#1c1c17] text-on-surface dark:text-[#e5e2da] flex flex-col" style="height:100dvh;">
+
+  <!-- ── Header ─────────────────────────────────────────────────────────── -->
+  <header class="flex-shrink-0 bg-[#fcf9f0] dark:bg-[#1c1c17] border-b border-outline-variant/20 sticky top-0 z-50">
+    <div class="flex items-center justify-between px-4 py-3 gap-3">
+      <div class="flex items-center gap-3">
+        <button id="menuBtn" onclick="toggleSidebar()"
+          class="lg:hidden p-2 rounded-full hover:bg-surface-container dark:hover:bg-[#2a2a24] active:scale-95 transition-transform">
+          <span class="material-symbols-outlined text-primary dark:text-[#d5e9c1]" style="font-size:22px;">menu</span>
+        </button>
+        <span class="material-symbols-outlined text-primary dark:text-[#d5e9c1]"
+          style="font-size:26px; font-variation-settings:'FILL' 1;">smart_toy</span>
+        <div class="leading-tight">
+          <h1 class="text-base font-bold text-primary dark:text-[#d5e9c1]">Farm Advisor</h1>
+          <p id="statusLabel" class="text-[11px] text-on-surface-variant dark:text-[#9e9e8e]">Gemma 4 · on-device</p>
+        </div>
+      </div>
+      <div class="flex items-center gap-1">
+        <button onclick="startNewConversation()"
+          class="p-2 rounded-full hover:bg-surface-container dark:hover:bg-[#2a2a24] active:scale-95 transition-transform"
+          title="New conversation">
+          <span class="material-symbols-outlined text-primary dark:text-[#d5e9c1]" style="font-size:22px;">edit_square</span>
+        </button>
+        <button onclick="toggleTheme()"
+          class="p-2 rounded-full hover:bg-surface-container dark:hover:bg-[#2a2a24] active:scale-95 transition-transform">
+          <span class="material-symbols-outlined text-primary dark:text-[#d5e9c1]">brightness_4</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- ── Main (sidebar + chat) ──────────────────────────────────────────── -->
+  <div class="flex flex-1 min-h-0 relative">
+
+    <!-- Backdrop (mobile sidebar) -->
+    <div id="backdrop" onclick="closeSidebar()"
+      class="fixed inset-0 bg-black/25 z-30 hidden lg:hidden"></div>
+
+    <!-- ── Sidebar ──────────────────────────────────────────────────────── -->
+    <aside id="sidebar"
+      class="fixed lg:relative inset-y-0 left-0 z-40 w-72 lg:w-60
+             bg-surface-container-low dark:bg-[#222219]
+             border-r border-outline-variant/20
+             flex flex-col -translate-x-full lg:translate-x-0
+             pt-[57px] lg:pt-0">
+
+      <div class="p-3 border-b border-outline-variant/20 flex-shrink-0">
+        <button onclick="startNewConversation()"
+          class="w-full flex items-center justify-center gap-2 py-2.5 px-4
+                 bg-primary text-on-primary rounded-xl text-sm font-semibold
+                 hover:bg-primary/90 active:scale-[.98] transition-all shadow-sm">
+          <span class="material-symbols-outlined" style="font-size:17px;">edit_square</span>
+          New conversation
+        </button>
+      </div>
+
+      <div id="convList" class="flex-1 overflow-y-auto no-scrollbar p-2 space-y-1">
+        <div class="flex items-center justify-center gap-2 py-10 text-on-surface-variant/60 dark:text-[#9e9e8e]/60 text-sm">
+          <span class="material-symbols-outlined animate-spin" style="font-size:18px;">progress_activity</span>
+          Loading…
+        </div>
+      </div>
+    </aside>
+
+    <!-- ── Chat column ──────────────────────────────────────────────────── -->
+    <div class="flex-1 min-w-0 flex flex-col">
+
+      <!-- Messages -->
+      <div id="msgContainer"
+        class="flex-1 min-h-0 overflow-y-auto no-scrollbar px-4 pt-6 pb-4 space-y-3">
+
+        <!-- Welcome state -->
+        <div id="welcome" class="flex flex-col items-center justify-center h-full gap-5 text-center px-4 py-12">
+          <div class="w-16 h-16 rounded-2xl bg-primary-fixed dark:bg-[#3a4a2e] flex items-center justify-center shadow-md">
+            <span class="material-symbols-outlined text-primary dark:text-[#d5e9c1]"
+              style="font-size:34px; font-variation-settings:'FILL' 1;">smart_toy</span>
+          </div>
+          <div>
+            <p class="text-xl font-bold">How can I help today?</p>
+            <p class="text-sm text-on-surface-variant dark:text-[#9e9e8e] mt-1">
+              Ask anything about your farm, or pick a topic below
+            </p>
+          </div>
+          <div class="flex flex-wrap gap-2 justify-center max-w-md">
+            <button class="chip" onclick="quickPrompt('My crops look unhealthy — what could be wrong?')">
+              <span class="material-symbols-outlined" style="font-size:14px;">eco</span>Crop health
+            </button>
+            <button class="chip" onclick="quickPrompt('When should I irrigate my fields this week?')">
+              <span class="material-symbols-outlined" style="font-size:14px;">water_drop</span>Irrigation timing
+            </button>
+            <button class="chip" onclick="quickPrompt('What are the best practices for pest and disease management?')">
+              <span class="material-symbols-outlined" style="font-size:14px;">bug_report</span>Pest management
+            </button>
+            <button class="chip" onclick="quickPrompt('What should I plant this season given current conditions?')">
+              <span class="material-symbols-outlined" style="font-size:14px;">agriculture</span>Planting advice
+            </button>
+            <button class="chip" onclick="quickPrompt('How can I improve my soil fertility and health?')">
+              <span class="material-symbols-outlined" style="font-size:14px;">compost</span>Soil fertility
+            </button>
+            <button class="chip" onclick="quickPrompt('What tasks should I prioritise on my farm this week?')">
+              <span class="material-symbols-outlined" style="font-size:14px;">task_alt</span>Task planning
+            </button>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Input bar -->
+      <div class="flex-shrink-0 border-t border-outline-variant/20 bg-[#fcf9f0] dark:bg-[#1c1c17] px-4 pt-3 pb-[calc(80px+.75rem)]">
+        <div id="inputWrap"
+          class="flex items-end gap-2 bg-surface-container dark:bg-[#2a2a24] rounded-2xl px-3 py-2
+                 border border-outline-variant/30 focus-within:border-primary/50 transition-colors">
+          <textarea id="msgInput" rows="1"
+            placeholder="Ask about your farm… (Enter to send)"
+            disabled
+            class="flex-1 bg-transparent text-sm text-on-surface dark:text-[#e5e2da]
+                   placeholder-on-surface-variant/50 dark:placeholder-[#9e9e8e]/60
+                   focus:outline-none py-1.5 leading-relaxed disabled:opacity-40"
+            oninput="onInputChange()"
+            onkeydown="handleKey(event)"></textarea>
+          <button id="sendBtn" onclick="sendMessage()" disabled
+            class="flex-shrink-0 w-9 h-9 bg-primary text-on-primary rounded-xl flex items-center justify-center
+                   hover:bg-primary/90 active:scale-90 transition-all duration-150
+                   disabled:opacity-30 disabled:cursor-not-allowed">
+            <span id="sendIcon" class="material-symbols-outlined"
+              style="font-size:18px; font-variation-settings:'FILL' 1;">send</span>
+          </button>
+        </div>
+        <p class="text-[11px] text-on-surface-variant/50 dark:text-[#9e9e8e]/50 text-center mt-2">
+          Powered by Gemma 4 · Runs locally on-device
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Toast ────────────────────────────────────────────────────────── -->
+  <div id="toast"
+    class="hide fixed bottom-28 left-1/2 -translate-x-1/2 z-[100] pointer-events-none
+           flex items-center gap-2
+           bg-[#1c1c17] dark:bg-[#e5e2da] text-[#fcf9f0] dark:text-[#1c1c17]
+           px-4 py-2.5 rounded-full text-sm font-medium shadow-xl whitespace-nowrap">
+    <span id="toastIcon" class="material-symbols-outlined" style="font-size:15px;">error</span>
+    <span id="toastText">Something went wrong</span>
+  </div>
+
+  <!-- ── Bottom nav ─────────────────────────────────────────────────────── -->
+  <nav class="fixed bottom-0 left-0 w-full z-50 bg-[#fcf9f0]/80 dark:bg-stone-950/80 backdrop-blur-md
+              rounded-t-[24px] shadow-[0_-8px_24px_rgba(28,28,23,0.06)]
+              flex justify-around items-center px-4 pb-6 pt-3">
+    <a class="flex flex-col items-center text-stone-500 dark:text-stone-400 px-3 py-1.5 transition-transform hover:scale-105 duration-150" href="/">
+      <span class="material-symbols-outlined">dashboard</span>
+      <span class="text-[11px] font-medium tracking-wide">Dashboard</span>
+    </a>
+    <a class="flex flex-col items-center text-stone-500 dark:text-stone-400 px-3 py-1.5 transition-transform hover:scale-105 duration-150" href="/myfields">
+      <span class="material-symbols-outlined" style="font-variation-settings:'FILL' 1;">landscape</span>
+      <span class="text-[11px] font-medium tracking-wide">Fields</span>
+    </a>
+    <a class="flex flex-col items-center text-stone-500 dark:text-stone-400 px-3 py-1.5 transition-transform hover:scale-105 duration-150" href="/mycrops">
+      <span class="material-symbols-outlined" style="font-variation-settings:'FILL' 1;">eco</span>
+      <span class="text-[11px] font-medium tracking-wide">Crops</span>
+    </a>
+    <a class="flex flex-col items-center text-stone-500 dark:text-stone-400 px-3 py-1.5 transition-transform hover:scale-105 duration-150" href="/mytasks">
+      <span class="material-symbols-outlined">assignment_turned_in</span>
+      <span class="text-[11px] font-medium tracking-wide">Tasks</span>
+    </a>
+    <a class="flex flex-col items-center bg-secondary-fixed dark:bg-primary-container text-on-background dark:text-surface-bright rounded-2xl px-3 py-1.5 transition-transform hover:scale-105 duration-150" href="/chatbot">
+      <span class="material-symbols-outlined" style="font-variation-settings:'FILL' 1;">chat</span>
+      <span class="text-[11px] font-medium tracking-wide">Chat</span>
+    </a>
+  </nav>
+
+  <script>
+    const API = '/chatbot';
+    let activeId = null;
+    let sending = false;
+    let cachedConvs = [];
+
+    // ── Sidebar ────────────────────────────────────────────────────────────
+
+    function toggleSidebar() {
+      const open = !document.getElementById('sidebar').classList.contains('-translate-x-full');
+      open ? closeSidebar() : openSidebar();
+    }
+    function openSidebar() {
+      document.getElementById('sidebar').classList.remove('-translate-x-full');
+      document.getElementById('backdrop').classList.remove('hidden');
+    }
+    function closeSidebar() {
+      document.getElementById('sidebar').classList.add('-translate-x-full');
+      document.getElementById('backdrop').classList.add('hidden');
+    }
+
+    // ── Conversation list ──────────────────────────────────────────────────
+
+    async function loadConvs() {
+      try {
+        const r = await fetch(`${API}/conversations?limit=40`);
+        if (!r.ok) throw 0;
+        const d = await r.json();
+        cachedConvs = d.conversations || [];
+        renderConvList();
+      } catch {
+        document.getElementById('convList').innerHTML =
+          '<p class="text-xs text-center text-on-surface-variant/50 py-6">Could not load conversations</p>';
+      }
+    }
+
+    function renderConvList() {
+      const el = document.getElementById('convList');
+      if (!cachedConvs.length) {
+        el.innerHTML = `
+          <div class="flex flex-col items-center gap-2 py-10 text-on-surface-variant/50 dark:text-[#9e9e8e]/50">
+            <span class="material-symbols-outlined" style="font-size:32px;">chat_bubble</span>
+            <p class="text-xs text-center">No conversations yet.<br>Start one above!</p>
+          </div>`;
+        return;
+      }
+      const groups = groupByDate(cachedConvs);
+      el.innerHTML = groups.map(({ label, items }) => `
+        <div>
+          <p class="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant/50 dark:text-[#9e9e8e]/50 px-2 py-2">${label}</p>
+          ${items.map(c => `
+            <div class="group relative rounded-xl overflow-hidden">
+              <button onclick="selectConv(${c.id})"
+                class="w-full text-left px-3 py-2.5 rounded-xl text-sm transition-colors
+                       ${activeId === c.id
+                         ? 'bg-primary-fixed dark:bg-[#3a4a2e] text-primary dark:text-[#d5e9c1] font-semibold'
+                         : 'hover:bg-surface-container dark:hover:bg-[#2a2a24]'}">
+                <p class="truncate pr-7 font-medium">${esc(c.title)}</p>
+                <p class="text-[11px] opacity-50 mt-0.5">${c.message_count} message${c.message_count !== 1 ? 's' : ''}</p>
+              </button>
+              <button onclick="deleteConv(event, ${c.id})"
+                title="Delete"
+                class="absolute right-2 top-1/2 -translate-y-1/2 p-1 rounded-lg
+                       opacity-0 group-hover:opacity-100 transition-opacity
+                       hover:bg-error-container hover:text-error">
+                <span class="material-symbols-outlined" style="font-size:14px;">delete</span>
+              </button>
+            </div>`).join('')}
+        </div>`).join('');
+    }
+
+    function groupByDate(convs) {
+      const now = new Date(), today = now.toDateString();
+      const yest = new Date(now - 864e5).toDateString();
+      const weekAgo = new Date(now - 7 * 864e5);
+      const g = { Today: [], Yesterday: [], 'This week': [], Older: [] };
+      convs.forEach(c => {
+        const d = new Date(c.updated_at);
+        if (d.toDateString() === today) g.Today.push(c);
+        else if (d.toDateString() === yest) g.Yesterday.push(c);
+        else if (d >= weekAgo) g['This week'].push(c);
+        else g.Older.push(c);
+      });
+      return Object.entries(g).filter(([, v]) => v.length).map(([label, items]) => ({ label, items }));
+    }
+
+    // ── Actions ────────────────────────────────────────────────────────────
+
+    async function startNewConversation() {
+      closeSidebar();
+      try {
+        const r = await fetch(`${API}/conversations`, { method: 'POST', headers: { 'Content-Type': 'application/json' } });
+        if (!r.ok) throw 0;
+        const d = await r.json();
+        activeId = d.conversation_id;
+        await loadConvs();
+        openChat([]);
+      } catch { toast('Failed to start a conversation', 'error'); }
+    }
+
+    async function selectConv(id) {
+      closeSidebar();
+      activeId = id;
+      renderConvList();
+      try {
+        const r = await fetch(`${API}/conversations/${id}`);
+        if (!r.ok) throw 0;
+        const d = await r.json();
+        openChat(d.messages || []);
+      } catch { toast('Failed to load conversation', 'error'); }
+    }
+
+    async function deleteConv(e, id) {
+      e.stopPropagation();
+      if (!confirm('Delete this conversation?')) return;
+      try {
+        const r = await fetch(`${API}/conversations/${id}`, { method: 'DELETE' });
+        if (!r.ok) throw 0;
+        if (activeId === id) { activeId = null; resetWelcome(); }
+        await loadConvs();
+        toast('Conversation deleted', 'info');
+      } catch { toast('Could not delete conversation', 'error'); }
+    }
+
+    async function quickPrompt(text) {
+      if (!activeId) {
+        try {
+          const r = await fetch(`${API}/conversations`, { method: 'POST', headers: { 'Content-Type': 'application/json' } });
+          if (!r.ok) throw 0;
+          const d = await r.json();
+          activeId = d.conversation_id;
+          await loadConvs();
+          openChat([]);
+        } catch { toast('Failed to start a conversation', 'error'); return; }
+      }
+      document.getElementById('msgInput').value = text;
+      autoResize(document.getElementById('msgInput'));
+      await sendMessage();
+    }
+
+    async function sendMessage() {
+      if (sending) return;
+      const input = document.getElementById('msgInput');
+      const msg = input.value.trim();
+      if (!msg || !activeId) return;
+
+      sending = true;
+      input.value = '';
+      autoResize(input);
+      setSendState(true);
+
+      hideWelcome();
+      addMsg('user', msg, null, true);
+      addTyping();
+      scrollBottom();
+
+      try {
+        const r = await fetch(`${API}/send`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ conversation_id: activeId, message: msg })
+        });
+        if (!r.ok) throw 0;
+        const d = await r.json();
+        removeTyping();
+        addMsg('bot', d.bot_message, d.timestamp, true);
+        scrollBottom();
+        loadConvs();
+      } catch {
+        removeTyping();
+        addMsg('bot', "Sorry, I couldn't reach the AI right now. Please try again.", null, true);
+        scrollBottom();
+        toast('Message failed — check your connection', 'error');
+      } finally {
+        sending = false;
+        setSendState(false);
+        refreshSendBtn();
+      }
+    }
+
+    // ── Chat rendering ─────────────────────────────────────────────────────
+
+    function openChat(messages) {
+      hideWelcome();
+      clearMessages();
+      if (!messages.length) {
+        addSystem('New conversation — ask me anything about your farm!');
+      } else {
+        messages.forEach(m => addMsg(m.sender, m.message, m.timestamp, false));
+      }
+      scrollBottom(false);
+      enableInput();
+    }
+
+    function resetWelcome() {
+      clearMessages();
+      document.getElementById('welcome').style.display = '';
+      disableInput();
+    }
+
+    function hideWelcome() {
+      document.getElementById('welcome').style.display = 'none';
+    }
+
+    function clearMessages() {
+      const c = document.getElementById('msgContainer');
+      [...c.children].forEach(n => { if (n.id !== 'welcome') n.remove(); });
+    }
+
+    function addMsg(sender, text, ts, animate) {
+      const c = document.getElementById('msgContainer');
+      const isUser = sender === 'user';
+      const el = document.createElement('div');
+      el.className = `flex ${isUser ? 'justify-end' : 'justify-start'} items-end gap-2 ${animate ? 'msg-in' : ''}`;
+
+      const avatar = isUser ? '' :
+        `<div class="flex-shrink-0 w-7 h-7 rounded-lg bg-primary-fixed dark:bg-[#3a4a2e] flex items-center justify-center">
+           <span class="material-symbols-outlined text-primary dark:text-[#d5e9c1]"
+             style="font-size:14px; font-variation-settings:'FILL' 1;">smart_toy</span>
+         </div>`;
+
+      el.innerHTML = `
+        ${avatar}
+        <div class="max-w-[78%] flex flex-col ${isUser ? 'items-end' : 'items-start'} gap-1">
+          <div class="${isUser
+            ? 'bg-primary text-on-primary rounded-2xl rounded-br-sm'
+            : 'bg-surface-container dark:bg-[#2a2a24] text-on-surface dark:text-[#e5e2da] rounded-2xl rounded-bl-sm border border-outline-variant/20'
+          } px-4 py-2.5 shadow-sm">
+            ${isUser
+              ? `<p class="text-sm leading-relaxed">${esc(text)}</p>`
+              : `<div class="bot-text text-sm">${fmtBot(text)}</div>`}
+          </div>
+          <span class="text-[10px] text-on-surface-variant/50 dark:text-[#9e9e8e]/50 px-1">${fmtTime(ts)}</span>
+        </div>`;
+      c.appendChild(el);
+    }
+
+    function addTyping() {
+      const c = document.getElementById('msgContainer');
+      const el = document.createElement('div');
+      el.id = 'typing';
+      el.className = 'flex justify-start items-end gap-2 msg-in';
+      el.innerHTML = `
+        <div class="flex-shrink-0 w-7 h-7 rounded-lg bg-primary-fixed dark:bg-[#3a4a2e] flex items-center justify-center">
+          <span class="material-symbols-outlined text-primary dark:text-[#d5e9c1]"
+            style="font-size:14px; font-variation-settings:'FILL' 1;">smart_toy</span>
+        </div>
+        <div class="bg-surface-container dark:bg-[#2a2a24] rounded-2xl rounded-bl-sm border border-outline-variant/20 px-4 py-3 shadow-sm">
+          <div class="flex gap-1.5 items-center h-4">
+            <div class="dot"></div><div class="dot"></div><div class="dot"></div>
+          </div>
+        </div>`;
+      c.appendChild(el);
+    }
+
+    function removeTyping() { document.getElementById('typing')?.remove(); }
+
+    function addSystem(text) {
+      const c = document.getElementById('msgContainer');
+      const el = document.createElement('div');
+      el.className = 'flex justify-center msg-in';
+      el.innerHTML = `<p class="text-xs text-on-surface-variant/60 dark:text-[#9e9e8e]/50 bg-surface-container dark:bg-[#2a2a24] px-3 py-1 rounded-full">${esc(text)}</p>`;
+      c.appendChild(el);
+    }
+
+    // ── Input helpers ──────────────────────────────────────────────────────
+
+    function handleKey(e) {
+      if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
+    }
+
+    function onInputChange() {
+      autoResize(document.getElementById('msgInput'));
+      refreshSendBtn();
+    }
+
+    function autoResize(el) {
+      el.style.height = 'auto';
+      el.style.height = Math.min(el.scrollHeight, 120) + 'px';
+    }
+
+    function refreshSendBtn() {
+      const val = document.getElementById('msgInput').value.trim();
+      document.getElementById('sendBtn').disabled = !val || sending || !activeId;
+    }
+
+    function enableInput() {
+      document.getElementById('msgInput').disabled = false;
+      document.getElementById('msgInput').focus();
+      refreshSendBtn();
+    }
+
+    function disableInput() {
+      document.getElementById('msgInput').disabled = true;
+      document.getElementById('sendBtn').disabled = true;
+    }
+
+    function setSendState(loading) {
+      const btn = document.getElementById('sendBtn');
+      const icon = document.getElementById('sendIcon');
+      btn.disabled = loading;
+      icon.textContent = loading ? 'progress_activity' : 'send';
+      icon.style.animation = loading ? 'spin 1s linear infinite' : '';
+    }
+
+    // ── Formatting ─────────────────────────────────────────────────────────
+
+    function fmtBot(text) {
+      return text.split('\n')
+        .map(l => l.trim() ? `<p>${esc(l)}</p>` : '')
+        .filter(Boolean).join('');
+    }
+
+    function fmtTime(iso) {
+      if (!iso) return '';
+      return new Date(iso).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+    }
+
+    function esc(t) {
+      const d = document.createElement('div');
+      d.textContent = t;
+      return d.innerHTML;
+    }
+
+    function scrollBottom(smooth = true) {
+      const c = document.getElementById('msgContainer');
+      c.scrollTo({ top: c.scrollHeight, behavior: smooth ? 'smooth' : 'instant' });
+    }
+
+    // ── Toast ──────────────────────────────────────────────────────────────
+
+    let _toastT;
+    function toast(msg, type = 'error') {
+      document.getElementById('toastText').textContent = msg;
+      document.getElementById('toastIcon').textContent = type === 'error' ? 'error' : 'check_circle';
+      const el = document.getElementById('toast');
+      el.classList.replace('hide', 'show');
+      clearTimeout(_toastT);
+      _toastT = setTimeout(() => el.classList.replace('show', 'hide'), 3500);
+    }
+
+    // ── Theme ──────────────────────────────────────────────────────────────
+
+    function toggleTheme() {
+      const dark = document.documentElement.classList.toggle('dark');
+      localStorage.setItem('theme', dark ? 'dark' : 'light');
+    }
+
+    // ── Init ───────────────────────────────────────────────────────────────
+
+    document.addEventListener('DOMContentLoaded', () => {
+      disableInput();
+      loadConvs();
+
+      // Keydown spin keyframe injection (for send loading state)
+      const style = document.createElement('style');
+      style.textContent = '@keyframes spin { to { transform: rotate(360deg); } }';
+      document.head.appendChild(style);
+    });
+  </script>
+</body>
+</html>

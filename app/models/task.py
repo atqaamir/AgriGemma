@@ -23,21 +23,6 @@ class Task(db.Model):
     field_id = db.Column(db.Integer, db.ForeignKey("field.id"), nullable=True)
     user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=True)
 
-    crop = db.relationship(
-        "Crop",
-        back_populates="tasks",
-        foreign_keys=[crop_id],
-        lazy="select",
-    )
-
-    field = db.relationship(
-        "Field",
-        back_populates="tasks",
-        foreign_keys=[field_id],
-        lazy="select",
-    )
-
-
 
     def __repr__(self):
         return f"<Task {self.id} - {self.title}>"

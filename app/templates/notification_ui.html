@@ -1,0 +1,838 @@
+<!-- Notification System UI Component -->
+<!-- Include this in your base template to enable notifications throughout the app -->
+
+<style>
+  #notification-container {
+    position: relative;
+    display: inline-block;
+  }
+
+  .notification-bell-icon {
+    position: relative;
+    cursor: pointer;
+    font-size: 24px;
+    transition: color 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .notification-bell-icon:hover {
+    color: #47573b;
+  }
+
+  .notification-badge {
+    position: absolute;
+    top: -8px;
+    right: -8px;
+    background-color: #F44336;
+    color: white;
+    border-radius: 50%;
+    min-width: 20px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: bold;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+
+  .notification-badge.show {
+    opacity: 1;
+  }
+
+  .notification-bell-icon.has-unread {
+    color: #F44336;
+  }
+
+  /* Dropdown Styles */
+  .notification-dropdown {
+    position: absolute;
+    top: 50px;
+    right: 0;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    z-index: 1000;
+    width: 400px;
+    max-height: 600px;
+    overflow-y: auto;
+    display: none;
+  }
+
+  :root.dark .notification-dropdown {
+    background: #1c1c17;
+    color: #f4f1e8;
+  }
+
+  .notification-dropdown.open {
+    display: block;
+    animation: slideDown 0.3s ease;
+  }
+
+  @keyframes slideDown {
+    from {
+      opacity: 0;
+      transform: translateY(-10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .notification-dropdown-header {
+    padding: 16px;
+    border-bottom: 1px solid #e0e0e0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-weight: 600;
+  }
+
+  .notification-dropdown-body {
+    max-height: 500px;
+    overflow-y: auto;
+  }
+
+  .notification-item {
+    padding: 12px 16px;
+    border-bottom: 1px solid #f0f0f0;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+  }
+
+  .notification-item:hover {
+    background-color: #f9f9f9;
+  }
+
+  .notification-item.unread {
+    background-color: #f5f5f5;
+  }
+
+  .notification-item-symbol {
+    font-size: 20px;
+    flex-shrink: 0;
+    margin-top: 2px;
+  }
+
+  .notification-item-content {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .notification-item-title {
+    font-weight: 600;
+    font-size: 14px;
+    margin-bottom: 4px;
+    color: #1c1c17;
+  }
+
+  .notification-item-message {
+    font-size: 13px;
+    color: #666;
+    line-height: 1.4;
+    word-break: break-word;
+  }
+
+  .notification-item-time {
+    font-size: 12px;
+    color: #999;
+    margin-top: 4px;
+  }
+
+  .notification-item-read-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background-color: #2196F3;
+    flex-shrink: 0;
+    margin-top: 6px;
+  }
+
+  .notification-dropdown-footer {
+    padding: 12px 16px;
+    text-align: center;
+    border-top: 1px solid #e0e0e0;
+  }
+
+  .notification-dropdown-footer a {
+    color: #2196F3;
+    text-decoration: none;
+    font-size: 13px;
+    font-weight: 600;
+  }
+
+  .notification-empty {
+    padding: 32px 16px;
+    text-align: center;
+    color: #999;
+  }
+
+  /* Modal Styles */
+  .notification-modal-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 2000;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .notification-modal-overlay.open {
+    display: flex;
+    animation: fadeIn 0.3s ease;
+  }
+
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+
+  .notification-modal {
+    background: white;
+    border-radius: 12px;
+    padding: 32px;
+    max-width: 600px;
+    width: 90%;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+    animation: slideUp 0.3s ease;
+  }
+
+  @keyframes slideUp {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .notification-modal-close {
+    float: right;
+    font-size: 24px;
+    cursor: pointer;
+    color: #999;
+  }
+
+  .notification-modal-close:hover {
+    color: #333;
+  }
+
+  .notification-modal-content {
+    clear: both;
+  }
+
+  .notification-modal-title {
+    font-size: 20px;
+    font-weight: 700;
+    margin-bottom: 16px;
+    color: #1c1c17;
+  }
+
+  .notification-modal-body {
+    font-size: 14px;
+    line-height: 1.6;
+    color: #444;
+    word-break: break-word;
+  }
+
+  .notification-modal-actions {
+    margin-top: 24px;
+    display: flex;
+    gap: 12px;
+    justify-content: flex-end;
+  }
+
+  .notification-modal-btn {
+    padding: 10px 20px;
+    border-radius: 6px;
+    border: none;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 14px;
+    transition: background-color 0.2s ease;
+  }
+
+  .notification-modal-btn-primary {
+    background-color: #47573b;
+    color: white;
+  }
+
+  .notification-modal-btn-primary:hover {
+    background-color: #3a4330;
+  }
+
+  .notification-modal-btn-secondary {
+    background-color: #e0e0e0;
+    color: #333;
+  }
+
+  .notification-modal-btn-secondary:hover {
+    background-color: #d0d0d0;
+  }
+
+  /* Alert Popup Styles */
+  .notification-alert-popup {
+    position: fixed;
+    top: 24px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: white;
+    border-radius: 12px;
+    padding: 16px 20px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.18);
+    z-index: 3000;
+    width: calc(100% - 32px);
+    max-width: 440px;
+    border-left: 4px solid #F44336;
+    animation: alertSlideDown 0.3s cubic-bezier(.22,.68,0,1.2) both;
+  }
+
+  @keyframes alertSlideDown {
+    from {
+      opacity: 0;
+      transform: translateX(-50%) translateY(-12px);
+    }
+    to {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+  }
+
+  .notification-alert-popup.critical {
+    border-left-color: #F44336;
+  }
+
+  .notification-alert-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+  }
+
+  .notification-alert-title {
+    font-weight: 700;
+    color: #F44336;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .notification-alert-close {
+    cursor: pointer;
+    color: #999;
+    font-size: 20px;
+  }
+
+  .notification-alert-close:hover {
+    color: #333;
+  }
+
+  .notification-alert-message {
+    font-size: 14px;
+    color: #444;
+    line-height: 1.5;
+  }
+</style>
+
+<div id="notification-container" class="hover:bg-[#f1eee5] dark:hover:bg-[#2a2a24] transition-colors p-2 rounded-full active:scale-95 duration-150" style="cursor: pointer;">
+  <!-- Bell Icon -->
+  <div class="notification-bell-icon" id="notificationBell" title="Notifications">
+    🔔
+  </div>
+
+  <!-- Unread Badge -->
+  <div class="notification-badge" id="notificationBadge"></div>
+
+  <!-- Dropdown -->
+  <div class="notification-dropdown" id="notificationDropdown">
+    <div class="notification-dropdown-header">
+      <span>Notifications</span>
+      <button id="markAllReadBtn" style="background: none; border: none; color: #2196F3; cursor: pointer; font-size: 12px; font-weight: 600;">Mark all as read</button>
+    </div>
+    <div class="notification-dropdown-body" id="notificationList">
+      <div class="notification-empty">No notifications</div>
+    </div>
+    <div class="notification-dropdown-footer">
+      <a href="/notifications/page" id="viewAllBtn">View all notifications</a>
+    </div>
+  </div>
+</div>
+
+<!-- Modal for Details -->
+<div class="notification-modal-overlay" id="notificationModalOverlay">
+  <div class="notification-modal">
+    <span class="notification-modal-close" id="notificationModalClose">&times;</span>
+    <div class="notification-modal-content">
+      <div class="notification-modal-title" id="modalTitle"></div>
+      <div class="notification-modal-body" id="modalBody"></div>
+      <div class="notification-modal-actions">
+        <button class="notification-modal-btn notification-modal-btn-secondary" id="modalCloseBtn">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Alerts Container -->
+<div id="alertsContainer"></div>
+
+<script>
+const NOTIFICATION_CONFIG = {
+  updateInterval: 10000, // 10 seconds
+  userId: 1, // TODO: replace with auth session user_id
+};
+
+const NOTIFICATION_METADATA = {
+  info: {
+    symbol: "ℹ️",
+    color: "#2196F3",
+    bg_color: "#E3F2FD",
+  },
+  warning: {
+    symbol: "⚠️",
+    color: "#FF9800",
+    bg_color: "#FFF3E0",
+  },
+  critical: {
+    symbol: "🚨",
+    color: "#F44336",
+    bg_color: "#FFEBEE",
+  },
+  recommendation: {
+    symbol: "💡",
+    color: "#4CAF50",
+    bg_color: "#E8F5E9",
+  },
+};
+
+class NotificationSystem {
+  constructor() {
+    this.notifications = [];
+    this.alertQueue = [];
+    this.currentAlertTimeout = null;
+    this.shownAlertIds = new Set(); // Track shown alerts to avoid duplicates
+    this.storageKey = `notification_alerts_${NOTIFICATION_CONFIG.userId}`;
+    this.loadShownAlerts();
+    this.initialized = false;
+    this.init();
+  }
+
+  loadShownAlerts() {
+    try {
+      const stored = localStorage.getItem(this.storageKey);
+      if (stored) {
+        this.shownAlertIds = new Set(JSON.parse(stored));
+      }
+    } catch (error) {
+      console.error("Error loading shown alerts from localStorage:", error);
+    }
+  }
+
+  saveShownAlerts() {
+    try {
+      localStorage.setItem(this.storageKey, JSON.stringify(Array.from(this.shownAlertIds)));
+    } catch (error) {
+      console.error("Error saving shown alerts to localStorage:", error);
+    }
+  }
+
+  init() {
+    if (this.initialized) return; // Prevent double-initialization
+    this.initialized = true;
+
+    try {
+      // Attach event listeners with proper cleanup
+      const bell = document.getElementById("notificationBell");
+      const markAllBtn = document.getElementById("markAllReadBtn");
+      const modalClose = document.getElementById("notificationModalClose");
+      const modalCloseBtn = document.getElementById("modalCloseBtn");
+      const overlay = document.getElementById("notificationModalOverlay");
+
+      if (bell) {
+        bell.removeEventListener("click", this.toggleDropdownHandler);
+        this.toggleDropdownHandler = () => this.toggleDropdown();
+        bell.addEventListener("click", this.toggleDropdownHandler);
+      }
+
+      if (markAllBtn) {
+        markAllBtn.removeEventListener("click", this.markAllReadHandler);
+        this.markAllReadHandler = () => this.markAllRead();
+        markAllBtn.addEventListener("click", this.markAllReadHandler);
+      }
+
+      if (modalClose) {
+        modalClose.removeEventListener("click", this.closeModalHandler);
+        this.closeModalHandler = () => this.closeModal();
+        modalClose.addEventListener("click", this.closeModalHandler);
+      }
+
+      if (modalCloseBtn) {
+        modalCloseBtn.removeEventListener("click", this.closeModalHandler2);
+        this.closeModalHandler2 = () => this.closeModal();
+        modalCloseBtn.addEventListener("click", this.closeModalHandler2);
+      }
+
+      if (overlay) {
+        overlay.removeEventListener("click", this.overlayClickHandler);
+        this.overlayClickHandler = (e) => {
+          if (e.target === overlay) {
+            this.closeModal();
+          }
+        };
+        overlay.addEventListener("click", this.overlayClickHandler);
+      }
+
+      // Close dropdown when clicking outside (use once to avoid multiple listeners)
+      if (!this.outsideClickHandler) {
+        this.outsideClickHandler = (e) => {
+          const container = document.getElementById("notification-container");
+          if (container && !container.contains(e.target)) {
+            this.closeDropdown();
+          }
+        };
+        document.removeEventListener("click", this.outsideClickHandler);
+        document.addEventListener("click", this.outsideClickHandler);
+      }
+    } catch (error) {
+      console.error("Error initializing notification system:", error);
+    }
+
+    // Load notifications
+    this.loadNotifications();
+
+    // Poll for new notifications
+    if (!this.pollInterval) {
+      this.pollInterval = setInterval(() => this.loadNotifications(), NOTIFICATION_CONFIG.updateInterval);
+    }
+  }
+
+  async loadNotifications() {
+    try {
+      const response = await fetch(`/notifications/unread?user_id=${NOTIFICATION_CONFIG.userId}`);
+      if (!response.ok) {
+        console.error("Failed to fetch notifications:", response.status);
+        return;
+      }
+      const data = await response.json();
+      this.notifications = data.notifications || [];
+      this.updateUI();
+      this.checkForAlerts();
+    } catch (error) {
+      console.error("Failed to load notifications:", error);
+    }
+  }
+
+  updateUI() {
+    this.updateBadge();
+    this.updateDropdown();
+  }
+
+  updateBadge() {
+    try {
+      const badge = document.getElementById("notificationBadge");
+      const bell = document.getElementById("notificationBell");
+
+      if (!badge || !bell) {
+        console.warn("Badge or bell element not found");
+        return;
+      }
+
+      const unreadCount = this.notifications.filter((n) => !n.is_read).length;
+
+      if (unreadCount > 0) {
+        badge.textContent = unreadCount > 99 ? "99+" : unreadCount;
+        badge.classList.add("show");
+        bell.classList.add("has-unread");
+      } else {
+        badge.classList.remove("show");
+        bell.classList.remove("has-unread");
+      }
+    } catch (error) {
+      console.error("Error updating badge:", error);
+    }
+  }
+
+  updateDropdown() {
+    try {
+      const notificationList = document.getElementById("notificationList");
+      if (!notificationList) return;
+
+      if (this.notifications.length === 0) {
+        notificationList.innerHTML = '<div class="notification-empty">No notifications</div>';
+        return;
+      }
+
+      notificationList.innerHTML = this.notifications
+        .map((notification) => this.renderNotificationItem(notification))
+        .join("");
+
+      // Attach click handlers to clickable notifications
+      document.querySelectorAll(".notification-item").forEach((item) => {
+        const notificationId = item.dataset.id;
+        const notificationType = item.dataset.type;
+
+        // Remove previous listeners
+        const clonedItem = item.cloneNode(true);
+        item.replaceWith(clonedItem);
+
+        const newItem = document.querySelector(`[data-id="${notificationId}"]`);
+        if (!newItem) return;
+
+        if (["critical", "recommendation"].includes(notificationType)) {
+          newItem.style.cursor = "pointer";
+          newItem.addEventListener("click", (e) => {
+            e.stopPropagation();
+            this.showDetail(notificationId);
+            this.markAsRead(notificationId);
+          });
+        } else {
+          newItem.addEventListener("click", (e) => {
+            e.stopPropagation();
+            this.markAsRead(notificationId);
+          });
+        }
+      });
+    } catch (error) {
+      console.error("Error updating dropdown:", error);
+    }
+  }
+
+  renderNotificationItem(notification) {
+    const metadata = NOTIFICATION_METADATA[notification.notification_type] || NOTIFICATION_METADATA.info;
+    const isUnread = !notification.is_read;
+    const createdAt = new Date(notification.created_at);
+    const timeAgo = this.getTimeAgo(createdAt);
+
+    const isClickable = ["critical", "recommendation"].includes(notification.notification_type);
+
+    return `
+      <div class="notification-item ${isUnread ? "unread" : ""}" data-id="${notification.id}" data-type="${notification.notification_type}" ${isClickable ? "style='cursor: pointer;'" : ""}>
+        <div class="notification-item-symbol">${metadata.symbol}</div>
+        <div class="notification-item-content">
+          <div class="notification-item-title">${notification.title}</div>
+          <div class="notification-item-message">${notification.message}</div>
+          <div class="notification-item-time">
+            ${timeAgo}
+            ${isClickable ? '<span style="margin-left:6px;font-size:11px;font-weight:600;color:#47573b;opacity:0.8;">View detail →</span>' : ""}
+          </div>
+        </div>
+        ${isUnread ? '<div class="notification-item-read-dot"></div>' : ""}
+      </div>
+    `;
+  }
+
+  checkForAlerts() {
+    const criticalNotifications = this.notifications.filter(
+      (n) => n.notification_type === "critical" && !n.is_read
+    );
+
+    // Remove stale IDs that are no longer unread critical — allows re-show if they reappear
+    const currentCriticalIds = new Set(criticalNotifications.map((n) => n.id));
+    for (const id of this.shownAlertIds) {
+      if (!currentCriticalIds.has(id)) {
+        this.shownAlertIds.delete(id);
+      }
+    }
+    this.saveShownAlerts();
+
+    // Queue any unread critical notifications not yet shown this session
+    criticalNotifications.forEach((notification) => {
+      if (!this.shownAlertIds.has(notification.id)) {
+        this.alertQueue.push(notification);
+        this.shownAlertIds.add(notification.id);
+        this.saveShownAlerts();
+      }
+    });
+
+    this.showNextAlert();
+  }
+
+  showNextAlert() {
+    if (this.alertQueue.length === 0 || this.currentAlertTimeout) {
+      return;
+    }
+
+    const alert = this.alertQueue.shift();
+    const container = document.getElementById("alertsContainer");
+
+    if (!container) {
+      console.warn("Alert container not found");
+      return;
+    }
+
+    const alertElement = document.createElement("div");
+    alertElement.className = "notification-alert-popup critical";
+    alertElement.id = `alert-${alert.id}`;
+
+    const metadata = NOTIFICATION_METADATA[alert.notification_type];
+    alertElement.innerHTML = `
+      <div class="notification-alert-header">
+        <div class="notification-alert-title">
+          ${metadata.symbol} ${alert.title}
+        </div>
+        <span class="notification-alert-close">&times;</span>
+      </div>
+      <div class="notification-alert-message">${alert.message}</div>
+    `;
+
+    container.appendChild(alertElement);
+
+    const dismissAlert = () => {
+      if (alertElement.parentElement) {
+        alertElement.remove();
+      }
+      this.currentAlertTimeout = null;
+      setTimeout(() => this.showNextAlert(), 100); // Show next alert after a small delay
+    };
+
+    // Close button handler
+    alertElement.querySelector(".notification-alert-close").addEventListener("click", dismissAlert);
+
+    // Auto-dismiss after 10 seconds
+    this.currentAlertTimeout = setTimeout(dismissAlert, 10000);
+  }
+
+  async showDetail(notificationId) {
+    try {
+      const notification = this.notifications.find((n) => n.id === parseInt(notificationId));
+      if (!notification) {
+        console.warn("Notification not found:", notificationId);
+        return;
+      }
+
+      const title = notification.title;
+      const body = notification.detail || notification.message;
+
+      const modalTitle = document.getElementById("modalTitle");
+      const modalBody = document.getElementById("modalBody");
+      const overlay = document.getElementById("notificationModalOverlay");
+
+      if (!modalTitle || !modalBody || !overlay) {
+        console.error("Modal elements not found");
+        return;
+      }
+
+      modalTitle.textContent = title;
+      modalBody.textContent = body;
+      overlay.classList.add("open");
+    } catch (error) {
+      console.error("Error showing notification detail:", error);
+    }
+  }
+
+  closeModal() {
+    try {
+      const overlay = document.getElementById("notificationModalOverlay");
+      if (overlay) {
+        overlay.classList.remove("open");
+      }
+    } catch (error) {
+      console.error("Error closing modal:", error);
+    }
+  }
+
+  toggleDropdown() {
+    try {
+      const dropdown = document.getElementById("notificationDropdown");
+      if (dropdown) {
+        dropdown.classList.toggle("open");
+      }
+    } catch (error) {
+      console.error("Error toggling dropdown:", error);
+    }
+  }
+
+  closeDropdown() {
+    try {
+      const dropdown = document.getElementById("notificationDropdown");
+      if (dropdown) {
+        dropdown.classList.remove("open");
+      }
+    } catch (error) {
+      console.error("Error closing dropdown:", error);
+    }
+  }
+
+  async markAsRead(notificationId) {
+    try {
+      await fetch(`/notifications/${notificationId}/read`, { method: "PUT" });
+      // Find and update the notification in local state immediately
+      const notification = this.notifications.find((n) => n.id === parseInt(notificationId));
+      if (notification) {
+        notification.is_read = true;
+      }
+      // Reload to sync with server
+      await this.loadNotifications();
+    } catch (error) {
+      console.error("Failed to mark notification as read:", error);
+    }
+  }
+
+  async markAllRead() {
+    try {
+      await fetch(`/notifications/read-all?user_id=${NOTIFICATION_CONFIG.userId}`, { method: "PUT" });
+      // Clear all alerts since everything is read
+      this.alertQueue = [];
+      this.shownAlertIds.clear();
+      this.saveShownAlerts();
+      this.loadNotifications();
+    } catch (error) {
+      console.error("Failed to mark all notifications as read:", error);
+    }
+  }
+
+  getTimeAgo(date) {
+    const now = new Date();
+    const seconds = Math.floor((now - date) / 1000);
+
+    if (seconds < 60) return "just now";
+    const minutes = Math.floor(seconds / 60);
+    if (minutes < 60) return `${minutes}m ago`;
+    const hours = Math.floor(minutes / 60);
+    if (hours < 24) return `${hours}h ago`;
+    const days = Math.floor(hours / 24);
+    return `${days}d ago`;
+  }
+}
+
+// Initialize the notification system when DOM is ready
+// Ensure only one instance exists globally
+if (!window.notificationSystem) {
+  const initNotificationSystem = () => {
+    try {
+      const container = document.getElementById("notification-container");
+      if (!container) {
+        console.warn("Notification container not found, deferring initialization");
+        setTimeout(initNotificationSystem, 100);
+        return;
+      }
+      window.notificationSystem = new NotificationSystem();
+    } catch (error) {
+      console.error("Failed to initialize notification system:", error);
+    }
+  };
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", initNotificationSystem);
+  } else {
+    initNotificationSystem();
+  }
+}
+
+</script>

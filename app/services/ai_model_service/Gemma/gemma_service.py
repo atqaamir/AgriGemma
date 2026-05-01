@@ -1,12 +1,9 @@
-import requests
+"""
+Backward-compatible shim.
+New code should import ai_model_service.complete() directly.
+"""
+from app.services.ai_model_service import ai_model_service
 
-GEMMA_API_URL = "YOUR_GEMMA_ENDPOINT"
 
-def ask_gemma(prompt):
-    response = requests.post(
-        GEMMA_API_URL,
-        json={"prompt": prompt}
-    )
-
-    return response.json()
-
+def ask_gemma(prompt: str) -> str:
+    return ai_model_service.complete(prompt)

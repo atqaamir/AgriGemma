@@ -4,8 +4,7 @@
   <meta charset="utf-8"/>
   <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
   <title>Terra Firma - Tasks</title>
-  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;700;800&family=Work+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
-  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+  {% include "_head_imports.html" %}
 
   <script>
     (function () {
@@ -82,48 +81,129 @@
     h1, h2, h3, h4 { font-family: 'Manrope', sans-serif; }
     .no-scrollbar::-webkit-scrollbar { display: none; }
     .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+    /* Bell dropdown */
+    #notif-dropdown { transform-origin: top right; transition: opacity 0.15s, transform 0.15s; }
+    #notif-dropdown.hidden { opacity: 0; transform: scale(0.95); pointer-events: none; }
+    #notif-dropdown:not(.hidden) { opacity: 1; transform: scale(1); }
+
+    /* Intelligence card skeleton */
+    .skeleton { background: linear-gradient(90deg, rgba(255,255,255,.06) 25%, rgba(255,255,255,.16) 50%, rgba(255,255,255,.06) 75%); background-size: 200% 100%; animation: shimmer 1.4s infinite; }
+    @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+
+    /* Critical alert popup */
+    #critical-alert { transition: opacity 0.25s, transform 0.25s; }
+    #critical-alert.entering { opacity: 0; transform: translateY(-12px); }
   </style>
 </head>
 
 <body class="bg-surface text-on-surface min-h-screen pb-32">
 
-  <!-- Header -->
-  <header class="bg-[#fcf9f0] dark:bg-[#1c1c17] flex justify-between items-center w-full px-6 py-4 sticky top-0 z-50">
-    <div class="flex items-center gap-3">
-      <span class="material-symbols-outlined text-[#47573b] dark:text-[#d5e9c1]" style="font-size:28px;">agriculture</span>
-      <h1 class="text-2xl font-semibold text-[#47573b] dark:text-[#d5e9c1] tracking-tight">Climate Adaptation Planner</h1>
-    </div>
-    <div class="flex gap-4">
-      <button onclick="toggleTheme()" class="hover:bg-[#f1eee5] dark:hover:bg-[#2a2a24] transition-colors p-2 rounded-full active:scale-95 duration-150">
-        <span class="material-symbols-outlined text-[#47573b] dark:text-[#d5e9c1]">brightness_4</span>
-      </button>
-      <button onclick="openNotificationsPanel()" class="hover:bg-[#f1eee5] dark:hover:bg-[#2a2a24] transition-colors p-2 rounded-full active:scale-95 duration-150">
-        <span class="material-symbols-outlined text-[#47573b] dark:text-[#d5e9c1]">notifications</span>
-      </button>
-    </div>
-  </header>
+  {% set show_search = False %}
+  {% include "_header.html" %}
 
-  <main class="px-4 pt-4 space-y-8 max-w-5xl mx-auto">
+  <!-- Click-away backdrop for dropdown -->
+  <div id="notif-backdrop" class="fixed inset-0 z-[55] hidden" onclick="closeNotifDropdown()"></div>
 
-    <!-- Critical Alert Hero -->
-    <section id="critical-alert-section" class="hidden relative overflow-hidden rounded-3xl bg-[#5F6F52] text-white p-8 min-h-[260px] flex flex-col justify-end">
-      <div class="absolute inset-0 z-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent"></div>
-      <div class="relative z-10 space-y-3">
-        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-error text-white text-[11px] font-bold uppercase tracking-widest">
-          <span class="material-symbols-outlined text-sm" style="font-variation-settings:'FILL' 1;">warning</span>
-          Critical Alert
+  <!-- ── Critical alert popup ────────────────────────────────────────────── -->
+  <div id="critical-alert" class="hidden fixed top-20 left-1/2 -translate-x-1/2 z-[80] w-full max-w-sm px-4">
+    <div class="bg-error-container border border-error/30 rounded-2xl p-4 shadow-2xl flex gap-3 items-start">
+      <span class="material-symbols-outlined text-error flex-shrink-0 mt-0.5" style="font-size:22px; font-variation-settings:'FILL' 1;">crisis_alert</span>
+      <div class="flex-1 min-w-0">
+        <p class="font-bold text-error text-sm" id="critical-alert-title">Critical Alert</p>
+        <p class="text-on-error-container text-xs mt-0.5 leading-relaxed" id="critical-alert-msg"></p>
+      </div>
+      <div class="flex flex-col items-end gap-1.5 flex-shrink-0">
+        <button onclick="dismissCriticalAlert()" class="p-1 hover:bg-error/10 rounded-full transition-colors">
+          <span class="material-symbols-outlined text-error" style="font-size:16px;">close</span>
+        </button>
+        <button onclick="openCriticalDetail()" id="critical-alert-detail-btn"
+          class="hidden text-[10px] font-bold text-error underline whitespace-nowrap">View detail</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Notification / Intelligence detail modal ────────────────────────── -->
+  <div id="detail-modal" class="hidden fixed inset-0 bg-black/50 z-[70] flex items-center justify-center p-4" onclick="closeDetailModal()">
+    <div class="bg-surface rounded-2xl w-full max-w-md shadow-2xl" onclick="event.stopPropagation()">
+      <div class="flex items-center gap-3 p-5 border-b border-surface-variant">
+        <span id="detail-modal-icon" class="material-symbols-outlined" style="font-size:24px; font-variation-settings:'FILL' 1;"></span>
+        <h3 id="detail-modal-title" class="font-bold text-on-surface text-base flex-1"></h3>
+        <button onclick="closeDetailModal()" class="p-1.5 hover:bg-surface-container rounded-full transition-colors">
+          <span class="material-symbols-outlined text-on-surface-variant">close</span>
+        </button>
+      </div>
+      <div class="p-5 space-y-3">
+        <p id="detail-modal-message" class="text-sm font-medium text-on-surface leading-relaxed"></p>
+        <div id="detail-modal-detail-wrap" class="bg-surface-container rounded-xl p-4 hidden">
+          <p class="text-[10px] uppercase tracking-widest text-on-surface-variant mb-2">AI Explanation</p>
+          <p id="detail-modal-detail" class="text-sm text-on-surface leading-relaxed"></p>
         </div>
-        <h2 id="alert-title" class="text-3xl font-extrabold leading-tight tracking-tight"></h2>
-        <p id="alert-detail" class="text-sm opacity-90 max-w-xl leading-relaxed"></p>
-        <div class="flex gap-3 pt-2 flex-wrap">
-          <button id="alert-action-btn" class="bg-secondary-fixed text-on-secondary-fixed px-6 py-2.5 rounded-full font-bold text-sm flex items-center gap-2 hover:opacity-90 active:scale-95 transition-all">
-            <span class="material-symbols-outlined text-sm">water_drop</span>
-            <span id="alert-action-label">Take Action</span>
-          </button>
-          <button class="bg-white/15 backdrop-blur-md text-white border border-white/20 px-6 py-2.5 rounded-full font-bold text-sm hover:bg-white/25 transition-all">
-            View Data
-          </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Main content ────────────────────────────────────────────────────── -->
+  <main class="px-4 pt-5 space-y-8 max-w-5xl mx-auto">
+
+    <!-- AI Intelligence Overview Card -->
+    <section id="intel-section" class="relative overflow-hidden rounded-3xl bg-[#47573b] text-white p-6 min-h-[220px]">
+      <div id="intel-loading" class="space-y-4">
+        <div class="flex items-center gap-2">
+          <div class="skeleton h-5 w-5 rounded-full"></div>
+          <div class="skeleton h-3 w-28 rounded-full"></div>
         </div>
+        <div class="skeleton h-4 w-3/4 rounded-full"></div>
+        <div class="skeleton h-4 w-1/2 rounded-full"></div>
+        <div class="space-y-2 pt-2">
+          <div class="skeleton h-3 w-full rounded-full"></div>
+          <div class="skeleton h-3 w-5/6 rounded-full"></div>
+          <div class="skeleton h-3 w-4/6 rounded-full"></div>
+        </div>
+      </div>
+
+      <div id="intel-content" class="hidden space-y-5">
+        <div class="flex items-start justify-between gap-3">
+          <div class="flex items-center gap-2 opacity-80">
+            <span class="material-symbols-outlined text-sm" style="font-variation-settings:'FILL' 1;">psychology</span>
+            <span class="text-[11px] font-bold uppercase tracking-widest">AI Intelligence Overview</span>
+          </div>
+          <span id="intel-priority-badge" class="flex-shrink-0 text-[10px] font-bold px-2.5 py-1 rounded-full uppercase tracking-widest"></span>
+        </div>
+        <p id="intel-summary" class="text-sm leading-relaxed font-medium opacity-95"></p>
+        <div id="intel-urgent-wrap" class="hidden space-y-2">
+          <p class="text-[10px] font-bold uppercase tracking-widest opacity-60">Urgent Actions</p>
+          <ul id="intel-urgent-list" class="space-y-1.5"></ul>
+        </div>
+        <div id="intel-rec-wrap" class="hidden space-y-2">
+          <p class="text-[10px] font-bold uppercase tracking-widest opacity-60">Recommendations</p>
+          <ul id="intel-rec-list" class="space-y-1.5"></ul>
+        </div>
+        <div>
+          <button onclick="toggleIntelDetails()" id="intel-toggle-btn"
+            class="flex items-center gap-1 text-xs font-bold opacity-70 hover:opacity-100 transition-opacity">
+            <span id="intel-toggle-label">Show analysis</span>
+            <span class="material-symbols-outlined text-sm" id="intel-toggle-icon">expand_more</span>
+          </button>
+          <div id="intel-details" class="hidden mt-3 space-y-4">
+            <div id="intel-risks-wrap" class="hidden space-y-2">
+              <p class="text-[10px] font-bold uppercase tracking-widest opacity-60">Risks</p>
+              <div id="intel-risks-list" class="space-y-2"></div>
+            </div>
+            <div id="intel-insights-wrap" class="hidden space-y-2">
+              <p class="text-[10px] font-bold uppercase tracking-widest opacity-60">Insights</p>
+              <ul id="intel-insights-list" class="space-y-1.5"></ul>
+            </div>
+          </div>
+        </div>
+        <p id="intel-fallback-note" class="hidden text-[10px] opacity-50 italic">Rule-based overview — AI model unavailable</p>
+        <p id="intel-generated-at" class="text-[10px] opacity-40"></p>
+      </div>
+
+      <div id="intel-error" class="hidden flex flex-col items-center justify-center h-full gap-2 opacity-70 py-8">
+        <span class="material-symbols-outlined" style="font-size:36px;">cloud_off</span>
+        <p class="text-sm font-medium">Intelligence overview unavailable</p>
+        <button onclick="loadIntelligence()" class="text-xs underline mt-1">Retry</button>
       </div>
     </section>
 
@@ -134,63 +214,54 @@
           <h3 id="tasks-section-title" class="text-2xl font-bold text-primary tracking-tight">Pending Tasks</h3>
           <p id="tasks-section-subtitle" class="text-on-surface-variant text-sm font-medium">Loading...</p>
         </div>
-        <button id="tasks-view-toggle-btn" onclick="viewAllTasks()" class="text-primary font-bold text-sm flex items-center gap-1 hover:underline active:scale-95 transition-transform">
+        <button id="tasks-view-toggle-btn" onclick="viewAllTasks()"
+          class="text-primary font-bold text-sm flex items-center gap-1 hover:underline active:scale-95 transition-transform">
           View All <span class="material-symbols-outlined text-base">arrow_forward</span>
         </button>
       </div>
 
-      <!-- Pending: horizontal scroll -->
       <div id="tasks-pending-container" class="flex gap-5 overflow-x-auto no-scrollbar pb-4 -mx-4 px-4">
         <div class="flex-none w-[280px] h-44 bg-surface-container-low rounded-2xl flex items-center justify-center">
           <span class="text-on-surface-variant text-sm">Loading tasks...</span>
         </div>
       </div>
 
-      <!-- All tasks: vertical list (hidden by default) -->
-      <div id="tasks-all-container" class="hidden space-y-3"></div>
-    </section>
-
-    <!-- Notifications Section -->
-    <section class="bg-surface-container-low rounded-[32px] p-6 space-y-5">
-      <div class="flex items-center gap-2">
-        <span class="w-2 h-6 bg-primary rounded-full"></span>
-        <h3 class="text-2xl font-bold text-on-surface">Notifications</h3>
-      </div>
-
-      <!-- Danger -->
-      <div class="space-y-2">
-        <div class="flex items-center gap-2">
-          <span class="material-symbols-outlined text-error" style="font-size:18px; font-variation-settings:'FILL' 1;">error</span>
-          <h4 class="text-xs font-bold uppercase tracking-widest text-error">Danger</h4>
+      <div id="tasks-all-wrap" class="hidden space-y-3">
+        <div class="flex gap-2">
+          <div class="flex-1 flex items-center gap-2 bg-surface-container rounded-xl px-4 py-2.5">
+            <span class="material-symbols-outlined text-on-surface-variant" style="font-size:18px;">search</span>
+            <input id="search-input" type="text" placeholder="Search tasks…"
+              class="flex-1 bg-transparent text-sm text-on-surface outline-none placeholder:text-on-surface-variant"
+              oninput="onSearchInput()">
+          </div>
+          <select id="status-filter" onchange="reloadAllTasks()"
+            class="bg-surface-container rounded-xl px-3 py-2.5 text-sm text-on-surface outline-none">
+            <option value="all">All</option>
+            <option value="pending">Pending</option>
+            <option value="completed">Completed</option>
+          </select>
+          <select id="priority-filter" onchange="reloadAllTasks()"
+            class="bg-surface-container rounded-xl px-3 py-2.5 text-sm text-on-surface outline-none">
+            <option value="">Any priority</option>
+            <option value="critical">Critical</option>
+            <option value="high">High</option>
+            <option value="medium">Medium</option>
+            <option value="low">Low</option>
+          </select>
         </div>
-        <div id="notif-danger-list" class="space-y-2 max-h-48 overflow-y-auto no-scrollbar">
-          <p id="notif-danger-empty" class="text-xs text-on-surface-variant px-1">No danger alerts.</p>
-        </div>
-      </div>
 
-      <div class="h-px bg-outline-variant/30"></div>
+        <div id="tasks-all-container" class="space-y-3"></div>
 
-      <!-- Warning -->
-      <div class="space-y-2">
-        <div class="flex items-center gap-2">
-          <span class="material-symbols-outlined text-amber-600" style="font-size:18px; font-variation-settings:'FILL' 1;">warning</span>
-          <h4 class="text-xs font-bold uppercase tracking-widest text-amber-600">Warning</h4>
-        </div>
-        <div id="notif-warning-list" class="space-y-2 max-h-48 overflow-y-auto no-scrollbar">
-          <p id="notif-warning-empty" class="text-xs text-on-surface-variant px-1">No warnings.</p>
-        </div>
-      </div>
-
-      <div class="h-px bg-outline-variant/30"></div>
-
-      <!-- Info -->
-      <div class="space-y-2">
-        <div class="flex items-center gap-2">
-          <span class="material-symbols-outlined text-on-surface-variant" style="font-size:18px; font-variation-settings:'FILL' 1;">info</span>
-          <h4 class="text-xs font-bold uppercase tracking-widest text-on-surface-variant">Info</h4>
-        </div>
-        <div id="notif-info-list" class="space-y-2 max-h-48 overflow-y-auto no-scrollbar">
-          <p id="notif-info-empty" class="text-xs text-on-surface-variant px-1">No info updates.</p>
+        <div id="pagination-wrap" class="hidden flex justify-center items-center gap-3 pt-2">
+          <button id="prev-btn" onclick="changePage(-1)"
+            class="px-4 py-2 rounded-xl border border-outline-variant text-sm font-bold text-on-surface-variant hover:bg-surface-container disabled:opacity-40 transition-colors">
+            ← Prev
+          </button>
+          <span id="page-indicator" class="text-sm text-on-surface-variant font-medium"></span>
+          <button id="next-btn" onclick="changePage(1)"
+            class="px-4 py-2 rounded-xl border border-outline-variant text-sm font-bold text-on-surface-variant hover:bg-surface-container disabled:opacity-40 transition-colors">
+            Next →
+          </button>
         </div>
       </div>
     </section>
@@ -198,13 +269,14 @@
   </main>
 
   <!-- FAB: Create Task -->
-  <button onclick="openCreateTaskModal()" class="fixed bottom-28 right-6 w-16 h-16 bg-[#5F6F52] rounded-full shadow-2xl flex items-center justify-center text-white active:scale-90 transition-transform z-40 hover:shadow-xl">
+  <button onclick="openCreateTaskModal()"
+    class="fixed bottom-28 right-6 w-16 h-16 bg-[#5F6F52] rounded-full shadow-2xl flex items-center justify-center text-white active:scale-90 transition-transform z-40 hover:shadow-xl">
     <span class="material-symbols-outlined text-3xl" style="font-variation-settings:'wght' 600;">add</span>
   </button>
 
   <!-- BottomNavBar -->
   <nav class="fixed bottom-0 left-0 w-full z-50 bg-[#fcf9f0]/80 dark:bg-stone-950/80 backdrop-blur-md rounded-t-[24px] shadow-[0_-8px_24px_rgba(28,28,23,0.06)] flex justify-around items-center px-4 pb-6 pt-3">
-    <a class="flex flex-col items-center justify-center text-stone-500 dark:text-stone-400 px-3 py-1.5 transition-transform hover:scale-105 duration-150" href="/dashboard">
+    <a class="flex flex-col items-center justify-center text-stone-500 dark:text-stone-400 px-3 py-1.5 transition-transform hover:scale-105 duration-150" href="/">
       <span class="material-symbols-outlined">dashboard</span>
       <span class="text-[11px] font-medium tracking-wide">Dashboard</span>
     </a>
@@ -216,11 +288,11 @@
       <span class="material-symbols-outlined">eco</span>
       <span class="text-[11px] font-medium tracking-wide">Crops</span>
     </a>
-    <a class="flex flex-col items-center justify-center bg-secondary-fixed dark:bg-primary-container text-on-background dark:text-surface-bright rounded-2xl px-3 py-1.5 transition-transform hover:scale-105 duration-150" href="/tasks">
+    <a class="flex flex-col items-center justify-center bg-secondary-fixed dark:bg-primary-container text-on-background dark:text-surface-bright rounded-2xl px-3 py-1.5 transition-transform hover:scale-105 duration-150" href="/mytasks">
       <span class="material-symbols-outlined" style="font-variation-settings:'FILL' 1;">assignment_turned_in</span>
       <span class="text-[11px] font-medium tracking-wide">Tasks</span>
     </a>
-    <a class="flex flex-col items-center justify-center text-stone-500 dark:text-stone-400 px-3 py-1.5 transition-transform hover:scale-105 duration-150" href="#">
+    <a class="flex flex-col items-center justify-center text-stone-500 dark:text-stone-400 px-3 py-1.5 transition-transform hover:scale-105 duration-150" href="/chatbot">
       <span class="material-symbols-outlined">chat</span>
       <span class="text-[11px] font-medium tracking-wide">Chat</span>
     </a>
@@ -237,9 +309,9 @@
       </div>
       <div class="p-6 space-y-5">
         <div class="flex items-center gap-2 flex-wrap">
-          <span id="taskDetailType" class="text-xs font-bold px-3 py-1 rounded-full bg-surface-container-high text-on-surface-variant uppercase tracking-wide"></span>
+          <span id="taskDetailType"     class="text-xs font-bold px-3 py-1 rounded-full bg-surface-container-high text-on-surface-variant uppercase tracking-wide"></span>
           <span id="taskDetailPriority" class="text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wide"></span>
-          <span id="taskDetailStatus" class="text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wide"></span>
+          <span id="taskDetailStatus"   class="text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wide"></span>
         </div>
         <div class="bg-surface-container rounded-xl p-4">
           <div class="grid grid-cols-2 gap-4">
@@ -256,8 +328,8 @@
               <span id="taskDetailDue" class="text-sm font-medium text-on-surface">—</span>
             </div>
             <div>
-              <span class="text-[10px] uppercase tracking-widest text-on-surface-variant block mb-1">Assigned To</span>
-              <span id="taskDetailAssigned" class="text-sm font-medium text-on-surface">—</span>
+              <span class="text-[10px] uppercase tracking-widest text-on-surface-variant block mb-1">Category</span>
+              <span id="taskDetailCategory" class="text-sm font-medium text-on-surface">—</span>
             </div>
           </div>
         </div>
@@ -291,6 +363,7 @@
           <div>
             <label class="text-[10px] uppercase tracking-widest text-on-surface-variant block mb-1">Priority *</label>
             <select name="priority" required class="w-full bg-surface-container rounded-lg px-4 py-3 text-sm text-on-surface outline-none focus:ring-2 focus:ring-primary">
+              <option value="critical">Critical</option>
               <option value="high">High</option>
               <option value="medium" selected>Medium</option>
               <option value="low">Low</option>
@@ -311,15 +384,9 @@
             </select>
           </div>
         </div>
-        <div class="grid grid-cols-2 gap-3">
-          <div>
-            <label class="text-[10px] uppercase tracking-widest text-on-surface-variant block mb-1">Due Date</label>
-            <input type="date" name="due_date" class="w-full bg-surface-container rounded-lg px-4 py-3 text-sm text-on-surface outline-none focus:ring-2 focus:ring-primary">
-          </div>
-          <div>
-            <label class="text-[10px] uppercase tracking-widest text-on-surface-variant block mb-1">Assigned To</label>
-            <input type="text" name="assigned_to" class="w-full bg-surface-container rounded-lg px-4 py-3 text-sm text-on-surface outline-none focus:ring-2 focus:ring-primary" placeholder="Name">
-          </div>
+        <div>
+          <label class="text-[10px] uppercase tracking-widest text-on-surface-variant block mb-1">Due Date</label>
+          <input type="date" name="due_date" class="w-full bg-surface-container rounded-lg px-4 py-3 text-sm text-on-surface outline-none focus:ring-2 focus:ring-primary">
         </div>
         <div>
           <label class="text-[10px] uppercase tracking-widest text-on-surface-variant block mb-1">Description</label>
@@ -334,124 +401,176 @@
     </div>
   </div>
 
+  <style>
+    .ntab { color: #75786f; }
+    .ntab-active { background: #f1eee5; color: #47573b; }
+    .dark .ntab-active { background: #2a2a24; color: #d5e9c1; }
+  </style>
+
   <script>
-    const USER_ID = 1;
-    const API_BASE = '/mytasks';
+    const USER_ID   = 1;
+    const TASKS_API = '/mytasks';
+    const NOTIF_API = '/notifications';
 
-    let allTasks = [];
-    let isViewingAll = false;
+    let isViewingAll   = false;
+    let currentPage    = 1;
+    let totalPages     = 1;
+    let searchDebounce = null;
+    let notifPage      = 1;
+    let notifHasNext   = false;
+    let activeNotifTab = '';
 
-    // ─── Theme ───────────────────────────────────────────────────────────────
+    // Critical alert popup queue
+    let criticalQueue  = [];
+    let currentCritical = null;
+
+    // ── Theme ──────────────────────────────────────────────────────────────────
     function toggleTheme() {
       const html = document.documentElement;
-      if (html.classList.contains('dark')) {
-        html.classList.remove('dark');
-        localStorage.setItem('theme', 'light');
-      } else {
-        html.classList.add('dark');
-        localStorage.setItem('theme', 'dark');
-      }
+      html.classList.toggle('dark');
+      localStorage.setItem('theme', html.classList.contains('dark') ? 'dark' : 'light');
     }
 
-    // ─── Boot ─────────────────────────────────────────────────────────────────
+    // ── Boot ───────────────────────────────────────────────────────────────────
     document.addEventListener('DOMContentLoaded', () => {
-      loadCriticalAlert();
-      loadTasks();
-      loadNotifications();
+      loadIntelligence();
+      loadPendingTasks();
+      loadUnreadCount();
+      loadCriticalQueue();
     });
 
-    // ─── Critical Alert ───────────────────────────────────────────────────────
-    async function loadCriticalAlert() {
+    // ── AI Intelligence Overview ───────────────────────────────────────────────
+    async function loadIntelligence() {
       try {
-        const res = await fetch(`${API_BASE}/tasks/${USER_ID}/critical-alert`);
-        console.log('Critical alert response:', res);
-        if (!res.ok) return;
-        const alert = await res.json();
-        console.log('Critical alert data:', alert);
-        if (!alert || !alert.alert_title) return;
-
-        document.getElementById('alert-title').textContent = alert.alert_title;
-        document.getElementById('alert-detail').textContent = alert.alert_detail || '';
-        document.getElementById('alert-action-label').textContent = alert.recommended_action || 'Take Action';
-        document.getElementById('critical-alert-section').classList.remove('hidden');
+        const res = await fetch(`${TASKS_API}/intelligence?user_id=${USER_ID}`);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        renderIntelligence(await res.json());
       } catch (e) {
-        console.error('Failed to load critical alert:', e);
+        document.getElementById('intel-loading').classList.add('hidden');
+        document.getElementById('intel-error').classList.remove('hidden');
       }
     }
 
-    // ─── Tasks ────────────────────────────────────────────────────────────────
-    async function loadTasks() {
+    function renderIntelligence(d) {
+      document.getElementById('intel-loading').classList.add('hidden');
+      document.getElementById('intel-error').classList.add('hidden');
+      document.getElementById('intel-content').classList.remove('hidden');
+
+      const badge = document.getElementById('intel-priority-badge');
+      const badgeColors = {
+        critical: 'bg-error text-white', high: 'bg-amber-500 text-white',
+        medium: 'bg-white/20 text-white', low: 'bg-white/10 text-white',
+      };
+      badge.textContent = (d.priority_level || 'medium').toUpperCase();
+      badge.className = `flex-shrink-0 text-[10px] font-bold px-2.5 py-1 rounded-full uppercase tracking-widest ${badgeColors[d.priority_level] || badgeColors.medium}`;
+
+      document.getElementById('intel-summary').textContent = d.summary || '';
+
+      if ((d.urgent_actions || []).length) {
+        document.getElementById('intel-urgent-wrap').classList.remove('hidden');
+        document.getElementById('intel-urgent-list').innerHTML = d.urgent_actions.map(a =>
+          `<li class="flex items-start gap-1.5 text-xs">
+            <span class="material-symbols-outlined text-error flex-shrink-0" style="font-size:14px; font-variation-settings:'FILL' 1;">emergency</span>
+            <span class="opacity-90 leading-relaxed">${escapeHtml(a)}</span>
+          </li>`
+        ).join('');
+      }
+
+      if ((d.recommendations || []).length) {
+        document.getElementById('intel-rec-wrap').classList.remove('hidden');
+        document.getElementById('intel-rec-list').innerHTML = d.recommendations.map(r =>
+          `<li class="flex items-start gap-1.5 text-xs">
+            <span class="material-symbols-outlined flex-shrink-0 opacity-70" style="font-size:14px;">chevron_right</span>
+            <span class="opacity-90 leading-relaxed">${escapeHtml(r)}</span>
+          </li>`
+        ).join('');
+      }
+
+      if ((d.risks || []).length) {
+        document.getElementById('intel-risks-wrap').classList.remove('hidden');
+        document.getElementById('intel-risks-list').innerHTML = d.risks.map(r =>
+          `<div class="bg-white/10 rounded-xl p-3 space-y-1">
+            <div class="flex items-center gap-2">
+              <span class="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full ${severityBadge(r.severity)}">${r.severity || 'medium'}</span>
+              <span class="text-xs font-medium opacity-90">${escapeHtml(r.risk || '')}</span>
+            </div>
+            ${r.mitigation ? `<p class="text-[11px] opacity-60 pl-1">${escapeHtml(r.mitigation)}</p>` : ''}
+          </div>`
+        ).join('');
+      }
+
+      if ((d.insights || []).length) {
+        document.getElementById('intel-insights-wrap').classList.remove('hidden');
+        document.getElementById('intel-insights-list').innerHTML = d.insights.map(i =>
+          `<li class="flex items-start gap-1.5 text-xs">
+            <span class="material-symbols-outlined flex-shrink-0 opacity-60" style="font-size:14px;">lightbulb</span>
+            <span class="opacity-80 leading-relaxed">${escapeHtml(i.insight || '')}</span>
+          </li>`
+        ).join('');
+      }
+
+      if (d.is_fallback) document.getElementById('intel-fallback-note').classList.remove('hidden');
+      if (d.generated_at) {
+        const ts = new Date(d.generated_at);
+        document.getElementById('intel-generated-at').textContent =
+          `Generated ${ts.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })}`;
+      }
+    }
+
+    let intelExpanded = false;
+    function toggleIntelDetails() {
+      intelExpanded = !intelExpanded;
+      document.getElementById('intel-details').classList.toggle('hidden', !intelExpanded);
+      document.getElementById('intel-toggle-label').textContent = intelExpanded ? 'Hide analysis' : 'Show analysis';
+      document.getElementById('intel-toggle-icon').textContent  = intelExpanded ? 'expand_less' : 'expand_more';
+    }
+
+    function severityBadge(sev) {
+      return { high: 'bg-error/80 text-white', medium: 'bg-amber-500/80 text-white', low: 'bg-white/20 text-white' }[sev] || 'bg-white/20 text-white';
+    }
+
+    // ── Pending task carousel ──────────────────────────────────────────────────
+    async function loadPendingTasks() {
       try {
-        const res = await fetch(`${API_BASE}/tasks`);
-        if (!res.ok) throw new Error('Failed to fetch tasks');
+        const res = await fetch(`${TASKS_API}/tasks/pending`);
+        if (!res.ok) throw new Error('Failed');
         const data = await res.json();
-        allTasks = Array.isArray(data.task_cards) ? data.task_cards : [];
-
-        const pending = allTasks.filter(t => !t.completed);
-        const dueToday = pending.filter(t => isDueToday(t.due_date)).length;
-
+        const tasks = Array.isArray(data.task_cards) ? data.task_cards : [];
+        const dueToday = tasks.filter(t => isDueToday(t.due_date)).length;
         document.getElementById('tasks-section-subtitle').textContent =
-          pending.length === 0
-            ? 'No pending tasks'
-            : `${pending.length} pending${dueToday > 0 ? ` • ${dueToday} due today` : ''}`;
-
-        renderPendingCards(sortByPriority(pending));
+          tasks.length === 0 ? 'All tasks done — great work!'
+          : `${tasks.length} pending${dueToday > 0 ? ` • ${dueToday} due today` : ''}`;
+        renderPendingCards(tasks);
       } catch (e) {
-        console.error('Error loading tasks:', e);
         document.getElementById('tasks-section-subtitle').textContent = 'Failed to load tasks';
       }
     }
 
-    function sortByPriority(tasks) {
-      const order = { high: 0, medium: 1, low: 2 };
-      return [...tasks].sort((a, b) => (order[a.priority] ?? 2) - (order[b.priority] ?? 2));
-    }
-
     function renderPendingCards(tasks) {
-      const container = document.getElementById('tasks-pending-container');
+      const c = document.getElementById('tasks-pending-container');
       if (!tasks.length) {
-        container.innerHTML = `
-          <div class="flex-none w-full text-center text-on-surface-variant py-10">
-            All tasks are done — nice work!
-          </div>`;
+        c.innerHTML = `<div class="flex-none w-full text-center text-on-surface-variant py-10">All tasks are done — nice work!</div>`;
         return;
       }
-
-      container.innerHTML = tasks.map(task => `
-        <div
-          class="flex-none w-[280px] bg-surface-container-lowest rounded-2xl p-5 flex flex-col gap-4 cursor-pointer hover:shadow-md transition-shadow border border-outline-variant/10 active:scale-[0.98]"
-          onclick="openTaskDetailModal(${task.id})"
-        >
+      c.innerHTML = tasks.map(task => `
+        <div class="flex-none w-[280px] bg-surface-container-lowest rounded-2xl p-5 flex flex-col gap-4 cursor-pointer hover:shadow-md transition-shadow border border-outline-variant/10 active:scale-[0.98]"
+          onclick="openTaskDetailModal(${task.id})">
           <div class="flex justify-between items-start">
             <div class="h-11 w-11 rounded-full bg-secondary-container flex items-center justify-center flex-shrink-0">
-              <span class="material-symbols-outlined text-on-secondary-container" style="font-variation-settings:'FILL' 1; font-size:20px;">
-                ${getTaskIcon(task.task_type)}
-              </span>
+              <span class="material-symbols-outlined text-on-secondary-container" style="font-variation-settings:'FILL' 1; font-size:20px;">${getTaskIcon(task.task_type)}</span>
             </div>
-            <button
-              onclick="deleteTask(${task.id}, event)"
-              class="p-1.5 rounded-full hover:bg-error/10 transition-colors"
-              title="Delete task"
-            >
+            <button onclick="deleteTask(${task.id}, event)" class="p-1.5 rounded-full hover:bg-error/10 transition-colors" title="Delete">
               <span class="material-symbols-outlined text-error" style="font-size:18px;">delete</span>
             </button>
           </div>
-
           <div class="flex-1">
             <h4 class="font-bold text-on-surface text-base leading-tight line-clamp-2">${escapeHtml(task.title || 'Untitled')}</h4>
             <p class="text-on-surface-variant text-xs mt-1 truncate">${escapeHtml(getTaskSubtitle(task))}</p>
             ${task.due_date ? `<p class="text-xs text-outline mt-0.5">${formatDate(task.due_date)}</p>` : ''}
           </div>
-
           <div class="flex items-center justify-between">
-            <span class="text-xs font-bold uppercase tracking-wider ${getPriorityColor(task.priority)}">
-              ${capitalize(task.priority || 'low')} Priority
-            </span>
-            <button
-              onclick="markTaskDone(${task.id}, event)"
-              class="h-9 w-9 rounded-full border-2 border-primary flex items-center justify-center hover:bg-primary hover:text-on-primary transition-colors text-primary active:scale-90"
-              title="Mark as done"
-            >
+            <span class="text-xs font-bold uppercase tracking-wider ${getPriorityColor(task.priority)}">${capitalize(task.priority || 'low')} Priority</span>
+            <button onclick="markTaskDone(${task.id}, event)" class="h-9 w-9 rounded-full border-2 border-primary flex items-center justify-center hover:bg-primary hover:text-on-primary transition-colors text-primary active:scale-90" title="Mark done">
               <span class="material-symbols-outlined" style="font-size:18px;">check</span>
             </button>
           </div>
@@ -459,352 +578,439 @@
       `).join('');
     }
 
+    // ── All tasks paginated list ───────────────────────────────────────────────
+    async function loadAllTasks(page = 1) {
+      currentPage = page;
+      const status   = document.getElementById('status-filter').value;
+      const priority = document.getElementById('priority-filter').value;
+      const search   = document.getElementById('search-input').value.trim();
+      const params   = new URLSearchParams({ page, per_page: 20, status });
+      if (priority) params.set('priority', priority);
+      if (search)   params.set('search', search);
+
+      try {
+        const res = await fetch(`${TASKS_API}/tasks?${params}`);
+        if (!res.ok) throw new Error('Failed');
+        const data = await res.json();
+        renderAllTasksList(data.task_cards || []);
+        totalPages = data.pages || 1;
+        const showPag = totalPages > 1;
+        document.getElementById('pagination-wrap').classList.toggle('hidden', !showPag);
+        if (showPag) {
+          document.getElementById('page-indicator').textContent = `Page ${data.page} of ${data.pages}`;
+          document.getElementById('prev-btn').disabled = data.page <= 1;
+          document.getElementById('next-btn').disabled = !data.has_next;
+        }
+        document.getElementById('tasks-section-subtitle').textContent = `${data.total} total • ${data.pending_count} pending`;
+      } catch (e) { console.error('All tasks load failed:', e); }
+    }
+
     function renderAllTasksList(tasks) {
-      const container = document.getElementById('tasks-all-container');
+      const c = document.getElementById('tasks-all-container');
       if (!tasks.length) {
-        container.innerHTML = `<div class="text-center text-on-surface-variant py-8">No tasks found.</div>`;
+        c.innerHTML = `<div class="text-center text-on-surface-variant py-8">No tasks match your filters.</div>`;
         return;
       }
-
-      container.innerHTML = tasks.map(task => `
-        <div
-          onclick="openTaskDetailModal(${task.id})"
-          class="flex items-center gap-4 p-4 bg-surface-container-lowest rounded-2xl cursor-pointer hover:shadow-sm transition-shadow border border-outline-variant/10 active:scale-[0.99] ${task.completed ? 'opacity-60' : ''}"
-        >
+      c.innerHTML = tasks.map(task => `
+        <div onclick="openTaskDetailModal(${task.id})"
+          class="flex items-center gap-4 p-4 bg-surface-container-lowest rounded-2xl cursor-pointer hover:shadow-sm transition-shadow border border-outline-variant/10 active:scale-[0.99] ${task.completed ? 'opacity-60' : ''}">
           <div class="h-10 w-10 rounded-full bg-secondary-container flex items-center justify-center flex-shrink-0">
             <span class="material-symbols-outlined text-on-secondary-container" style="font-variation-settings:'FILL' 1; font-size:20px;">
               ${task.completed ? 'check_circle' : getTaskIcon(task.task_type)}
             </span>
           </div>
           <div class="flex-1 min-w-0">
-            <h5 class="font-bold text-sm text-on-surface truncate ${task.completed ? 'line-through text-on-surface-variant' : ''}">
-              ${escapeHtml(task.title || 'Untitled')}
-            </h5>
+            <h5 class="font-bold text-sm text-on-surface truncate ${task.completed ? 'line-through text-on-surface-variant' : ''}">${escapeHtml(task.title || 'Untitled')}</h5>
             <p class="text-xs text-on-surface-variant truncate">${escapeHtml(getTaskSubtitle(task))}</p>
           </div>
           <span class="text-[10px] font-bold uppercase flex-shrink-0 ${task.completed ? 'text-primary' : getPriorityColor(task.priority)}">
             ${task.completed ? 'Done' : capitalize(task.priority || 'low')}
           </span>
-          <button
-            onclick="deleteTask(${task.id}, event)"
-            class="p-1.5 rounded-full hover:bg-error/10 transition-colors flex-shrink-0"
-          >
+          <button onclick="deleteTask(${task.id}, event)" class="p-1.5 rounded-full hover:bg-error/10 transition-colors flex-shrink-0">
             <span class="material-symbols-outlined text-error" style="font-size:18px;">delete</span>
           </button>
         </div>
       `).join('');
     }
 
-    // ─── View toggle ──────────────────────────────────────────────────────────
+    function changePage(delta) {
+      const next = currentPage + delta;
+      if (next < 1 || next > totalPages) return;
+      loadAllTasks(next);
+    }
+    function reloadAllTasks() { loadAllTasks(1); }
+    function onSearchInput() { clearTimeout(searchDebounce); searchDebounce = setTimeout(reloadAllTasks, 400); }
+
     function viewAllTasks() {
       isViewingAll = true;
       document.getElementById('tasks-pending-container').classList.add('hidden');
-      document.getElementById('tasks-all-container').classList.remove('hidden');
+      document.getElementById('tasks-all-wrap').classList.remove('hidden');
       document.getElementById('tasks-section-title').textContent = 'All Tasks';
-      document.getElementById('tasks-section-subtitle').textContent = `${allTasks.length} total`;
-
-      const toggleBtn = document.getElementById('tasks-view-toggle-btn');
-      toggleBtn.innerHTML = `<span class="material-symbols-outlined text-base">arrow_back</span> Pending Only`;
-      toggleBtn.onclick = viewPendingTasks;
-
-      renderAllTasksList(allTasks);
+      const btn = document.getElementById('tasks-view-toggle-btn');
+      btn.innerHTML = `<span class="material-symbols-outlined text-base">arrow_back</span> Pending Only`;
+      btn.onclick = viewPendingTasks;
+      loadAllTasks(1);
     }
 
     function viewPendingTasks() {
       isViewingAll = false;
-      document.getElementById('tasks-all-container').classList.add('hidden');
+      document.getElementById('tasks-all-wrap').classList.add('hidden');
       document.getElementById('tasks-pending-container').classList.remove('hidden');
-
-      const pending = allTasks.filter(t => !t.completed);
-      const dueToday = pending.filter(t => isDueToday(t.due_date)).length;
       document.getElementById('tasks-section-title').textContent = 'Pending Tasks';
-      document.getElementById('tasks-section-subtitle').textContent =
-        pending.length === 0
-          ? 'No pending tasks'
-          : `${pending.length} pending${dueToday > 0 ? ` • ${dueToday} due today` : ''}`;
-
-      const toggleBtn = document.getElementById('tasks-view-toggle-btn');
-      toggleBtn.innerHTML = `View All <span class="material-symbols-outlined text-base">arrow_forward</span>`;
-      toggleBtn.onclick = viewAllTasks;
-
-      renderPendingCards(sortByPriority(pending));
+      const btn = document.getElementById('tasks-view-toggle-btn');
+      btn.innerHTML = `View All <span class="material-symbols-outlined text-base">arrow_forward</span>`;
+      btn.onclick = viewAllTasks;
+      loadPendingTasks();
     }
 
-    // ─── Task actions ─────────────────────────────────────────────────────────
+    // ── Task actions ───────────────────────────────────────────────────────────
     async function markTaskDone(taskId, event) {
       event.stopPropagation();
       try {
-        const res = await fetch(`${API_BASE}/tasks/${taskId}`, {
+        const res = await fetch(`${TASKS_API}/tasks/${taskId}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ completed: true })
+          body: JSON.stringify({ completed: true }),
         });
-        if (!res.ok) throw new Error('Failed to update task');
-
-        const idx = allTasks.findIndex(t => t.id === taskId);
-        if (idx !== -1) allTasks[idx].completed = true;
-
-        if (isViewingAll) {
-          renderAllTasksList(allTasks);
-        } else {
-          const pending = allTasks.filter(t => !t.completed);
-          renderPendingCards(sortByPriority(pending));
-          const dueToday = pending.filter(t => isDueToday(t.due_date)).length;
-          document.getElementById('tasks-section-subtitle').textContent =
-            pending.length === 0 ? 'No pending tasks' :
-            `${pending.length} pending${dueToday > 0 ? ` • ${dueToday} due today` : ''}`;
-        }
-      } catch (e) {
-        console.error('Error marking task done:', e);
-      }
+        if (!res.ok) throw new Error('Failed');
+        if (isViewingAll) { loadAllTasks(currentPage); } else { loadPendingTasks(); }
+      } catch (e) { console.error(e); }
     }
 
     async function deleteTask(taskId, event) {
       event.stopPropagation();
-      if (!confirm('Delete this task? This action cannot be undone.')) return;
+      if (!confirm('Delete this task? This cannot be undone.')) return;
       try {
-        const res = await fetch(`${API_BASE}/tasks/${taskId}`, { method: 'DELETE' });
-        if (!res.ok) throw new Error('Failed to delete task');
-
-        allTasks = allTasks.filter(t => t.id !== taskId);
-
-        if (isViewingAll) {
-          renderAllTasksList(allTasks);
-        } else {
-          renderPendingCards(sortByPriority(allTasks.filter(t => !t.completed)));
-        }
-      } catch (e) {
-        console.error('Error deleting task:', e);
-      }
+        const res = await fetch(`${TASKS_API}/tasks/${taskId}`, { method: 'DELETE' });
+        if (!res.ok) throw new Error('Failed');
+        if (isViewingAll) { loadAllTasks(currentPage); } else { loadPendingTasks(); }
+      } catch (e) { console.error(e); }
     }
 
-    // ─── Task Detail Modal ────────────────────────────────────────────────────
+    // ── Task Detail Modal ──────────────────────────────────────────────────────
     async function openTaskDetailModal(taskId) {
       document.getElementById('taskDetailModal').classList.remove('hidden');
       document.getElementById('taskDetailTitle').textContent = 'Loading...';
       try {
-        const res = await fetch(`${API_BASE}/tasks/${taskId}`);
+        const res = await fetch(`${TASKS_API}/tasks/${taskId}`);
         if (!res.ok) throw new Error('Not found');
-        const task = await res.json();
-        populateTaskModal(task);
-      } catch (e) {
-        console.error('Error loading task:', e);
-        closeTaskDetailModal();
-      }
+        populateTaskModal(await res.json());
+      } catch (e) { closeTaskDetailModal(); }
     }
-
-    function closeTaskDetailModal() {
-      document.getElementById('taskDetailModal').classList.add('hidden');
-    }
+    function closeTaskDetailModal() { document.getElementById('taskDetailModal').classList.add('hidden'); }
 
     function populateTaskModal(task) {
       document.getElementById('taskDetailTitle').textContent = task.title || 'Untitled Task';
-
-      document.getElementById('taskDetailType').textContent = formatTaskType(task.task_type);
-
-      const priorityEl = document.getElementById('taskDetailPriority');
-      const priorityColors = { high: 'bg-red-100 text-error', medium: 'bg-amber-100 text-amber-700', low: 'bg-primary/10 text-primary' };
-      priorityEl.textContent = capitalize(task.priority || 'low');
-      priorityEl.className = `text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wide ${priorityColors[task.priority] || priorityColors.low}`;
-
-      const statusEl = document.getElementById('taskDetailStatus');
-      statusEl.textContent = task.completed ? 'Completed' : 'Pending';
-      statusEl.className = `text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wide ${task.completed ? 'bg-primary/10 text-primary' : 'bg-amber-100 text-amber-700'}`;
-
-      document.getElementById('taskDetailField').textContent = task.field_name || '—';
-      document.getElementById('taskDetailCrop').textContent = task.crop_name || '—';
-      document.getElementById('taskDetailDue').textContent = task.due_date ? String(task.due_date) : '—';
-      document.getElementById('taskDetailAssigned').textContent = task.assigned_to || '—';
-
+      document.getElementById('taskDetailType').textContent   = formatTaskType(task.task_type);
+      const p = document.getElementById('taskDetailPriority');
+      const pColors = { critical: 'bg-error/10 text-error', high: 'bg-red-100 text-error', medium: 'bg-amber-100 text-amber-700', low: 'bg-primary/10 text-primary' };
+      p.textContent = capitalize(task.priority || 'low');
+      p.className   = `text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wide ${pColors[task.priority] || pColors.low}`;
+      const s = document.getElementById('taskDetailStatus');
+      s.textContent = task.completed ? 'Completed' : 'Pending';
+      s.className   = `text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wide ${task.completed ? 'bg-primary/10 text-primary' : 'bg-amber-100 text-amber-700'}`;
+      document.getElementById('taskDetailField').textContent    = task.field_name || '—';
+      document.getElementById('taskDetailCrop').textContent     = task.crop_name  || '—';
+      document.getElementById('taskDetailDue').textContent      = task.due_date   ? String(task.due_date) : '—';
+      document.getElementById('taskDetailCategory').textContent = task.task_category ? capitalize(task.task_category) : '—';
       const descBlock = document.getElementById('taskDetailDescBlock');
-      if (task.description) {
-        document.getElementById('taskDetailDesc').textContent = task.description;
-        descBlock.classList.remove('hidden');
-      } else {
-        descBlock.classList.add('hidden');
-      }
-
+      if (task.description) { document.getElementById('taskDetailDesc').textContent = task.description; descBlock.classList.remove('hidden'); }
+      else descBlock.classList.add('hidden');
       const notesBlock = document.getElementById('taskDetailNotesBlock');
-      if (task.notes) {
-        document.getElementById('taskDetailNotes').textContent = task.notes;
-        notesBlock.classList.remove('hidden');
-      } else {
-        notesBlock.classList.add('hidden');
-      }
+      if (task.notes) { document.getElementById('taskDetailNotes').textContent = task.notes; notesBlock.classList.remove('hidden'); }
+      else notesBlock.classList.add('hidden');
     }
 
-    // ─── Create Task Modal ────────────────────────────────────────────────────
+    // ── Create Task Modal ──────────────────────────────────────────────────────
     function openCreateTaskModal() {
       document.getElementById('createTaskForm').reset();
       document.getElementById('createTaskError').classList.add('hidden');
       document.getElementById('createTaskModal').classList.remove('hidden');
     }
-
-    function closeCreateTaskModal() {
-      document.getElementById('createTaskModal').classList.add('hidden');
-    }
+    function closeCreateTaskModal() { document.getElementById('createTaskModal').classList.add('hidden'); }
 
     async function submitCreateTask(event) {
       event.preventDefault();
-      const form = event.target;
+      const form      = event.target;
       const submitBtn = document.getElementById('createTaskSubmitBtn');
-      const errorEl = document.getElementById('createTaskError');
+      const errorEl   = document.getElementById('createTaskError');
       errorEl.classList.add('hidden');
-
-      const formData = new FormData(form);
       const body = {};
-      for (const [key, value] of formData.entries()) {
-        if (value !== '') body[key] = value;
-      }
-
-      submitBtn.disabled = true;
+      for (const [k, v] of new FormData(form).entries()) { if (v !== '') body[k] = v; }
+      submitBtn.disabled    = true;
       submitBtn.textContent = 'Creating...';
-
       try {
-        const res = await fetch(`${API_BASE}/tasks`, {
+        const res = await fetch(`${TASKS_API}/tasks`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(body)
+          body: JSON.stringify(body),
         });
         if (!res.ok) {
           const err = await res.json();
           throw new Error(err.errors ? JSON.stringify(err.errors) : 'Failed to create task');
         }
-        const newTask = await res.json();
-        // Add minimal card shape to local cache
-        allTasks.unshift({
-          id: newTask.id,
-          title: newTask.title,
-          priority: newTask.priority,
-          due_date: newTask.due_date,
-          completed: newTask.completed,
-          task_type: newTask.task_type,
-          task_category: newTask.task_category,
-          field_name: newTask.field_name,
-          crop_name: newTask.crop_name,
-        });
-
         closeCreateTaskModal();
-
-        if (isViewingAll) {
-          renderAllTasksList(allTasks);
-        } else {
-          renderPendingCards(sortByPriority(allTasks.filter(t => !t.completed)));
-        }
+        if (isViewingAll) { loadAllTasks(currentPage); } else { loadPendingTasks(); }
       } catch (e) {
         errorEl.textContent = e.message;
         errorEl.classList.remove('hidden');
       } finally {
-        submitBtn.disabled = false;
+        submitBtn.disabled    = false;
         submitBtn.textContent = 'Create Task';
       }
     }
 
-    // ─── Notifications ────────────────────────────────────────────────────────
-    async function loadNotifications() {
+    // ── Bell + Notification Dropdown ───────────────────────────────────────────
+    async function loadUnreadCount() {
       try {
-        const res = await fetch(`${API_BASE}/tasks/${USER_ID}/notifications`);
-        console.log('Notifications response:', res);
-        if (!res.ok) throw new Error('Failed to fetch notifications');
+        const res = await fetch(`${NOTIF_API}/unread/count?user_id=${USER_ID}`);
+        if (!res.ok) return;
+        const { unread_count } = await res.json();
+        updateBellBadge(unread_count);
+      } catch (_) {}
+    }
+
+    function updateBellBadge(count) {
+      const badge = document.getElementById('bell-badge');
+      const icon  = document.getElementById('bell-icon');
+      if (count > 0) {
+        badge.textContent = count > 99 ? '99+' : String(count);
+        badge.classList.remove('hidden');
+        icon.classList.add('text-error');
+        icon.classList.remove('text-[#47573b]', 'dark:text-[#d5e9c1]');
+      } else {
+        badge.classList.add('hidden');
+        icon.classList.remove('text-error');
+        icon.classList.add('text-[#47573b]', 'dark:text-[#d5e9c1]');
+      }
+    }
+
+    function toggleNotifDropdown(event) {
+      event.stopPropagation();
+      const dd = document.getElementById('notif-dropdown');
+      const isOpen = !dd.classList.contains('hidden');
+      if (isOpen) {
+        closeNotifDropdown();
+      } else {
+        dd.classList.remove('hidden');
+        document.getElementById('notif-backdrop').classList.remove('hidden');
+        notifPage = 1;
+        activeNotifTab = '';
+        setActiveTab('all');
+        fetchAndRenderNotifications(true, '');
+      }
+    }
+
+    function closeNotifDropdown() {
+      document.getElementById('notif-dropdown').classList.add('hidden');
+      document.getElementById('notif-backdrop').classList.add('hidden');
+    }
+
+    function filterNotifs(type) {
+      activeNotifTab = type;
+      setActiveTab(type || 'all');
+      notifPage = 1;
+      fetchAndRenderNotifications(true, type);
+    }
+
+    function setActiveTab(id) {
+      document.querySelectorAll('.ntab').forEach(el => el.classList.remove('ntab-active'));
+      const el = document.getElementById(`ntab-${id}`);
+      if (el) el.classList.add('ntab-active');
+    }
+
+    async function fetchAndRenderNotifications(reset = false, typeFilter = activeNotifTab) {
+      try {
+        const params = new URLSearchParams({ user_id: USER_ID, page: notifPage, per_page: 20 });
+        if (typeFilter) params.set('type', typeFilter);
+        const res = await fetch(`${NOTIF_API}/?${params}`);
+        if (!res.ok) return;
         const data = await res.json();
-        console.log('Notifications data:', data);
-        const notifications = Array.isArray(data.notifications) ? data.notifications : [];
-        renderNotifications(notifications);
-      } catch (e) {
-        console.error('Error loading notifications:', e);
-      }
-    }
+        notifHasNext = data.has_next || false;
 
-    function renderNotifications(notifications) {
-      const groups = { danger: [], warning: [], reminder: [], info: [] };
+        const list    = document.getElementById('notif-list');
+        const emptyEl = document.getElementById('notif-empty');
+        if (reset) list.innerHTML = '';
 
-      for (const n of notifications) {
-        const raw = String(n.type || '').toLowerCase();
-        const type = raw.includes('info') ? 'info' : (groups[raw] !== undefined ? raw : 'info');
-        groups[type].push(n.message);
-      }
-
-      const styleMap = {
-        danger:   { bg: 'bg-error-container/30',  border: 'border-error/20',          text: 'text-on-error-container' },
-        warning:  { bg: 'bg-amber-50',            border: 'border-amber-200',          text: 'text-amber-900' },
-        reminder: { bg: 'bg-primary/5',           border: 'border-primary/20',         text: 'text-on-surface' },
-        info:     { bg: 'bg-surface-container',   border: 'border-outline-variant/30', text: 'text-on-surface' },
-      };
-
-      for (const [type, messages] of Object.entries(groups)) {
-        const list = document.getElementById(`notif-${type}-list`);
-        const emptyEl = document.getElementById(`notif-${type}-empty`);
-
-        if (!messages.length) {
-          if (emptyEl) emptyEl.classList.remove('hidden');
-          continue;
+        const items = data.notifications || [];
+        if (items.length === 0 && reset) {
+          emptyEl.classList.remove('hidden');
+          document.getElementById('notif-load-more-wrap').classList.add('hidden');
+          return;
         }
+        emptyEl.classList.add('hidden');
+        items.forEach(n => list.appendChild(buildNotifEl(n)));
+        document.getElementById('notif-load-more-wrap').classList.toggle('hidden', !notifHasNext);
+        updateBellBadge(data.unread_count || 0);
+      } catch (e) { console.error('Notifications load failed:', e); }
+    }
 
-        if (emptyEl) emptyEl.classList.add('hidden');
-        const s = styleMap[type];
-        list.innerHTML = messages.map(msg => `
-          <div class="flex items-start p-3 rounded-xl border ${s.bg} ${s.border}">
-            <p class="text-sm ${s.text} leading-relaxed">${escapeHtml(msg)}</p>
-          </div>
-        `).join('');
+    // Notification type config
+    const NOTIF_CONFIG = {
+      critical:       { icon: 'crisis_alert',  iconFill: true,  rowClass: 'border-error/30 bg-red-50/80 dark:bg-red-950/20',       dotClass: 'bg-error',           iconClass: 'text-error',    labelClass: 'text-error'    },
+      warning:        { icon: 'warning',        iconFill: true,  rowClass: 'border-amber-300/40 bg-amber-50/70 dark:bg-amber-950/15', dotClass: 'bg-amber-500',       iconClass: 'text-amber-600', labelClass: 'text-amber-700' },
+      recommendation: { icon: 'lightbulb',      iconFill: true,  rowClass: 'border-primary/30 bg-primary/5',                         dotClass: 'bg-primary',         iconClass: 'text-primary',  labelClass: 'text-primary'  },
+      info:           { icon: 'info',           iconFill: false, rowClass: 'border-outline-variant/30 bg-surface-container',          dotClass: 'bg-on-surface-variant', iconClass: 'text-on-surface-variant', labelClass: 'text-on-surface-variant' },
+    };
+
+    function buildNotifEl(n) {
+      const cfg = NOTIF_CONFIG[n.notification_type] || NOTIF_CONFIG.info;
+      const isClickable = n.notification_type === 'critical' || n.notification_type === 'recommendation';
+      const fillStyle = cfg.iconFill ? "font-variation-settings:'FILL' 1;" : '';
+
+      const div = document.createElement('div');
+      div.className = `flex gap-3 p-3 rounded-xl border ${cfg.rowClass} ${n.is_read ? 'opacity-60' : ''} transition-opacity ${isClickable ? 'cursor-pointer hover:opacity-90 active:scale-[0.99]' : ''}`;
+      div.innerHTML = `
+        <span class="material-symbols-outlined ${cfg.iconClass} flex-shrink-0 mt-0.5" style="font-size:18px; ${fillStyle}">${cfg.icon}</span>
+        <div class="flex-1 min-w-0">
+          <p class="text-sm font-semibold text-on-surface truncate">${escapeHtml(n.title || '')}</p>
+          <p class="text-xs text-on-surface-variant leading-relaxed mt-0.5 line-clamp-2">${escapeHtml(n.message || '')}</p>
+          <p class="text-[10px] text-outline mt-1">${formatRelativeTime(n.created_at)}</p>
+        </div>
+        <div class="flex-shrink-0 flex flex-col items-center gap-1 pt-0.5">
+          <div class="w-2 h-2 rounded-full ${cfg.dotClass} ${n.is_read ? 'opacity-0' : ''}"></div>
+          ${isClickable ? `<span class="material-symbols-outlined text-on-surface-variant/50 hover:text-on-surface-variant" style="font-size:14px;">open_in_new</span>` : ''}
+        </div>`;
+
+      div.onclick = () => {
+        markNotifRead(n.id, div);
+        if (isClickable) openDetailModal(n);
+      };
+      return div;
+    }
+
+    async function markNotifRead(id, el) {
+      try {
+        await fetch(`${NOTIF_API}/${id}/read`, { method: 'PUT' });
+        el.classList.add('opacity-60');
+        const dot = el.querySelector('.rounded-full.w-2');
+        if (dot) dot.classList.add('opacity-0');
+        loadUnreadCount();
+      } catch (_) {}
+    }
+
+    async function markAllRead() {
+      try {
+        await fetch(`${NOTIF_API}/read-all?user_id=${USER_ID}`, { method: 'PUT' });
+        await fetchAndRenderNotifications(true, activeNotifTab);
+        updateBellBadge(0);
+      } catch (_) {}
+    }
+
+    async function loadMoreNotifications() {
+      notifPage++;
+      await fetchAndRenderNotifications(false, activeNotifTab);
+    }
+
+    // ── Detail modal (critical / recommendation) ───────────────────────────────
+    function openDetailModal(n) {
+      const cfg  = NOTIF_CONFIG[n.notification_type] || NOTIF_CONFIG.info;
+      const fill = cfg.iconFill ? "font-variation-settings:'FILL' 1;" : '';
+      const icon = document.getElementById('detail-modal-icon');
+      icon.textContent = cfg.icon;
+      icon.className   = `material-symbols-outlined ${cfg.iconClass}`;
+      icon.setAttribute('style', `font-size:24px; ${fill}`);
+
+      document.getElementById('detail-modal-title').textContent   = n.title || '';
+      document.getElementById('detail-modal-message').textContent = n.message || '';
+
+      const detailWrap = document.getElementById('detail-modal-detail-wrap');
+      if (n.detail) {
+        document.getElementById('detail-modal-detail').textContent = n.detail;
+        detailWrap.classList.remove('hidden');
+      } else {
+        detailWrap.classList.add('hidden');
+      }
+      document.getElementById('detail-modal').classList.remove('hidden');
+    }
+
+    function closeDetailModal() { document.getElementById('detail-modal').classList.add('hidden'); }
+
+    // ── Critical alert popup queue ─────────────────────────────────────────────
+    async function loadCriticalQueue() {
+      try {
+        const res = await fetch(`${NOTIF_API}/unread/critical?user_id=${USER_ID}`);
+        if (!res.ok) return;
+        const data = await res.json();
+        criticalQueue = (data.notifications || []).slice(0, 3); // cap at 3
+        showNextCritical();
+      } catch (_) {}
+    }
+
+    function showNextCritical() {
+      if (!criticalQueue.length) return;
+      currentCritical = criticalQueue.shift();
+      const alertEl = document.getElementById('critical-alert');
+      document.getElementById('critical-alert-title').textContent = currentCritical.title || 'Critical Alert';
+      document.getElementById('critical-alert-msg').textContent   = currentCritical.message || '';
+
+      const detailBtn = document.getElementById('critical-alert-detail-btn');
+      if (currentCritical.detail) { detailBtn.classList.remove('hidden'); }
+      else                         { detailBtn.classList.add('hidden'); }
+
+      alertEl.classList.add('entering');
+      alertEl.classList.remove('hidden');
+      requestAnimationFrame(() => {
+        alertEl.classList.remove('entering');
+      });
+
+      // Auto-dismiss after 8 seconds
+      setTimeout(dismissCriticalAlert, 8000);
+    }
+
+    function dismissCriticalAlert() {
+      const alertEl = document.getElementById('critical-alert');
+      alertEl.classList.add('hidden');
+      currentCritical = null;
+      // Mark it read
+      if (currentCritical) markNotifRead(currentCritical.id, { classList: { add: () => {}, remove: () => {} }, querySelector: () => null });
+      setTimeout(() => { if (criticalQueue.length) showNextCritical(); }, 800);
+    }
+
+    function openCriticalDetail() {
+      if (currentCritical) {
+        openDetailModal(currentCritical);
+        dismissCriticalAlert();
       }
     }
 
-    function openNotificationsPanel() {
-      document.querySelector('section.bg-surface-container-low')?.scrollIntoView({ behavior: 'smooth' });
-    }
-
-    // ─── Helpers ──────────────────────────────────────────────────────────────
+    // ── Helpers ────────────────────────────────────────────────────────────────
     function getTaskIcon(type) {
-      const map = {
-        irrigation: 'water_drop', spraying: 'science', inspection: 'monitoring',
-        harvesting: 'agriculture', fertilizing: 'eco', maintenance: 'build',
-        planning: 'event_note', monitoring: 'monitoring'
-      };
-      return map[String(type || '').toLowerCase()] || 'assignment';
+      return { irrigation: 'water_drop', spraying: 'science', inspection: 'monitoring',
+               harvesting: 'agriculture', fertilizing: 'eco', maintenance: 'build',
+               planning: 'event_note', monitoring: 'monitoring' }[String(type || '').toLowerCase()] || 'assignment';
     }
-
     function getTaskSubtitle(task) {
       if (task.field_name) return `${task.field_name}${task.task_category ? ' • ' + capitalize(task.task_category) : ''}`;
       if (task.crop_name)  return `${task.crop_name}${task.task_type ? ' • ' + formatTaskType(task.task_type) : ''}`;
-      if (task.task_type)  return formatTaskType(task.task_type);
-      return '';
+      return formatTaskType(task.task_type) || '';
     }
-
-    function getPriorityColor(priority) {
-      return { high: 'text-error', medium: 'text-amber-600', low: 'text-primary' }[priority] || 'text-primary';
+    function getPriorityColor(p) {
+      return { critical: 'text-error', high: 'text-error', medium: 'text-amber-600', low: 'text-primary' }[p] || 'text-primary';
     }
-
-    function formatTaskType(type) {
-      if (!type) return 'Task';
-      return capitalize(String(type).replace(/_/g, ' '));
+    function formatTaskType(t) { return t ? capitalize(String(t).replace(/_/g, ' ')) : 'Task'; }
+    function formatDate(d) {
+      if (!d) return '';
+      const dt = new Date(String(d));
+      return isNaN(dt) ? String(d) : dt.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
     }
-
-    function formatDate(dateStr) {
-      if (!dateStr) return '';
-      const d = new Date(String(dateStr));
-      if (isNaN(d)) return String(dateStr);
-      return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+    function formatRelativeTime(iso) {
+      if (!iso) return '';
+      const diff = Date.now() - new Date(iso).getTime();
+      const m = Math.floor(diff / 60000);
+      if (m < 1)  return 'Just now';
+      if (m < 60) return `${m}m ago`;
+      const h = Math.floor(m / 60);
+      if (h < 24) return `${h}h ago`;
+      return `${Math.floor(h / 24)}d ago`;
     }
-
-    function isDueToday(dateStr) {
-      if (!dateStr) return false;
-      const today = new Date().toISOString().split('T')[0];
-      return String(dateStr).split('T')[0] === today;
+    function isDueToday(d) {
+      if (!d) return false;
+      return String(d).split('T')[0] === new Date().toISOString().split('T')[0];
     }
-
-    function capitalize(text) {
-      const s = String(text || '');
-      return s.charAt(0).toUpperCase() + s.slice(1);
-    }
-
-    function escapeHtml(text) {
-      return String(text ?? '')
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;')
-        .replace(/'/g, '&#039;');
+    function capitalize(s) { s = String(s || ''); return s.charAt(0).toUpperCase() + s.slice(1); }
+    function escapeHtml(s) {
+      return String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#039;');
     }
   </script>
 </body>

@@ -7,15 +7,13 @@ from datetime import datetime
 from app.extensions import db
 
 
-class ClimateProfile(db.Model):
-    __tablename__ = "climate_profiles"
+class CurrentWeatherProfile(db.Model):
+    __tablename__ = "current_weather_profiles"
 
     id = db.Column(db.Integer, primary_key=True)
 
     region = db.Column(db.String(100), nullable=False)
     season = db.Column(db.String(50), nullable=True)   # e.g. Kharif, Rabi, Summer
-    month = db.Column(db.String(20), nullable=True)    # e.g. January, July
-    crop_type = db.Column(db.String(100), nullable=True)
 
     avg_temperature_c = db.Column(db.Float, nullable=True)
     avg_rainfall_mm = db.Column(db.Float, nullable=True)
@@ -24,7 +22,9 @@ class ClimateProfile(db.Model):
     notes = db.Column(db.Text, nullable=True)
 
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
-
+    _start_index = db.Column(db.Integer, nullable=False)  # To track the start of a consecutive date sequence
+    _with_increments = db.Column(db.Integer, default=7, nullable=False)  # To track how many consecutive dates are together
+  
     def to_dict(self):
         return {
             "id": self.id,
