@@ -5,6 +5,7 @@ from ._page_tasks import tasks_bp
 from .weather import weather_bp
 from .chatbot import chatbot_bp
 from .notifications import notifications_bp
+from .recommendations import recommendations_bp
 
 
 def register_routes(app):
@@ -15,3 +16,4 @@ def register_routes(app):
     app.register_blueprint(weather_bp, url_prefix="/weather")
     app.register_blueprint(chatbot_bp, url_prefix="/chatbot")
     app.register_blueprint(notifications_bp, url_prefix="/notifications")
+    app.register_blueprint(recommendations_bp, url_prefix="/recommendations")
