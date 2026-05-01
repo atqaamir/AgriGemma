@@ -16,8 +16,8 @@ class Field(db.Model):
     heat_level = db.Column(db.Float, nullable=True)
     stress_risk = db.Column(db.Float, nullable=True)
     disease_risk = db.Column(db.String(50), nullable=True)
-    water_source_id 
-    soil_type_id
+    water_source_id = db.Column(db.Integer, db.ForeignKey("water_source.id"))
+    soil_type_id = db.Column(db.Integer, db.ForeignKey("soil_type.id"))
 
     currently_active = db.Column(db.Boolean, default=True, nullable=False)
     user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=True)

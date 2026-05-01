@@ -40,15 +40,18 @@ class VocabularySeeder:
 
         self._clear_tables()
 
-        self._seed(CropNames, vocab["Crop_Name"])
-        self._seed(GrowthStage, vocab["Growth_Stage"])
-        self._seed(Soil_Type, vocab["Soil_Type"])
-        self._seed(WaterSource, vocab["Water_Source"])
+        self._seed(CropNames, vocab["Crop_Name"], "name")
+        self._seed(GrowthStage, vocab["Growth_Stage"], "name")
+        self._seed(Soil_Type, vocab["Soil_Type"], "name")
+        self._seed(WaterSource, vocab["Water_Source"], "name")
 
         self.db.session.commit()
 
-    def _seed(self, model, mapping: dict):
-        objects = [model(id=k, name=v) for k, v in mapping.items()]
+    def _seed(self, model, mapping: dict, name_field: str):
+        objects = [
+            model(id=k, **{name_field: v})
+            for k, v in mapping.items()
+        ]
         self.db.session.bulk_save_objects(objects)
 
     def _clear_tables(self):
