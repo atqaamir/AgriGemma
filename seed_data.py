@@ -1,4 +1,4 @@
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 
 from app.extensions import db
 from app.models.notification import Notification
@@ -6,115 +6,716 @@ from app.models.user import User
 from app.models.crop import Crop
 from app.models.field import Field
 from app.models.task import Task
+from app.models.alert import Alert
+from app.models.weather import ClimateProfile
+from app.models.weather_forecast import CurrentWeatherProfile
 
 
 def run():
-    # Clear existing data (respect FK order)
+    # DO NOT create app here (run.py already did it)
+
+    # Clear in correct dependency order
     Task.query.delete()
+    Alert.query.delete()
     Notification.query.delete()
     Crop.query.delete()
     Field.query.delete()
     User.query.delete()
+    ClimateProfile.query.delete()
+    CurrentWeatherProfile.query.delete()
     db.session.commit()
 
-    # User
-    user = User(name="Demo Farmer", location="Punjab, Pakistan")
-    db.session.add(user)
+    # ---- user ----
+    user = [
+        User(name="Ahmad Khan", location="Punjab, Pakistan"),
+        User(name="Ali Raza", location="Sindh, Pakistan"),
+        User(name="Muhammad Usman", location="Khyber Pakhtunkhwa, Pakistan"),
+        User(name="Bilal Ahmed", location="Punjab, Pakistan"),
+        User(name="Hassan Qureshi", location="Punjab, Pakistan"),
+        User(name="Sajid Hussain", location="Sindh, Pakistan"),
+        User(name="Imran Shah", location="Khyber Pakhtunkhwa, Pakistan"),
+        User(name="Naveed Akhtar", location="Sindh, Pakistan"),
+        User(name="Faisal Mehmood", location="Islamabad Capital Territory, Pakistan"),
+    ]
+
+    db.session.add_all(user)
     db.session.commit()
 
-    # Fields
+    # ---- FIELDS ----
     sample_fields = [
-        Field(name="North Field Alpha", user_id=user.id, acreage=12.5, health_status="healthy",
-              field_score=92.0, moisture_level=65.0, heat_level=28.0,
-              stress_risk=10.0, currently_active=True, health_percentage=92.0),
-
-        Field(name="East Creek Basin", user_id=user.id, acreage=34.2, health_status="alert",
-              field_score=64.0, moisture_level=45.0, heat_level=25.0,
-              stress_risk=35.0, currently_active=True, health_percentage=64.0),
-
-        Field(name="South Hill Slope", user_id=user.id, acreage=18.0, health_status="critical",
-              field_score=88.0, moisture_level=60.0, heat_level=27.0,
-              stress_risk=15.0, currently_active=False, health_percentage=88.0),
-
-        Field(name="The Reservoir", user_id=user.id, acreage=5.5, health_status="healthy",
-              field_score=95.0, moisture_level=70.0, heat_level=30.0,
-              stress_risk=8.0, currently_active=False, health_percentage=95.0),
+        Field(
+        	name="North Field Alpha",
+        	user_id=user[0].id,
+        	acreage=12.5,
+        	health_status="healthy",
+        	field_score=92.0,
+        	health_percentage=90.0,
+        	moisture_level=65.0,
+        	heat_level=28.0,
+        	stress_risk=10.0,
+        	disease_risk="low",
+        	water_source_id=2,
+        	soil_type_id=2,
+        	currently_active=True,
+    	),
+    	Field(
+        	name="East Creek Basin",
+        	user_id=user[1].id,
+        	acreage=34.2,
+        	health_status="alert",
+        	field_score=64.0,
+        	health_percentage=65.0,
+        	moisture_level=45.0,
+        	heat_level=25.0,
+        	stress_risk=35.0,
+        	disease_risk="medium",
+        	water_source_id=1,
+        	soil_type_id=3,
+        	currently_active=True,
+    	),
+    	Field(
+        	name="South Hill Slope",
+        	user_id=user[2].id,
+        	acreage=18.0,
+        	health_status="critical",
+        	field_score=88.0,
+        	health_percentage=88.0,
+        	moisture_level=60.0,
+        	heat_level=27.0,
+        	stress_risk=15.0,
+        	disease_risk="high",
+        	water_source_id=2,
+        	soil_type_id=1,
+        	currently_active=False,
+    	),
+    	Field(
+        	name="The Reservoir",
+        	user_id=user[3].id,
+        	acreage=5.5,
+        	health_status="healthy",
+        	field_score=95.0,
+        	health_percentage=82.0,
+        	moisture_level=70.0,
+        	heat_level=30.0,
+        	stress_risk=8.0,
+        	disease_risk="high",
+        	water_source_id=3,
+        	soil_type_id=2,
+        	currently_active=False,
+    	),
+    	Field(
+        	name="Punjab Wheat Belt",
+        	user_id=user[4].id,
+        	acreage=50.0,
+        	health_status="alert",
+        	field_score=72.0,
+        	health_percentage=75.0,
+        	moisture_level=55.0,
+        	heat_level=32.0,
+        	stress_risk=28.0,
+        	disease_risk="medium",
+        	water_source_id=2,
+        	soil_type_id=2,
+        	currently_active=True,
+    	),
+    	Field(
+        	name="Sindh Canal Edge",
+        	user_id=user[5].id,
+        	acreage=40.8,
+        	health_status="healthy",
+        	field_score=89.0,
+        	health_percentage=88.0,
+        	moisture_level=68.0,
+        	heat_level=34.0,
+        	stress_risk=12.0,
+        	disease_risk="low",
+        	water_source_id=1,
+        	soil_type_id=3,
+        	currently_active=True,
+    	),
+    	Field(
+        	name="KP Highland Terrace",
+        	user_id=user[6].id,
+        	acreage=9.3,
+        	health_status="alert",
+        	field_score=70.0,
+        	health_percentage=72.0,
+        	moisture_level=50.0,
+        	heat_level=22.0,
+        	stress_risk=30.0,
+        	disease_risk="medium",
+        	water_source_id=2,
+        	soil_type_id=1,
+        	currently_active=True,
+    	),
+    	Field(
+        	name="Lower Indus Plain",
+        	user_id=user[7].id,
+        	acreage=60.0,
+        	health_status="critical",
+        	field_score=58.0,
+        	health_percentage=60.0,
+        	moisture_level=42.0,
+        	heat_level=38.0,
+        	stress_risk=45.0,
+        	disease_risk="high",
+        	water_source_id=1,
+        	soil_type_id=3,
+        	currently_active=True,
+    	),
+    	Field(
+        	name="Margalla Foothills Plot",
+        	user_id=user[8].id,
+        	acreage=14.7,
+        	health_status="healthy",
+        	field_score=91.0,
+        	health_percentage=89.0,
+       		moisture_level=66.0,
+        	heat_level=26.0,
+        	stress_risk=12.0,
+        	disease_risk="low",
+        	water_source_id=2,
+        	soil_type_id=2,
+        	currently_active=False,
+    	),
     ]
 
     db.session.add_all(sample_fields)
     db.session.commit()
 
-    # Crops
-    crop_data = [
-        {"crop_name_id": 1, "user_id": user.id, "planting_date": date.today(),
-         "current_growth_stage_id": 1, "current_health_status": "healthy",
-         "currently_water_requirement": 25.5, "currently_active": True,
-         "field_id": sample_fields[0].id},
+    # ---- CROPS ----
+    sample_crops = [
+	Crop(
+		crop_name_id=2,
+        	currently_active=True,
+        	current_growth_stage_id=2,   # Vegetative
+        	current_health_status="healthy",
+        	planting_date=date.today(),
+        	currently_water_requirement=900.0,
+        	field_id=sample_fields[0].id,
+        	user_id=user[0].id,
+    	),
+    	Crop(
+        	crop_name_id=3,
+        	currently_active=True,
+        	current_growth_stage_id=3,   # Flowering
+        	current_health_status="alert",
+        	planting_date=date.today(),
+        	currently_water_requirement=750.0,
+        	field_id=sample_fields[1].id,
+        	user_id=user[1].id,
+    	),
+	Crop(
+        	crop_name_id=1,
+        	currently_active=False,
+        	current_growth_stage_id=2,   # Vegetative
+        	current_health_status="critical",
+        	planting_date=date.today(),
+        	currently_water_requirement=600.0,
+        	field_id=sample_fields[2].id,
+        	user_id=user[2].id,
+    	),
+    	Crop(
+        	crop_name_id=2,
+        	currently_active=False,
+        	current_growth_stage_id=1,   # Seedling
+        	current_health_status="healthy",
+        	planting_date=date.today(),
+        	currently_water_requirement=1000.0,
+        	field_id=sample_fields[3].id,
+        	user_id=user[3].id,
+    	),
+    	Crop(
+        	crop_name_id=2,
+        	currently_active=True,
+        	current_growth_stage_id=3,   # Flowering
+        	current_health_status="alert",
+        	planting_date=date.today(),
+        	currently_water_requirement=450.0,
+        	field_id=sample_fields[4].id,
+        	user_id=user[4].id,
+    	),
+    	Crop(
+        	crop_name_id=3,
+        	currently_active=True,
+        	current_growth_stage_id=2,   # Vegetative
+        	current_health_status="healthy",
+        	planting_date=date.today(),
+        	currently_water_requirement=800.0,
+        	field_id=sample_fields[5].id,
+        	user_id=user[5].id,
+    	),
+    	Crop(
+        	crop_name_id=1,
+        	currently_active=True,
+        	current_growth_stage_id=1,   # Seedling
+        	current_health_status="alert",
+        	planting_date=date.today(),
+        	currently_water_requirement=400.0,
+        	field_id=sample_fields[6].id,
+        	user_id=user[6].id,
+    	),
+    	Crop(
+        	crop_name_id=2,
+        	currently_active=True,
+        	current_growth_stage_id=3,   # Flowering
+        	current_health_status="critical",
+        	planting_date=date.today(),
+        	currently_water_requirement=1100.0,
+        	field_id=sample_fields[7].id,
+        	user_id=user[7].id,
+    	),
+    	Crop(
+        	crop_name_id=1,
+        	currently_active=False,
+        	current_growth_stage_id=2,   # Vegetative
+        	current_health_status="healthy",
+        	planting_date=date.today(),
+        	currently_water_requirement=550.0,
+        	field_id=sample_fields[8].id,
+        	user_id=user[8].id,
+    	),
+   ]
 
-        {"crop_name_id": 2, "user_id": user.id, "planting_date": date.today(),
-         "current_growth_stage_id": 3, "current_health_status": "alert",
-         "currently_water_requirement": 18.0, "currently_active": True,
-         "field_id": sample_fields[1].id},
-
-        {"crop_name_id": 3, "user_id": user.id, "planting_date": date.today(),
-         "current_growth_stage_id": 2, "current_health_status": "critical",
-         "currently_water_requirement": 22.0, "currently_active": True,
-         "field_id": sample_fields[2].id},
-
-        {"crop_name_id": 1, "user_id": user.id, "planting_date": date.today(),
-         "current_growth_stage_id": 2, "current_health_status": "healthy",
-         "currently_water_requirement": 20.5, "currently_active": False,
-         "field_id": sample_fields[3].id},
-    ]
-
-    crops = []
-    for item in crop_data:
-        crop = Crop(**item)
-        db.session.add(crop)
-        crops.append(crop)
-
+    db.session.add_all(sample_crops)
     db.session.commit()
 
-    north_field = sample_fields[0]
-    maize_crop = crops[0]   # crop_name_id=1 (Maize), field=North Field Alpha
-
-    # Tasks
+    # Add sample tasks
     sample_tasks = [
-        Task(title="Check equipment", priority="medium", created_at=datetime.utcnow(),
-             due_date=date.today(), completed=False, task_type="maintenance",
-             task_category="general", description="Inspect equipment.",
-             notes="Focus on irrigation pump.", user_id=user.id),
-
-        Task(title="Fertilize Maize", priority="high", created_at=datetime.utcnow(),
-             due_date=date.today(), completed=False, task_type="fertilizing",
-             task_category="crop", description="Apply nitrogen fertilizer.",
-             crop_id=maize_crop.id, user_id=user.id),
-
-        Task(title="Irrigate North Field Alpha", priority="high", created_at=datetime.utcnow(),
-             due_date=date.today(), completed=False, task_type="irrigation",
-             task_category="field", description="Run irrigation cycle.",
-             field_id=north_field.id, user_id=user.id),
+    	Task(
+        	title="Irrigate",
+        	priority="medium",
+        	created_at=datetime.utcnow(),
+        	due_date=date.today(),
+        	completed=False,
+        	task_type="irrigation",
+        	task_category="field",
+        	description="Provide controlled irrigation to support vegetative rice growth in North Field Alpha.",
+        	notes="Soil moisture currently stable.",
+        	crop_id=sample_crops[0].id,
+        	field_id=sample_fields[0].id,
+        	user_id=user[0].id,
+    	),
+    	Task(
+        	title="Spray for fungal prevention",
+        	priority="high",
+        	created_at=datetime.utcnow(),
+        	due_date=date.today(),
+        	completed=False,
+        	task_type="spraying",
+        	task_category="field",
+        	description="Apply preventive fungicide to cotton during flowering to reduce disease risk.",
+        	notes="High humidity reported recently.",
+        	crop_id=sample_crops[1].id,
+        	field_id=sample_fields[1].id,
+        	user_id=user[1].id,
+    	),
+    	Task(
+        	title="Check drainage",
+        	priority="high",
+        	created_at=datetime.utcnow(),
+        	due_date=date.today(),
+        	completed=False,
+        	task_type="maintenance",
+        	task_category="field",
+        	description="Inspect drainage channels to avoid water stress impacting maize recovery.",
+        	notes="Uneven slope requires attention.",
+        	crop_id=sample_crops[2].id,
+        	field_id=sample_fields[2].id,
+        	user_id=user[2].id,
+    	),
+    	Task(
+        	title="Check equipment",
+        	priority="low",
+        	created_at=datetime.utcnow(),
+        	due_date=date.today(),
+        	completed=False,
+        	task_type="maintenance",
+        	task_category="general",
+        	description="Check irrigation pumps and tools used near the reservoir seedling plot.",
+        	notes="Routine preventive maintenance.",
+        	crop_id=sample_crops[3].id,
+        	field_id=sample_fields[3].id,
+        	user_id=user[3].id,
+    	),
+    	Task(
+        	title="Inspect Growth",
+        	priority="high",
+        	created_at=datetime.utcnow(),
+        	due_date=date.today(),
+        	completed=False,
+        	task_type="inspection",
+        	task_category="crop",
+        	description="Inspect during flowering stage for lodging or disease symptoms.",
+        	notes="Wind conditions may affect crop stability.",
+        	crop_id=sample_crops[4].id,
+        	field_id=sample_fields[4].id,
+        	user_id=user[4].id,
+    	),
+    	Task(
+        	title="Fertilize",
+        	priority="medium",
+        	created_at=datetime.utcnow(),
+        	due_date=date.today(),
+        	completed=False,
+        	task_type="fertilizing",
+        	task_category="crop",
+        	description="Apply balanced fertilizer to support vegetative cotton growth.",
+        	notes="Canal water supply is adequate.",
+        	crop_id=sample_crops[5].id,
+        	field_id=sample_fields[5].id,
+        	user_id=user[5].id,
+    	),
+    	Task(
+        	title="Review weather forecast",
+        	priority="medium",
+        	created_at=datetime.utcnow(),
+        	due_date=date.today(),
+        	completed=False,
+        	task_type="general",
+        	task_category="general",
+        	description="Review upcoming temperature trends due to frost sensitivity at seedling stage.",
+        	notes="Night temperatures are dropping.",
+        	crop_id=sample_crops[6].id,
+        	field_id=sample_fields[6].id,
+        	user_id=user[6].id,
+    	),
+    	Task(
+        	title="Soil pH Testing",
+        	priority="high",
+        	created_at=datetime.utcnow(),
+        	due_date=date.today(),
+        	completed=False,
+        	task_type="inspection",
+        	task_category="field",
+        	description="Conduct soil pH testing to diagnose stress in flowering rice crop.",
+        	notes="Previous nutrient imbalance suspected.",
+        	crop_id=sample_crops[7].id,
+        	field_id=sample_fields[7].id,
+        	user_id=user[7].id,
+    	),
+    	Task(
+        	title="Monitor Flowering",
+        	priority="low",
+        	created_at=datetime.utcnow(),
+        	due_date=date.today(),
+        	completed=False,
+        	task_type="monitoring",
+        	task_category="general",
+        	description="General monitoring task to observe flowering indicators and field conditions.",
+        	notes="Used as a reference monitoring task.",
+        	crop_id=sample_crops[8].id,
+        	field_id=sample_fields[8].id,
+        	user_id=user[8].id,
+    	),
     ]
 
     db.session.add_all(sample_tasks)
     db.session.commit()
 
-    # Notifications
-    sample_notifications = [
-        Notification(user_id=user.id, title="Crop Fertilization Required",
-                     message="Maize requires fertilization today.",
-                     notification_type="recommendation", is_read=False,
-                     created_at=datetime.utcnow(), entity_type="crop",
-                     entity_id=maize_crop.id),
 
-        Notification(user_id=user.id, title="Field Moisture Warning",
-                     message="Moisture level dropping.",
-                     notification_type="warning", is_read=False,
-                     created_at=datetime.utcnow(), entity_type="field",
-                     entity_id=north_field.id),
+    sample_alert = [
+	Alert(
+        	user_id=user[0].id,
+        	crop_id=sample_crops[0].id,
+        	level="medium",
+        	message="Rice crop requires irrigation support during vegetative stage."
+    	),
+    	Alert(
+       		user_id=user[1].id,
+        	crop_id=sample_crops[1].id,
+        	level="high",
+        	message="High humidity increases fungal risk for flowering cotton."
+    	),
+    	Alert(
+        	user_id=user[2].id,
+        	crop_id=sample_crops[2].id,
+        	level="high",
+        	message="Drainage issues may worsen maize crop stress."
+    	),
+    	Alert(
+        	user_id=user[3].id,
+        	crop_id=sample_crops[3].id,
+        	level="low",
+        	message="Routine equipment check recommended near reservoir seedling field."
+    	),
+    	Alert(
+        	user_id=user[4].id,
+        	crop_id=sample_crops[4].id,
+        	level="high",
+        	message="Crop in flowering stage requires inspection due to strong winds."
+    	),
+    	Alert(
+        	user_id=user[5].id,
+        	crop_id=sample_crops[5].id,
+        	level="medium",
+        	message="Vegetative cotton crop would benefit from timely fertilization."
+    	),
+    	Alert(
+        	user_id=user[6].id,
+        	crop_id=sample_crops[6].id,
+        	level="medium",
+        	message="Seedling-stage may be vulnerable to low temperatures in highland area."
+    	),
+    	Alert(
+        	user_id=user[7].id,
+        	crop_id=sample_crops[7].id,
+        	level="high",
+        	message="Flowering rice crop is under high environmental stress in Lower Indus Plain."
+    	),
+    	Alert(
+        	user_id=user[8].id,
+        	crop_id=sample_crops[8].id,
+        	level="low",
+        	message="Maize crop is stable but should continue routine monitoring."
+    	),
+    ]
+
+    db.session.add_all(sample_alert)
+    db.session.commit()
+
+
+    sample_notifications = [
+    	Notification(
+        	user_id=user[0].id,
+        	title="Irrigation recommended for rice",
+        	message="Your rice crop in North Field Alpha needs irrigation during the vegetative stage.",
+        	detail="Adequate irrigation at this stage helps ensure strong tiller development and prevents early stress.",
+        	notification_type="recommendation",
+        	is_read=False,
+        	created_at=datetime.utcnow(),
+    	),
+    	Notification(
+        	user_id=user[1].id,
+        	title="Fungal risk warning for cotton",
+        	message="High humidity conditions increase fungal risk in your East Creek Basin field.",
+        	detail="Flowering cotton is especially sensitive to prolonged moisture. Preventive spraying can reduce future losses.",
+        	notification_type="warning",
+        	is_read=False,
+        	created_at=datetime.utcnow(),
+    	),
+    	Notification(
+        	user_id=user[2].id,
+        	title="Drainage issue detected",
+        	message="Water drainage problems may impact maize health at South Hill Slope.",
+        	detail="Poor drainage can result in root stress and nutrient imbalance. Clearing channels is advised as soon as possible.",
+        	notification_type="critical",
+        	is_read=False,
+        	created_at=datetime.utcnow(),
+    	),
+    	Notification(
+        	user_id=user[3].id,
+        	title="Routine equipment check",
+        	message="This is a reminder to check irrigation and field equipment near the reservoir plot.",
+        	detail=None,
+        	notification_type="info",
+        	is_read=False,
+        	created_at=datetime.utcnow(),
+    	),
+    	Notification(
+        	user_id=user[4].id,
+        	title="Wheat flowering stage alert",
+        	message="Your crop has entered the flowering stage and requires close monitoring.",
+        	detail="Strong winds during flowering can affect yield. Regular inspection can help detect issues early.",
+        	notification_type="warning",
+        	is_read=False,
+        	created_at=datetime.utcnow(),
+    	),
+    	Notification(
+        	user_id=user[5].id,
+        	title="Fertilization recommended for cotton",
+        	message="Cotton at the vegetative stage may benefit from balanced fertilization.",
+        	detail="Timely nutrient application supports healthy canopy development and prepares the crop for flowering.",
+        	notification_type="recommendation",
+        	is_read=False,
+        	created_at=datetime.utcnow(),
+    	),
+    	Notification(
+        	user_id=user[6].id,
+        	title="Cold stress risk for wheat seedlings",
+        	message="Seedlings may experience stress due to dropping night temperatures.",
+        	detail="Early-stage wheat is sensitive to cold spells. Monitoring weather forecasts is strongly advised.",
+        	notification_type="warning",
+        	is_read=False,
+        	created_at=datetime.utcnow(),
+    	),
+    	Notification(
+        	user_id=user[7].id,
+        	title="High stress alert for rice crop",
+        	message="Your rice crop is experiencing high environmental stress during flowering.",
+        	detail="Combined heat and nutrient stress at this stage can significantly reduce yield. Immediate attention is required.",
+        	notification_type="critical",
+        	is_read=False,
+        	created_at=datetime.utcnow(),
+    	),
+    	Notification(
+        	user_id=user[8].id,
+        	title="Maize crop status update",
+        	message="Your maize crop is healthy and progressing well in the vegetative stage.",
+        	detail=None,
+        	notification_type="info",
+        	is_read=False,
+        	created_at=datetime.utcnow(),
+    	),
     ]
 
     db.session.add_all(sample_notifications)
     db.session.commit()
 
-    print("Seed complete")
+    sample_climate_profile = [
+	ClimateProfile(
+        	region="Punjab, Pakistan",
+        	season="Rabi",
+        	avg_temperature_c=29.5,   # significantly warmer than forecast
+        	avg_rainfall_mm=0.4,      # much drier than expected
+        	avg_humidity=48.0,
+        	notes="Week observed warmer and drier than forecast; mild heat stress noted in wheat.",
+        	created_at=datetime.utcnow() - timedelta(days=28),
+    	),
+    	ClimateProfile(
+        	region="Sindh, Pakistan",
+        	season="Kharif",
+        	avg_temperature_c=35.8,   # extreme heat
+        	avg_rainfall_mm=0.0,      # no rainfall despite forecast
+        	avg_humidity=58.0,
+        	notes="Extreme heatwave conditions observed; irrigation demand increased sharply.",
+        	created_at=datetime.utcnow() - timedelta(days=21),
+    	),
+    	ClimateProfile(
+        	region="Khyber Pakhtunkhwa, Pakistan",
+        	season="Rabi",
+        	avg_temperature_c=20.1,   # colder than forecast
+        	avg_rainfall_mm=12.2,     # heavy rainfall event
+        	avg_humidity=72.0,
+        	notes="Unexpected cold and heavy rain impacted early-stage crops.",
+        	created_at=datetime.utcnow() - timedelta(days=21),
+    	),
+    	ClimateProfile(
+        	region="Islamabad Capital Territory, Pakistan",
+        	season="Rabi",
+        	avg_temperature_c=23.0,
+        	avg_rainfall_mm=18.5,     # extreme rainfall vs forecast
+        	avg_humidity=75.0,
+        	notes="Prolonged rainfall exceeded forecast levels; drainage challenges reported.",
+        	created_at=datetime.utcnow() - timedelta(days=14),
+    	),
+    	ClimateProfile(
+        	region="Punjab, Pakistan",
+        	season="Kharif",
+        	avg_temperature_c=31.0,
+        	avg_rainfall_mm=22.0,     # early monsoon-like rain
+        	avg_humidity=68.0,
+        	notes="Unexpected early rainfall marked Kharif transition sooner than forecast.",
+        	created_at=datetime.utcnow() - timedelta(days=14),
+    	),
+    	ClimateProfile(
+        	region="Sindh, Pakistan",
+        	season="Kharif",
+        	avg_temperature_c=33.2,
+        	avg_rainfall_mm=8.7,
+        	avg_humidity=70.0,
+        	notes="Higher-than-expected humidity increased disease pressure on cotton.",
+        	created_at=datetime.utcnow() - timedelta(days=7),
+    	),
+    	ClimateProfile(
+        	region="Punjab, Pakistan",
+        	season="Kharif",
+        	avg_temperature_c=27.4,   # much cooler than forecast
+        	avg_rainfall_mm=30.0,     # extreme rain
+        	avg_humidity=82.0,
+        	notes="Significant cooling and unusual rainfall caused localized flooding.",
+        	created_at=datetime.utcnow() - timedelta(days=7),
+    	),
+    ]
+
+    db.session.add_all(sample_climate_profile)
+    db.session.commit()
+
+    sample_weather_profile = [
+    	CurrentWeatherProfile(
+        	region="Punjab, Pakistan",
+        	season="Rabi",
+        	avg_temperature_c=26.0,
+        	avg_rainfall_mm=2.5,
+        	avg_humidity=55.0,
+        	notes="Stable temperatures, suitable for wheat flowering and ripening.",
+        	created_at=datetime.utcnow() + timedelta(days=0),
+        	_start_index=0,
+        	_with_increments=7,
+    	),
+    	CurrentWeatherProfile(
+        	region="Punjab, Pakistan",
+        	season="Rabi",
+        	avg_temperature_c=27.2,
+        	avg_rainfall_mm=3.0,
+        	avg_humidity=57.0,
+        	notes="Slight warming trend observed, no major rainfall expected.",
+        	created_at=datetime.utcnow() + timedelta(days=1),
+        	_start_index=1,
+        	_with_increments=7,
+    	),
+    	CurrentWeatherProfile(
+        	region="Sindh, Pakistan",
+        	season="Kharif",
+        	avg_temperature_c=32.5,
+        	avg_rainfall_mm=0.8,
+        	avg_humidity=62.0,
+        	notes="Hot and dry conditions; irrigation planning critical for cotton fields.",
+        	created_at=datetime.utcnow() + timedelta(days=2),
+        	_start_index=2,
+        	_with_increments=7,
+    	),
+    	CurrentWeatherProfile(
+        	region="Sindh, Pakistan",
+        	season="Kharif",
+        	avg_temperature_c=33.1,
+        	avg_rainfall_mm=1.2,
+        	avg_humidity=65.0,
+        	notes="Humidity increasing slightly; monitor fungal risk.",
+        	created_at=datetime.utcnow() + timedelta(days=3),
+        	_start_index=3,
+        	_with_increments=7,
+    	),
+    	CurrentWeatherProfile(
+        	region="Khyber Pakhtunkhwa, Pakistan",
+        	season="Rabi",
+        	avg_temperature_c=22.0,
+        	avg_rainfall_mm=4.5,
+        	avg_humidity=60.0,
+        	notes="Cooler nights expected; seedling crops may face mild cold stress.",
+        	created_at=datetime.utcnow() + timedelta(days=4),
+        	_start_index=4,
+        	_with_increments=7,
+    	),
+    	CurrentWeatherProfile(
+        	region="Islamabad Capital Territory, Pakistan",
+        	season="Rabi",
+        	avg_temperature_c=24.8,
+        	avg_rainfall_mm=5.2,
+        	avg_humidity=58.0,
+        	notes="Intermittent showers forecasted; suitable for soil moisture replenishment.",
+        	created_at=datetime.utcnow() + timedelta(days=5),
+        	_start_index=5,
+        	_with_increments=7,
+    	),
+    	CurrentWeatherProfile(
+        	region="Punjab, Pakistan",
+        	season="Kharif",
+        	avg_temperature_c=28.5,
+        	avg_rainfall_mm=6.5,
+        	avg_humidity=61.0,
+        	notes="Transition toward Kharif season; early rainfall signals detected.",
+        	created_at=datetime.utcnow() + timedelta(days=6),
+        	_start_index=6,
+        	_with_increments=7,
+    	),
+    ]
+
+    db.session.add_all(sample_weather_profile)
+    db.session.commit()
+
+    print("Sample data seeded successfully.")
+    print(f"user: {User.query.count()}")
+    print(f"Crops: {Crop.query.count()}")
+    print(f"Fields: {Field.query.count()}")
+    print(f"Tasks: {Task.query.count()}")

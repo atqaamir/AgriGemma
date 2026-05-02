@@ -481,7 +481,7 @@
   </button>
 
   <!-- BottomNavBar Section -->
-  <nav class="fixed bottom-0 left-0 w-full z-50 bg-[#fcf9f0]/80 dark:bg-stone-950/80 backdrop-blur-md rounded-t-[24px] shadow-[0_-8px_24px_rgba(28,28,23,0.06)] flex justify-around items-center px-4 pb-6 pt-3">
+  <nav id="bottomNav" class="fixed bottom-0 left-0 w-full z-50 bg-[#fcf9f0]/80 dark:bg-stone-950/80 backdrop-blur-md rounded-t-[24px] shadow-[0_-8px_24px_rgba(28,28,23,0.06)] flex justify-around items-center px-4 pb-6 pt-3">
     <a class="flex flex-col items-center justify-center text-stone-500 dark:text-stone-400 px-3 py-1.5 transition-transform hover:scale-105 duration-150" href="/">
       <span class="material-symbols-outlined" data-icon="dashboard">dashboard</span>
       <span class="font-['Work_Sans'] text-[11px] font-medium tracking-wide">Dashboard</span>
@@ -851,7 +851,7 @@
 
     // show modal
     document.getElementById('cropDetailsModal').classList.remove('hidden');
-    document.querySelector('nav').classList.add('hidden');
+    document.getElementById('bottomNav').classList.add('hidden');
 
     // loading state
     document.getElementById('cropDetailsModalTitle').textContent = 'Loading...';
@@ -913,23 +913,19 @@
       `;
     } else {
       tasksContainer.innerHTML = tasks.map(task => `
-        <div class="bg-white dark:bg-stone-900 rounded-xl p-3 flex items-center justify-between">
-          <div>
-            <p class="font-medium text-sm">
-              ${escapeHtml(task.title || 'Untitled Task')}
-            </p>
-            <p class="text-xs text-on-surface-variant">
-              ${formatTaskType(task.task_type)}
+        <div onclick="openTaskDetailModal(${task.id})" class="bg-white dark:bg-stone-900 p-4 rounded-[20px] flex items-center gap-4 shadow-sm cursor-pointer hover:shadow-md transition-shadow active:scale-[0.98]">
+          <div class="w-12 h-12 rounded-full bg-[#f1f3ee] dark:bg-stone-800 flex items-center justify-center text-[#47573b] dark:text-[#d5e9c1]">
+            <span class="material-symbols-outlined" style="font-size: 20px;">
+              ${getTaskIcon(task.task_type)}
+            </span>
+          </div>
+          <div class="flex-1 min-w-0">
+            <h5 class="text-sm font-bold text-on-surface truncate">${escapeHtml(task.title || 'Untitled Task')}</h5>
+            <p class="text-[11px] text-on-surface-variant font-medium truncate">
+              ${escapeHtml(getTaskSubtitle(task))}
             </p>
           </div>
-
-          <span class="text-xs font-bold ${
-            task.completed
-              ? 'text-primary'
-              : 'text-amber-600'
-          }">
-            ${task.completed ? 'Done' : 'Pending'}
-          </span>
+          <span class="material-symbols-outlined text-outline-variant">chevron_right</span>
         </div>
       `).join('');
     }
@@ -942,12 +938,13 @@
 
   function closeCropDetailsModal() {
   document.getElementById('cropDetailsModal').classList.add('hidden');
-  document.querySelector('nav').classList.remove('hidden');
+  document.getElementById('bottomNav').classList.remove('hidden');
 }
 
     async function openTaskDetailModal(taskId) {
       document.getElementById('taskDetailModal').classList.remove('hidden');
       document.getElementById('taskDetailTitle').textContent = 'Loading...';
+      document.getElementById('bottomNav').classList.add('hidden');
 
     try {
         console.log('Fetching task details for task ID:', taskId);
@@ -955,7 +952,6 @@
         if (!response.ok) throw new Error('Failed to fetch task');
         const task = await response.json();
         populateTaskModal(task);
-        document.querySelector('nav').classList.add('hidden');
       } catch (error) {
         console.error('Error loading task:', error);
         closeTaskDetailModal();
@@ -964,7 +960,7 @@
 
     function closeTaskDetailModal() {
       document.getElementById('taskDetailModal').classList.add('hidden');
-      document.querySelector('nav').classList.remove('hidden');
+      document.getElementById('bottomNav').classList.remove('hidden');
     }
 
     function populateTaskModal(task) {
@@ -1139,12 +1135,12 @@
       document.getElementById('createCropForm').reset();
       document.getElementById('createCropError').classList.add('hidden');
       document.getElementById('createCropModal').classList.remove('hidden');
-      document.querySelector('nav').classList.add('hidden');
+      document.getElementById('bottomNav').classList.add('hidden');
     }
 
     function closeCreateCropModal() {
       document.getElementById('createCropModal').classList.add('hidden');
-      document.querySelector('nav').classList.remove('hidden');
+      document.getElementById('bottomNav').classList.remove('hidden');
     }
 
     async function submitCreateCrop(event) {
