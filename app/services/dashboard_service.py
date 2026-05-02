@@ -217,8 +217,8 @@ class DashboardService:
         return {
             "total": len(all_crops),
             "healthy": status_counts.get("healthy", 0),
-            "warning": status_counts.get("warning", 0),
-            "at_risk": status_counts.get("risk", 0),
+            "warning": status_counts.get("alert", 0),
+            "at_risk": status_counts.get("critical", 0),
             "needing_irrigation": sum(
                 1 for c in all_crops if CropService.needs_irrigation(c)
             ),

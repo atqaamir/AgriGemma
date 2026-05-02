@@ -1,346 +1,265 @@
 <!DOCTYPE html>
-
-<html class="light" lang="en"><head>
-<meta charset="utf-8"/>
-<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-<title>The Resilient Harvest - Dashboard</title>
-<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
-<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;700;800&amp;family=Work_Sans:wght@300;400;500;600&amp;display=swap" rel="stylesheet"/>
-<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
-<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
-<script id="tailwind-config">
-      tailwind.config = {
-        darkMode: "class",
-        theme: {
-          extend: {
-            "colors": {
-                    "surface": "#fcf9f0",
-                    "secondary-fixed": "#d5e9c1",
-                    "on-error-container": "#93000a",
-                    "inverse-primary": "#bbccaa",
-                    "on-tertiary-fixed": "#1e1c12",
-                    "tertiary-fixed-dim": "#ccc6b6",
-                    "surface-container-high": "#ebe8df",
-                    "primary": "#47573b",
-                    "on-secondary-fixed-variant": "#3b4b2e",
-                    "secondary-fixed-dim": "#bacda7",
-                    "surface-dim": "#dddad1",
-                    "surface-variant": "#e5e2da",
-                    "on-secondary-fixed": "#111f07",
-                    "surface-container-highest": "#e5e2da",
-                    "on-tertiary-container": "#f1ebda",
-                    "on-secondary-container": "#586a4a",
-                    "inverse-on-surface": "#f4f1e8",
-                    "on-primary": "#ffffff",
-                    "on-primary-fixed": "#121f09",
-                    "on-primary-container": "#dff1cd",
-                    "secondary-container": "#d5e9c1",
-                    "background": "#fcf9f0",
-                    "on-surface": "#1c1c17",
-                    "outline": "#75786f",
-                    "error": "#ba1a1a",
-                    "on-error": "#ffffff",
-                    "primary-container": "#5f6f52",
-                    "tertiary-container": "#6e6a5d",
-                    "surface-container-low": "#f7f3ea",
-                    "tertiary": "#555246",
-                    "on-surface-variant": "#444840",
-                    "error-container": "#ffdad6",
-                    "on-tertiary-fixed-variant": "#4a473b",
-                    "primary-fixed": "#d6e8c5",
-                    "primary-fixed-dim": "#bbccaa",
-                    "on-primary-fixed-variant": "#3c4b31",
-                    "tertiary-fixed": "#e8e2d2",
-                    "inverse-surface": "#31312b",
-                    "surface-bright": "#fcf9f0",
-                    "surface-container-lowest": "#ffffff",
-                    "secondary": "#536344",
-                    "surface-container": "#f1eee5",
-                    "on-secondary": "#ffffff",
-                    "on-tertiary": "#ffffff",
-                    "surface-tint": "#536347",
-                    "outline-variant": "#c5c8bd",
-                    "on-background": "#1c1c17"
-            },
-            "borderRadius": {
-                    "DEFAULT": "0.25rem",
-                    "lg": "0.5rem",
-                    "xl": "0.75rem",
-                    "full": "9999px"
-            },
-            "fontFamily": {
-                    "headline": ["Manrope"],
-                    "body": ["Work Sans"],
-                    "label": ["Work Sans"]
-            }
+<html class="light" lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+  <title>Dashboard</title>
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;700;800&family=Work_Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="/static/css/dashboard.css"/>
+  <script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            "surface": "#fcf9f0",
+            "secondary-fixed": "#d5e9c1",
+            "on-error-container": "#93000a",
+            "inverse-primary": "#bbccaa",
+            "on-tertiary-fixed": "#1e1c12",
+            "tertiary-fixed-dim": "#ccc6b6",
+            "surface-container-high": "#ebe8df",
+            "primary": "#47573b",
+            "on-secondary-fixed-variant": "#3b4b2e",
+            "secondary-fixed-dim": "#bacda7",
+            "surface-dim": "#dddad1",
+            "surface-variant": "#e5e2da",
+            "on-secondary-fixed": "#111f07",
+            "surface-container-highest": "#e5e2da",
+            "on-tertiary-container": "#f1ebda",
+            "on-secondary-container": "#586a4a",
+            "inverse-on-surface": "#f4f1e8",
+            "on-primary": "#ffffff",
+            "on-primary-fixed": "#121f09",
+            "on-primary-container": "#dff1cd",
+            "secondary-container": "#d5e9c1",
+            "background": "#fcf9f0",
+            "on-surface": "#1c1c17",
+            "outline": "#75786f",
+            "error": "#ba1a1a",
+            "on-error": "#ffffff",
+            "primary-container": "#5f6f52",
+            "tertiary-container": "#6e6a5d",
+            "surface-container-low": "#f7f3ea",
+            "tertiary": "#555246",
+            "on-surface-variant": "#444840",
+            "error-container": "#ffdad6",
+            "on-tertiary-fixed-variant": "#4a473b",
+            "primary-fixed": "#d6e8c5",
+            "primary-fixed-dim": "#bbccaa",
+            "on-primary-fixed-variant": "#3c4b31",
+            "tertiary-fixed": "#e8e2d2",
+            "inverse-surface": "#31312b",
+            "surface-bright": "#fcf9f0",
+            "surface-container-lowest": "#ffffff",
+            "secondary": "#536344",
+            "surface-container": "#f1eee5",
+            "on-secondary": "#ffffff",
+            "on-tertiary": "#ffffff",
+            "surface-tint": "#536347",
+            "outline-variant": "#c5c8bd",
+            "on-background": "#1c1c17"
           },
+          borderRadius: {
+            "DEFAULT": "0.25rem",
+            "lg": "0.5rem",
+            "xl": "0.75rem",
+            "full": "9999px"
+          },
+          fontFamily: {
+            "headline": ["Manrope"],
+            "body": ["Work Sans"],
+            "label": ["Work Sans"]
+          }
         },
-      }
-    </script>
-<style>
-        body { font-family: 'Work Sans', sans-serif; background-color: #fcf9f0; }
-        h1, h2, h3 { font-family: 'Manrope', sans-serif; }
-        .material-symbols-outlined {
-            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
-        }
-        .soil-gauge-track { background-color: #d5e9c1; height: 8px; border-radius: 4px; }
-        .soil-gauge-indicator { background-color: #47573b; height: 8px; border-radius: 4px; }
-        .organic-gradient { background: linear-gradient(135deg, #47573b 0%, #5f6f52 100%); }
-    </style>
-<style>
-    body {
-      min-height: max(884px, 100dvh);
+      },
     }
-  </style>
+  </script>
 </head>
+
 <body class="text-on-surface pb-32">
-<!-- Top Navigation -->
-<nav class="fixed top-0 w-full z-50 bg-[#fcf9f0] dark:bg-stone-950">
-<div class="flex items-center justify-between px-6 h-16 w-full max-w-screen-xl mx-auto">
-<div class="flex items-center gap-3">
-<span class="material-symbols-outlined text-[#47573b] dark:text-[#d5e9c1]" data-icon="agriculture">agriculture</span>
-<span class="font-['Manrope'] font-bold text-[#47573b] dark:text-[#d5e9c1] text-lg tracking-tight">Climate Adaptation Advisor</span>
-</div>
-<div class="flex items-center gap-4">
-<button class="p-2 transition-colors duration-200 hover:bg-stone-200/50 dark:hover:bg-stone-800/50 rounded-full">
-<span class="material-symbols-outlined text-stone-500" data-icon="notifications">notifications</span>
-</button>
-</div>
-</div>
-</nav>
-<main class="mt-20 px-6 max-w-screen-xl mx-auto space-y-8">
-<!-- Hero Section: Organic Editorialism -->
-<section class="relative overflow-hidden rounded-[32px] organic-gradient min-h-[340px] flex flex-col justify-end p-8 text-on-primary">
-<div class="absolute top-0 right-0 w-1/2 h-full opacity-40 mix-blend-overlay">
-<img alt="sun-drenched organic corn field" class="w-full h-full object-cover" data-alt="overhead view of healthy rows of green corn crops stretching to the horizon under a bright golden sun" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDspppSFAdqz7pOvzJCuDPdQrGNjsDU17-wgKZTIaEVyZRN2hTPNOdzlWA6zFylN8TURwI2SYqLA9KYcwETTlj6pGS7-PKIppfYstghwGHs-k3EBosMgecHZqCfL9sddlcJDMGzZrrbkgGMwzstTFXna4tmJpCu80PB_00g349xJhlsHiHAMc-9T2izdxtRQCZCr3sYp3cp0Et-w-wxF-Hv3Z9-XJpTWS8Gmm_xOD4-QuqCX10f_ysRSmFt0ELvqAZzqzTfwF8wCg"/>
-</div>
-<div class="relative z-10 grid md:grid-cols-2 gap-8 items-end">
-<div>
-<h1 class="text-4xl md:text-5xl font-medium tracking-tight mb-2">Welcome back, John!</h1>
-<p class="text-on-primary-container/80 text-lg max-w-md">Your fields are thriving. Today's forecast calls for sustained warmth—monitor irrigation carefully.</p>
-</div>
-<div class="bg-white/10 backdrop-blur-xl rounded-3xl p-6 border border-white/10 flex items-center justify-between">
-<div class="flex items-center gap-4">
-<span class="material-symbols-outlined text-5xl" data-icon="sunny" style="font-variation-settings: 'FILL' 1;">sunny</span>
-<div>
-<span class="text-4xl font-bold">32°C</span>
-<p class="text-sm uppercase tracking-widest opacity-80">Sunny</p>
-</div>
-</div>
-<div class="flex gap-4 border-l border-white/20 pl-6">
-<div class="text-center">
-<p class="text-xs opacity-70">Tue</p>
-<span class="material-symbols-outlined block my-1" data-icon="partly_cloudy_day">partly_cloudy_day</span>
-<p class="text-sm font-medium">30°</p>
-</div>
-<div class="text-center">
-<p class="text-xs opacity-70">Wed</p>
-<span class="material-symbols-outlined block my-1" data-icon="rainy">rainy</span>
-<p class="text-sm font-medium">26°</p>
-</div>
-<div class="text-center">
-<p class="text-xs opacity-70">Thu</p>
-<span class="material-symbols-outlined block my-1" data-icon="sunny">sunny</span>
-<p class="text-sm font-medium">31°</p>
-</div>
-</div>
-</div>
-</div>
-</section>
-<!-- Bento Grid Layout -->
-<div class="grid grid-cols-1 md:grid-cols-12 gap-6">
-<!-- Farm Overview -->
-<div class="md:col-span-4 bg-surface-container-low rounded-3xl p-6 flex flex-col h-full">
-  <h2 class="font-headline text-xl font-medium mb-6">Farm Overview</h2>
 
-  <div class="flex flex-col space-y-8">
+  <!-- Top Navigation -->
+  {% include "_header.html" %}
 
-    <!-- Optimal Range -->
-    <div class="flex flex-col items-center">
-      <div class="relative flex flex-col items-center">
-        <svg class="w-48 h-48 -rotate-90">
-          <circle cx="96" cy="96" r="80" fill="transparent"
-            class="text-surface-container-highest"
-            stroke="currentColor" stroke-width="12" />
+  <main class="mt-10 px-4 max-w-screen-xl mx-auto space-y-8">
 
-          <circle cx="96" cy="96" r="80" fill="transparent"
-            class="text-primary"
-            stroke="currentColor"
-            stroke-width="12"
-            stroke-dasharray="502.4"
-            stroke-dashoffset="125.6" />
-        </svg>
-
-        <div class="absolute inset-0 flex flex-col items-center justify-center">
-          <span class="text-4xl font-headline font-bold">75%</span>
-          <span class="text-xs uppercase tracking-tighter text-outline">Optimal Range</span>
+    <!-- Hero Section -->
+    <section class="relative overflow-hidden rounded-[32px] organic-gradient min-h-[340px] flex flex-col justify-center p-8 text-on-primary">
+      <div class="absolute top-0 right-0 w-1/2 h-full opacity-40 mix-blend-overlay">
+        <img alt="sun-drenched organic corn field" class="w-full h-full object-cover"
+          src="https://lh3.googleusercontent.com/aida-public/AB6AXuDspppSFAdqz7pOvzJCuDPdQrGNjsDU17-wgKZTIaEVyZRN2hTPNOdzlWA6zFylN8TURwI2SYqLA9KYcwETTlj6pGS7-PKIppfYstghwGHs-k3EBosMgecHZqCfL9sddlcJDMGzZrrbkgGMwzstTFXna4tmJpCu80PB_00g349xJhlsHiHAMc-9T2izdxtRQCZCr3sYp3cp0Et-w-wxF-Hv3Z9-XJpTWS8Gmm_xOD4-QuqCX10f_ysRSmFt0ELvqAZzqzTfwF8wCg"/>
+      </div>
+      <div class="relative z-10 grid md:grid-cols-2 gap-8 items-end">
+        <div>
+          <h1 id="welcome-name" class="text-4xl md:text-5xl font-medium tracking-tight mb-2">Welcome back!</h1>
+          <p id="hero-subtitle" class="text-on-primary-container/80 text-lg max-w-md"></p>
+        </div>
+        <div class="bg-white/10 backdrop-blur-xl rounded-3xl p-4 border border-white/10 flex items-center justify-between">
+          <div class="flex items-center gap-4">
+            <span id="weather-icon" class="material-symbols-outlined text-2xl" data-icon="sunny" style="font-variation-settings: 'FILL' 1;">sunny</span>
+            <div>
+              <span id="weather-temp" class="text-2xl font-bold">--°C</span>
+              <p id="weather-condition" class="text-sm uppercase tracking-widest opacity-80">--</p>
+            </div>
+          </div>
+          <div id="weather-forecast" class="flex gap-4 border-l border-white/20 pl-6">
+            <!-- Populated by JS -->
+          </div>
         </div>
       </div>
+    </section>
+
+    <!-- Bento Grid -->
+    <div class="grid grid-cols-1 md:grid-cols-12 gap-6">
+
+      <!-- Farm Overview -->
+      <div class="md:col-span-4 bg-surface-container-low rounded-3xl p-6 flex flex-col h-full">
+        <h2 class="font-headline text-xl font-medium mb-6">Farm Overview</h2>
+        <div class="flex flex-col space-y-8">
+
+          <!-- Donut: Optimal Range -->
+          <div class="flex flex-col items-center">
+            <div class="relative flex flex-col items-center">
+              <svg class="w-48 h-48 -rotate-90">
+                <circle cx="96" cy="96" r="80" fill="transparent"
+                  class="text-surface-container-highest"
+                  stroke="currentColor" stroke-width="12"/>
+                <circle id="donut-arc" cx="96" cy="96" r="80" fill="transparent"
+                  class="text-primary"
+                  stroke="currentColor"
+                  stroke-width="12"
+                  stroke-dasharray="502.4"
+                  stroke-dashoffset="502.4"/>
+              </svg>
+              <div class="absolute inset-0 flex flex-col items-center justify-center">
+                <span id="donut-label" class="text-4xl font-headline font-bold">--%</span>
+                <span class="text-xs uppercase tracking-tighter text-outline">Optimal Range</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Active Area -->
+          <div class="flex items-center gap-4">
+            <div class="w-12 h-12 bg-secondary-fixed rounded-2xl flex items-center justify-center text-primary">
+              <span class="material-symbols-outlined">texture</span>
+            </div>
+            <div class="flex-1 flex flex-col">
+              <div class="flex justify-between items-start">
+                <p class="text-sm text-on-surface-variant">Active Area</p>
+                <span id="active-area-badge" class="text-xs bg-primary text-white px-2 py-0.5 rounded-full whitespace-nowrap">-- active</span>
+              </div>
+              <p id="active-area-value" class="text-2xl font-bold">-- Acres</p>
+            </div>
+          </div>
+
+          <!-- Crops Growing -->
+          <div class="flex items-center gap-4">
+            <div class="w-12 h-12 bg-secondary-fixed rounded-2xl flex items-center justify-center text-primary">
+              <span class="material-symbols-outlined">potted_plant</span>
+            </div>
+            <div class="flex-1 flex flex-col">
+              <div class="flex justify-between items-start">
+                <p class="text-sm text-on-surface-variant">Crops Growing</p>
+                <span id="crops-badge" class="text-xs bg-primary text-white px-2 py-0.5 rounded-full whitespace-nowrap">-- active</span>
+              </div>
+              <p id="crops-list" class="text-lg font-semibold">--</p>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Critical Tasks -->
+      <div class="md:col-span-8 bg-surface-container rounded-3xl p-6">
+        <div class="flex justify-between items-center mb-6">
+          <h2 class="font-headline text-xl font-medium">Critical Tasks</h2>
+          <span id="critical-tasks-badge" class="text-xs font-medium bg-primary text-white px-2 py-0.5 rounded-full whitespace-nowrap">-- Urgent</span>
+        </div>
+        <div id="critical-tasks-list" class="space-y-4">
+          <!-- Populated by JS -->
+        </div>
+      </div>
+
+      <!-- Crop Health Status -->
+      <div class="md:col-span-7 bg-surface-container-low rounded-3xl p-6">
+        <h2 class="font-headline text-xl font-medium mb-6">Crop Health Status</h2>
+        <div class="flex items-end gap-1 mb-6">
+          <div id="crop-health-healthy" class="flex-1 bg-primary h-12 rounded-l-xl flex items-center justify-center text-on-primary text-sm font-bold">-- Healthy</div>
+          <div id="crop-health-attention" class="flex-1 bg-error h-12 rounded-r-xl flex items-center justify-center text-on-error text-sm font-bold">-- Attention</div>
+        </div>
+        <div id="crop-cards-list" class="grid grid-cols-2 gap-4">
+          <!-- Populated by JS -->
+        </div>
+      </div>
+
+      <!-- Soil Conditions -->
+      <div class="md:col-span-5 bg-surface-container-highest rounded-3xl p-6">
+        <h2 class="font-headline text-xl font-medium mb-6">Soil Conditions</h2>
+        <div class="space-y-6">
+
+          <!-- Soil Moisture -->
+          <div>
+            <div class="flex justify-between mb-2">
+              <div class="flex items-center gap-2">
+                <span class="material-symbols-outlined text-primary" data-icon="humidity_mid">humidity_mid</span>
+                <span class="text-sm font-medium">Soil Moisture</span>
+              </div>
+              <span id="soil-moisture-label" class="text-sm text-primary font-bold">--</span>
+            </div>
+            <div class="soil-gauge-track">
+              <div id="soil-moisture-gauge" class="soil-gauge-indicator w-0"></div>
+            </div>
+          </div>
+
+          <!-- Heat Level (shown as Nutrients / NPK) -->
+          <div>
+            <div class="flex justify-between mb-2">
+              <div class="flex items-center gap-2">
+                <span class="material-symbols-outlined text-primary" data-icon="compost">compost</span>
+                <span class="text-sm font-medium">Soil Heat Guagee</span>
+              </div>
+              <span id="soil-heat-label" class="text-sm text-primary font-bold">--</span>
+            </div>
+            <div class="soil-gauge-track">
+              <div id="soil-heat-gauge" class="soil-gauge-indicator w-0"></div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
     </div>
 
-    <!-- Active Area -->
-	<div class="flex items-center gap-4">
+    <!-- Seasonal Planning CTA -->
+    <section class="pt-8 pb-12">
+      <div class="bg-surface-container-high rounded-[2.5rem] p-12 text-center relative overflow-hidden">
+        <div class="absolute top-0 left-0 w-full h-full opacity-10 pointer-events-none">
+          <img alt="Harvest Planning" class="w-full h-full object-cover"
+            src="https://lh3.googleusercontent.com/aida-public/AB6AXuD3ipJjkKWAxYcf7KI01tRYf59EuPgdtIz-DxALVUegxXC273r9uxiTvhIReP-0st3g0aPluQcZM0-N75rawCoGPmffr3SSLfh9dgbkfv34OrZ_T0EuTyTP3vL_saQTv0YGELcivtRdFH7c9qpiLUi_0oQLqCuFpkESa1FxngzpoWdYr1qbXQ0VmIya1WXc5VbNIp0dCOVvJYgcDgmFm0riOaSUWayml6u-1TAv_PTCTivktvTSwtDBZFLUZ8myGNfeNu86cbnp2A"/>
+        </div>
+        <div class="relative z-10 space-y-6">
+          <h3 class="text-4xl font-bold tracking-tight text-primary max-w-xl mx-auto leading-tight">Ready to map out the season?</h3>
+          <p class="text-lg text-on-surface-variant max-w-2xl mx-auto leading-relaxed">Start your seasonal planning with our predictive yield models and soil health projections.</p>
+          <div class="pt-4 flex flex-col sm:flex-row gap-4 justify-center">
+            <button class="bg-primary text-on-primary px-10 py-4 rounded-full font-medium hover:bg-primary-container transition-colors shadow-md active:scale-95">Create new Plan</button>
+            <button class="bg-surface-dim text-on-surface px-10 py-4 rounded-full font-medium hover:bg-surface-variant transition-colors active:scale-95">View Current Plan</button>
+          </div>
+        </div>
+      </div>
+    </section>
 
-	  <div class="w-12 h-12 bg-secondary-fixed rounded-2xl flex items-center justify-center text-primary">
-		<span class="material-symbols-outlined">texture</span>
-	  </div>
+  </main>
 
-	  <div class="flex-1 flex flex-col">
-
-		<!-- top row: label + badge -->
-		<div class="flex justify-between items-start">
-		  <p class="text-sm text-on-surface-variant">Active Area</p>
-		  <span class="text-xs bg-primary text-white px-2 py-0.5 rounded-full whitespace-nowrap">
-			3 active
-		  </span>
-		</div>
-
-		<p class="text-2xl font-bold">50 Acres</p>
-	  </div>
-
-	</div>
-
-    <!-- Crops -->
-    <div class="flex items-center gap-4">
-
-	  <div class="w-12 h-12 bg-secondary-fixed rounded-2xl flex items-center justify-center text-primary">
-		<span class="material-symbols-outlined">potted_plant</span>
-	  </div>
-
-	<div class="flex-1 flex flex-col">
-
-	<!-- top row: label + badge -->
-	<div class="flex justify-between items-start">
-	  <p class="text-sm text-on-surface-variant">Crops Growing</p>
-	  <span class="text-xs bg-primary text-white px-2 py-0.5 rounded-full whitespace-nowrap">
-		4 active
-	  </span>
-	</div>
-
-    <p class="text-lg font-semibold">Corn, Soybeans</p>
-
-		</div>
-
-	</div>
-
-  </div>
-</div>
-<!-- Tasks & Alerts (High Priority) -->
-<div class="md:col-span-8 bg-surface-container rounded-3xl p-6">
-<div class="flex justify-between items-center mb-6">
-  <h2 class="font-headline text-xl font-medium">Critical Tasks</h2>
-
-  <span class="text-xs font-medium bg-primary text-white px-2 py-0.5 rounded-full whitespace-nowrap">
-    2 Urgent
-  </span>
-</div>
-<div class="space-y-4">
-<div class="bg-surface-container-lowest rounded-2xl p-5 flex items-center justify-between group cursor-pointer hover:shadow-sm transition-shadow">
-<div class="flex items-center gap-4">
-<div class="w-10 h-10 bg-error-container text-on-error-container rounded-full flex items-center justify-center">
-<span class="material-symbols-outlined text-xl" data-icon="water_drop" style="font-variation-settings: 'FILL' 1;">water_drop</span>
-</div>
-<div>
-<h3 class="font-medium text-lg">Irrigate Sector B</h3>
-<p class="text-sm text-on-surface-variant">High Priority • Critical for yield maintenance</p>
-</div>
-</div>
-<span class="material-symbols-outlined text-outline group-hover:text-primary" data-icon="chevron_right">chevron_right</span>
-</div>
-<div class="bg-surface-container-lowest rounded-2xl p-5 flex items-center justify-between group cursor-pointer hover:shadow-sm transition-shadow">
-<div class="flex items-center gap-4">
-<div class="w-10 h-10 bg-secondary-fixed text-primary rounded-full flex items-center justify-center">
-<span class="material-symbols-outlined text-xl" data-icon="bug_report">bug_report</span>
-</div>
-<div>
-<h3 class="font-medium text-lg">Scout South Field</h3>
-<p class="text-sm text-on-surface-variant">Scheduled • Early signs of Aphid activity</p>
-</div>
-</div>
-<span class="material-symbols-outlined text-outline group-hover:text-primary" data-icon="chevron_right">chevron_right</span>
-</div>
-<button class="text-primary font-medium text-sm flex items-center gap-1">
-                        View All <span class="material-symbols-outlined text-sm">arrow_forward</span>
-</button>
-</div>
-</div>
-<!-- Crop Monitoring Summary -->
-<div class="md:col-span-7 bg-surface-container-low rounded-3xl p-6">
-<h2 class="font-headline text-xl font-medium mb-6">Crop Health Status</h2>
-<div class="flex items-end gap-1 mb-6">
-<div class="flex-1 bg-primary h-12 rounded-l-xl flex items-center justify-center text-on-primary text-sm font-bold">3 Healthy</div>
-<div class="flex-1 bg-error h-12 rounded-r-xl flex items-center justify-center text-on-error text-sm font-bold">1 Attention</div>
-</div>
-<div class="grid grid-cols-2 gap-4">
-<div class="bg-white/50 p-4 rounded-2xl flex items-center gap-3">
-<span class="material-symbols-outlined text-primary" data-icon="eco" style="font-variation-settings: 'FILL' 1;">eco</span>
-<span class="text-sm font-medium">Corn (Sector A)</span>
-<span class="ml-auto text-primary font-bold">94%</span>
-</div>
-<div class="bg-white/50 p-4 rounded-2xl flex items-center gap-3">
-<span class="material-symbols-outlined text-error" data-icon="warning" style="font-variation-settings: 'FILL' 1;">warning</span>
-<span class="text-sm font-medium">Soy (Sector B)</span>
-<span class="ml-auto text-error font-bold">62%</span>
-</div>
-</div>
-</div>
-<!-- Soil Condition: Gauges -->
-<div class="md:col-span-5 bg-surface-container-highest rounded-3xl p-6">
-<h2 class="font-headline text-xl font-medium mb-6">Soil Conditions</h2>
-<div class="space-y-6">
-<div>
-<div class="flex justify-between mb-2">
-<div class="flex items-center gap-2">
-<span class="material-symbols-outlined text-primary" data-icon="humidity_mid">humidity_mid</span>
-<span class="text-sm font-medium">Soil Moisture</span>
-</div>
-<span class="text-sm text-primary font-bold">Optimal</span>
-</div>
-<div class="soil-gauge-track">
-<div class="soil-gauge-indicator w-[72%]"></div>
-</div>
-</div>
-<div>
-<div class="flex justify-between mb-2">
-<div class="flex items-center gap-2">
-<span class="material-symbols-outlined text-primary" data-icon="compost">compost</span>
-<span class="text-sm font-medium">Nutrients (NPK)</span>
-</div>
-<span class="text-sm text-primary font-bold">Good</span>
-</div>
-<div class="soil-gauge-track">
-<div class="soil-gauge-indicator w-[85%]"></div>
-</div>
-</div>
-</div>
-</div>
-</div>
-<!-- Start Your Planning Section -->
-<section class="pt-8 pb-12">
-<div class="bg-surface-container-high rounded-[2.5rem] p-12 text-center relative overflow-hidden">
-<!-- Background Decoration -->
-<div class="absolute top-0 left-0 w-full h-full opacity-10 pointer-events-none">
-<img alt="Harvest Planning" class="w-full h-full object-cover" data-alt="Overhead view of various seeds and agricultural planners arranged neatly on a rustic wooden table" src="https://lh3.googleusercontent.com/aida-public/AB6AXuD3ipJjkKWAxYcf7KI01tRYf59EuPgdtIz-DxALVUegxXC273r9uxiTvhIReP-0st3g0aPluQcZM0-N75rawCoGPmffr3SSLfh9dgbkfv34OrZ_T0EuTyTP3vL_saQTv0YGELcivtRdFH7c9qpiLUi_0oQLqCuFpkESa1FxngzpoWdYr1qbXQ0VmIya1WXc5VbNIp0dCOVvJYgcDgmFm0riOaSUWayml6u-1TAv_PTCTivktvTSwtDBZFLUZ8myGNfeNu86cbnp2A"/>
-</div>
-<div class="relative z-10 space-y-6">
-<h3 class="text-4xl font-bold tracking-tight text-primary max-w-xl mx-auto leading-tight">Ready to map out the season?</h3>
-<p class="text-lg text-on-surface-variant max-w-2xl mx-auto leading-relaxed">Start your seasonal planning with our predictive yield models and soil health projections.</p>
-<div class="pt-4 flex flex-col sm:flex-row gap-4 justify-center">
-<button class="bg-primary text-on-primary px-10 py-4 rounded-full font-medium hover:bg-primary-container transition-colors shadow-md active:scale-95">Create new Plan</button>
-<button class="bg-surface-dim text-on-surface px-10 py-4 rounded-full font-medium hover:bg-surface-variant transition-colors active:scale-95">View Current Plan</button>
-</div>
-</div>
-</div>
-</section>
-</main>
-<!-- Bottom Navigation Bar -->
-  <!-- BottomNavBar Section -->
+  <!-- Bottom Navigation -->
   <nav class="fixed bottom-0 left-0 w-full z-50 bg-[#fcf9f0]/80 dark:bg-stone-950/80 backdrop-blur-md rounded-t-[24px] shadow-[0_-8px_24px_rgba(28,28,23,0.06)] flex justify-around items-center px-4 pb-6 pt-3">
     <a class="flex flex-col items-center justify-center bg-secondary-fixed dark:bg-primary-container text-on-background dark:text-surface-bright rounded-2xl px-3 py-1.5 transition-transform hover:scale-105 duration-150" href="/">
       <span class="material-symbols-outlined" data-icon="dashboard">dashboard</span>
       <span class="font-['Work_Sans'] text-[11px] font-medium tracking-wide">Dashboard</span>
     </a>
-    <a class="flex flex-col items-center justify-center text-stone-500 dark:text-stone-400 px-3 py-1.5 transition-transform hover:scale-105 duration-150"  href="/myfields">
+    <a class="flex flex-col items-center justify-center text-stone-500 dark:text-stone-400 px-3 py-1.5 transition-transform hover:scale-105 duration-150" href="/myfields">
       <span class="material-symbols-outlined" data-icon="landscape" style="font-variation-settings: 'FILL' 1;">landscape</span>
       <span class="font-['Work_Sans'] text-[11px] font-medium tracking-wide">Fields</span>
     </a>
@@ -357,4 +276,248 @@
       <span class="font-['Work_Sans'] text-[11px] font-medium tracking-wide">Chat</span>
     </a>
   </nav>
-</body></html>
+
+  <script>
+    const USER_ID = 1;
+    const DONUT_CIRCUMFERENCE = 502.4;
+
+    // ── Boot ───────────────────────────────────────────────────────────────────
+    document.addEventListener('DOMContentLoaded', loadDashboard);
+
+    async function loadDashboard() {
+      try {
+        const [dashRes, cropsRes] = await Promise.all([
+          fetch(`/${USER_ID}/dashboard`),
+          fetch('/mycrops/crops/active'),
+        ]);
+        if (!dashRes.ok) throw new Error(`Dashboard API ${dashRes.status}`);
+        const dash  = await dashRes.json();
+        const crops = cropsRes.ok ? ((await cropsRes.json()).crop_cards || []) : [];
+
+        renderHero(dash);
+        renderFarmOverview(dash, crops);
+        renderCriticalTasks(dash);
+        renderCropHealth(dash, crops);
+        renderSoilConditions(dash);
+      } catch (e) {
+        console.error('Dashboard load failed:', e);
+      }
+    }
+
+    // ── Hero ───────────────────────────────────────────────────────────────────
+    function renderHero(data) {
+      setText('welcome-name', `Welcome back, ${data.user?.name || 'Farmer'}!`);
+      setText('hero-subtitle', data.insights?.summary || '');
+
+      const current = data.weather?.current || {};
+      setText('weather-temp', `${current.temperature_c ?? '--'}°C`);
+      setText('weather-condition', capitalize(current.condition || '--'));
+      setText('weather-icon', getWeatherIcon(current.condition));
+
+      const forecast = data.weather?.forecast || [];
+      document.getElementById('weather-forecast').innerHTML = forecast.map(f => `
+        <div class="text-center">
+          <p class="text-xs opacity-70">${escapeHtml(f.day)}</p>
+          <span class="material-symbols-outlined block my-1">${getWeatherIcon(f.condition)}</span>
+          <p class="text-sm font-medium">${f.temperature_c ?? '--'}°</p>
+        </div>
+      `).join('');
+    }
+
+    // ── Farm Overview ──────────────────────────────────────────────────────────
+    function renderFarmOverview(data, crops) {
+      const overview  = data.overview        || {};
+      const fieldCond = data.field_condition  || {};
+
+      // Donut — driven by avg_score (0-100)
+      const score  = clamp(fieldCond.avg_score || 0, 0, 100);
+      const offset = DONUT_CIRCUMFERENCE * (1 - score / 100);
+      setAttr('donut-arc', 'stroke-dashoffset', offset.toFixed(1));
+      setText('donut-label', `${Math.round(score)}%`);
+
+      // Active Area
+      setText('active-area-value', `${overview.total_acreage ?? 0} Acres`);
+      setText('active-area-badge', `${overview.active_fields ?? 0} active`);
+
+      // Crops Growing
+      const cropNames = crops.length
+        ? [...new Set(crops.map(c => c.name).filter(Boolean))].join(', ')
+        : '—';
+      setText('crops-list',  cropNames);
+      setText('crops-badge', `${overview.total_crops ?? 0} active`);
+    }
+
+    // ── Critical Tasks ─────────────────────────────────────────────────────────
+    function renderCriticalTasks(data) {
+      const tasks = data.critical_tasks || [];
+      setText('critical-tasks-badge', `${tasks.length} Urgent`);
+
+      const container = document.getElementById('critical-tasks-list');
+
+      if (!tasks.length) {
+        container.innerHTML = `
+          <div class="bg-surface-container-lowest rounded-2xl p-5 text-center text-on-surface-variant text-sm">
+            All clear — no urgent tasks.
+          </div>
+          <button onclick="window.location='/mytasks'" class="text-primary font-medium text-sm flex items-center gap-1">
+            View All <span class="material-symbols-outlined text-sm">arrow_forward</span>
+          </button>`;
+        return;
+      }
+
+      container.innerHTML = tasks.map(task => `
+        <div class="bg-surface-container-lowest rounded-2xl p-5 flex items-center justify-between group cursor-pointer hover:shadow-sm transition-shadow"
+          onclick="window.location='/mytasks'">
+          <div class="flex items-center gap-4">
+            <div class="w-10 h-10 ${getTaskIconBg(task.priority)} rounded-full flex items-center justify-center">
+              <span class="material-symbols-outlined text-xl ${getTaskIconFg(task.priority)}" style="font-variation-settings: 'FILL' 1;">
+                ${getTaskIcon(task.task_type)}
+              </span>
+            </div>
+            <div>
+              <h3 class="font-medium text-lg">${escapeHtml(task.title)}</h3>
+              <p class="text-sm text-on-surface-variant">
+                ${capitalize(task.priority)} Priority${task.overdue ? ' • Overdue' : ''}${task.field_name ? ' • ' + escapeHtml(task.field_name) : ''}
+              </p>
+            </div>
+          </div>
+          <span class="material-symbols-outlined text-outline group-hover:text-primary">chevron_right</span>
+        </div>
+      `).join('') + `
+        <button onclick="window.location='/mytasks'" class="text-primary font-medium text-sm flex items-center gap-1">
+          View All <span class="material-symbols-outlined text-sm">arrow_forward</span>
+        </button>`;
+    }
+
+    // ── Crop Health Status ─────────────────────────────────────────────────────
+    function renderCropHealth(data, crops) {
+      const cc        = data.crop_condition || {};
+      const healthy   = cc.healthy || 0;
+      const attention = (cc.warning || 0) + (cc.at_risk || 0);
+
+      setText('crop-health-healthy',   `${healthy} Healthy`);
+      setText('crop-health-attention', `${attention} Attention`);
+
+      const container = document.getElementById('crop-cards-list');
+
+      if (!crops.length) {
+        container.innerHTML = `
+          <div class="col-span-2 text-center text-on-surface-variant text-sm py-4">No active crops.</div>`;
+        return;
+      }
+
+      container.innerHTML = crops.map(crop => {
+        const pct       = calculateGrowthProgress(crop.planting_date, crop.growth_stage);
+        const isHealthy = (crop.health_status || 'healthy').toLowerCase() === 'healthy';
+        const label     = crop.name + (crop.field?.name ? ` (${crop.field.name})` : '');
+        return `
+          <div class="bg-white/50 p-4 rounded-2xl flex flex-col items-center gap-3">
+           <div class="bg-whit/50 w-full  flex  justify-between "> 
+            <span class="material-symbols-outlined ${isHealthy ? 'text-primary' : 'text-error'}"
+              style="font-variation-settings: 'FILL' 1;">${isHealthy ? 'eco' : 'warning'}</span>
+              <span class=" ${isHealthy ? 'text-primary' : 'text-error'} font-bold">${pct}%</span>
+              </div>
+            <span class="text-sm font-medium">${escapeHtml(label)}</span>
+            
+          </div>`;
+      }).join('');
+    }
+
+    // ── Soil Conditions ────────────────────────────────────────────────────────
+    function renderSoilConditions(data) {
+      const soil = data.soil_condition || {};
+
+      const moisture = soil.avg_moisture ?? 0;
+      setText('soil-moisture-label', getSoilMoistureLabel(moisture));
+      setWidth('soil-moisture-gauge', moisture);
+
+      const heat = soil.avg_heat ?? 0;
+      setText('soil-heat-label', getSoilHeatLabel(heat));
+      setWidth('soil-heat-gauge', heat);
+    }
+
+    // ── Helpers ────────────────────────────────────────────────────────────────
+    function setText(id, text) {
+      const el = document.getElementById(id);
+      if (el) el.textContent = text;
+    }
+
+    function setAttr(id, attr, value) {
+      const el = document.getElementById(id);
+      if (el) el.setAttribute(attr, value);
+    }
+
+    function setWidth(id, pct) {
+      const el = document.getElementById(id);
+      if (el) el.style.width = `${clamp(pct, 0, 100)}%`;
+    }
+
+    function clamp(val, min, max) {
+      return Math.min(Math.max(Number(val) || 0, min), max);
+    }
+
+    function capitalize(s) {
+      s = String(s || '');
+      return s.charAt(0).toUpperCase() + s.slice(1);
+    }
+
+    function escapeHtml(s) {
+      return String(s ?? '')
+        .replace(/&/g, '&amp;').replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
+    }
+
+    function getWeatherIcon(condition) {
+      const map = {
+        sunny: 'sunny', clear: 'sunny',
+        cloudy: 'partly_cloudy_day', 'partly cloudy': 'partly_cloudy_day',
+        rainy: 'rainy', rain: 'rainy',
+        thunderstorm: 'thunderstorm',
+        snow: 'weather_snowy',
+        windy: 'air',
+      };
+      return map[(condition || '').toLowerCase()] || 'partly_cloudy_day';
+    }
+
+    function getTaskIcon(type) {
+      return {
+        irrigation: 'water_drop', spraying: 'science', inspection: 'monitoring',
+        harvesting: 'agriculture', fertilizing: 'eco', maintenance: 'build',
+        planning: 'event_note', monitoring: 'monitoring',
+      }[String(type || '').toLowerCase()] || 'assignment';
+    }
+
+    function getTaskIconBg(priority) {
+      return (priority === 'critical' || priority === 'high')
+        ? 'bg-error-container'
+        : 'bg-secondary-fixed';
+    }
+
+    function getTaskIconFg(priority) {
+      return (priority === 'critical' || priority === 'high')
+        ? 'text-on-error-container'
+        : 'text-primary';
+    }
+
+    function getSoilMoistureLabel(pct) {
+      if (pct < 30) return 'Low';
+      if (pct > 70) return 'High';
+      return 'Optimal';
+    }
+
+    function getSoilHeatLabel(pct) {
+      if (pct < 30) return 'Cool';
+      if (pct > 60) return 'Hot';
+      return 'Warm';
+    }
+
+    function calculateGrowthProgress(plantingDate, stage) {
+      if (!plantingDate) return 0;
+      const daysElapsed = 30; // matches crops.html logic
+      if (daysElapsed <= 0) return 0;
+      return Math.min(Math.round((daysElapsed / 120) * 100), 100);
+    }
+  </script>
+
+</body>
+</html>

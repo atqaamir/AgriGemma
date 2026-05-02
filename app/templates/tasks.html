@@ -3,147 +3,112 @@
 <head>
   <meta charset="utf-8"/>
   <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-  <title>Terra Firma - Tasks</title>
-  {% include "_head_imports.html" %}
-
-  <script>
-    (function () {
-      const theme = localStorage.getItem('theme') || 'light';
-      if (theme === 'dark') document.documentElement.classList.add('dark');
-    })();
-  </script>
-
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script>
+  <title>Tasks</title>
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;700;800&family=Work_Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="/static/css/dashboard.css"/>
+  <script id="tailwind-config">
     tailwind.config = {
       darkMode: "class",
       theme: {
         extend: {
           colors: {
-            surface: "#fcf9f0",
-            "surface-container-lowest": "#ffffff",
-            "surface-container-low": "#f7f3ea",
-            "surface-container": "#f1eee5",
+            "surface": "#fcf9f0",
+            "secondary-fixed": "#d5e9c1",
+            "on-error-container": "#93000a",
+            "inverse-primary": "#bbccaa",
+            "on-tertiary-fixed": "#1e1c12",
+            "tertiary-fixed-dim": "#ccc6b6",
             "surface-container-high": "#ebe8df",
-            "surface-container-highest": "#e5e2da",
-            "surface-variant": "#e5e2da",
+            "primary": "#47573b",
+            "on-secondary-fixed-variant": "#3b4b2e",
+            "secondary-fixed-dim": "#bacda7",
             "surface-dim": "#dddad1",
-            "surface-bright": "#fcf9f0",
-            "on-surface": "#1c1c17",
-            "on-surface-variant": "#444840",
-            "inverse-surface": "#31312b",
+            "surface-variant": "#e5e2da",
+            "on-secondary-fixed": "#111f07",
+            "surface-container-highest": "#e5e2da",
+            "on-tertiary-container": "#f1ebda",
+            "on-secondary-container": "#586a4a",
             "inverse-on-surface": "#f4f1e8",
-            primary: "#47573b",
+            "on-primary": "#ffffff",
+            "on-primary-fixed": "#121f09",
+            "on-primary-container": "#dff1cd",
+            "secondary-container": "#d5e9c1",
+            "background": "#fcf9f0",
+            "on-surface": "#1c1c17",
+            "outline": "#75786f",
+            "error": "#ba1a1a",
+            "on-error": "#ffffff",
             "primary-container": "#5f6f52",
+            "tertiary-container": "#6e6a5d",
+            "surface-container-low": "#f7f3ea",
+            "tertiary": "#555246",
+            "on-surface-variant": "#444840",
+            "error-container": "#ffdad6",
+            "on-tertiary-fixed-variant": "#4a473b",
             "primary-fixed": "#d6e8c5",
             "primary-fixed-dim": "#bbccaa",
-            "on-primary": "#ffffff",
-            "on-primary-container": "#dff1cd",
-            "on-primary-fixed": "#121f09",
             "on-primary-fixed-variant": "#3c4b31",
-            "inverse-primary": "#bbccaa",
-            secondary: "#536344",
-            "secondary-container": "#d5e9c1",
-            "secondary-fixed": "#d5e9c1",
-            "secondary-fixed-dim": "#bacda7",
-            "on-secondary": "#ffffff",
-            "on-secondary-container": "#586a4a",
-            "on-secondary-fixed": "#111f07",
-            "on-secondary-fixed-variant": "#3b4b2e",
-            tertiary: "#555246",
-            "tertiary-container": "#6e6a5d",
             "tertiary-fixed": "#e8e2d2",
-            "tertiary-fixed-dim": "#ccc6b6",
+            "inverse-surface": "#31312b",
+            "surface-bright": "#fcf9f0",
+            "surface-container-lowest": "#ffffff",
+            "secondary": "#536344",
+            "surface-container": "#f1eee5",
+            "on-secondary": "#ffffff",
             "on-tertiary": "#ffffff",
-            "on-tertiary-container": "#f1ebda",
-            "on-tertiary-fixed": "#1e1c12",
-            "on-tertiary-fixed-variant": "#4a473b",
-            background: "#fcf9f0",
-            "on-background": "#1c1c17",
-            outline: "#75786f",
-            "outline-variant": "#c5c8bd",
-            error: "#ba1a1a",
-            "error-container": "#ffdad6",
-            "on-error": "#ffffff",
-            "on-error-container": "#93000a",
             "surface-tint": "#536347",
+            "outline-variant": "#c5c8bd",
+            "on-background": "#1c1c17"
           },
-          borderRadius: { DEFAULT: "0.25rem", lg: "0.5rem", xl: "1.5rem", full: "9999px" },
-          fontFamily: { headline: ["Manrope"], body: ["Work Sans"], label: ["Work Sans"] }
-        }
-      }
-    };
+          borderRadius: {
+            "DEFAULT": "0.25rem",
+            "lg": "0.5rem",
+            "xl": "0.75rem",
+            "full": "9999px"
+          },
+          fontFamily: {
+            "headline": ["Manrope"],
+            "body": ["Work Sans"],
+            "label": ["Work Sans"]
+          }
+        },
+      },
+    }
   </script>
-
-  <style>
-    .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
-    body { font-family: 'Work Sans', sans-serif; }
-    h1, h2, h3, h4 { font-family: 'Manrope', sans-serif; }
-    .no-scrollbar::-webkit-scrollbar { display: none; }
-    .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-    #notif-dropdown { transform-origin: top right; transition: opacity 0.15s, transform 0.15s; }
-    #notif-dropdown.hidden { opacity: 0; transform: scale(0.95); pointer-events: none; }
-    #notif-dropdown:not(.hidden) { opacity: 1; transform: scale(1); }
-    #critical-alert { transition: opacity 0.25s, transform 0.25s; }
-    #critical-alert.entering { opacity: 0; transform: translateY(-12px); }
-    .ntab { color: #75786f; }
-    .ntab-active { background: #f1eee5; color: #47573b; }
-    .dark .ntab-active { background: #2a2a24; color: #d5e9c1; }
-  </style>
 </head>
 
-<body class="bg-surface text-on-surface min-h-screen pb-32">
-  {% include "_header.html" %}
-
-  <div id="notif-backdrop" class="fixed inset-0 z-[55] hidden" onclick="closeNotifDropdown()"></div>
-
-  <!-- Critical alert popup -->
-  <div id="critical-alert" class="hidden fixed top-20 left-1/2 -translate-x-1/2 z-[80] w-full max-w-sm px-4">
-    <div class="bg-error-container border border-error/30 rounded-2xl p-4 shadow-2xl flex gap-3 items-start">
-      <span class="material-symbols-outlined text-error flex-shrink-0 mt-0.5" style="font-size:22px; font-variation-settings:'FILL' 1;">crisis_alert</span>
-      <div class="flex-1 min-w-0">
-        <p class="font-bold text-error text-sm" id="critical-alert-title">Critical Alert</p>
-        <p class="text-on-error-container text-xs mt-0.5 leading-relaxed" id="critical-alert-msg"></p>
-      </div>
-      <div class="flex flex-col items-end gap-1.5 flex-shrink-0">
-        <button onclick="dismissCriticalAlert()" class="p-1 hover:bg-error/10 rounded-full transition-colors">
-          <span class="material-symbols-outlined text-error" style="font-size:16px;">close</span>
-        </button>
-        <button onclick="openCriticalDetail()" id="critical-alert-detail-btn"
-          class="hidden text-[10px] font-bold text-error underline whitespace-nowrap">View detail</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- Notification detail modal -->
-  <div id="detail-modal" class="hidden fixed inset-0 bg-black/50 z-[70] flex items-center justify-center p-4" onclick="closeDetailModal()">
-    <div class="bg-surface rounded-2xl w-full max-w-md shadow-2xl" onclick="event.stopPropagation()">
-      <div class="flex items-center gap-3 p-5 border-b border-surface-variant">
-        <span id="detail-modal-icon" class="material-symbols-outlined" style="font-size:24px; font-variation-settings:'FILL' 1;"></span>
-        <h3 id="detail-modal-title" class="font-bold text-on-surface text-base flex-1"></h3>
-        <button onclick="closeDetailModal()" class="p-1.5 hover:bg-surface-container rounded-full transition-colors">
-          <span class="material-symbols-outlined text-on-surface-variant">close</span>
-        </button>
-      </div>
-      <div class="p-5 space-y-3">
-        <p id="detail-modal-message" class="text-sm font-medium text-on-surface leading-relaxed"></p>
-        <div id="detail-modal-detail-wrap" class="bg-surface-container rounded-xl p-4 hidden">
-          <p class="text-[10px] uppercase tracking-widest text-on-surface-variant mb-2">AI Explanation</p>
-          <p id="detail-modal-detail" class="text-sm text-on-surface leading-relaxed"></p>
-        </div>
-      </div>
-    </div>
-  </div>
+   {% include "_header.html" %}
 
   <!-- Main content -->
-  <main class="pt-4 px-6 max-w-screen-xl mx-auto">
-
-    <section class="mb-8">
-      <h1 class="text-4xl font-medium tracking-tight mb-2">My Tasks</h1>
-      <p class="text-on-surface-variant font-body">Track and manage all farm activities and schedules.</p>
-    </section>
+  <main class="pt-4 px-6 pb-40 max-w-screen-xl mx-auto">
 
     <div class="space-y-4">
+
+      <!-- Climate Insights Hero Section -->
+      <section class="relative overflow-hidden rounded-xl bg-primary-container text-on-primary-container p-8 min-h-[320px] flex flex-col justify-end group">
+        <div class="absolute inset-0 z-0">
+          <img alt="Dry field forecast" class="w-full h-full object-cover opacity-40 mix-blend-overlay group-hover:scale-105 transition-transform duration-700" data-alt="expansive golden wheat field under a vast, cloudless hazy sky during an afternoon dry spell with warm orange tones" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAPwNodAhEPdvtyZ3zTMsZGgAaoVQRlKTsfKqrMYcPJCrbPN9sXbbRu_pjbZ_UTS4LIYu9eCJaNCsbL2RihKK07CANITE4wQeKOA9ZXOKPXjpAX_Gm8BsDwzRRLn7Mji1vnfQ7xPejL8TRQCetgVHP6-R6G5_2G_2ZeZ-GnDOtDmO_NWp7DEjL4b_R8j3OAf7z4uNvEj9bVA38G-0nd8NnIWXQJkPUAd7MHUlc0CFJlwJ1SMZPwLxxbbVWdmEK6JrHfws4X-Xov4A"/>
+          <div class="absolute inset-0 bg-gradient-to-t from-primary/90 via-primary/40 to-transparent"></div>
+        </div>
+        <div class="relative z-10 space-y-4">
+          <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-secondary-fixed text-on-secondary-fixed text-[11px] font-bold uppercase tracking-widest">
+            <span class="material-symbols-outlined text-sm" style="font-variation-settings: 'FILL' 1;">warning</span> Critical Alert
+          </div>
+          <h2 class="text-4xl font-extrabold leading-tight tracking-tight">Extended Dry Spell Forecast</h2>
+          <p class="text-lg opacity-90 max-w-xl font-body">Data indicates 14 days of zero precipitation and 35°C peaks. Immediate irrigation adjustments required for the North and East quadrants.</p>
+          <div class="flex gap-4 pt-4">
+            <button class="bg-secondary-fixed text-on-secondary-fixed px-8 py-3 rounded-full font-bold text-sm flex items-center gap-2 hover:opacity-90 active:scale-95 transition-all">
+              <span class="material-symbols-outlined">water_drop</span>
+              ADJUST IRRIGATION
+            </button>
+            <button class="bg-surface/20 backdrop-blur-md text-white border border-white/20 px-8 py-3 rounded-full font-bold text-sm hover:bg-surface/30 transition-all">
+              VIEW DATA
+            </button>
+          </div>
+        </div>
+      </section>
 
       <!-- Section header -->
       <div class="flex justify-between items-center px-2">
@@ -168,13 +133,18 @@
       </div>
 
       <!-- Pending tasks horizontal scroll -->
-      <div id="tasks-pending-container" class="flex overflow-x-auto gap-4 pb-4 no-scrollbar px-2 -mx-2">
+      <div id="tasks-pending-container" class="flex overflow-x-auto gap-4 pb-4 no-scrollbar pl-2 pr-6">
         <div class="flex-none w-[200px] h-56 bg-surface-container-low rounded-[24px] flex items-center justify-center">
           <span class="text-on-surface-variant text-sm">Loading tasks...</span>
         </div>
       </div>
 
-      <!-- View all toggle button -->
+      <!-- All tasks horizontal scroll (hidden initially, same layout as pending) -->
+      <div id="tasks-all-wrap" class="hidden">
+        <div id="tasks-all-container" class="flex overflow-x-auto gap-4 pb-4 no-scrollbar pl-2 pr-6"></div>
+      </div>
+
+      <!-- Toggle button — always below the cards -->
       <div class="flex justify-center">
         <button id="tasks-view-toggle-btn" onclick="viewAllTasks()"
           class="flex items-center gap-2 px-6 py-2.5 rounded-full border border-outline-variant text-primary font-bold text-xs hover:bg-surface-variant transition-colors active:scale-95">
@@ -183,21 +153,20 @@
         </button>
       </div>
 
-      <!-- All tasks grid (hidden initially) -->
-      <div id="tasks-all-wrap" class="hidden space-y-4">
-        <div id="tasks-all-container" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4"></div>
-        <div id="pagination-wrap" class="hidden flex justify-center items-center gap-3 pt-2">
-          <button id="prev-btn" onclick="changePage(-1)"
-            class="px-4 py-2 rounded-xl border border-outline-variant text-sm font-bold text-on-surface-variant hover:bg-surface-container disabled:opacity-40 transition-colors">
-            ← Prev
-          </button>
-          <span id="page-indicator" class="text-sm text-on-surface-variant font-medium"></span>
-          <button id="next-btn" onclick="changePage(1)"
-            class="px-4 py-2 rounded-xl border border-outline-variant text-sm font-bold text-on-surface-variant hover:bg-surface-container disabled:opacity-40 transition-colors">
-            Next →
-          </button>
+      <section class="grid grid-cols-1 md:grid-cols-2 gap-8">
+        <div class="bg-[#e5e2da] rounded-xl p-8 flex flex-col justify-between group overflow-hidden relative">
+          <div class="relative z-10 space-y-4">
+            <h3 class="text-xl font-bold text-on-surface">Upcoming Harvest</h3>
+            <p class="text-sm text-on-surface-variant font-medium">Predicted window: Oct 12 - Oct 15</p>
+            <button class="mt-4 text-primary font-bold inline-flex items-center gap-2 group-hover:translate-x-1 transition-transform">
+              Detailed Schedule <span class="material-symbols-outlined">chevron_right</span>
+            </button>
+          </div>
+            <div class="absolute -right-4 -bottom-4 opacity-10 group-hover:scale-110 transition-transform">
+            <span class="material-symbols-outlined text-[120px]">eco</span>
+            </div>
         </div>
-      </div>
+      </section>
 
     </div>
   </main>
@@ -510,7 +479,7 @@
   </div>
 
   <!-- FAB: Create Task -->
-  <button onclick="openCreateTaskModal()"
+  <button id="main-fab" onclick="openCreateTaskModal()"
     class="fixed bottom-28 right-6 w-16 h-16 bg-[#5F6F52] rounded-full shadow-2xl flex items-center justify-center text-white active:scale-90 transition-transform z-40 hover:shadow-xl">
     <span class="material-symbols-outlined text-3xl" style="font-variation-settings:'wght' 600;">add</span>
   </button>
@@ -653,27 +622,8 @@
 
     function renderFilteredAllTasks() {
       const tasks = getFilteredSortedTasks(cachedAllTasks || []);
-      allTasksTotalPages = Math.max(1, Math.ceil(tasks.length / ALL_TASKS_PER_PAGE));
-      if (allTasksPage > allTasksTotalPages) allTasksPage = 1;
-
-      const start = (allTasksPage - 1) * ALL_TASKS_PER_PAGE;
-      renderAllTasksGrid(tasks.slice(start, start + ALL_TASKS_PER_PAGE));
-
-      const showPag = allTasksTotalPages > 1;
-      document.getElementById('pagination-wrap').classList.toggle('hidden', !showPag);
-      if (showPag) {
-        document.getElementById('page-indicator').textContent = `Page ${allTasksPage} of ${allTasksTotalPages}`;
-        document.getElementById('prev-btn').disabled = allTasksPage <= 1;
-        document.getElementById('next-btn').disabled = allTasksPage >= allTasksTotalPages;
-      }
+      renderAllTasksScroll(tasks);
       updateSubtitle();
-    }
-
-    function changePage(delta) {
-      const next = allTasksPage + delta;
-      if (next < 1 || next > allTasksTotalPages) return;
-      allTasksPage = next;
-      renderFilteredAllTasks();
     }
 
     // ── Card rendering ─────────────────────────────────────────────────────────
@@ -709,7 +659,7 @@
             </button>
             <!-- Edit button -->
             <button onclick="openEditTaskModal(${task.id}, event)"
-              class="absolute top-2 left-9 bg-white/90 backdrop-blur rounded-full p-1.5 shadow-sm hover:bg-primary/10 transition-colors"
+              class="absolute top-2 left-10 bg-white/90 backdrop-blur rounded-full p-1.5 shadow-sm hover:bg-primary/10 transition-colors"
               title="Edit task">
               <span class="material-symbols-outlined text-primary" style="font-size:16px;">edit</span>
             </button>
@@ -734,7 +684,11 @@
                   <span class="material-symbols-outlined" style="font-size:16px;">check</span>
                 </button>
               ` : `
-                <span class="material-symbols-outlined text-primary" style="font-size:20px; font-variation-settings:'FILL' 1;">check_circle</span>
+                <button onclick="markTaskPending(${task.id}, event)"
+                  class="h-8 w-8 rounded-full flex items-center justify-center hover:opacity-70 transition-opacity active:scale-90"
+                  title="Mark pending">
+                  <span class="material-symbols-outlined text-primary" style="font-size:20px; font-variation-settings:'FILL' 1;">check_circle</span>
+                </button>
               `}
             </div>
           </div>
@@ -742,22 +696,24 @@
       `;
     }
 
+    const SCROLL_SPACER = '<div class="flex-none w-6 shrink-0" aria-hidden="true"></div>';
+
     function renderPendingCards(tasks) {
       const c = document.getElementById('tasks-pending-container');
       if (!tasks.length) {
         c.innerHTML = `<div class="flex-none w-full text-center text-on-surface-variant py-10">No tasks match your filters.</div>`;
         return;
       }
-      c.innerHTML = tasks.map(t => buildTaskCard(t, false)).join('');
+      c.innerHTML = tasks.map(t => buildTaskCard(t, false)).join('') + SCROLL_SPACER;
     }
 
-    function renderAllTasksGrid(tasks) {
+    function renderAllTasksScroll(tasks) {
       const c = document.getElementById('tasks-all-container');
       if (!tasks.length) {
-        c.innerHTML = `<div class="col-span-full text-center text-on-surface-variant py-10">No tasks match your filters.</div>`;
+        c.innerHTML = `<div class="flex-none w-full text-center text-on-surface-variant py-10">No tasks match your filters.</div>`;
         return;
       }
-      c.innerHTML = tasks.map(t => buildTaskCard(t, true)).join('');
+      c.innerHTML = tasks.map(t => buildTaskCard(t, false)).join('') + SCROLL_SPACER;
     }
 
     // ── View switching ─────────────────────────────────────────────────────────
@@ -829,7 +785,6 @@
           body: JSON.stringify({ completed: true }),
         });
         if (!res.ok) throw new Error('Failed');
-        const updated = await res.json();
         cachedPendingTasks = cachedPendingTasks.filter(t => t.id !== taskId);
         if (cachedAllTasks) {
           const idx = cachedAllTasks.findIndex(t => t.id === taskId);
@@ -840,10 +795,35 @@
       } catch (e) { console.error('markTaskDone:', e); }
     }
 
+    async function markTaskPending(taskId, event) {
+      event.stopPropagation();
+      try {
+        const res = await fetch(`${TASKS_API}/tasks/${taskId}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ completed: false }),
+        });
+        if (!res.ok) throw new Error('Failed');
+        const updated = await res.json();
+        if (cachedAllTasks) {
+          const idx = cachedAllTasks.findIndex(t => t.id === taskId);
+          if (idx !== -1) cachedAllTasks[idx] = { ...cachedAllTasks[idx], completed: false };
+        }
+        // Re-add to pending cache so it shows up if user switches back
+        if (!cachedPendingTasks.find(t => t.id === taskId)) {
+          cachedPendingTasks.push({ ...updated, completed: false });
+        }
+        if (isViewingAll) renderFilteredAllTasks();
+        else renderFilteredPendingTasks();
+      } catch (e) { console.error('markTaskPending:', e); }
+    }
+
     // ── Task Detail Modal ──────────────────────────────────────────────────────
     async function openTaskDetailModal(taskId) {
+      document.querySelector('nav').classList.add('hidden');
       document.getElementById('taskDetailModal').classList.remove('hidden');
       document.getElementById('taskDetailTitle').textContent = 'Loading...';
+      document.querySelector('nav').classList.add('hidden');
       try {
         const res = await fetch(`${TASKS_API}/tasks/${taskId}`);
         if (!res.ok) throw new Error('Not found');
@@ -853,6 +833,7 @@
 
     function closeTaskDetailModal() {
       document.getElementById('taskDetailModal').classList.add('hidden');
+      document.querySelector('nav').classList.remove('hidden');
     }
 
     function populateTaskDetailModal(task) {
@@ -885,12 +866,15 @@
     // ── Create Task Modal ──────────────────────────────────────────────────────
     function openCreateTaskModal() {
       document.getElementById('createTaskForm').reset();
+      document.querySelector('nav').classList.add('hidden');
       document.getElementById('createTaskError').classList.add('hidden');
       document.getElementById('createTaskModal').classList.remove('hidden');
+      
     }
 
     function closeCreateTaskModal() {
       document.getElementById('createTaskModal').classList.add('hidden');
+      document.querySelector('nav').classList.remove('hidden');
     }
 
     async function submitCreateTask(event) {
@@ -935,7 +919,9 @@
         if (!res.ok) throw new Error('Failed to fetch task');
         const task = await res.json();
         populateEditTaskModal(task);
+        document.querySelector('nav').classList.remove('hidden');
         document.getElementById('editTaskModal').classList.remove('hidden');
+        
       } catch (e) {
         console.error('openEditTaskModal:', e);
       }
@@ -954,6 +940,7 @@
 
     function closeEditTaskModal() {
       document.getElementById('editTaskModal').classList.add('hidden');
+      document.querySelector('nav').classList.remove('hidden');
     }
 
     async function submitEditTask(event) {
@@ -998,18 +985,18 @@
 
     // ── Filter Modal ───────────────────────────────────────────────────────────
     function openFilterModal() {
-      // Restore current filter state into form
       const form = document.getElementById('filterForm');
       form.status.value    = filterState.status;
       form.priority.value  = filterState.priority;
       form.task_type.value = filterState.task_type;
-      // Hide status filter in pending mode
       document.getElementById('filter-status-wrap').classList.toggle('hidden', !isViewingAll);
+      document.querySelector('nav').classList.add('hidden');
       document.getElementById('filterModal').classList.remove('hidden');
     }
 
     function closeFilterModal() {
       document.getElementById('filterModal').classList.add('hidden');
+      document.querySelector('nav').classList.remove('hidden');
     }
 
     function applyFilters(event) {
@@ -1034,11 +1021,13 @@
     function openSearchModal() {
       document.getElementById('searchForm').task_title.value = searchState;
       document.getElementById('searchError').classList.add('hidden');
+      document.querySelector('nav').classList.add('hidden');
       document.getElementById('searchModal').classList.remove('hidden');
     }
 
     function closeSearchModal() {
       document.getElementById('searchModal').classList.add('hidden');
+      document.querySelector('nav').classList.remove('hidden');
     }
 
     function performSearch(event) {
@@ -1059,11 +1048,13 @@
     function openSortModal() {
       document.getElementById('sortForm').sort_field.value = sortState.field;
       document.getElementById('sortForm').sort_order.value = sortState.order;
+      document.querySelector('nav').classList.add('hidden');
       document.getElementById('sortModal').classList.remove('hidden');
     }
 
     function closeSortModal() {
       document.getElementById('sortModal').classList.add('hidden');
+      document.querySelector('nav').classList.remove('hidden');
     }
 
     function applySorting(event) {

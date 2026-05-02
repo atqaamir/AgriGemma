@@ -1,102 +1,92 @@
 <!DOCTYPE html>
 
 <html lang="en">
+
   <head>
-    <meta charset="utf-8"/>
-    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
-    {% include "_head_imports.html" %}
-    <link rel="stylesheet" href="/static/css/crops.css"/>
-    <script>
-    // Initialize theme immediately to avoid flickering
-    (function() {
-      const theme = localStorage.getItem('theme') || 'light';
-      if (theme === 'dark') {
-        document.documentElement.classList.add('dark');
-      }
-    })();
-    </script>
-    <script id="tailwind-config">
-        tailwind.config = {
-          darkMode: "class",
-          theme: {
-            extend: {
-              "colors": {
-                      "surface": "#fcf9f0",
-                      "secondary-fixed": "#d5e9c1",
-                      "on-error-container": "#93000a",
-                      "inverse-primary": "#bbccaa",
-                      "on-tertiary-fixed": "#1e1c12",
-                      "tertiary-fixed-dim": "#ccc6b6",
-                      "surface-container-high": "#ebe8df",
-                      "primary": "#47573b",
-                      "on-secondary-fixed-variant": "#3b4b2e",
-                      "secondary-fixed-dim": "#bacda7",
-                      "surface-dim": "#dddad1",
-                      "surface-variant": "#e5e2da",
-                      "on-secondary-fixed": "#111f07",
-                      "surface-container-highest": "#e5e2da",
-                      "on-tertiary-container": "#f1ebda",
-                      "on-secondary-container": "#586a4a",
-                      "inverse-on-surface": "#f4f1e8",
-                      "on-primary": "#ffffff",
-                      "on-primary-fixed": "#121f09",
-                      "on-primary-container": "#dff1cd",
-                      "secondary-container": "#d5e9c1",
-                      "background": "#fcf9f0",
-                      "on-surface": "#1c1c17",
-                      "outline": "#75786f",
-                      "error": "#ba1a1a",
-                      "on-error": "#ffffff",
-                      "primary-container": "#5f6f52",
-                      "tertiary-container": "#6e6a5d",
-                      "surface-container-low": "#f7f3ea",
-                      "tertiary": "#555246",
-                      "on-surface-variant": "#444840",
-                      "error-container": "#ffdad6",
-                      "on-tertiary-fixed-variant": "#4a473b",
-                      "primary-fixed": "#d6e8c5",
-                      "primary-fixed-dim": "#bbccaa",
-                      "on-primary-fixed-variant": "#3c4b31",
-                      "tertiary-fixed": "#e8e2d2",
-                      "inverse-surface": "#31312b",
-                      "surface-bright": "#fcf9f0",
-                      "surface-container-lowest": "#ffffff",
-                      "secondary": "#536344",
-                      "surface-container": "#f1eee5",
-                      "on-secondary": "#ffffff",
-                      "on-tertiary": "#ffffff",
-                      "surface-tint": "#536347",
-                      "outline-variant": "#c5c8bd",
-                      "on-background": "#1c1c17"
-              },
-              "borderRadius": {
-                      "DEFAULT": "0.25rem",
-                      "lg": "0.5rem",
-                      "xl": "1.5rem",
-                      "full": "9999px"
-              },
-              "fontFamily": {
-                      "headline": ["Manrope"],
-                      "body": ["Work Sans"],
-                      "label": ["Work Sans"]
-              }
-            },
+  <meta charset="utf-8"/>
+  <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+  <title>Crops</title>
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;700;800&family=Work_Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="/static/css/dashboard.css"/>
+  <script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            "surface": "#fcf9f0",
+            "secondary-fixed": "#d5e9c1",
+            "on-error-container": "#93000a",
+            "inverse-primary": "#bbccaa",
+            "on-tertiary-fixed": "#1e1c12",
+            "tertiary-fixed-dim": "#ccc6b6",
+            "surface-container-high": "#ebe8df",
+            "primary": "#47573b",
+            "on-secondary-fixed-variant": "#3b4b2e",
+            "secondary-fixed-dim": "#bacda7",
+            "surface-dim": "#dddad1",
+            "surface-variant": "#e5e2da",
+            "on-secondary-fixed": "#111f07",
+            "surface-container-highest": "#e5e2da",
+            "on-tertiary-container": "#f1ebda",
+            "on-secondary-container": "#586a4a",
+            "inverse-on-surface": "#f4f1e8",
+            "on-primary": "#ffffff",
+            "on-primary-fixed": "#121f09",
+            "on-primary-container": "#dff1cd",
+            "secondary-container": "#d5e9c1",
+            "background": "#fcf9f0",
+            "on-surface": "#1c1c17",
+            "outline": "#75786f",
+            "error": "#ba1a1a",
+            "on-error": "#ffffff",
+            "primary-container": "#5f6f52",
+            "tertiary-container": "#6e6a5d",
+            "surface-container-low": "#f7f3ea",
+            "tertiary": "#555246",
+            "on-surface-variant": "#444840",
+            "error-container": "#ffdad6",
+            "on-tertiary-fixed-variant": "#4a473b",
+            "primary-fixed": "#d6e8c5",
+            "primary-fixed-dim": "#bbccaa",
+            "on-primary-fixed-variant": "#3c4b31",
+            "tertiary-fixed": "#e8e2d2",
+            "inverse-surface": "#31312b",
+            "surface-bright": "#fcf9f0",
+            "surface-container-lowest": "#ffffff",
+            "secondary": "#536344",
+            "surface-container": "#f1eee5",
+            "on-secondary": "#ffffff",
+            "on-tertiary": "#ffffff",
+            "surface-tint": "#536347",
+            "outline-variant": "#c5c8bd",
+            "on-background": "#1c1c17"
           },
-        }
-    </script>
-  </head>
+          borderRadius: {
+            "DEFAULT": "0.25rem",
+            "lg": "0.5rem",
+            "xl": "0.75rem",
+            "full": "9999px"
+          },
+          fontFamily: {
+            "headline": ["Manrope"],
+            "body": ["Work Sans"],
+            "label": ["Work Sans"]
+          }
+        },
+      },
+    }
+  </script>
+</head>
 
-
-<body class="bg-surface text-on-surface min-h-screen pb-32">
   {% include "_header.html" %}
 
-  <main class="pt-4 px-6 max-w-screen-xl mx-auto">
-    <section class="mb-8">
-      <h1 class="text-4xl font-medium tracking-tight mb-2">My Crops</h1>
-      <p class="text-on-surface-variant font-body">Real-time physiological monitoring and harvest estimations.</p>
-    </section>
+<body class="bg-surface text-on-surface min-h-screen pb-32">
+  <!-- Top Navigation -->
 
+  <main class="px-4 pt-4 space-y-8">
     <!-- Active Crops Section -->
     <div class="space-y-4">
       <div class="flex justify-between items-center px-2">
@@ -725,10 +715,13 @@
 
     function getCropImage(cropType) {
       const imageMap = {
-        Corn: '/static/images/Corn.jpg',
+        Maize: '/static/images/Maize.jpg',
         Wheat: '/static/images/Wheat.jpg',
         Soybeans: '/static/images/Soybeans.jpg',
-        Sunflower: '/static/images/Sunflower.jpg'
+        Sunflower: '/static/images/Sunflower.jpg',
+        Rice: '/static/images/Rice.jpg',
+        Cotton: '/static/images/Cotton.jpg'
+
       };
       return imageMap[cropType] || '/static/images/field_default.jpg';
     }

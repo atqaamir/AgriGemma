@@ -5,12 +5,14 @@
     show_search  boolean  default True   — show the search button
     page_title   string   default "Climate Adaptation Planner"
 #}
-<header class="bg-[#fcf9f0] dark:bg-[#1c1c17] flex justify-between items-center w-full px-6 py-4 sticky top-0 z-50 border-b border-outline-variant/20">
+<header class="bg-[#fcf9f0] dark:bg-[#1c1c17] flex justify-between items-center w-full px-6 py-4 sticky top-0 z-50 border-b border-outline-variant/40">
   <div class="flex items-center gap-3">
-    <span class="material-symbols-outlined text-[#47573b] dark:text-[#d5e9c1]" style="font-size:28px; font-variation-settings:'FILL' 1;">agriculture</span>
-    <h1 class="text-2xl font-semibold text-[#47573b] dark:text-[#d5e9c1] font-['Manrope'] tracking-tight">
-      {{ page_title if page_title is defined else "Climate Adaptation Planner" }}
-    </h1>
+    <button id="drawerToggleBtn"
+      class="hover:bg-[#f1eee5] dark:hover:bg-[#2a2a24] transition-colors p-2 rounded-full active:scale-95 duration-150"
+      aria-label="Open navigation menu">
+      <span class="material-symbols-outlined text-[#47573b] dark:text-[#d5e9c1]">menu</span>
+    </button>
+    <span class="font-['Manrope'] font-bold text-[#47573b] dark:text-[#d5e9c1] text-lg tracking-tight">AgriGemma</span>
   </div>
   <div class="flex gap-1 items-center">
     {% include "notification_ui.html" %}
@@ -26,3 +28,209 @@
     {% endif %}
   </div>
 </header>
+
+<!-- ── Side Drawer Overlay ───────────────────────────────────────────────────── -->
+<div id="drawerOverlay"
+  style="display:none; position:fixed; inset:0; background:rgba(28,28,23,0.45); z-index:200; backdrop-filter:blur(2px);"
+  aria-hidden="true">
+</div>
+
+<!-- ── Side Drawer ───────────────────────────────────────────────────────────── -->
+<nav id="sideDrawer"
+  style="position:fixed; top:0; left:0; height:100%; width:280px; z-index:201;
+         background:#fcf9f0; border-right:1px solid #e8e5dc;
+         transform:translateX(-100%); transition:transform 0.25s cubic-bezier(0.22,0.68,0,1.1);
+         display:flex; flex-direction:column; overflow:hidden;"
+  aria-label="Main navigation">
+
+  <!-- Drawer header -->
+  <div style="display:flex; align-items:center; justify-content:space-between;
+              padding:18px 20px 16px; border-bottom:1px solid #e8e5dc; flex-shrink:0;">
+    <span style="font-family:'Manrope',sans-serif; font-weight:800; font-size:18px;
+                 color:#47573b; letter-spacing:-0.3px;">AgriGemma</span>
+    <button id="drawerCloseBtn"
+      style="background:none; border:none; cursor:pointer; padding:6px; border-radius:50%;
+             display:flex; align-items:center; justify-content:center; color:#47573b;
+             transition:background-color 0.15s;"
+      onmouseover="this.style.backgroundColor='#f1eee5'"
+      onmouseout="this.style.backgroundColor='transparent'"
+      aria-label="Close navigation menu">
+      <span class="material-symbols-outlined">close</span>
+    </button>
+  </div>
+
+  <!-- Nav items -->
+  <div style="flex:1; overflow-y:auto; padding:12px 10px;" id="drawerNavList">
+    <!-- items injected by JS to handle active state -->
+  </div>
+
+  <!-- Drawer footer -->
+  <div style="padding:16px 20px; border-top:1px solid #e8e5dc; flex-shrink:0;">
+    <span style="font-size:11px; color:#9e9e8e; font-family:'Work Sans',sans-serif;">
+      Climate Adaptation Planner
+    </span>
+  </div>
+</nav>
+
+<!-- Dark-mode drawer styles injected once -->
+<style>
+  .dark #sideDrawer {
+    background: #1e1e18 !important;
+    border-right-color: #3a3a30 !important;
+  }
+  .dark #sideDrawer > div:first-child,
+  .dark #sideDrawer > div:last-child {
+    border-color: #3a3a30 !important;
+  }
+  .dark #sideDrawer > div:first-child span {
+    color: #d5e9c1 !important;
+  }
+  .dark #sideDrawer > div:first-child button {
+    color: #d5e9c1 !important;
+  }
+  .dark #sideDrawer > div:first-child button:hover {
+    background-color: #2a2a24 !important;
+  }
+  .dark #sideDrawer > div:last-child span {
+    color: #5a5e54 !important;
+  }
+
+  .drawer-nav-item {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 11px 14px;
+    border-radius: 12px;
+    text-decoration: none;
+    font-family: 'Work Sans', sans-serif;
+    font-size: 15px;
+    font-weight: 500;
+    color: #444840;
+    transition: background-color 0.15s, color 0.15s;
+    margin-bottom: 2px;
+  }
+
+  .drawer-nav-item:hover {
+    background-color: #f1eee5;
+    color: #1c1c17;
+  }
+
+  .drawer-nav-item.active {
+    background-color: #d6e8c5;
+    color: #47573b;
+    font-weight: 700;
+  }
+
+  .drawer-nav-item .drawer-nav-icon {
+    font-size: 22px;
+    flex-shrink: 0;
+    color: #5a5e54;
+    transition: color 0.15s;
+  }
+
+  .drawer-nav-item:hover .drawer-nav-icon,
+  .drawer-nav-item.active .drawer-nav-icon {
+    color: #47573b;
+  }
+
+  .dark .drawer-nav-item {
+    color: #9e9e8e;
+  }
+
+  .dark .drawer-nav-item:hover {
+    background-color: #2a2a24;
+    color: #e5e2da;
+  }
+
+  .dark .drawer-nav-item.active {
+    background-color: #3a4a2e;
+    color: #d5e9c1;
+  }
+
+  .dark .drawer-nav-item .drawer-nav-icon {
+    color: #6e7268;
+  }
+
+  .dark .drawer-nav-item:hover .drawer-nav-icon,
+  .dark .drawer-nav-item.active .drawer-nav-icon {
+    color: #d5e9c1;
+  }
+
+  #sideDrawer.open {
+    transform: translateX(0) !important;
+  }
+</style>
+
+<script>
+(function () {
+  if (window.__drawerLoaded) return;
+  window.__drawerLoaded = true;
+
+  const NAV_ITEMS = [
+    { label: 'Dashboard',     href: '/',                   icon: 'dashboard'          },
+    { label: 'Crops',         href: '/mycrops',            icon: 'eco'                },
+    { label: 'Fields',        href: '/myfields',           icon: 'landscape'          },
+    { label: 'Tasks',         href: '/mytasks',            icon: 'assignment_turned_in'},
+    { label: 'Chat',          href: '/chatbot',            icon: 'chat'               },
+    { label: 'Notifications', href: '/notifications/page', icon: 'notifications'      },
+  ];
+
+  function buildNav() {
+    const list    = document.getElementById('drawerNavList');
+    if (!list) return;
+    const current = window.location.pathname.replace(/\/$/, '') || '/';
+
+    list.innerHTML = NAV_ITEMS.map(item => {
+      const itemPath = item.href.replace(/\/$/, '') || '/';
+      const isActive = current === itemPath;
+      return `
+        <a href="${item.href}" class="drawer-nav-item${isActive ? ' active' : ''}">
+          <span class="material-symbols-outlined drawer-nav-icon"
+                style="font-variation-settings:'FILL' ${isActive ? 1 : 0},'wght' 400,'GRAD' 0,'opsz' 24;">
+            ${item.icon}
+          </span>
+          ${item.label}
+        </a>`;
+    }).join('');
+  }
+
+  function openDrawer() {
+    document.getElementById('sideDrawer').classList.add('open');
+    const ov = document.getElementById('drawerOverlay');
+    ov.style.display = 'block';
+    requestAnimationFrame(() => { ov.style.opacity = '1'; });
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closeDrawer() {
+    document.getElementById('sideDrawer').classList.remove('open');
+    const ov = document.getElementById('drawerOverlay');
+    ov.style.opacity = '0';
+    setTimeout(() => { ov.style.display = 'none'; }, 200);
+    document.body.style.overflow = '';
+  }
+
+  function init() {
+    buildNav();
+
+    const toggleBtn = document.getElementById('drawerToggleBtn');
+    const closeBtn  = document.getElementById('drawerCloseBtn');
+    const overlay   = document.getElementById('drawerOverlay');
+
+    if (toggleBtn) toggleBtn.addEventListener('click', openDrawer);
+    if (closeBtn)  closeBtn.addEventListener('click', closeDrawer);
+    if (overlay)   overlay.addEventListener('click', closeDrawer);
+
+    // Close on Escape
+    document.addEventListener('keydown', e => {
+      if (e.key === 'Escape') closeDrawer();
+    });
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
+})();
+</script>
