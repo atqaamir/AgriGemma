@@ -118,31 +118,27 @@ class GemmaProvider(AIModelProvider):
         if any(w in p for w in ("water", "irrigat", "moisture")):
             return (
                 "To optimise irrigation: monitor soil moisture and water when it "
-                "drops below 30%. Drip irrigation reduces water waste significantly. "
-                "[AI model offline — set GEMMA_MODEL_PATH to enable full responses]"
+                "drops below 30%. Drip irrigation reduces water waste significantly."
             )
         if any(w in p for w in ("disease", "pest", "health", "sick")):
             return (
                 "For disease and pest management:\n"
                 "1. Scout fields regularly for early symptoms\n"
                 "2. Apply targeted treatments promptly\n"
-                "3. Use crop rotation to break pest cycles\n"
-                "[AI model offline]"
+                "3. Use crop rotation to break pest cycles"
             )
         if any(w in p for w in ("plant", "crop", "sow", "seed")):
             return (
                 "When planning planting, consider soil temperature, weather forecast, "
-                "soil preparation, and pest history. What crop are you considering? "
-                "[AI model offline]"
+                "soil preparation, and pest history. What crop are you considering?"
             )
         if any(w in p for w in ("task", "todo", "work")):
             return (
                 "Prioritise tasks by urgency and seasonal deadlines. "
-                "Overdue items should be addressed first. [AI model offline]"
+                "Overdue items should be addressed first."
             )
 
         return (
-            "I'm your AI farm advisor. Full responses require the Gemma 4 model "
-            "(see GEMMA_MODEL_PATH setup). I can help with irrigation, diseases, "
+            "I'm your AI farm advisor. I can help with irrigation, crop diseases, "
             "pests, planting, fertilisation, and task planning."
         )

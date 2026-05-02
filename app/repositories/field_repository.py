@@ -51,3 +51,10 @@ class FieldRepository:
             setattr(field, key, value)
         db.session.commit()
         return field
+
+    @staticmethod
+    def get_by_user_id(user_id):
+        return Field.query.options(
+            subqueryload(Field.crops),
+            subqueryload(Field.tasks),
+        ).filter_by(user_id=user_id).all()

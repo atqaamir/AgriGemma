@@ -1,102 +1,92 @@
 <!DOCTYPE html>
 
 <html lang="en">
+
   <head>
-    <meta charset="utf-8"/>
-    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
-    {% include "_head_imports.html" %}
-    <link rel="stylesheet" href="/static/css/crops.css"/>
-    <script>
-    // Initialize theme immediately to avoid flickering
-    (function() {
-      const theme = localStorage.getItem('theme') || 'light';
-      if (theme === 'dark') {
-        document.documentElement.classList.add('dark');
-      }
-    })();
-    </script>
-    <script id="tailwind-config">
-        tailwind.config = {
-          darkMode: "class",
-          theme: {
-            extend: {
-              "colors": {
-                      "surface": "#fcf9f0",
-                      "secondary-fixed": "#d5e9c1",
-                      "on-error-container": "#93000a",
-                      "inverse-primary": "#bbccaa",
-                      "on-tertiary-fixed": "#1e1c12",
-                      "tertiary-fixed-dim": "#ccc6b6",
-                      "surface-container-high": "#ebe8df",
-                      "primary": "#47573b",
-                      "on-secondary-fixed-variant": "#3b4b2e",
-                      "secondary-fixed-dim": "#bacda7",
-                      "surface-dim": "#dddad1",
-                      "surface-variant": "#e5e2da",
-                      "on-secondary-fixed": "#111f07",
-                      "surface-container-highest": "#e5e2da",
-                      "on-tertiary-container": "#f1ebda",
-                      "on-secondary-container": "#586a4a",
-                      "inverse-on-surface": "#f4f1e8",
-                      "on-primary": "#ffffff",
-                      "on-primary-fixed": "#121f09",
-                      "on-primary-container": "#dff1cd",
-                      "secondary-container": "#d5e9c1",
-                      "background": "#fcf9f0",
-                      "on-surface": "#1c1c17",
-                      "outline": "#75786f",
-                      "error": "#ba1a1a",
-                      "on-error": "#ffffff",
-                      "primary-container": "#5f6f52",
-                      "tertiary-container": "#6e6a5d",
-                      "surface-container-low": "#f7f3ea",
-                      "tertiary": "#555246",
-                      "on-surface-variant": "#444840",
-                      "error-container": "#ffdad6",
-                      "on-tertiary-fixed-variant": "#4a473b",
-                      "primary-fixed": "#d6e8c5",
-                      "primary-fixed-dim": "#bbccaa",
-                      "on-primary-fixed-variant": "#3c4b31",
-                      "tertiary-fixed": "#e8e2d2",
-                      "inverse-surface": "#31312b",
-                      "surface-bright": "#fcf9f0",
-                      "surface-container-lowest": "#ffffff",
-                      "secondary": "#536344",
-                      "surface-container": "#f1eee5",
-                      "on-secondary": "#ffffff",
-                      "on-tertiary": "#ffffff",
-                      "surface-tint": "#536347",
-                      "outline-variant": "#c5c8bd",
-                      "on-background": "#1c1c17"
-              },
-              "borderRadius": {
-                      "DEFAULT": "0.25rem",
-                      "lg": "0.5rem",
-                      "xl": "1.5rem",
-                      "full": "9999px"
-              },
-              "fontFamily": {
-                      "headline": ["Manrope"],
-                      "body": ["Work Sans"],
-                      "label": ["Work Sans"]
-              }
-            },
+  <meta charset="utf-8"/>
+  <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+  <title>Crops</title>
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;700;800&family=Work_Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="/static/css/dashboard.css"/>
+  <script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            "surface": "#fcf9f0",
+            "secondary-fixed": "#d5e9c1",
+            "on-error-container": "#93000a",
+            "inverse-primary": "#bbccaa",
+            "on-tertiary-fixed": "#1e1c12",
+            "tertiary-fixed-dim": "#ccc6b6",
+            "surface-container-high": "#ebe8df",
+            "primary": "#47573b",
+            "on-secondary-fixed-variant": "#3b4b2e",
+            "secondary-fixed-dim": "#bacda7",
+            "surface-dim": "#dddad1",
+            "surface-variant": "#e5e2da",
+            "on-secondary-fixed": "#111f07",
+            "surface-container-highest": "#e5e2da",
+            "on-tertiary-container": "#f1ebda",
+            "on-secondary-container": "#586a4a",
+            "inverse-on-surface": "#f4f1e8",
+            "on-primary": "#ffffff",
+            "on-primary-fixed": "#121f09",
+            "on-primary-container": "#dff1cd",
+            "secondary-container": "#d5e9c1",
+            "background": "#fcf9f0",
+            "on-surface": "#1c1c17",
+            "outline": "#75786f",
+            "error": "#ba1a1a",
+            "on-error": "#ffffff",
+            "primary-container": "#5f6f52",
+            "tertiary-container": "#6e6a5d",
+            "surface-container-low": "#f7f3ea",
+            "tertiary": "#555246",
+            "on-surface-variant": "#444840",
+            "error-container": "#ffdad6",
+            "on-tertiary-fixed-variant": "#4a473b",
+            "primary-fixed": "#d6e8c5",
+            "primary-fixed-dim": "#bbccaa",
+            "on-primary-fixed-variant": "#3c4b31",
+            "tertiary-fixed": "#e8e2d2",
+            "inverse-surface": "#31312b",
+            "surface-bright": "#fcf9f0",
+            "surface-container-lowest": "#ffffff",
+            "secondary": "#536344",
+            "surface-container": "#f1eee5",
+            "on-secondary": "#ffffff",
+            "on-tertiary": "#ffffff",
+            "surface-tint": "#536347",
+            "outline-variant": "#c5c8bd",
+            "on-background": "#1c1c17"
           },
-        }
-    </script>
-  </head>
+          borderRadius: {
+            "DEFAULT": "0.25rem",
+            "lg": "0.5rem",
+            "xl": "0.75rem",
+            "full": "9999px"
+          },
+          fontFamily: {
+            "headline": ["Manrope"],
+            "body": ["Work Sans"],
+            "label": ["Work Sans"]
+          }
+        },
+      },
+    }
+  </script>
+</head>
 
-
-<body class="bg-surface text-on-surface min-h-screen pb-32">
   {% include "_header.html" %}
 
-  <main class="pt-4 px-6 max-w-screen-xl mx-auto">
-    <section class="mb-8">
-      <h1 class="text-4xl font-medium tracking-tight mb-2">My Crops</h1>
-      <p class="text-on-surface-variant font-body">Real-time physiological monitoring and harvest estimations.</p>
-    </section>
+<body class="bg-surface text-on-surface min-h-screen pb-32">
+  <!-- Top Navigation -->
 
+  <main class="px-4 pt-4 space-y-8">
     <!-- Active Crops Section -->
     <div class="space-y-4">
       <div class="flex justify-between items-center px-2">
@@ -207,7 +197,7 @@
               <span id="cropGrowthStage" class="font-medium text-on-surface block"></span>
             </div>
             <div>
-              <span class="text-on-surface-variant">Related Fields:</span>
+              <span class="text-on-surface-variant">Related Field:</span>
               <span id="cropRelatedFields" class="font-medium text-on-surface block"></span>
             </div>
           </div>
@@ -290,13 +280,208 @@
   </div>
 
 
+  <!-- Create Crop Modal -->
+  <div id="createCropModal" class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 hidden" onclick="closeCreateCropModal()">
+    <div class="bg-surface rounded-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto shadow-2xl" onclick="event.stopPropagation()">
+      <div class="sticky top-0 flex items-center justify-between p-6 border-b border-surface-variant bg-surface">
+        <h2 class="text-xl font-bold text-primary">New Crop</h2>
+        <button onclick="closeCreateCropModal()" class="p-2 hover:bg-surface-container rounded-full transition-colors">
+          <span class="material-symbols-outlined">close</span>
+        </button>
+      </div>
+      <form id="createCropForm" class="p-6 space-y-4" onsubmit="submitCreateCrop(event)">
+        <div>
+          <label class="text-[10px] uppercase tracking-widest text-on-surface-variant block mb-1">Crop Name *</label>
+          <select id="createCropName" name="name" required class="w-full bg-surface-container rounded-lg px-4 py-3 text-sm text-on-surface outline-none focus:ring-2 focus:ring-primary">
+            <option value="">Select crop...</option>
+          </select>
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="text-[10px] uppercase tracking-widest text-on-surface-variant block mb-1">Planting Date</label>
+            <input type="date" name="planting_date" class="w-full bg-surface-container rounded-lg px-4 py-3 text-sm text-on-surface outline-none focus:ring-2 focus:ring-primary">
+          </div>
+          <div>
+            <label class="text-[10px] uppercase tracking-widest text-on-surface-variant block mb-1">Growth Stage</label>
+            <select id="createCropGrowthStage" name="growth_stage" class="w-full bg-surface-container rounded-lg px-4 py-3 text-sm text-on-surface outline-none focus:ring-2 focus:ring-primary">
+              <option value="">Select stage...</option>
+            </select>
+          </div>
+        </div>
+        <div>
+          <label class="text-[10px] uppercase tracking-widest text-on-surface-variant block mb-1">Health Status</label>
+          <select name="health_status" class="w-full bg-surface-container rounded-lg px-4 py-3 text-sm text-on-surface outline-none focus:ring-2 focus:ring-primary">
+            <option value="healthy">Healthy</option>
+            <option value="alert">Alert</option>
+            <option value="critical">Critical</option>
+          </select>
+        </div>
+        <p id="createCropError" class="text-error text-xs hidden"></p>
+        <div class="flex gap-3 pt-2">
+          <button type="button" onclick="closeCreateCropModal()" class="flex-1 py-3 rounded-xl border border-outline-variant text-on-surface-variant text-sm font-bold hover:bg-surface-container transition-colors">Cancel</button>
+          <button type="submit" id="createCropSubmitBtn" class="flex-1 py-3 rounded-xl bg-primary text-on-primary text-sm font-bold hover:opacity-90 transition-opacity">Create Crop</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Edit Crop Modal -->
+  <div id="editCropModal" class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 hidden" onclick="closeEditCropModal()">
+    <div class="bg-surface rounded-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto shadow-2xl" onclick="event.stopPropagation()">
+      <div class="sticky top-0 flex items-center justify-between p-6 border-b border-surface-variant bg-surface">
+        <h2 class="text-xl font-bold text-primary">Edit Crop</h2>
+        <button onclick="closeEditCropModal()" class="p-2 hover:bg-surface-container rounded-full transition-colors">
+          <span class="material-symbols-outlined">close</span>
+        </button>
+      </div>
+      <form id="editCropForm" class="p-6 space-y-4" onsubmit="submitEditCrop(event)">
+        <div>
+          <label class="text-[10px] uppercase tracking-widest text-on-surface-variant block mb-1">Crop Name *</label>
+          <select id="editCropName" name="name" required class="w-full bg-surface-container rounded-lg px-4 py-3 text-sm text-on-surface outline-none focus:ring-2 focus:ring-primary">
+            <option value="">Select crop...</option>
+          </select>
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="text-[10px] uppercase tracking-widest text-on-surface-variant block mb-1">Planting Date</label>
+            <input type="date" name="planting_date" class="w-full bg-surface-container rounded-lg px-4 py-3 text-sm text-on-surface outline-none focus:ring-2 focus:ring-primary">
+          </div>
+          <div>
+            <label class="text-[10px] uppercase tracking-widest text-on-surface-variant block mb-1">Growth Stage</label>
+            <select id="editCropGrowthStage" name="growth_stage" class="w-full bg-surface-container rounded-lg px-4 py-3 text-sm text-on-surface outline-none focus:ring-2 focus:ring-primary">
+              <option value="">Select stage...</option>
+            </select>
+          </div>
+        </div>
+        <div>
+          <label class="text-[10px] uppercase tracking-widest text-on-surface-variant block mb-1">Health Status</label>
+          <select name="health_status" class="w-full bg-surface-container rounded-lg px-4 py-3 text-sm text-on-surface outline-none focus:ring-2 focus:ring-primary">
+            <option value="healthy">Healthy</option>
+            <option value="alert">Alert</option>
+            <option value="critical">Critical</option>
+          </select>
+        </div>
+        <p id="editCropError" class="text-error text-xs hidden"></p>
+        <div class="flex gap-3 pt-2">
+          <button type="button" onclick="closeEditCropModal()" class="flex-1 py-3 rounded-xl border border-outline-variant text-on-surface-variant text-sm font-bold hover:bg-surface-container transition-colors">Cancel</button>
+          <button type="submit" id="editCropSubmitBtn" class="flex-1 py-3 rounded-xl bg-primary text-on-primary text-sm font-bold hover:opacity-90 transition-opacity">Update Crop</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Filter Modal -->
+  <div id="filterModal" class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 hidden" onclick="closeFilterModal()">
+    <div class="bg-surface rounded-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto shadow-2xl" onclick="event.stopPropagation()">
+      <div class="sticky top-0 flex items-center justify-between p-6 border-b border-surface-variant bg-surface">
+        <h2 class="text-xl font-bold text-primary">Filter Crops</h2>
+        <button onclick="closeFilterModal()" class="p-2 hover:bg-surface-container rounded-full transition-colors">
+          <span class="material-symbols-outlined">close</span>
+        </button>
+      </div>
+      <form id="filterForm" class="p-6 space-y-4" onsubmit="applyFilters(event)">
+        <div>
+          <label class="text-[10px] uppercase tracking-widest text-on-surface-variant block mb-1">Health Status</label>
+          <select name="health_status" class="w-full bg-surface-container rounded-lg px-4 py-3 text-sm text-on-surface outline-none focus:ring-2 focus:ring-primary">
+            <option value="">All Statuses</option>
+            <option value="healthy">Healthy</option>
+            <option value="alert">Alert</option>
+            <option value="critical">Critical</option>
+          </select>
+        </div>
+        <div>
+          <label class="text-[10px] uppercase tracking-widest text-on-surface-variant block mb-1">Growth Stage</label>
+          <input type="text" name="growth_stage" class="w-full bg-surface-container rounded-lg px-4 py-3 text-sm text-on-surface outline-none focus:ring-2 focus:ring-primary" placeholder="e.g. Seedling">
+        </div>
+        <div>
+          <label class="text-[10px] uppercase tracking-widest text-on-surface-variant block mb-1">Minimum Water Requirement %</label>
+          <input type="number" name="min_water" min="0" max="100" class="w-full bg-surface-container rounded-lg px-4 py-3 text-sm text-on-surface outline-none focus:ring-2 focus:ring-primary" placeholder="0">
+        </div>
+        <p id="filterError" class="text-error text-xs hidden"></p>
+        <div class="flex gap-3 pt-2">
+          <button type="button" onclick="closeFilterModal(); resetFilters()" class="flex-1 py-3 rounded-xl border border-outline-variant text-on-surface-variant text-sm font-bold hover:bg-surface-container transition-colors">Reset</button>
+          <button type="submit" class="flex-1 py-3 rounded-xl bg-primary text-on-primary text-sm font-bold hover:opacity-90 transition-opacity">Apply Filters</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Search Modal -->
+  <div id="searchModal" class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 hidden" onclick="closeSearchModal()">
+    <div class="bg-surface rounded-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto shadow-2xl" onclick="event.stopPropagation()">
+      <div class="sticky top-0 flex items-center justify-between p-6 border-b border-surface-variant bg-surface">
+        <h2 class="text-xl font-bold text-primary">Search Crops</h2>
+        <button onclick="closeSearchModal()" class="p-2 hover:bg-surface-container rounded-full transition-colors">
+          <span class="material-symbols-outlined">close</span>
+        </button>
+      </div>
+      <form id="searchForm" class="p-6 space-y-4" onsubmit="performSearch(event)">
+        <div>
+          <label class="text-[10px] uppercase tracking-widest text-on-surface-variant block mb-1">Crop Name</label>
+          <input type="text" name="crop_name" class="w-full bg-surface-container rounded-lg px-4 py-3 text-sm text-on-surface outline-none focus:ring-2 focus:ring-primary" placeholder="Search crop name...">
+        </div>
+        <div>
+          <label class="text-[10px] uppercase tracking-widest text-on-surface-variant block mb-1">Search across all crops</label>
+          <p class="text-xs text-on-surface-variant mb-3">Enter a crop name to search through your entire crop inventory.</p>
+        </div>
+        <p id="searchError" class="text-error text-xs hidden"></p>
+        <div class="flex gap-3 pt-2">
+          <button type="button" onclick="closeSearchModal()" class="flex-1 py-3 rounded-xl border border-outline-variant text-on-surface-variant text-sm font-bold hover:bg-surface-container transition-colors">Cancel</button>
+          <button type="submit" class="flex-1 py-3 rounded-xl bg-primary text-on-primary text-sm font-bold hover:opacity-90 transition-opacity">Search</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Sort Modal -->
+  <div id="sortModal" class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 hidden" onclick="closeSortModal()">
+    <div class="bg-surface rounded-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto shadow-2xl" onclick="event.stopPropagation()">
+      <div class="sticky top-0 flex items-center justify-between p-6 border-b border-surface-variant bg-surface">
+        <h2 class="text-xl font-bold text-primary">Sort Crops</h2>
+        <button onclick="closeSortModal()" class="p-2 hover:bg-surface-container rounded-full transition-colors">
+          <span class="material-symbols-outlined">close</span>
+        </button>
+      </div>
+      <form id="sortForm" class="p-6 space-y-4" onsubmit="applySorting(event)">
+        <div>
+          <label class="text-[10px] uppercase tracking-widest text-on-surface-variant block mb-1">Sort By</label>
+          <select name="sort_field" class="w-full bg-surface-container rounded-lg px-4 py-3 text-sm text-on-surface outline-none focus:ring-2 focus:ring-primary">
+            <option value="name">Crop Name</option>
+            <option value="planting_date">Planting Date</option>
+            <option value="growth_stage">Growth Stage</option>
+            <option value="health_status">Health Status</option>
+            <option value="water_requirement">Water Requirement</option>
+          </select>
+        </div>
+        <div>
+          <label class="text-[10px] uppercase tracking-widest text-on-surface-variant block mb-1">Sort Order</label>
+          <div class="space-y-2">
+            <label class="flex items-center gap-3 cursor-pointer">
+              <input type="radio" name="sort_order" value="asc" checked class="accent-primary">
+              <span class="text-sm">Ascending</span>
+            </label>
+            <label class="flex items-center gap-3 cursor-pointer">
+              <input type="radio" name="sort_order" value="desc" class="accent-primary">
+              <span class="text-sm">Descending</span>
+            </label>
+          </div>
+        </div>
+        <p id="sortError" class="text-error text-xs hidden"></p>
+        <div class="flex gap-3 pt-2">
+          <button type="button" onclick="closeSortModal()" class="flex-1 py-3 rounded-xl border border-outline-variant text-on-surface-variant text-sm font-bold hover:bg-surface-container transition-colors">Cancel</button>
+          <button type="submit" class="flex-1 py-3 rounded-xl bg-primary text-on-primary text-sm font-bold hover:opacity-90 transition-opacity">Apply Sort</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
   <!-- Floating Action Button -->
   <button onclick="openCreateCropModal()" class="fixed right-6 bottom-28 w-16 h-16 bg-[#5f6f52] text-white rounded-full flex items-center justify-center shadow-2xl z-[60] transition-transform hover:scale-110 active:scale-95">
     <span class="material-symbols-outlined text-3xl">add</span>
   </button>
 
   <!-- BottomNavBar Section -->
-  <nav class="fixed bottom-0 left-0 w-full z-50 bg-[#fcf9f0]/80 dark:bg-stone-950/80 backdrop-blur-md rounded-t-[24px] shadow-[0_-8px_24px_rgba(28,28,23,0.06)] flex justify-around items-center px-4 pb-6 pt-3">
+  <nav id="bottomNav" class="fixed bottom-0 left-0 w-full z-50 bg-[#fcf9f0]/80 dark:bg-stone-950/80 backdrop-blur-md rounded-t-[24px] shadow-[0_-8px_24px_rgba(28,28,23,0.06)] flex justify-around items-center px-4 pb-6 pt-3">
     <a class="flex flex-col items-center justify-center text-stone-500 dark:text-stone-400 px-3 py-1.5 transition-transform hover:scale-105 duration-150" href="/">
       <span class="material-symbols-outlined" data-icon="dashboard">dashboard</span>
       <span class="font-['Work_Sans'] text-[11px] font-medium tracking-wide">Dashboard</span>
@@ -356,9 +541,46 @@
     let isViewingAll = false;
     let isViewingAllTasks = false;
 
+    let cropVocabulary = { crop_names: [], growth_stages: [] };
+
     document.addEventListener('DOMContentLoaded', function() {
       loadCropsPage();
+      loadVocabulary();
     });
+
+    async function loadVocabulary() {
+      try {
+        const response = await fetch(`${API_BASE}/vocabulary`);
+        if (!response.ok) throw new Error('Failed to fetch vocabulary');
+        cropVocabulary = await response.json();
+        populateVocabularySelects();
+      } catch (error) {
+        console.error('Error loading vocabulary:', error);
+      }
+    }
+
+    function populateVocabularySelects() {
+      const nameSelects = ['createCropName', 'editCropName'];
+      const stageSelects = ['createCropGrowthStage', 'editCropGrowthStage'];
+
+      nameSelects.forEach(id => {
+        const el = document.getElementById(id);
+        if (!el) return;
+        const current = el.value;
+        el.innerHTML = '<option value="">Select crop...</option>' +
+          cropVocabulary.crop_names.map(n => `<option value="${escapeHtml(n)}">${escapeHtml(n)}</option>`).join('');
+        if (current) el.value = current;
+      });
+
+      stageSelects.forEach(id => {
+        const el = document.getElementById(id);
+        if (!el) return;
+        const current = el.value;
+        el.innerHTML = '<option value="">Select stage...</option>' +
+          cropVocabulary.growth_stages.map(s => `<option value="${escapeHtml(s)}">${escapeHtml(s)}</option>`).join('');
+        if (current) el.value = current;
+      });
+    }
 
     async function loadCropsPage() {
       try {
@@ -439,7 +661,7 @@
                 <h4 class="font-bold text-on-surface text-sm truncate">${escapeHtml(crop.name || 'Unnamed Crop')}</h4>
                 <div class="flex justify-between items-centre mt-0.5 gap-2">
                   <p class="text-[10px] text-on-surface-variant font-medium truncate">
-                    ${escapeHtml(cropName)} • ${escapeHtml(crop.field_name || 'Unknown Field')}
+                    ${escapeHtml(cropName)} • ${escapeHtml(crop.field?.name || 'Unknown Field')}
                   </p>
                   <span class="text-[10px] font-bold ${getHealthColor(crop.health_status)}">${progress}%</span>
                 </div>
@@ -493,10 +715,13 @@
 
     function getCropImage(cropType) {
       const imageMap = {
-        Corn: '/static/images/Corn.jpg',
+        Maize: '/static/images/Maize.jpg',
         Wheat: '/static/images/Wheat.jpg',
         Soybeans: '/static/images/Soybeans.jpg',
-        Sunflower: '/static/images/Sunflower.jpg'
+        Sunflower: '/static/images/Sunflower.jpg',
+        Rice: '/static/images/Rice.jpg',
+        Cotton: '/static/images/Cotton.jpg'
+
       };
       return imageMap[cropType] || '/static/images/field_default.jpg';
     }
@@ -626,7 +851,7 @@
 
     // show modal
     document.getElementById('cropDetailsModal').classList.remove('hidden');
-    document.querySelector('nav').classList.add('hidden');
+    document.getElementById('bottomNav').classList.add('hidden');
 
     // loading state
     document.getElementById('cropDetailsModalTitle').textContent = 'Loading...';
@@ -655,7 +880,7 @@
       crop.growth_stage || '—';
 
     document.getElementById('cropRelatedFields').textContent =
-      crop.field_name || '—';
+      crop.field?.name || '—';
 
     // health section
     document.getElementById('cropStatusText').textContent =
@@ -688,23 +913,19 @@
       `;
     } else {
       tasksContainer.innerHTML = tasks.map(task => `
-        <div class="bg-white dark:bg-stone-900 rounded-xl p-3 flex items-center justify-between">
-          <div>
-            <p class="font-medium text-sm">
-              ${escapeHtml(task.title || 'Untitled Task')}
-            </p>
-            <p class="text-xs text-on-surface-variant">
-              ${formatTaskType(task.task_type)}
+        <div onclick="openTaskDetailModal(${task.id})" class="bg-white dark:bg-stone-900 p-4 rounded-[20px] flex items-center gap-4 shadow-sm cursor-pointer hover:shadow-md transition-shadow active:scale-[0.98]">
+          <div class="w-12 h-12 rounded-full bg-[#f1f3ee] dark:bg-stone-800 flex items-center justify-center text-[#47573b] dark:text-[#d5e9c1]">
+            <span class="material-symbols-outlined" style="font-size: 20px;">
+              ${getTaskIcon(task.task_type)}
+            </span>
+          </div>
+          <div class="flex-1 min-w-0">
+            <h5 class="text-sm font-bold text-on-surface truncate">${escapeHtml(task.title || 'Untitled Task')}</h5>
+            <p class="text-[11px] text-on-surface-variant font-medium truncate">
+              ${escapeHtml(getTaskSubtitle(task))}
             </p>
           </div>
-
-          <span class="text-xs font-bold ${
-            task.completed
-              ? 'text-primary'
-              : 'text-amber-600'
-          }">
-            ${task.completed ? 'Done' : 'Pending'}
-          </span>
+          <span class="material-symbols-outlined text-outline-variant">chevron_right</span>
         </div>
       `).join('');
     }
@@ -717,12 +938,13 @@
 
   function closeCropDetailsModal() {
   document.getElementById('cropDetailsModal').classList.add('hidden');
-  document.querySelector('nav').classList.remove('hidden');
+  document.getElementById('bottomNav').classList.remove('hidden');
 }
 
     async function openTaskDetailModal(taskId) {
       document.getElementById('taskDetailModal').classList.remove('hidden');
       document.getElementById('taskDetailTitle').textContent = 'Loading...';
+      document.getElementById('bottomNav').classList.add('hidden');
 
     try {
         console.log('Fetching task details for task ID:', taskId);
@@ -730,7 +952,6 @@
         if (!response.ok) throw new Error('Failed to fetch task');
         const task = await response.json();
         populateTaskModal(task);
-        document.querySelector('nav').classList.add('hidden');
       } catch (error) {
         console.error('Error loading task:', error);
         closeTaskDetailModal();
@@ -739,7 +960,7 @@
 
     function closeTaskDetailModal() {
       document.getElementById('taskDetailModal').classList.add('hidden');
-      document.querySelector('nav').classList.remove('hidden');
+      document.getElementById('bottomNav').classList.remove('hidden');
     }
 
     function populateTaskModal(task) {
@@ -845,10 +1066,21 @@
       `).join('');
     }
 
-    function deleteCrop(cropId) {
-      if (confirm('Are you sure you want to delete this crop?')) {
-        console.log('Deleting crop:', cropId);
-        // Implementation for deleting crop
+    async function deleteCrop(cropId, event) {
+      event.stopPropagation();
+      if (!confirm('Delete this crop? This action cannot be undone.')) return;
+
+      try {
+        const response = await fetch(`${API_BASE}/crops/${cropId}`, { method: 'DELETE' });
+        if (!response.ok) throw new Error('Failed to delete crop');
+
+        cachedActiveCrops = cachedActiveCrops.filter(c => c.id !== cropId);
+        if (cachedAllCrops) cachedAllCrops = cachedAllCrops.filter(c => c.id !== cropId);
+
+        const card = document.querySelector(`[data-crop-id="${cropId}"]`);
+        if (card) card.remove();
+      } catch (error) {
+        console.error('Error deleting crop:', error);
       }
     }
 
@@ -900,20 +1132,216 @@
     }
 
     function openCreateCropModal() {
-      console.log('Opening create crop modal');
-      // Implementation for creating new crop
+      document.getElementById('createCropForm').reset();
+      document.getElementById('createCropError').classList.add('hidden');
+      document.getElementById('createCropModal').classList.remove('hidden');
+      document.getElementById('bottomNav').classList.add('hidden');
     }
 
-    function openSortModal() {
-      console.log('Opening sort modal');
+    function closeCreateCropModal() {
+      document.getElementById('createCropModal').classList.add('hidden');
+      document.getElementById('bottomNav').classList.remove('hidden');
+    }
+
+    async function submitCreateCrop(event) {
+      event.preventDefault();
+      const form = event.target;
+      const submitBtn = document.getElementById('createCropSubmitBtn');
+      const errorEl = document.getElementById('createCropError');
+      errorEl.classList.add('hidden');
+
+      const formData = new FormData(form);
+      const body = {};
+      for (const [key, value] of formData.entries()) {
+        if (value !== '') body[key] = isNaN(value) || key === 'name' || key === 'growth_stage' || key === 'health_status' || key === 'planting_date' ? value : Number(value);
+      }
+
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Creating...';
+
+      try {
+        const response = await fetch(`${API_BASE}/crops`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body)
+        });
+
+        if (!response.ok) {
+          const err = await response.json();
+          throw new Error(err.errors ? JSON.stringify(err.errors) : 'Failed to create crop');
+        }
+
+        cachedAllCrops = null;
+        cachedAllCropTasks = null;
+        closeCreateCropModal();
+        await loadCropsPage();
+      } catch (error) {
+        errorEl.textContent = error.message;
+        errorEl.classList.remove('hidden');
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Create Crop';
+      }
+    }
+
+    async function EditCrop(cropId, event) {
+      event.stopPropagation();
+      try {
+        const response = await fetch(`${API_BASE}/crops/${cropId}`);
+        if (!response.ok) throw new Error('Failed to fetch crop details');
+
+        const crop = await response.json();
+        populateEditCropModal(crop);
+        document.getElementById('editCropModal').classList.remove('hidden');
+      } catch (error) {
+        console.error('Error loading crop for editing:', error);
+        showError('Failed to load crop for editing');
+      }
+    }
+
+    function populateEditCropModal(crop) {
+      const form = document.getElementById('editCropForm');
+      form.cropId = crop.id;
+      document.getElementById('editCropName').value = crop.name || '';
+      form.planting_date.value = crop.planting_date ? String(crop.planting_date).split('T')[0] : '';
+      document.getElementById('editCropGrowthStage').value = crop.growth_stage || '';
+      form.health_status.value = crop.health_status || 'healthy';
+      document.getElementById('editCropError').classList.add('hidden');
+    }
+
+    function closeEditCropModal() {
+      document.getElementById('editCropModal').classList.add('hidden');
+    }
+
+    async function submitEditCrop(event) {
+      event.preventDefault();
+      const form = event.target;
+      const cropId = form.cropId;
+      const submitBtn = document.getElementById('editCropSubmitBtn');
+      const errorEl = document.getElementById('editCropError');
+      errorEl.classList.add('hidden');
+
+      const formData = new FormData(form);
+      const body = {};
+      for (const [key, value] of formData.entries()) {
+        if (value !== '') body[key] = isNaN(value) || key === 'name' || key === 'growth_stage' || key === 'health_status' || key === 'planting_date' ? value : Number(value);
+      }
+
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Updating...';
+
+      try {
+        const response = await fetch(`${API_BASE}/crops/${cropId}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body)
+        });
+
+        if (!response.ok) {
+          const err = await response.json();
+          throw new Error(err.errors ? JSON.stringify(err.errors) : 'Failed to update crop');
+        }
+
+        cachedAllCrops = null;
+        cachedAllCropTasks = null;
+        closeEditCropModal();
+        await loadCropsPage();
+      } catch (error) {
+        errorEl.textContent = error.message;
+        errorEl.classList.remove('hidden');
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Update Crop';
+      }
     }
 
     function openFilterModal() {
-      console.log('Opening filter modal');
+      document.getElementById('filterModal').classList.remove('hidden');
+    }
+    function closeFilterModal() {
+      document.getElementById('filterModal').classList.add('hidden');
+    }
+    function resetFilters() {
+      document.getElementById('filterForm').reset();
+      renderCropCards(isViewingAll ? (cachedAllCrops || cachedActiveCrops) : cachedActiveCrops);
+    }
+    function applyFilters(event) {
+      event.preventDefault();
+      const form = event.target;
+      const healthStatus = form.health_status.value;
+      const growthStage = form.growth_stage.value.toLowerCase();
+      const minWater = parseFloat(form.min_water.value) || 0;
+
+      const source = isViewingAll ? (cachedAllCrops || cachedActiveCrops) : cachedActiveCrops;
+      const filtered = source.filter(crop => {
+        const matchesHealth = !healthStatus || crop.health_status === healthStatus;
+        const matchesStage = !growthStage || (crop.growth_stage || '').toLowerCase().includes(growthStage);
+        const matchesWater = (crop.water_requirement || 0) >= minWater;
+        return matchesHealth && matchesStage && matchesWater;
+      });
+
+      renderCropCards(filtered);
+      closeFilterModal();
     }
 
     function openSearchModal() {
-      console.log('Opening search modal');
+      document.getElementById('searchError').classList.add('hidden');
+      document.getElementById('searchModal').classList.remove('hidden');
+    }
+    function closeSearchModal() {
+      document.getElementById('searchModal').classList.add('hidden');
+    }
+    function performSearch(event) {
+      event.preventDefault();
+      const form = event.target;
+      const cropName = form.crop_name.value.toLowerCase().trim();
+
+      if (!cropName) {
+        document.getElementById('searchError').textContent = 'Please enter a crop name to search';
+        document.getElementById('searchError').classList.remove('hidden');
+        return;
+      }
+
+      const source = isViewingAll ? (cachedAllCrops || cachedActiveCrops) : cachedActiveCrops;
+      const searched = source.filter(crop =>
+        (crop.name || '').toLowerCase().includes(cropName)
+      );
+
+      renderCropCards(searched);
+      closeSearchModal();
+    }
+
+    function openSortModal() {
+      document.getElementById('sortModal').classList.remove('hidden');
+    }
+    function closeSortModal() {
+      document.getElementById('sortModal').classList.add('hidden');
+    }
+    function applySorting(event) {
+      event.preventDefault();
+      const form = event.target;
+      const sortField = form.sort_field.value;
+      const sortOrder = form.sort_order.value;
+
+      const source = isViewingAll ? (cachedAllCrops || cachedActiveCrops) : cachedActiveCrops;
+      const sorted = [...source].sort((a, b) => {
+        let aVal = a[sortField] ?? '';
+        let bVal = b[sortField] ?? '';
+
+        if (typeof aVal === 'string') {
+          aVal = aVal.toLowerCase();
+          bVal = String(bVal).toLowerCase();
+        }
+
+        if (sortOrder === 'asc') {
+          return aVal > bVal ? 1 : aVal < bVal ? -1 : 0;
+        } else {
+          return aVal < bVal ? 1 : aVal > bVal ? -1 : 0;
+        }
+      });
+
+      renderCropCards(sorted);
+      closeSortModal();
     }
 
     function showNotifications() {
@@ -921,7 +1349,7 @@
     }
 
     function openSearch() {
-      console.log('Opening search');
+      openSearchModal();
     }
 
     function loadCrops() {
@@ -959,6 +1387,23 @@
 
 
 
+
+
+    document.getElementById('createCropModal').addEventListener('click', function(e) {
+      if (e.target === this) closeCreateCropModal();
+    });
+    document.getElementById('editCropModal').addEventListener('click', function(e) {
+      if (e.target === this) closeEditCropModal();
+    });
+    document.getElementById('filterModal').addEventListener('click', function(e) {
+      if (e.target === this) closeFilterModal();
+    });
+    document.getElementById('searchModal').addEventListener('click', function(e) {
+      if (e.target === this) closeSearchModal();
+    });
+    document.getElementById('sortModal').addEventListener('click', function(e) {
+      if (e.target === this) closeSortModal();
+    });
 
   </script>
 </body>

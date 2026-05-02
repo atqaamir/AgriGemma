@@ -1,5 +1,7 @@
 from app.repositories.crop_repository import CropRepository
 from app.services.domain_service.task_service import TaskService
+from app.rules.vocabulary.crop_names import CropNames
+from app.rules.vocabulary.growth_stage import GrowthStage
 
 
 class CropService:
@@ -36,9 +38,9 @@ class CropService:
 
     @staticmethod
     def needs_irrigation(crop) -> bool:
-        """Heuristic: flag crops whose water requirement exceeds the threshold."""
+        """Heuristic: flag crops whose water requirement exceeds 700 mm (high demand)."""
         return bool(
-            crop.currently_water_requirement and crop.currently_water_requirement > 5.0
+            crop.currently_water_requirement and crop.currently_water_requirement > 700.0
         )
 
     @staticmethod
@@ -55,6 +57,16 @@ class CropService:
         for crop in CropRepository.get_all():
             all_tasks.extend(TaskService.get_pending_tasks_for_crop(crop.id))
         return all_tasks
+
+    @staticmethod
+    def get_vocabulary() -> dict:
+        crop_names = [c.name for c in CropNames.query.order_by(CropNames.name).all()]
+        growth_stages = [g.name for g in GrowthStage.query.order_by(GrowthStage.id).all()]
+        return {"crop_names": crop_names, "growth_stages": growth_stages}
+
+    @staticmethod
+    def get_crops_by_user(user_id: int) -> list:
+        return CropRepository.get_by_user_id(user_id)
 
     @staticmethod
     def get_pending_tasks_by_crop_id(crop_id: int) -> list:

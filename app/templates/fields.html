@@ -1,36 +1,28 @@
 <!DOCTYPE html>
+
 <html lang="en">
-<head>
+  <head>
   <meta charset="utf-8"/>
   <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-  <title>Terra Firma - Fields</title>
-  {% include "_head_imports.html" %}
-  <link rel="stylesheet" href="/static/css/fields.css"/>
-  <script src="https://cdn.tailwindcss.com"></script>
-
-  <script>
-    (function() {
-      const theme = localStorage.getItem('theme') || 'light';
-      if (theme === 'dark') {
-        document.documentElement.classList.add('dark');
-      }
-    })();
-  </script>
-
+  <title>Fields</title>
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;700;800&family=Work_Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="/static/css/dashboard.css"/>
   <script id="tailwind-config">
     tailwind.config = {
       darkMode: "class",
       theme: {
         extend: {
           colors: {
-            surface: "#fcf9f0",
+            "surface": "#fcf9f0",
             "secondary-fixed": "#d5e9c1",
             "on-error-container": "#93000a",
             "inverse-primary": "#bbccaa",
             "on-tertiary-fixed": "#1e1c12",
             "tertiary-fixed-dim": "#ccc6b6",
             "surface-container-high": "#ebe8df",
-            primary: "#47573b",
+            "primary": "#47573b",
             "on-secondary-fixed-variant": "#3b4b2e",
             "secondary-fixed-dim": "#bacda7",
             "surface-dim": "#dddad1",
@@ -44,15 +36,15 @@
             "on-primary-fixed": "#121f09",
             "on-primary-container": "#dff1cd",
             "secondary-container": "#d5e9c1",
-            background: "#fcf9f0",
+            "background": "#fcf9f0",
             "on-surface": "#1c1c17",
-            outline: "#75786f",
-            error: "#ba1a1a",
+            "outline": "#75786f",
+            "error": "#ba1a1a",
             "on-error": "#ffffff",
             "primary-container": "#5f6f52",
             "tertiary-container": "#6e6a5d",
             "surface-container-low": "#f7f3ea",
-            tertiary: "#555246",
+            "tertiary": "#555246",
             "on-surface-variant": "#444840",
             "error-container": "#ffdad6",
             "on-tertiary-fixed-variant": "#4a473b",
@@ -63,7 +55,7 @@
             "inverse-surface": "#31312b",
             "surface-bright": "#fcf9f0",
             "surface-container-lowest": "#ffffff",
-            secondary: "#536344",
+            "secondary": "#536344",
             "surface-container": "#f1eee5",
             "on-secondary": "#ffffff",
             "on-tertiary": "#ffffff",
@@ -72,1394 +64,1361 @@
             "on-background": "#1c1c17"
           },
           borderRadius: {
-            DEFAULT: "0.25rem",
-            lg: "0.5rem",
-            xl: "1.5rem",
-            full: "9999px"
+            "DEFAULT": "0.25rem",
+            "lg": "0.5rem",
+            "xl": "0.75rem",
+            "full": "9999px"
           },
           fontFamily: {
-            headline: ["Manrope"],
-            body: ["Work Sans"],
-            label: ["Work Sans"]
+            "headline": ["Manrope"],
+            "body": ["Work Sans"],
+            "label": ["Work Sans"]
           }
-        }
-      }
+        },
+      },
     }
   </script>
 </head>
+    {% include "_header.html" %}
 
-<body class="bg-surface text-on-surface min-h-screen pb-32">
-  {% include "_header.html" %}
+  <body class="bg-surface text-on-surface min-h-screen pb-32">
+    <!-- Top Navigation -->
 
-  <main class="px-4 pt-4 space-y-8">
-    <!-- Map Summary Chip / Mini Card -->
-    <section class="relative overflow-hidden rounded-3xl h-44 flex flex-col justify-end p-6 bg-surface-container" data-location="Iowa Farm Lands">
-      <div class="absolute inset-0 z-0 opacity-40 bg-cover bg-center" style="background-image: url('/static/images/fields_map.jpg')"></div>
-      <div class="absolute inset-0 bg-gradient-to-t from-surface-container via-transparent to-transparent z-10"></div>
-      <div class="relative z-20 flex justify-between items-end">
-        <div>
-          <span class="text-xs font-medium tracking-[0.03em] text-primary uppercase mb-1 block">Property Overview</span>
-          <h2 class="text-3xl font-bold text-on-surface tracking-tight">
-            <span id="total-acreage">0.0</span>
-            <span class="text-lg font-medium opacity-70">Total AC</span>
-          </h2>
-        </div>
-        <button onclick="openMap()" class="bg-primary px-4 py-2 rounded-full flex items-center gap-2 shadow-lg hover:shadow-xl transition-shadow">
-          <span class="material-symbols-outlined text-on-primary text-sm" style="font-variation-settings: 'FILL' 1;">map</span>
-          <span class="text-on-primary text-xs font-bold">Interactive Map</span>
-        </button>
-      </div>
-    </section>
+    <main class="px-4 pt-4 space-y-8">
+      <!-- Active Fields Section -->
+      <div class="space-y-4">
+        <div class="flex justify-between items-center px-2">
+          <h3 id="fields-section-title" 
+              class="text-xl font-bold text-on-surface tracking-tight">
+            Active Fields
+          </h3>
 
-    <!-- Active Fields Section -->
-    <div class="space-y-4">
-      <div class="flex justify-between items-center px-2">
-        <h3 id="fields-section-title" 
-            class="text-xl font-bold text-on-surface tracking-tight">
-          Active Fields
-        </h3>
+          <div class="flex items-center gap-2">
+            <!-- Sort -->
+            <button id="fields-sort-btn" 
+              class="text-primary text-sm font-semibold flex items-center gap-1"
+              onclick="openSortModal()">
+              <span class="material-symbols-outlined text-sm">sort</span>
+            </button>
 
-        <div class="flex items-center gap-2">
-          <!-- Sort -->
-          <button id="fields-sort-btn" 
-            class="text-primary text-sm font-semibold flex items-center gap-1"
-            onclick="openSortModal()">
-            <span class="material-symbols-outlined text-sm">sort</span>
-          </button>
+            <!-- Filter -->
+            <button id="fields-filter-btn" 
+              class="text-primary text-sm font-semibold flex items-center gap-1"
+              onclick="openFilterModal()">
+              <span class="material-symbols-outlined text-sm">filter_alt</span>
+            </button>
 
-          <!-- Filter -->
-          <button id="fields-filter-btn" 
-            class="text-primary text-sm font-semibold flex items-center gap-1"
-            onclick="openFilterModal()">
-            <span class="material-symbols-outlined text-sm">filter_alt</span>
-          </button>
+            <!-- Search -->
+            <button id="fields-search-btn" 
+              class="text-primary text-sm font-semibold flex items-center gap-1"
+              onclick="openSearchModal()">
+              <span class="material-symbols-outlined text-sm">search</span>
+            </button>
+          </div>
 
-          <!-- Search -->
-          <button id="fields-search-btn" 
-            class="text-primary text-sm font-semibold flex items-center gap-1"
-            onclick="openSearchModal()">
-            <span class="material-symbols-outlined text-sm">search</span>
-          </button>
         </div>
 
-      </div>
-
-      <!-- Loading State -->
-      <div id="fields-container" class="flex overflow-x-auto gap-4 pb-4 no-scrollbar px-2 -mx-2">
-        <div class="flex-none w-[200px] h-48 bg-surface-container-low rounded-[24px] flex items-center justify-center">
-          <span class="text-on-surface-variant">Loading fields...</span>
-        </div>
-      </div>
-
-      <div class="flex justify-center">
-        <button id="fields-view-toggle-btn" onclick="viewAllFields()" class="flex items-center gap-2 px-6 py-2.5 rounded-full border border-outline-variant text-primary font-bold text-xs hover:bg-surface-variant transition-colors active:scale-95">
-          View All Field Inventory
-          <span class="material-symbols-outlined text-sm">arrow_forward</span>
-        </button>
-      </div>
-    </div>
-
-    <!-- Pending Tasks Section -->
-    <section class="bg-[#d6e8c5]/40 dark:bg-[#5f6f52]/20 rounded-[32px] p-6 space-y-5">
-      <div class="flex justify-between items-center">
-        <div class="flex items-center gap-2 text-[#47573b] dark:text-[#d5e9c1]">
-          <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">assignment</span>
-          <h3 id="tasks-section-title" class="font-bold tracking-tight text-lg">Pending Tasks</h3>
-        </div>
-        <span id="tasks-due-today" class="bg-[#47573b] text-white text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-wide">
-          0 DUE TODAY
-        </span>
-      </div>
-
-      <div id="tasks-container" class="space-y-3">
-        <div class="text-center text-on-surface-variant py-4">Loading tasks...</div>
-      </div>
-
-      <button id="tasks-view-toggle-btn" onclick="viewAllFieldTasks()" class="w-full py-3.5 text-center text-xs font-bold text-[#47573b] dark:text-[#d5e9c1] bg-[#f1f3ee]/60 dark:bg-white/5 rounded-xl hover:bg-white/80 dark:hover:bg-white/10 transition-colors active:scale-95">
-        View All Field Tasks
-      </button>
-    </section>
-  </main>
-
-  <!-- Field Details Modal -->
-  <div id="fieldDetailsModal" class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 hidden" onclick="closeFieldDetailsModal()">
-    <div class="bg-surface rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-2xl" onclick="event.stopPropagation()">
-      <div class="sticky top-0 flex items-center justify-between p-6 border-b border-surface-variant bg-surface">
-        <h2 id="fieldDetailsModalTitle" class="text-2xl font-bold text-primary">Field Details</h2>
-        <button onclick="closeFieldDetailsModal()" class="p-2 hover:bg-surface-container rounded-full transition-colors">
-          <span class="material-symbols-outlined">close</span>
-        </button>
-      </div>
-
-      <div class="p-6 space-y-6">
-        <div class="bg-surface-container rounded-lg p-4">
-          <h3 class="text-sm font-medium text-on-surface-variant mb-3">Basic Information</h3>
-          <div class="grid grid-cols-2 gap-4">
-            <div>
-              <span class="text-on-surface-variant">Field Name:</span>
-              <span id="fieldName" class="font-medium text-on-surface block"></span>
-            </div>
-            <div>
-              <span class="text-on-surface-variant">Crop:</span>
-              <span id="fieldCrop" class="font-medium text-on-surface block"></span>
-            </div>
-            <div>
-              <span class="text-on-surface-variant">Acreage:</span>
-              <span id="fieldAcreage" class="font-medium text-on-surface block"></span>
-            </div>
-            <div>
-              <span class="text-on-surface-variant">Growth Stage:</span>
-              <span id="fieldGrowthStage" class="font-medium text-on-surface block"></span>
-            </div>
+        <!-- Loading State -->
+        <div id="fields-container" class="flex overflow-x-auto gap-4 pb-4 no-scrollbar px-2 -mx-2">
+          <div class="flex-none w-[200px] h-48 bg-surface-container-low rounded-[24px] flex items-center justify-center">
+            <span class="text-on-surface-variant">Loading fields...</span>
           </div>
         </div>
 
-        <div class="bg-surface-container rounded-lg p-4">
-          <h3 class="text-sm font-medium text-on-surface-variant mb-3">Health Status</h3>
-          <div class="space-y-4">
-            <div>
-              <span class="text-on-surface-variant">Status:</span>
-              <div class="flex items-center gap-1.5 text-primary font-medium mt-1">
-                <span id="fieldStatusIcon" class="material-symbols-outlined text-sm" style="font-variation-settings: 'FILL' 1;"></span>
-                <span id="fieldStatusText"></span>
+        <div class="flex justify-center">
+          <button id="fields-view-toggle-btn" onclick="viewAllFields()" class="flex items-center gap-2 px-6 py-2.5 rounded-full border border-outline-variant text-primary font-bold text-xs hover:bg-surface-variant transition-colors active:scale-95">
+            View All Field Inventory
+            <span class="material-symbols-outlined text-sm">arrow_forward</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Pending Tasks Section -->
+      <section class="bg-[#d6e8c5]/40 dark:bg-[#5f6f52]/20 rounded-[32px] p-6 space-y-5">
+        <div class="flex justify-between items-center">
+          <div class="flex items-center gap-2 text-[#47573b] dark:text-[#d5e9c1]">
+            <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">assignment</span>
+            <h3 id="tasks-section-title" class="font-bold tracking-tight text-lg">Pending Tasks</h3>
+          </div>
+          <span id="tasks-due-today" class="bg-[#47573b] text-white text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-wide">
+            0 DUE TODAY
+          </span>
+        </div>
+
+        <div id="tasks-container" class="space-y-3">
+          <div class="text-center text-on-surface-variant py-4">Loading tasks...</div>
+        </div>
+
+        <button id="tasks-view-toggle-btn" onclick="viewAllFieldTasks()" class="w-full py-3.5 text-center text-xs font-bold text-[#47573b] dark:text-[#d5e9c1] bg-[#f1f3ee]/60 dark:bg-white/5 rounded-xl hover:bg-white/80 dark:hover:bg-white/10 transition-colors active:scale-95">
+          View All Field Tasks
+        </button>
+      </section>
+    </main>
+
+    <!-- Field Details Modal -->
+    <div id="fieldDetailsModal" class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 hidden" onclick="closeFieldDetailsModal()">
+      <div class="bg-surface rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-2xl" onclick="event.stopPropagation()">
+        <div class="sticky top-0 flex items-center justify-between p-6 border-b border-surface-variant bg-surface">
+          <h2 id="fieldDetailsModalTitle" class="text-2xl font-bold text-primary">Field Details</h2>
+          <button onclick="closeFieldDetailsModal()" class="p-2 hover:bg-surface-container rounded-full transition-colors">
+            <span class="material-symbols-outlined">close</span>
+          </button>
+        </div>
+
+        <div class="p-6 space-y-6">
+          <div class="bg-surface-container rounded-lg p-4">
+            <h3 class="text-sm font-medium text-on-surface-variant mb-3">Basic Information</h3>
+            <div class="grid grid-cols-2 gap-4">
+              <div>
+                <span class="text-on-surface-variant">Field Name:</span>
+                <span id="fieldName" class="font-medium text-on-surface block"></span>
               </div>
-            </div>
-            <div>
-              <span class="text-on-surface-variant">Health Percentage:</span>
-              <div class="flex items-center gap-2 mt-1">
-                <span id="fieldHealthPercent" class="text-primary font-medium"></span>
+              <div>
+                <span class="text-on-surface-variant">Crop:</span>
+                <span id="fieldCrop" class="font-medium text-on-surface block"></span>
               </div>
-              <div class="h-2 w-full bg-surface-container-highest rounded-full overflow-hidden mt-2">
-                <div id="fieldHealthBar" class="bg-primary h-full"></div>
+              <div>
+                <span class="text-on-surface-variant">Acreage:</span>
+                <span id="fieldAcreage" class="font-medium text-on-surface block"></span>
+              </div>
+              <div>
+                <span class="text-on-surface-variant">Growth Stage:</span>
+                <span id="fieldGrowthStage" class="font-medium text-on-surface block"></span>
               </div>
             </div>
           </div>
-        </div>
 
-        <div class="bg-surface-container rounded-lg p-4">
-          <h3 class="text-sm font-medium text-on-surface-variant mb-3">Environmental Data</h3>
-          <div class="grid grid-cols-3 gap-4">
-            <div>
-              <span class="text-[9px] uppercase tracking-[0.1em] text-on-surface-variant block mb-1">Moisture</span>
-              <span id="fieldMoisture" class="text-base font-bold text-on-surface"></span>
-            </div>
-            <div>
-              <span class="text-[9px] uppercase tracking-[0.1em] text-on-surface-variant block mb-1">Temperature</span>
-              <span id="fieldTemperature" class="text-base font-bold text-on-surface"></span>
-            </div>
-            <div>
-              <span class="text-[9px] uppercase tracking-[0.1em] text-on-surface-variant block mb-1">Stress Level</span>
-              <span id="fieldStress" class="text-base font-bold text-on-surface"></span>
+          <div class="bg-surface-container rounded-lg p-4">
+            <h3 class="text-sm font-medium text-on-surface-variant mb-3">Health Status</h3>
+            <div class="space-y-4">
+              <div>
+                <span class="text-on-surface-variant">Status:</span>
+                <div class="flex items-center gap-1.5 text-primary font-medium mt-1">
+                  <span id="fieldStatusIcon" class="material-symbols-outlined text-sm" style="font-variation-settings: 'FILL' 1;"></span>
+                  <span id="fieldStatusText"></span>
+                </div>
+              </div>
+              <div>
+                <span class="text-on-surface-variant">Health Percentage:</span>
+                <div class="flex items-center gap-2 mt-1">
+                  <span id="fieldHealthPercent" class="text-primary font-medium"></span>
+                </div>
+                <div class="h-2 w-full bg-surface-container-highest rounded-full overflow-hidden mt-2">
+                  <div id="fieldHealthBar" class="bg-primary h-full"></div>
+                </div>
+              </div>
             </div>
           </div>
-        </div>
 
-        <div class="bg-surface-container rounded-lg p-4">
-          <h3 class="text-sm font-medium text-on-surface-variant mb-3">Disease Risk</h3>
-          <div id="fieldDiseaseRisk" class="font-medium text-on-surface"></div>
-        </div>
+          <div class="bg-surface-container rounded-lg p-4">
+            <h3 class="text-sm font-medium text-on-surface-variant mb-3">Environmental Data</h3>
+            <div class="grid grid-cols-3 gap-4">
+              <div>
+                <span class="text-[9px] uppercase tracking-[0.1em] text-on-surface-variant block mb-1">Moisture</span>
+                <span id="fieldMoisture" class="text-base font-bold text-on-surface"></span>
+              </div>
+              <div>
+                <span class="text-[9px] uppercase tracking-[0.1em] text-on-surface-variant block mb-1">Temperature</span>
+                <span id="fieldTemperature" class="text-base font-bold text-on-surface"></span>
+              </div>
+              <div>
+                <span class="text-[9px] uppercase tracking-[0.1em] text-on-surface-variant block mb-1">Stress Level</span>
+                <span id="fieldStress" class="text-base font-bold text-on-surface"></span>
+              </div>
+            </div>
+          </div>
 
-        <div class="bg-surface-container rounded-lg p-4">
-          <h3 class="text-sm font-medium text-on-surface-variant mb-3">Field Tasks</h3>
-          <div id="fieldTasksList" class="space-y-3">
-            <div class="text-sm text-on-surface-variant">No tasks found.</div>
+          <div class="bg-surface-container rounded-lg p-4">
+            <h3 class="text-sm font-medium text-on-surface-variant mb-3">Disease Risk</h3>
+            <div id="fieldDiseaseRisk" class="font-medium text-on-surface"></div>
+          </div>
+
+          <div class="bg-surface-container rounded-lg p-4">
+            <h3 class="text-sm font-medium text-on-surface-variant mb-3">Field Tasks</h3>
+            <div id="fieldTasksList" class="space-y-3">
+              <div class="text-sm text-on-surface-variant">No tasks found.</div>
+            </div>
           </div>
         </div>
       </div>
     </div>
-  </div>
 
-  <!-- Task Detail Modal -->
-  <div id="taskDetailModal" class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 hidden" onclick="closeTaskDetailModal()">
-    <div class="bg-surface rounded-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto shadow-2xl" onclick="event.stopPropagation()">
-      <div class="sticky top-0 flex items-center justify-between p-6 border-b border-surface-variant bg-surface">
-        <h2 id="taskDetailTitle" class="text-xl font-bold text-primary truncate pr-4">Task Details</h2>
-        <button onclick="closeTaskDetailModal()" class="flex-shrink-0 p-2 hover:bg-surface-container rounded-full transition-colors">
-          <span class="material-symbols-outlined">close</span>
-        </button>
-      </div>
-      <div class="p-6 space-y-5">
-        <div class="flex items-center gap-2 flex-wrap">
-          <span id="taskDetailType" class="text-xs font-bold px-3 py-1 rounded-full bg-surface-container-high text-on-surface-variant uppercase tracking-wide"></span>
-          <span id="taskDetailPriority" class="text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wide"></span>
-          <span id="taskDetailStatus" class="text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wide"></span>
+    <!-- Task Detail Modal -->
+    <div id="taskDetailModal" class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 hidden" onclick="closeTaskDetailModal()">
+      <div class="bg-surface rounded-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto shadow-2xl" onclick="event.stopPropagation()">
+        <div class="sticky top-0 flex items-center justify-between p-6 border-b border-surface-variant bg-surface">
+          <h2 id="taskDetailTitle" class="text-xl font-bold text-primary truncate pr-4">Task Details</h2>
+          <button onclick="closeTaskDetailModal()" class="flex-shrink-0 p-2 hover:bg-surface-container rounded-full transition-colors">
+            <span class="material-symbols-outlined">close</span>
+          </button>
         </div>
-        <div class="bg-surface-container rounded-xl p-4">
-          <div class="grid grid-cols-2 gap-4">
-            <div>
-              <span class="text-[10px] uppercase tracking-widest text-on-surface-variant block mb-1">Field</span>
-              <span id="taskDetailField" class="text-sm font-medium text-on-surface">—</span>
-            </div>
-            <div>
-              <span class="text-[10px] uppercase tracking-widest text-on-surface-variant block mb-1">Crop</span>
-              <span id="taskDetailCrop" class="text-sm font-medium text-on-surface">—</span>
-            </div>
-            <div>
-              <span class="text-[10px] uppercase tracking-widest text-on-surface-variant block mb-1">Due Date</span>
-              <span id="taskDetailDue" class="text-sm font-medium text-on-surface">—</span>
-            </div>
-            <div>
-              <span class="text-[10px] uppercase tracking-widest text-on-surface-variant block mb-1">Assigned To</span>
-              <span id="taskDetailAssigned" class="text-sm font-medium text-on-surface">—</span>
+        <div class="p-6 space-y-5">
+          <div class="flex items-center gap-2 flex-wrap">
+            <span id="taskDetailType" class="text-xs font-bold px-3 py-1 rounded-full bg-surface-container-high text-on-surface-variant uppercase tracking-wide"></span>
+            <span id="taskDetailPriority" class="text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wide"></span>
+            <span id="taskDetailStatus" class="text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wide"></span>
+          </div>
+          <div class="bg-surface-container rounded-xl p-4">
+            <div class="grid grid-cols-2 gap-4">
+              <div>
+                <span class="text-[10px] uppercase tracking-widest text-on-surface-variant block mb-1">Field</span>
+                <span id="taskDetailField" class="text-sm font-medium text-on-surface">—</span>
+              </div>
+              <div>
+                <span class="text-[10px] uppercase tracking-widest text-on-surface-variant block mb-1">Crop</span>
+                <span id="taskDetailCrop" class="text-sm font-medium text-on-surface">—</span>
+              </div>
+              <div>
+                <span class="text-[10px] uppercase tracking-widest text-on-surface-variant block mb-1">Due Date</span>
+                <span id="taskDetailDue" class="text-sm font-medium text-on-surface">—</span>
+              </div>
+              <div>
+                <span class="text-[10px] uppercase tracking-widest text-on-surface-variant block mb-1">Assigned To</span>
+                <span id="taskDetailAssigned" class="text-sm font-medium text-on-surface">—</span>
+              </div>
             </div>
           </div>
-        </div>
-        <div id="taskDetailDescBlock" class="bg-surface-container rounded-xl p-4 hidden">
-          <span class="text-[10px] uppercase tracking-widest text-on-surface-variant block mb-2">Description</span>
-          <p id="taskDetailDesc" class="text-sm text-on-surface leading-relaxed"></p>
-        </div>
-        <div id="taskDetailNotesBlock" class="bg-surface-container rounded-xl p-4 hidden">
-          <span class="text-[10px] uppercase tracking-widest text-on-surface-variant block mb-2">Notes</span>
-          <p id="taskDetailNotes" class="text-sm text-on-surface leading-relaxed"></p>
+          <div id="taskDetailDescBlock" class="bg-surface-container rounded-xl p-4 hidden">
+            <span class="text-[10px] uppercase tracking-widest text-on-surface-variant block mb-2">Description</span>
+            <p id="taskDetailDesc" class="text-sm text-on-surface leading-relaxed"></p>
+          </div>
+          <div id="taskDetailNotesBlock" class="bg-surface-container rounded-xl p-4 hidden">
+            <span class="text-[10px] uppercase tracking-widest text-on-surface-variant block mb-2">Notes</span>
+            <p id="taskDetailNotes" class="text-sm text-on-surface leading-relaxed"></p>
+          </div>
         </div>
       </div>
     </div>
-  </div>
 
-  <!-- Create Field Modal -->
-  <div id="createFieldModal" class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 hidden" onclick="closeCreateFieldModal()">
-    <div class="bg-surface rounded-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto shadow-2xl" onclick="event.stopPropagation()">
-      <div class="sticky top-0 flex items-center justify-between p-6 border-b border-surface-variant bg-surface">
-        <h2 class="text-xl font-bold text-primary">New Field</h2>
-        <button onclick="closeCreateFieldModal()" class="p-2 hover:bg-surface-container rounded-full transition-colors">
-          <span class="material-symbols-outlined">close</span>
-        </button>
-      </div>
-      <form id="createFieldForm" class="p-6 space-y-4" onsubmit="submitCreateField(event)">
-        <div>
-          <label class="text-[10px] uppercase tracking-widest text-on-surface-variant block mb-1">Field Name *</label>
-          <input type="text" name="name" required class="w-full bg-surface-container rounded-lg px-4 py-3 text-sm text-on-surface outline-none focus:ring-2 focus:ring-primary" placeholder="e.g. North Field">
+    <!-- Create Field Modal -->
+    <div id="createFieldModal" class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 hidden" onclick="closeCreateFieldModal()">
+      <div class="bg-surface rounded-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto shadow-2xl" onclick="event.stopPropagation()">
+        <div class="sticky top-0 flex items-center justify-between p-6 border-b border-surface-variant bg-surface">
+          <h2 class="text-xl font-bold text-primary">New Field</h2>
+          <button onclick="closeCreateFieldModal()" class="p-2 hover:bg-surface-container rounded-full transition-colors">
+            <span class="material-symbols-outlined">close</span>
+          </button>
         </div>
-        <div class="grid grid-cols-2 gap-3">
+        <form id="createFieldForm" class="p-6 space-y-4" onsubmit="submitCreateField(event)">
           <div>
-            <label class="text-[10px] uppercase tracking-widest text-on-surface-variant block mb-1">Acreage</label>
-            <input type="number" name="acreage" step="0.1" min="0" class="w-full bg-surface-container rounded-lg px-4 py-3 text-sm text-on-surface outline-none focus:ring-2 focus:ring-primary" placeholder="0.0">
+            <label class="text-[10px] uppercase tracking-widest text-on-surface-variant block mb-1">Field Name *</label>
+            <input type="text" name="name" required class="w-full bg-surface-container rounded-lg px-4 py-3 text-sm text-on-surface outline-none focus:ring-2 focus:ring-primary" placeholder="e.g. North Field">
+          </div>
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="text-[10px] uppercase tracking-widest text-on-surface-variant block mb-1">Acreage</label>
+              <input type="number" name="acreage" step="0.1" min="0" class="w-full bg-surface-container rounded-lg px-4 py-3 text-sm text-on-surface outline-none focus:ring-2 focus:ring-primary" placeholder="0.0">
+            </div>
+            <div>
+              <label class="text-[10px] uppercase tracking-widest text-on-surface-variant block mb-1">Health Status</label>
+              <select name="health_status" class="w-full bg-surface-container rounded-lg px-4 py-3 text-sm text-on-surface outline-none focus:ring-2 focus:ring-primary">
+                <option value="healthy">Healthy</option>
+                <option value="alert">Alert</option>
+                <option value="critical">Critical</option>
+              </select>
+            </div>
+          </div>
+          <div class="grid grid-cols-3 gap-3">
+            <div>
+              <label class="text-[10px] uppercase tracking-widest text-on-surface-variant block mb-1">Moisture %</label>
+              <input type="number" name="moisture_level" min="0" max="100" class="w-full bg-surface-container rounded-lg px-4 py-3 text-sm text-on-surface outline-none focus:ring-2 focus:ring-primary" placeholder="0">
+            </div>
+            <div>
+              <label class="text-[10px] uppercase tracking-widest text-on-surface-variant block mb-1">Heat °C</label>
+              <input type="number" name="heat_level" class="w-full bg-surface-container rounded-lg px-4 py-3 text-sm text-on-surface outline-none focus:ring-2 focus:ring-primary" placeholder="0">
+            </div>
+            <div>
+              <label class="text-[10px] uppercase tracking-widest text-on-surface-variant block mb-1">Stress Risk %</label>
+              <input type="number" name="stress_risk" min="0" max="100" class="w-full bg-surface-container rounded-lg px-4 py-3 text-sm text-on-surface outline-none focus:ring-2 focus:ring-primary" placeholder="0">
+            </div>
           </div>
           <div>
-            <label class="text-[10px] uppercase tracking-widest text-on-surface-variant block mb-1">Growth Stage</label>
-            <input type="text" name="growth_stage" class="w-full bg-surface-container rounded-lg px-4 py-3 text-sm text-on-surface outline-none focus:ring-2 focus:ring-primary" placeholder="e.g. Seedling">
+            <label class="text-[10px] uppercase tracking-widest text-on-surface-variant block mb-1">Disease Risk</label>
+            <select name="disease_risk" class="w-full bg-surface-container rounded-lg px-4 py-3 text-sm text-on-surface outline-none focus:ring-2 focus:ring-primary">
+              <option value="low">Low</option>
+              <option value="medium">Medium</option>
+              <option value="high">High</option>
+            </select>
           </div>
+          <p id="createFieldError" class="text-error text-xs hidden"></p>
+          <div class="flex gap-3 pt-2">
+            <button type="button" onclick="closeCreateFieldModal()" class="flex-1 py-3 rounded-xl border border-outline-variant text-on-surface-variant text-sm font-bold hover:bg-surface-container transition-colors">Cancel</button>
+            <button type="submit" id="createFieldSubmitBtn" class="flex-1 py-3 rounded-xl bg-primary text-on-primary text-sm font-bold hover:opacity-90 transition-opacity">Create Field</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Edit Field Modal -->
+    <div id="editFieldModal" class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 hidden" onclick="closeEditFieldModal()">
+      <div class="bg-surface rounded-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto shadow-2xl" onclick="event.stopPropagation()">
+        <div class="sticky top-0 flex items-center justify-between p-6 border-b border-surface-variant bg-surface">
+          <h2 class="text-xl font-bold text-primary">Edit Field</h2>
+          <button onclick="closeEditFieldModal()" class="p-2 hover:bg-surface-container rounded-full transition-colors">
+            <span class="material-symbols-outlined">close</span>
+          </button>
         </div>
-        <div class="grid grid-cols-2 gap-3">
+        <form id="editFieldForm" class="p-6 space-y-4" onsubmit="submitEditField(event)">
+          <div>
+            <label class="text-[10px] uppercase tracking-widest text-on-surface-variant block mb-1">Field Name *</label>
+            <input type="text" name="name" required class="w-full bg-surface-container rounded-lg px-4 py-3 text-sm text-on-surface outline-none focus:ring-2 focus:ring-primary" placeholder="e.g. North Field">
+          </div>
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="text-[10px] uppercase tracking-widest text-on-surface-variant block mb-1">Acreage</label>
+              <input type="number" name="acreage" step="0.1" min="0" class="w-full bg-surface-container rounded-lg px-4 py-3 text-sm text-on-surface outline-none focus:ring-2 focus:ring-primary" placeholder="0.0">
+            </div>
+            <div>
+              <label class="text-[10px] uppercase tracking-widest text-on-surface-variant block mb-1">Health Status</label>
+              <select name="health_status" class="w-full bg-surface-container rounded-lg px-4 py-3 text-sm text-on-surface outline-none focus:ring-2 focus:ring-primary">
+                <option value="healthy">Healthy</option>
+                <option value="alert">Alert</option>
+                <option value="critical">Critical</option>
+              </select>
+            </div>
+          </div>
+          <div class="grid grid-cols-3 gap-3">
+            <div>
+              <label class="text-[10px] uppercase tracking-widest text-on-surface-variant block mb-1">Moisture %</label>
+              <input type="number" name="moisture_level" min="0" max="100" class="w-full bg-surface-container rounded-lg px-4 py-3 text-sm text-on-surface outline-none focus:ring-2 focus:ring-primary" placeholder="0">
+            </div>
+            <div>
+              <label class="text-[10px] uppercase tracking-widest text-on-surface-variant block mb-1">Heat °C</label>
+              <input type="number" name="heat_level" class="w-full bg-surface-container rounded-lg px-4 py-3 text-sm text-on-surface outline-none focus:ring-2 focus:ring-primary" placeholder="0">
+            </div>
+            <div>
+              <label class="text-[10px] uppercase tracking-widest text-on-surface-variant block mb-1">Stress Risk %</label>
+              <input type="number" name="stress_risk" min="0" max="100" class="w-full bg-surface-container rounded-lg px-4 py-3 text-sm text-on-surface outline-none focus:ring-2 focus:ring-primary" placeholder="0">
+            </div>
+          </div>
+          <div>
+            <label class="text-[10px] uppercase tracking-widest text-on-surface-variant block mb-1">Disease Risk</label>
+            <select name="disease_risk" class="w-full bg-surface-container rounded-lg px-4 py-3 text-sm text-on-surface outline-none focus:ring-2 focus:ring-primary">
+              <option value="low">Low</option>
+              <option value="medium">Medium</option>
+              <option value="high">High</option>
+            </select>
+          </div>
+          <p id="editFieldError" class="text-error text-xs hidden"></p>
+          <div class="flex gap-3 pt-2">
+            <button type="button" onclick="closeEditFieldModal()" class="flex-1 py-3 rounded-xl border border-outline-variant text-on-surface-variant text-sm font-bold hover:bg-surface-container transition-colors">Cancel</button>
+            <button type="submit" id="editFieldSubmitBtn" class="flex-1 py-3 rounded-xl bg-primary text-on-primary text-sm font-bold hover:opacity-90 transition-opacity">Update Field</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Filter Modal -->
+    <div id="filterModal" class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 hidden" onclick="closeFilterModal()">
+      <div class="bg-surface rounded-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto shadow-2xl" onclick="event.stopPropagation()">
+        <div class="sticky top-0 flex items-center justify-between p-6 border-b border-surface-variant bg-surface">
+          <h2 class="text-xl font-bold text-primary">Filter Fields</h2>
+          <button onclick="closeFilterModal()" class="p-2 hover:bg-surface-container rounded-full transition-colors">
+            <span class="material-symbols-outlined">close</span>
+          </button>
+        </div>
+        <form id="filterForm" class="p-6 space-y-4" onsubmit="applyFilters(event)">
           <div>
             <label class="text-[10px] uppercase tracking-widest text-on-surface-variant block mb-1">Health Status</label>
             <select name="health_status" class="w-full bg-surface-container rounded-lg px-4 py-3 text-sm text-on-surface outline-none focus:ring-2 focus:ring-primary">
+              <option value="">All Statuses</option>
               <option value="healthy">Healthy</option>
               <option value="alert">Alert</option>
               <option value="critical">Critical</option>
             </select>
           </div>
           <div>
-            <label class="text-[10px] uppercase tracking-widest text-on-surface-variant block mb-1">Field Score (0–100)</label>
-            <input type="number" name="field_score" min="0" max="100" class="w-full bg-surface-container rounded-lg px-4 py-3 text-sm text-on-surface outline-none focus:ring-2 focus:ring-primary" placeholder="0">
-          </div>
-        </div>
-        <div class="grid grid-cols-3 gap-3">
-          <div>
-            <label class="text-[10px] uppercase tracking-widest text-on-surface-variant block mb-1">Moisture %</label>
-            <input type="number" name="moisture_level" min="0" max="100" class="w-full bg-surface-container rounded-lg px-4 py-3 text-sm text-on-surface outline-none focus:ring-2 focus:ring-primary" placeholder="0">
-          </div>
-          <div>
-            <label class="text-[10px] uppercase tracking-widest text-on-surface-variant block mb-1">Heat °C</label>
-            <input type="number" name="heat_level" class="w-full bg-surface-container rounded-lg px-4 py-3 text-sm text-on-surface outline-none focus:ring-2 focus:ring-primary" placeholder="0">
-          </div>
-          <div>
-            <label class="text-[10px] uppercase tracking-widest text-on-surface-variant block mb-1">Stress Risk %</label>
-            <input type="number" name="stress_risk" min="0" max="100" class="w-full bg-surface-container rounded-lg px-4 py-3 text-sm text-on-surface outline-none focus:ring-2 focus:ring-primary" placeholder="0">
-          </div>
-        </div>
-        <div>
-          <label class="text-[10px] uppercase tracking-widest text-on-surface-variant block mb-1">Disease Risk</label>
-          <input type="text" name="disease_risk" class="w-full bg-surface-container rounded-lg px-4 py-3 text-sm text-on-surface outline-none focus:ring-2 focus:ring-primary" placeholder="e.g. Low">
-        </div>
-        <p id="createFieldError" class="text-error text-xs hidden"></p>
-        <div class="flex gap-3 pt-2">
-          <button type="button" onclick="closeCreateFieldModal()" class="flex-1 py-3 rounded-xl border border-outline-variant text-on-surface-variant text-sm font-bold hover:bg-surface-container transition-colors">Cancel</button>
-          <button type="submit" id="createFieldSubmitBtn" class="flex-1 py-3 rounded-xl bg-primary text-on-primary text-sm font-bold hover:opacity-90 transition-opacity">Create Field</button>
-        </div>
-      </form>
-    </div>
-  </div>
-
-  <!-- Edit Field Modal -->
-  <div id="editFieldModal" class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 hidden" onclick="closeEditFieldModal()">
-    <div class="bg-surface rounded-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto shadow-2xl" onclick="event.stopPropagation()">
-      <div class="sticky top-0 flex items-center justify-between p-6 border-b border-surface-variant bg-surface">
-        <h2 class="text-xl font-bold text-primary">Edit Field</h2>
-        <button onclick="closeEditFieldModal()" class="p-2 hover:bg-surface-container rounded-full transition-colors">
-          <span class="material-symbols-outlined">close</span>
-        </button>
-      </div>
-      <form id="editFieldForm" class="p-6 space-y-4" onsubmit="submitEditField(event)">
-        <div>
-          <label class="text-[10px] uppercase tracking-widest text-on-surface-variant block mb-1">Field Name *</label>
-          <input type="text" name="name" required class="w-full bg-surface-container rounded-lg px-4 py-3 text-sm text-on-surface outline-none focus:ring-2 focus:ring-primary" placeholder="e.g. North Field">
-        </div>
-        <div class="grid grid-cols-2 gap-3">
-          <div>
-            <label class="text-[10px] uppercase tracking-widest text-on-surface-variant block mb-1">Acreage</label>
-            <input type="number" name="acreage" step="0.1" min="0" class="w-full bg-surface-container rounded-lg px-4 py-3 text-sm text-on-surface outline-none focus:ring-2 focus:ring-primary" placeholder="0.0">
-          </div>
-          <div>
             <label class="text-[10px] uppercase tracking-widest text-on-surface-variant block mb-1">Growth Stage</label>
             <input type="text" name="growth_stage" class="w-full bg-surface-container rounded-lg px-4 py-3 text-sm text-on-surface outline-none focus:ring-2 focus:ring-primary" placeholder="e.g. Seedling">
           </div>
-        </div>
-        <div class="grid grid-cols-2 gap-3">
           <div>
-            <label class="text-[10px] uppercase tracking-widest text-on-surface-variant block mb-1">Health Status</label>
-            <select name="health_status" class="w-full bg-surface-container rounded-lg px-4 py-3 text-sm text-on-surface outline-none focus:ring-2 focus:ring-primary">
-              <option value="healthy">Healthy</option>
-              <option value="alert">Alert</option>
-              <option value="critical">Critical</option>
+            <label class="text-[10px] uppercase tracking-widest text-on-surface-variant block mb-1">Minimum Field Score</label>
+            <input type="number" name="min_field_score" min="0" max="100" class="w-full bg-surface-container rounded-lg px-4 py-3 text-sm text-on-surface outline-none focus:ring-2 focus:ring-primary" placeholder="0">
+          </div>
+          <div>
+            <label class="text-[10px] uppercase tracking-widest text-on-surface-variant block mb-1">Disease Risk</label>
+            <input type="text" name="disease_risk" class="w-full bg-surface-container rounded-lg px-4 py-3 text-sm text-on-surface outline-none focus:ring-2 focus:ring-primary" placeholder="e.g. Low">
+          </div>
+          <p id="filterError" class="text-error text-xs hidden"></p>
+          <div class="flex gap-3 pt-2">
+            <button type="button" onclick="closeFilterModal(); resetFilters()" class="flex-1 py-3 rounded-xl border border-outline-variant text-on-surface-variant text-sm font-bold hover:bg-surface-container transition-colors">Reset</button>
+            <button type="submit" class="flex-1 py-3 rounded-xl bg-primary text-on-primary text-sm font-bold hover:opacity-90 transition-opacity">Apply Filters</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Search Modal -->
+    <div id="searchModal" class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 hidden" onclick="closeSearchModal()">
+      <div class="bg-surface rounded-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto shadow-2xl" onclick="event.stopPropagation()">
+        <div class="sticky top-0 flex items-center justify-between p-6 border-b border-surface-variant bg-surface">
+          <h2 class="text-xl font-bold text-primary">Search Fields</h2>
+          <button onclick="closeSearchModal()" class="p-2 hover:bg-surface-container rounded-full transition-colors">
+            <span class="material-symbols-outlined">close</span>
+          </button>
+        </div>
+        <form id="searchForm" class="p-6 space-y-4" onsubmit="performSearch(event)">
+          <div>
+            <label class="text-[10px] uppercase tracking-widest text-on-surface-variant block mb-1">Field Name</label>
+            <input type="text" name="field_name" class="w-full bg-surface-container rounded-lg px-4 py-3 text-sm text-on-surface outline-none focus:ring-2 focus:ring-primary" placeholder="Search field name...">
+          </div>
+          <div>
+            <label class="text-[10px] uppercase tracking-widest text-on-surface-variant block mb-1">Search across all fields</label>
+            <p class="text-xs text-on-surface-variant mb-3">Enter a field name to search through your entire field inventory.</p>
+          </div>
+          <p id="searchError" class="text-error text-xs hidden"></p>
+          <div class="flex gap-3 pt-2">
+            <button type="button" onclick="closeSearchModal()" class="flex-1 py-3 rounded-xl border border-outline-variant text-on-surface-variant text-sm font-bold hover:bg-surface-container transition-colors">Cancel</button>
+            <button type="submit" class="flex-1 py-3 rounded-xl bg-primary text-on-primary text-sm font-bold hover:opacity-90 transition-opacity">Search</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Sort Modal -->
+    <div id="sortModal" class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 hidden" onclick="closeSortModal()">
+      <div class="bg-surface rounded-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto shadow-2xl" onclick="event.stopPropagation()">
+        <div class="sticky top-0 flex items-center justify-between p-6 border-b border-surface-variant bg-surface">
+          <h2 class="text-xl font-bold text-primary">Sort Fields</h2>
+          <button onclick="closeSortModal()" class="p-2 hover:bg-surface-container rounded-full transition-colors">
+            <span class="material-symbols-outlined">close</span>
+          </button>
+        </div>
+        <form id="sortForm" class="p-6 space-y-4" onsubmit="applySorting(event)">
+          <div>
+            <label class="text-[10px] uppercase tracking-widest text-on-surface-variant block mb-1">Sort By</label>
+            <select name="sort_field" class="w-full bg-surface-container rounded-lg px-4 py-3 text-sm text-on-surface outline-none focus:ring-2 focus:ring-primary">
+              <option value="name">Field Name</option>
+              <option value="acreage">Acreage</option>
+              <option value="field_score">Field Score</option>
+              <option value="health_status">Health Status</option>
+              <option value="moisture_level">Moisture Level</option>
+              <option value="heat_level">Heat Level</option>
+              <option value="stress_risk">Stress Risk</option>
             </select>
           </div>
           <div>
-            <label class="text-[10px] uppercase tracking-widest text-on-surface-variant block mb-1">Field Score (0–100)</label>
-            <input type="number" name="field_score" min="0" max="100" class="w-full bg-surface-container rounded-lg px-4 py-3 text-sm text-on-surface outline-none focus:ring-2 focus:ring-primary" placeholder="0">
+            <label class="text-[10px] uppercase tracking-widest text-on-surface-variant block mb-1">Sort Order</label>
+            <div class="space-y-2">
+              <label class="flex items-center gap-3 cursor-pointer">
+                <input type="radio" name="sort_order" value="asc" checked class="accent-primary">
+                <span class="text-sm">Ascending</span>
+              </label>
+              <label class="flex items-center gap-3 cursor-pointer">
+                <input type="radio" name="sort_order" value="desc" class="accent-primary">
+                <span class="text-sm">Descending</span>
+              </label>
+            </div>
           </div>
-        </div>
-        <div class="grid grid-cols-3 gap-3">
-          <div>
-            <label class="text-[10px] uppercase tracking-widest text-on-surface-variant block mb-1">Moisture %</label>
-            <input type="number" name="moisture_level" min="0" max="100" class="w-full bg-surface-container rounded-lg px-4 py-3 text-sm text-on-surface outline-none focus:ring-2 focus:ring-primary" placeholder="0">
+          <p id="sortError" class="text-error text-xs hidden"></p>
+          <div class="flex gap-3 pt-2">
+            <button type="button" onclick="closeSortModal()" class="flex-1 py-3 rounded-xl border border-outline-variant text-on-surface-variant text-sm font-bold hover:bg-surface-container transition-colors">Cancel</button>
+            <button type="submit" class="flex-1 py-3 rounded-xl bg-primary text-on-primary text-sm font-bold hover:opacity-90 transition-opacity">Apply Sort</button>
           </div>
-          <div>
-            <label class="text-[10px] uppercase tracking-widest text-on-surface-variant block mb-1">Heat °C</label>
-            <input type="number" name="heat_level" class="w-full bg-surface-container rounded-lg px-4 py-3 text-sm text-on-surface outline-none focus:ring-2 focus:ring-primary" placeholder="0">
-          </div>
-          <div>
-            <label class="text-[10px] uppercase tracking-widest text-on-surface-variant block mb-1">Stress Risk %</label>
-            <input type="number" name="stress_risk" min="0" max="100" class="w-full bg-surface-container rounded-lg px-4 py-3 text-sm text-on-surface outline-none focus:ring-2 focus:ring-primary" placeholder="0">
-          </div>
-        </div>
-        <div>
-          <label class="text-[10px] uppercase tracking-widest text-on-surface-variant block mb-1">Disease Risk</label>
-          <input type="text" name="disease_risk" class="w-full bg-surface-container rounded-lg px-4 py-3 text-sm text-on-surface outline-none focus:ring-2 focus:ring-primary" placeholder="e.g. Low">
-        </div>
-        <p id="editFieldError" class="text-error text-xs hidden"></p>
-        <div class="flex gap-3 pt-2">
-          <button type="button" onclick="closeEditFieldModal()" class="flex-1 py-3 rounded-xl border border-outline-variant text-on-surface-variant text-sm font-bold hover:bg-surface-container transition-colors">Cancel</button>
-          <button type="submit" id="editFieldSubmitBtn" class="flex-1 py-3 rounded-xl bg-primary text-on-primary text-sm font-bold hover:opacity-90 transition-opacity">Update Field</button>
-        </div>
-      </form>
-    </div>
-  </div>
-
-  <!-- Filter Modal -->
-  <div id="filterModal" class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 hidden" onclick="closeFilterModal()">
-    <div class="bg-surface rounded-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto shadow-2xl" onclick="event.stopPropagation()">
-      <div class="sticky top-0 flex items-center justify-between p-6 border-b border-surface-variant bg-surface">
-        <h2 class="text-xl font-bold text-primary">Filter Fields</h2>
-        <button onclick="closeFilterModal()" class="p-2 hover:bg-surface-container rounded-full transition-colors">
-          <span class="material-symbols-outlined">close</span>
-        </button>
+        </form>
       </div>
-      <form id="filterForm" class="p-6 space-y-4" onsubmit="applyFilters(event)">
-        <div>
-          <label class="text-[10px] uppercase tracking-widest text-on-surface-variant block mb-1">Health Status</label>
-          <select name="health_status" class="w-full bg-surface-container rounded-lg px-4 py-3 text-sm text-on-surface outline-none focus:ring-2 focus:ring-primary">
-            <option value="">All Statuses</option>
-            <option value="healthy">Healthy</option>
-            <option value="alert">Alert</option>
-            <option value="critical">Critical</option>
-          </select>
-        </div>
-        <div>
-          <label class="text-[10px] uppercase tracking-widest text-on-surface-variant block mb-1">Growth Stage</label>
-          <input type="text" name="growth_stage" class="w-full bg-surface-container rounded-lg px-4 py-3 text-sm text-on-surface outline-none focus:ring-2 focus:ring-primary" placeholder="e.g. Seedling">
-        </div>
-        <div>
-          <label class="text-[10px] uppercase tracking-widest text-on-surface-variant block mb-1">Minimum Field Score</label>
-          <input type="number" name="min_field_score" min="0" max="100" class="w-full bg-surface-container rounded-lg px-4 py-3 text-sm text-on-surface outline-none focus:ring-2 focus:ring-primary" placeholder="0">
-        </div>
-        <div>
-          <label class="text-[10px] uppercase tracking-widest text-on-surface-variant block mb-1">Disease Risk</label>
-          <input type="text" name="disease_risk" class="w-full bg-surface-container rounded-lg px-4 py-3 text-sm text-on-surface outline-none focus:ring-2 focus:ring-primary" placeholder="e.g. Low">
-        </div>
-        <p id="filterError" class="text-error text-xs hidden"></p>
-        <div class="flex gap-3 pt-2">
-          <button type="button" onclick="closeFilterModal(); resetFilters()" class="flex-1 py-3 rounded-xl border border-outline-variant text-on-surface-variant text-sm font-bold hover:bg-surface-container transition-colors">Reset</button>
-          <button type="submit" class="flex-1 py-3 rounded-xl bg-primary text-on-primary text-sm font-bold hover:opacity-90 transition-opacity">Apply Filters</button>
-        </div>
-      </form>
     </div>
-  </div>
 
-  <!-- Search Modal -->
-  <div id="searchModal" class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 hidden" onclick="closeSearchModal()">
-    <div class="bg-surface rounded-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto shadow-2xl" onclick="event.stopPropagation()">
-      <div class="sticky top-0 flex items-center justify-between p-6 border-b border-surface-variant bg-surface">
-        <h2 class="text-xl font-bold text-primary">Search Fields</h2>
-        <button onclick="closeSearchModal()" class="p-2 hover:bg-surface-container rounded-full transition-colors">
-          <span class="material-symbols-outlined">close</span>
-        </button>
-      </div>
-      <form id="searchForm" class="p-6 space-y-4" onsubmit="performSearch(event)">
-        <div>
-          <label class="text-[10px] uppercase tracking-widest text-on-surface-variant block mb-1">Field Name</label>
-          <input type="text" name="field_name" class="w-full bg-surface-container rounded-lg px-4 py-3 text-sm text-on-surface outline-none focus:ring-2 focus:ring-primary" placeholder="Search field name...">
-        </div>
-        <div>
-          <label class="text-[10px] uppercase tracking-widest text-on-surface-variant block mb-1">Search across all fields</label>
-          <p class="text-xs text-on-surface-variant mb-3">Enter a field name to search through your entire field inventory.</p>
-        </div>
-        <p id="searchError" class="text-error text-xs hidden"></p>
-        <div class="flex gap-3 pt-2">
-          <button type="button" onclick="closeSearchModal()" class="flex-1 py-3 rounded-xl border border-outline-variant text-on-surface-variant text-sm font-bold hover:bg-surface-container transition-colors">Cancel</button>
-          <button type="submit" class="flex-1 py-3 rounded-xl bg-primary text-on-primary text-sm font-bold hover:opacity-90 transition-opacity">Search</button>
-        </div>
-      </form>
-    </div>
-  </div>
+    <!-- Floating Action Button -->
+    <button onclick="openCreateFieldModal()" class="fixed bottom-28 right-6 w-16 h-16 bg-[#5F6F52] rounded-full shadow-2xl flex items-center justify-center text-white active:scale-90 transition-transform z-40 hover:shadow-xl">
+      <span class="material-symbols-outlined text-3xl" style="font-variation-settings: 'wght' 600;">add</span>
+    </button>
 
-  <!-- Sort Modal -->
-  <div id="sortModal" class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 hidden" onclick="closeSortModal()">
-    <div class="bg-surface rounded-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto shadow-2xl" onclick="event.stopPropagation()">
-      <div class="sticky top-0 flex items-center justify-between p-6 border-b border-surface-variant bg-surface">
-        <h2 class="text-xl font-bold text-primary">Sort Fields</h2>
-        <button onclick="closeSortModal()" class="p-2 hover:bg-surface-container rounded-full transition-colors">
-          <span class="material-symbols-outlined">close</span>
-        </button>
-      </div>
-      <form id="sortForm" class="p-6 space-y-4" onsubmit="applySorting(event)">
-        <div>
-          <label class="text-[10px] uppercase tracking-widest text-on-surface-variant block mb-1">Sort By</label>
-          <select name="sort_field" class="w-full bg-surface-container rounded-lg px-4 py-3 text-sm text-on-surface outline-none focus:ring-2 focus:ring-primary">
-            <option value="name">Field Name</option>
-            <option value="acreage">Acreage</option>
-            <option value="field_score">Field Score</option>
-            <option value="health_status">Health Status</option>
-            <option value="moisture_level">Moisture Level</option>
-            <option value="heat_level">Heat Level</option>
-            <option value="stress_risk">Stress Risk</option>
-          </select>
-        </div>
-        <div>
-          <label class="text-[10px] uppercase tracking-widest text-on-surface-variant block mb-1">Sort Order</label>
-          <div class="space-y-2">
-            <label class="flex items-center gap-3 cursor-pointer">
-              <input type="radio" name="sort_order" value="asc" checked class="accent-primary">
-              <span class="text-sm">Ascending</span>
-            </label>
-            <label class="flex items-center gap-3 cursor-pointer">
-              <input type="radio" name="sort_order" value="desc" class="accent-primary">
-              <span class="text-sm">Descending</span>
-            </label>
+    <!-- BottomNavBar Section -->
+    <nav id="bottomNav" class="fixed bottom-0 left-0 w-full z-50 bg-[#fcf9f0]/80 dark:bg-stone-950/80 backdrop-blur-md rounded-t-[24px] shadow-[0_-8px_24px_rgba(28,28,23,0.06)] flex justify-around items-center px-4 pb-6 pt-3">
+      <a class="flex flex-col items-center justify-center text-stone-500 dark:text-stone-400 px-3 py-1.5 transition-transform hover:scale-105 duration-150" href="/">
+        <span class="material-symbols-outlined" data-icon="dashboard">dashboard</span>
+        <span class="font-['Work_Sans'] text-[11px] font-medium tracking-wide">Dashboard</span>
+      </a>
+      <a class="flex flex-col items-center justify-center bg-secondary-fixed dark:bg-primary-container text-on-background dark:text-surface-bright rounded-2xl px-3 py-1.5 transition-transform hover:scale-105 duration-150" href="/myfields">
+        <span class="material-symbols-outlined" data-icon="landscape" style="font-variation-settings: 'FILL' 1;">landscape</span>
+        <span class="font-['Work_Sans'] text-[11px] font-medium tracking-wide">Fields</span>
+      </a>
+      <a class="flex flex-col items-center justify-center text-stone-500 dark:text-stone-400 px-3 py-1.5 transition-transform hover:scale-105 duration-150" href="/mycrops">
+        <span class="material-symbols-outlined" data-icon="eco" style="font-variation-settings: 'FILL' 1;">eco</span>
+        <span class="font-['Work_Sans'] text-[11px] font-medium tracking-wide">Crops</span>
+      </a>
+      <a class="flex flex-col items-center justify-center text-stone-500 dark:text-stone-400 px-3 py-1.5 transition-transform hover:scale-105 duration-150" href="/mytasks">
+        <span class="material-symbols-outlined" data-icon="assignment_turned_in">assignment_turned_in</span>
+        <span class="font-['Work_Sans'] text-[11px] font-medium tracking-wide">Tasks</span>
+      </a>
+      <a class="flex flex-col items-center justify-center text-stone-500 dark:text-stone-400 px-3 py-1.5 transition-transform hover:scale-105 duration-150" href="/chatbot">
+        <span class="material-symbols-outlined" data-icon="chat">chat</span>
+        <span class="font-['Work_Sans'] text-[11px] font-medium tracking-wide">Chat</span>
+      </a>
+    </nav>
+
+    <script>
+
+      // ===== THEME TOGGLE =====
+      function initTheme() {
+        const savedTheme = localStorage.getItem('theme') || 'light';
+        if (savedTheme === 'dark') {
+          document.documentElement.classList.add('dark');
+        } else {
+          document.documentElement.classList.remove('dark');
+        }
+      }
+
+      function toggleTheme() {
+        const html = document.documentElement;
+        if (html.classList.contains('dark')) {
+          html.classList.remove('dark');
+          localStorage.setItem('theme', 'light');
+        } else {
+          html.classList.add('dark');
+          localStorage.setItem('theme', 'dark');
+        }
+      }
+
+      // Initialize theme on page load
+      initTheme();
+
+    
+
+      const API_BASE = '/myfields';
+
+      let cachedActiveFields = [];
+      let cachedActiveTasks = [];
+      let cachedAllFields = null;
+      let cachedAllFieldTasks = null;
+      let isViewingAll = false;
+      let isViewingAllTasks = false;
+
+      document.addEventListener('DOMContentLoaded', function() {
+        loadFieldsPage();
+      });
+
+      async function loadFieldsPage() {
+        try {
+          const response = await fetch(`${API_BASE}/fields/active`);
+          if (!response.ok) throw new Error('Failed to fetch active fields');
+
+          const data = await response.json();
+          const fields = Array.isArray(data.field_cards) ? data.field_cards : [];
+          const tasks = Array.isArray(data.field_task_cards) ? data.field_task_cards : [];
+
+          cachedActiveFields = fields;
+          cachedActiveTasks = tasks;
+          renderFieldCards(fields);
+          renderTasks(tasks);
+          updateTotalAcreage(fields);
+          updateOverallStats(fields);
+        } catch (error) {
+          console.error('Error loading fields page:', error);
+          showError('Failed to load fields');
+        }
+      }
+
+      function renderFieldCards(fields) {
+        const container = document.getElementById('fields-container');
+
+        if (!fields.length) {
+          container.innerHTML = `
+            <div class="flex-none w-full text-center text-on-surface-variant py-10">
+              No active fields found.
+            </div>
+          `;
+          return;
+        }
+
+        container.innerHTML = fields.map(field => {
+          const cropName = field.crop?.name || 'No Crop';
+          const score = clampScore(field.field_score);
+
+          return `
+            <div
+              class="field-card flex-none w-[200px] bg-surface-container-low rounded-[24px] overflow-hidden flex flex-col cursor-pointer hover:shadow-md transition-shadow"
+              data-field-id="${field.id}"
+              onclick="openFieldDetailsModal(${field.id})"
+              >
+              <div class="h-28 relative">
+                <img
+                  class="w-full h-full object-cover"
+                  alt="${escapeHtml(field.name || 'Field')}"
+                  src="${getFieldImage(cropName)}"
+                  onerror="this.src='/static/images/field_default.jpg'"
+                />
+                <div class="absolute top-2 right-2 bg-white/90 backdrop-blur rounded-full p-1.5 shadow-sm">
+                  <span class="material-symbols-outlined ${getStatusClass(field.health_status)} text-sm" style="font-variation-settings: 'FILL' 1;">
+                    ${getStatusIcon(field.health_status)}
+                  </span>
+                </div>
+                <button
+                  onclick="deleteField(${field.id}, event)"
+                  class="absolute top-2 left-2 bg-white/90 backdrop-blur rounded-full p-1.5 shadow-sm hover:bg-red-50 transition-colors"
+                  title="Delete field"
+                >
+                  <span class="material-symbols-outlined text-error text-sm">delete</span>
+                </button>
+                <button
+                  onclick="EditField(${field.id}, event)"
+                  class="absolute top-2 left-9 bg-white/90 backdrop-blur rounded-full p-1.5 shadow-sm hover:bg-red-50 transition-colors"
+                  title="Edit field"
+                >
+                  <span class="material-symbols-outlined text-primary text-sm">edit</span>
+                </button>
+              </div>
+
+              <div class="p-4 space-y-3">
+                <div>
+                  <h4 class="font-bold text-on-surface text-sm truncate">${escapeHtml(field.name || 'Unnamed Field')}</h4>
+                  <div class="flex justify-between items-center mt-0.5 gap-2">
+                    <p class="text-[10px] text-on-surface-variant font-medium truncate">
+                      ${escapeHtml(cropName)} • ${field.acreage ?? 0} AC
+                    </p>
+                    <span class="text-[10px] font-bold ${getHealthColor(field.health_status)}">${score}%</span>
+                  </div>
+                </div>
+
+                <div class="flex items-center gap-2 py-1">
+                  <div class="flex-1 h-1.5 bg-surface-variant rounded-full overflow-hidden">
+                    <div class="${getHealthProgressColor(field.health_status)} h-full" style="width: ${score}%"></div>
+                  </div>
+                </div>
+
+                <div class="flex justify-between items-center pt-1 border-t border-outline-variant/20">
+                  <div class="flex gap-2">
+                    <div class="relative group cursor-help">
+                      <span class="material-symbols-outlined text-xs text-secondary opacity-70 hover:opacity-100 transition-opacity">opacity</span>
+                      <div class="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-on-surface text-surface text-[9px] rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-10">
+                        Moisture: ${field.moisture_level ?? 0}%
+                      </div>
+                    </div>
+                    <div class="relative group cursor-help">
+                      <span class="material-symbols-outlined text-xs text-secondary opacity-70 hover:opacity-100 transition-opacity">thermostat</span>
+                      <div class="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-on-surface text-surface text-[9px] rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-10">
+                        Temperature: ${field.heat_level ?? 0}°C
+                      </div>
+                    </div>
+                  </div>
+                  <span class="text-[10px] font-bold ${getHealthColor(field.health_status)} uppercase">
+                    ${escapeHtml(field.crop?.growth_stage || 'Unknown')}
+                  </span>
+                </div>
+              </div>
+            </div>
+          `;
+        }).join('');
+      }
+
+      async function openFieldDetailsModal(fieldId) {
+        try {
+          const response = await fetch(`${API_BASE}/fields/${fieldId}`);
+          if (!response.ok) throw new Error('Failed to fetch field details');
+
+          const field = await response.json();
+          populateFieldModal(field);
+          document.getElementById('fieldDetailsModal').classList.remove('hidden');
+          document.getElementById('bottomNav').classList.add('hidden');
+        } catch (error) {
+          console.error('Error loading field details:', error);
+          showError('Failed to load field details');
+        }
+      }
+
+      function populateFieldModal(field) {
+        const cropName = field.crop?.name || 'Unknown';
+        const score = clampScore(field.field_score);
+        const normalizedStatus = normalizeStatus(field.health_status);
+
+        document.getElementById('fieldDetailsModalTitle').textContent = field.name || 'Field Details';
+        document.getElementById('fieldName').textContent = field.name || 'Unknown';
+        document.getElementById('fieldCrop').textContent = cropName;
+        document.getElementById('fieldAcreage').textContent = `${field.acreage ?? 0} AC`;
+        document.getElementById('fieldGrowthStage').textContent = field.crop?.growth_stage || 'Unknown';
+
+        document.getElementById('fieldStatusIcon').textContent = getStatusIcon(normalizedStatus);
+        document.getElementById('fieldStatusIcon').className = `material-symbols-outlined text-sm ${getStatusClass(normalizedStatus)}`;
+        document.getElementById('fieldStatusText').textContent = capitalize(normalizedStatus);
+        document.getElementById('fieldStatusText').className = getHealthColor(normalizedStatus);
+
+        document.getElementById('fieldHealthPercent').textContent = `${score}%`;
+        document.getElementById('fieldHealthPercent').className = `font-medium ${getHealthColor(normalizedStatus)}`;
+        document.getElementById('fieldHealthBar').style.width = `${score}%`;
+        document.getElementById('fieldHealthBar').className = `h-full ${getHealthProgressColor(normalizedStatus)}`;
+
+        document.getElementById('fieldMoisture').textContent = `${Math.round(Number(field.moisture_level || 0))}%`;
+        document.getElementById('fieldTemperature').textContent = `${Math.round(Number(field.heat_level || 0))}°C`;
+        document.getElementById('fieldStress').textContent = getStressLabel(field.stress_risk);
+        document.getElementById('fieldDiseaseRisk').textContent = field.disease_risk || 'Unknown';
+
+        renderFieldTasks(field.tasks || []);
+      }
+
+      function renderFieldTasks(tasks) {
+        const container = document.getElementById('fieldTasksList');
+
+        if (!tasks.length) {
+          container.innerHTML = `<div class="text-sm text-on-surface-variant">No tasks found.</div>`;
+          return;
+        }
+
+        container.innerHTML = tasks.map(task => `
+          <div onclick="openTaskDetailModal(${task.id})" class="bg-white dark:bg-stone-900 p-4 rounded-[20px] flex items-center gap-4 shadow-sm cursor-pointer hover:shadow-md transition-shadow active:scale-[0.98]">
+            <div class="w-12 h-12 rounded-full bg-[#f1f3ee] dark:bg-stone-800 flex items-center justify-center text-[#47573b] dark:text-[#d5e9c1]">
+              <span class="material-symbols-outlined" style="font-size: 20px;">
+                ${getTaskIcon(task.task_type)}
+              </span>
+            </div>
+            <div class="flex-1 min-w-0">
+              <h5 class="text-sm font-bold text-on-surface truncate">${escapeHtml(task.title || 'Untitled Task')}</h5>
+              <p class="text-[11px] text-on-surface-variant font-medium truncate">
+                ${escapeHtml(getTaskSubtitle(task))}
+              </p>
+            </div>
+            <span class="material-symbols-outlined text-outline-variant">chevron_right</span>
           </div>
-        </div>
-        <p id="sortError" class="text-error text-xs hidden"></p>
-        <div class="flex gap-3 pt-2">
-          <button type="button" onclick="closeSortModal()" class="flex-1 py-3 rounded-xl border border-outline-variant text-on-surface-variant text-sm font-bold hover:bg-surface-container transition-colors">Cancel</button>
-          <button type="submit" class="flex-1 py-3 rounded-xl bg-primary text-on-primary text-sm font-bold hover:opacity-90 transition-opacity">Apply Sort</button>
-        </div>
-      </form>
-    </div>
-  </div>
-
-  <!-- Floating Action Button -->
-  <button onclick="openCreateFieldModal()" class="fixed bottom-28 right-6 w-16 h-16 bg-[#5F6F52] rounded-full shadow-2xl flex items-center justify-center text-white active:scale-90 transition-transform z-40 hover:shadow-xl">
-    <span class="material-symbols-outlined text-3xl" style="font-variation-settings: 'wght' 600;">add</span>
-  </button>
-
-  <!-- BottomNavBar Section -->
-  <nav class="fixed bottom-0 left-0 w-full z-50 bg-[#fcf9f0]/80 dark:bg-stone-950/80 backdrop-blur-md rounded-t-[24px] shadow-[0_-8px_24px_rgba(28,28,23,0.06)] flex justify-around items-center px-4 pb-6 pt-3">
-    <a class="flex flex-col items-center justify-center text-stone-500 dark:text-stone-400 px-3 py-1.5 transition-transform hover:scale-105 duration-150" href="/">
-      <span class="material-symbols-outlined" data-icon="dashboard">dashboard</span>
-      <span class="font-['Work_Sans'] text-[11px] font-medium tracking-wide">Dashboard</span>
-    </a>
-    <a class="flex flex-col items-center justify-center bg-secondary-fixed dark:bg-primary-container text-on-background dark:text-surface-bright rounded-2xl px-3 py-1.5 transition-transform hover:scale-105 duration-150" href="/myfields">
-      <span class="material-symbols-outlined" data-icon="landscape" style="font-variation-settings: 'FILL' 1;">landscape</span>
-      <span class="font-['Work_Sans'] text-[11px] font-medium tracking-wide">Fields</span>
-    </a>
-    <a class="flex flex-col items-center justify-center text-stone-500 dark:text-stone-400 px-3 py-1.5 transition-transform hover:scale-105 duration-150" href="/mycrops">
-      <span class="material-symbols-outlined" data-icon="eco" style="font-variation-settings: 'FILL' 1;">eco</span>
-      <span class="font-['Work_Sans'] text-[11px] font-medium tracking-wide">Crops</span>
-    </a>
-    <a class="flex flex-col items-center justify-center text-stone-500 dark:text-stone-400 px-3 py-1.5 transition-transform hover:scale-105 duration-150" href="/mytasks">
-      <span class="material-symbols-outlined" data-icon="assignment_turned_in">assignment_turned_in</span>
-      <span class="font-['Work_Sans'] text-[11px] font-medium tracking-wide">Tasks</span>
-    </a>
-    <a class="flex flex-col items-center justify-center text-stone-500 dark:text-stone-400 px-3 py-1.5 transition-transform hover:scale-105 duration-150" href="/chatbot">
-      <span class="material-symbols-outlined" data-icon="chat">chat</span>
-      <span class="font-['Work_Sans'] text-[11px] font-medium tracking-wide">Chat</span>
-    </a>
-  </nav>
-
-  <script>
-
-     // ===== THEME TOGGLE =====
-    function initTheme() {
-      const savedTheme = localStorage.getItem('theme') || 'light';
-      if (savedTheme === 'dark') {
-        document.documentElement.classList.add('dark');
-      } else {
-        document.documentElement.classList.remove('dark');
+        `).join('');
       }
-    }
 
-    function toggleTheme() {
-      const html = document.documentElement;
-      if (html.classList.contains('dark')) {
-        html.classList.remove('dark');
-        localStorage.setItem('theme', 'light');
-      } else {
-        html.classList.add('dark');
-        localStorage.setItem('theme', 'dark');
+      function closeFieldDetailsModal() {
+        document.getElementById('fieldDetailsModal').classList.add('hidden');
+        document.getElementById('bottomNav').classList.remove('hidden');
       }
-    }
 
-    // Initialize theme on page load
-    initTheme();
+      function renderTasks(tasks) {
+        const container = document.getElementById('tasks-container');
 
-   
+        const pendingTasks = tasks.filter(task => !task.completed);
 
-    const API_BASE = '/myfields';
+        if (!pendingTasks.length) {
+          container.innerHTML = `
+            <div class="text-center text-on-surface-variant py-4">
+              No pending tasks found.
+            </div>
+          `;
+          updateDueToday([]);
+          return;
+        }
 
-    let cachedActiveFields = [];
-    let cachedActiveTasks = [];
-    let cachedAllFields = null;
-    let cachedAllFieldTasks = null;
-    let isViewingAll = false;
-    let isViewingAllTasks = false;
+        container.innerHTML = pendingTasks.map(task => `
+          <div onclick="openTaskDetailModal(${task.id})" class="bg-white dark:bg-stone-900 p-4 rounded-[20px] flex items-center gap-4 shadow-sm cursor-pointer hover:shadow-md transition-shadow active:scale-[0.98]">
+            <div class="w-12 h-12 rounded-full bg-[#f1f3ee] dark:bg-stone-800 flex items-center justify-center text-[#47573b] dark:text-[#d5e9c1]">
+              <span class="material-symbols-outlined" style="font-size: 20px;">
+                ${getTaskIcon(task.task_type)}
+              </span>
+            </div>
+            <div class="flex-1 min-w-0">
+              <h5 class="text-sm font-bold text-on-surface truncate">${escapeHtml(task.title || 'Untitled Task')}</h5>
+              <p class="text-[11px] text-on-surface-variant font-medium truncate">
+                ${escapeHtml(getTaskSubtitle(task))}
+              </p>
+            </div>
+            <span class="material-symbols-outlined text-outline-variant">chevron_right</span>
+          </div>
+        `).join('');
 
-    document.addEventListener('DOMContentLoaded', function() {
-      loadFieldsPage();
-    });
-
-    async function loadFieldsPage() {
-      try {
-        const response = await fetch(`${API_BASE}/fields/active`);
-        if (!response.ok) throw new Error('Failed to fetch active fields');
-
-        const data = await response.json();
-        const fields = Array.isArray(data.field_cards) ? data.field_cards : [];
-        const tasks = Array.isArray(data.field_task_cards) ? data.field_task_cards : [];
-
-        cachedActiveFields = fields;
-        cachedActiveTasks = tasks;
-        renderFieldCards(fields);
-        renderTasks(tasks);
-        updateTotalAcreage(fields);
-        updateOverallStats(fields);
-      } catch (error) {
-        console.error('Error loading fields page:', error);
-        showError('Failed to load fields');
+        updateDueToday(pendingTasks);
       }
-    }
 
-    function renderFieldCards(fields) {
-      const container = document.getElementById('fields-container');
+      function updateDueToday(tasks) {
+        const today = new Date().toISOString().split('T')[0];
+        const dueToday = tasks.filter(task => {
+          if (!task.due_date) return false;
+          return String(task.due_date).split('T')[0] === today;
+        }).length;
 
-      if (!fields.length) {
+        document.getElementById('tasks-due-today').textContent = `${dueToday} DUE TODAY`;
+      }
+
+      function updateTotalAcreage(fields) {
+        const total = fields.reduce((sum, field) => sum + (parseFloat(field.acreage) || 0), 0);
+        document.getElementById('total-acreage').textContent = total.toFixed(1);
+      }
+
+      function updateOverallStats(fields) {
+        if (!fields.length) {
+          document.getElementById('overall-moisture-value').textContent = '0%';
+          document.getElementById('overall-progress-ring').style.setProperty('--progress', 0);
+          document.getElementById('avg-heat').textContent = '0°C';
+          document.getElementById('avg-stress').textContent = 'Low';
+          document.getElementById('overall-threats').textContent = 'Clear';
+          document.getElementById('overall-health-message').textContent = 'No active fields available.';
+          return;
+        }
+
+        const avgMoisture = average(fields.map(f => Number(f.moisture_level || 0)));
+        const avgHeat = average(fields.map(f => Number(f.heat_level || 0)));
+        const avgStress = average(fields.map(f => Number(f.stress_risk || 0)));
+
+        const criticalCount = fields.filter(f => normalizeStatus(f.health_status) === 'critical').length;
+        const alertCount = fields.filter(f => normalizeStatus(f.health_status) === 'alert').length;
+
+        document.getElementById('overall-moisture-value').textContent = `${Math.round(avgMoisture)}%`;
+        document.getElementById('overall-progress-ring').style.setProperty('--progress', Math.round(avgMoisture));
+        document.getElementById('avg-heat').textContent = `${Math.round(avgHeat)}°C`;
+        document.getElementById('avg-stress').textContent = getStressLabel(avgStress);
+        document.getElementById('overall-threats').textContent =
+          criticalCount > 0 ? 'Critical' :
+          alertCount > 0 ? 'Watch' :
+          'Clear';
+
+        document.getElementById('overall-health-message').textContent =
+          criticalCount > 0
+            ? 'One or more active fields need urgent attention. Review moisture, stress, and disease indicators immediately.'
+            : alertCount > 0
+            ? 'Some active fields show early warning signs. Monitor health trends and pending tasks closely.'
+            : 'Average soil moisture and temperature levels across active fields are within a stable range.';
+      }
+
+      function getTaskSubtitle(task) {
+        if (task.field_name) return `${task.field_name} • ${formatTaskType(task.task_type)}`;
+        if (task.crop_name) return `${task.crop_name} • ${formatTaskType(task.task_type)}`;
+        if (task.task_category) return `${capitalize(task.task_category)} • ${formatTaskType(task.task_type)}`;
+        return formatTaskType(task.task_type);
+      }
+
+      function getTaskIcon(type) {
+        const iconMap = {
+          irrigation: 'water_drop',
+          spraying: 'science',
+          inspection: 'monitoring',
+          harvesting: 'agriculture',
+          fertilizing: 'eco',
+          maintenance: 'build',
+          planning: 'event_note',
+          monitoring: 'monitoring'
+        };
+        return iconMap[String(type || '').toLowerCase()] || 'assignment';
+      }
+
+      function formatTaskType(type) {
+        if (!type) return 'Task';
+        return capitalize(String(type).replace(/_/g, ' '));
+      }
+
+      function getFieldImage(cropType) {
+        const imageMap = {
+          Corn: '/static/images/Corn.jpg',
+          Wheat: '/static/images/Wheat.jpg',
+          Soybeans: '/static/images/Soybeans.jpg',
+          Sunflower: '/static/images/Sunflower.jpg'
+        };
+        return imageMap[cropType] || '/static/images/field_default.jpg';
+      }
+
+      function normalizeStatus(status) {
+        const value = String(status || '').toLowerCase();
+        if (value === 'healthy') return 'healthy';
+        if (value === 'alert') return 'alert';
+        if (value === 'critical') return 'critical';
+        return 'healthy';
+      }
+
+      function getStatusIcon(status) {
+        const iconMap = {
+          healthy: 'check_circle',
+          alert: 'warning',
+          critical: 'error'
+        };
+        return iconMap[normalizeStatus(status)] || 'help';
+      }
+
+      function getStatusClass(status) {
+        const classMap = {
+          healthy: 'text-primary',
+          alert: 'text-amber-600',
+          critical: 'text-error'
+        };
+        return classMap[normalizeStatus(status)] || 'text-primary';
+      }
+
+      function getHealthColor(status) {
+        const colorMap = {
+          healthy: 'text-primary',
+          alert: 'text-amber-600',
+          critical: 'text-error'
+        };
+        return colorMap[normalizeStatus(status)] || 'text-primary';
+      }
+
+      function getHealthProgressColor(status) {
+        const colorMap = {
+          healthy: 'bg-primary',
+          alert: 'bg-amber-500',
+          critical: 'bg-error'
+        };
+        return colorMap[normalizeStatus(status)] || 'bg-primary';
+      }
+
+      function clampScore(value) {
+        const num = Number(value || 0);
+        return Math.max(0, Math.min(100, Math.round(num)));
+      }
+
+      function getStressLabel(value) {
+        const num = Number(value || 0);
+        if (num >= 60) return 'High';
+        if (num >= 25) return 'Medium';
+        return 'Low';
+      }
+
+      function average(arr) {
+        if (!arr.length) return 0;
+        return arr.reduce((sum, n) => sum + n, 0) / arr.length;
+      }
+
+      function capitalize(text) {
+        const str = String(text || '');
+        return str.charAt(0).toUpperCase() + str.slice(1);
+      }
+
+      function escapeHtml(text) {
+        return String(text ?? '')
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;')
+          .replace(/'/g, '&#039;');
+      }
+
+      function openCreateFieldModal() {
+        document.getElementById('createFieldForm').reset();
+        document.getElementById('createFieldError').classList.add('hidden');
+        document.getElementById('createFieldModal').classList.remove('hidden');
+        document.getElementById('bottomNav').classList.add('hidden');
+      }
+
+      function closeCreateFieldModal() {
+        document.getElementById('createFieldModal').classList.add('hidden');
+        document.getElementById('bottomNav').classList.remove('hidden');
+      }
+
+      async function submitCreateField(event) {
+        event.preventDefault();
+        const form = event.target;
+        const submitBtn = document.getElementById('createFieldSubmitBtn');
+        const errorEl = document.getElementById('createFieldError');
+        errorEl.classList.add('hidden');
+
+        const formData = new FormData(form);
+        const body = {};
+        for (const [key, value] of formData.entries()) {
+          if (value !== '') body[key] = isNaN(value) || key === 'name' || key === 'growth_stage' || key === 'disease_risk' || key === 'health_status' ? value : Number(value);
+        }
+
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Creating...';
+
+        try {
+          const response = await fetch(`${API_BASE}/fields`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(body)
+          });
+
+          if (!response.ok) {
+            const err = await response.json();
+            throw new Error(err.errors ? JSON.stringify(err.errors) : 'Failed to create field');
+          }
+
+          cachedAllFields = null;
+          cachedAllFieldTasks = null;
+          closeCreateFieldModal();
+          await loadFieldsPage();
+        } catch (error) {
+          errorEl.textContent = error.message;
+          errorEl.classList.remove('hidden');
+        } finally {
+          submitBtn.disabled = false;
+          submitBtn.textContent = 'Create Field';
+        }
+      }
+
+      async function deleteField(fieldId, event) {
+        event.stopPropagation();
+        if (!confirm('Delete this field? This action cannot be undone.')) return;
+
+        try {
+          const response = await fetch(`${API_BASE}/fields/${fieldId}`, { method: 'DELETE' });
+          if (!response.ok) throw new Error('Failed to delete field');
+
+          cachedActiveFields = cachedActiveFields.filter(f => f.id !== fieldId);
+          if (cachedAllFields) cachedAllFields = cachedAllFields.filter(f => f.id !== fieldId);
+
+          const card = document.querySelector(`[data-field-id="${fieldId}"]`);
+          if (card) card.remove();
+
+          updateTotalAcreage(cachedActiveFields);
+          updateOverallStats(cachedActiveFields);
+        } catch (error) {
+          console.error('Error deleting field:', error);
+        }
+      }
+
+      async function EditField(fieldId, event) {
+        event.stopPropagation();
+        try {
+          const response = await fetch(`${API_BASE}/fields/${fieldId}`);
+          if (!response.ok) throw new Error('Failed to fetch field details');
+
+          const field = await response.json();
+          populateEditFieldModal(field);
+          document.getElementById('editFieldModal').classList.remove('hidden');
+        } catch (error) {
+          console.error('Error loading field for editing:', error);
+          showError('Failed to load field for editing');
+        }
+      }
+
+      function populateEditFieldModal(field) {
+        const form = document.getElementById('editFieldForm');
+        form.fieldId = field.id;
+        form.name.value = field.name || '';
+        form.acreage.value = field.acreage ?? '';
+        form.health_status.value = field.health_status || 'healthy';
+        form.moisture_level.value = field.moisture_level ?? '';
+        form.heat_level.value = field.heat_level ?? '';
+        form.stress_risk.value = field.stress_risk ?? '';
+        form.disease_risk.value = (field.disease_risk || 'low').toLowerCase();
+        document.getElementById('editFieldError').classList.add('hidden');
+      }
+
+      function closeEditFieldModal() {
+        document.getElementById('editFieldModal').classList.add('hidden');
+        doc
+      }
+
+      async function submitEditField(event) {
+        event.preventDefault();
+        const form = event.target;
+        const fieldId = form.fieldId;
+        const submitBtn = document.getElementById('editFieldSubmitBtn');
+        const errorEl = document.getElementById('editFieldError');
+        errorEl.classList.add('hidden');
+
+        const formData = new FormData(form);
+        const body = {};
+        for (const [key, value] of formData.entries()) {
+          if (value !== '') body[key] = isNaN(value) || key === 'name' || key === 'growth_stage' || key === 'disease_risk' || key === 'health_status' ? value : Number(value);
+        }
+
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Updating...';
+
+        try {
+          const response = await fetch(`${API_BASE}/fields/${fieldId}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(body)
+          });
+
+          if (!response.ok) {
+            const err = await response.json();
+            throw new Error(err.errors ? JSON.stringify(err.errors) : 'Failed to update field');
+          }
+
+          cachedAllFields = null;
+          cachedAllFieldTasks = null;
+          closeEditFieldModal();
+          await loadFieldsPage();
+        } catch (error) {
+          errorEl.textContent = error.message;
+          errorEl.classList.remove('hidden');
+        } finally {
+          submitBtn.disabled = false;
+          submitBtn.textContent = 'Update Field';
+        }
+      }
+
+      async function openTaskDetailModal(taskId) {
+        document.getElementById('taskDetailModal').classList.remove('hidden');
+        document.getElementById('taskDetailTitle').textContent = 'Loading...';
+        try {
+          console.log('Fetching task details for task ID:', taskId);
+          const response = await fetch(`/mytasks/tasks/${taskId}`);
+          if (!response.ok) throw new Error('Failed to fetch task');
+          const task = await response.json();
+          populateTaskModal(task);
+          document.getElementById('bottomNav').classList.add('hidden');
+        } catch (error) {
+          console.error('Error loading task:', error);
+          closeTaskDetailModal();
+        }
+      }
+
+      function closeTaskDetailModal() {
+        document.getElementById('taskDetailModal').classList.add('hidden');
+        document.getElementById('bottomNav').classList.remove('hidden');
+      }
+
+      function populateTaskModal(task) {
+        document.getElementById('taskDetailTitle').textContent = task.title || 'Untitled Task';
+
+        const typeEl = document.getElementById('taskDetailType');
+        typeEl.textContent = formatTaskType(task.task_type);
+
+        const priorityEl = document.getElementById('taskDetailPriority');
+        const priorityColors = { high: 'bg-red-100 text-error', medium: 'bg-amber-100 text-amber-700', low: 'bg-primary/10 text-primary' };
+        priorityEl.textContent = capitalize(task.priority || 'low');
+        priorityEl.className = `text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wide ${priorityColors[task.priority] || priorityColors.low}`;
+
+        const statusEl = document.getElementById('taskDetailStatus');
+        statusEl.textContent = task.completed ? 'Completed' : 'Pending';
+        statusEl.className = `text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wide ${task.completed ? 'bg-primary/10 text-primary' : 'bg-amber-100 text-amber-700'}`;
+
+        document.getElementById('taskDetailField').textContent = task.field_name || '—';
+        document.getElementById('taskDetailCrop').textContent = task.crop_name || '—';
+        document.getElementById('taskDetailDue').textContent = task.due_date ? String(task.due_date) : '—';
+        document.getElementById('taskDetailAssigned').textContent = task.assigned_to || '—';
+
+        const descBlock = document.getElementById('taskDetailDescBlock');
+        if (task.description) {
+          document.getElementById('taskDetailDesc').textContent = task.description;
+          descBlock.classList.remove('hidden');
+        } else {
+          descBlock.classList.add('hidden');
+        }
+
+        const notesBlock = document.getElementById('taskDetailNotesBlock');
+        if (task.notes) {
+          document.getElementById('taskDetailNotes').textContent = task.notes;
+          notesBlock.classList.remove('hidden');
+        } else {
+          notesBlock.classList.add('hidden');
+        }
+      }
+
+      async function viewAllFieldTasks() {
+        const container = document.getElementById('tasks-container');
+        container.innerHTML = `<div class="text-center text-on-surface-variant py-4">Loading all tasks...</div>`;
+
+        try {
+          if (!cachedAllFieldTasks) {
+            const response = await fetch(`${API_BASE}/fields`);
+            if (!response.ok) throw new Error('Failed to fetch tasks');
+            const data = await response.json();
+            cachedAllFields = cachedAllFields || (Array.isArray(data.field_cards) ? data.field_cards : []);
+            cachedAllFieldTasks = Array.isArray(data.field_task_cards) ? data.field_task_cards : [];
+          }
+
+          renderAllTasks(cachedAllFieldTasks);
+          setTasksViewMode('all');
+          isViewingAllTasks = true;
+        } catch (error) {
+          console.error('Error loading all tasks:', error);
+          renderTasks(cachedActiveTasks);
+        }
+      }
+
+      function viewActiveFieldTasks() {
+        renderTasks(cachedActiveTasks);
+        setTasksViewMode('active');
+        isViewingAllTasks = false;
+      }
+
+      function setTasksViewMode(mode) {
+        const title = document.getElementById('tasks-section-title');
+        const badge = document.getElementById('tasks-due-today');
+        const toggleBtn = document.getElementById('tasks-view-toggle-btn');
+
+        if (mode === 'all') {
+          title.textContent = 'All Field Tasks';
+          badge.classList.add('hidden');
+          toggleBtn.innerHTML = `<span class="material-symbols-outlined text-sm align-middle mr-1">arrow_back</span> Active Tasks`;
+          toggleBtn.onclick = viewActiveFieldTasks;
+        } else {
+          title.textContent = 'Pending Tasks';
+          badge.classList.remove('hidden');
+          toggleBtn.innerHTML = 'View All Field Tasks';
+          toggleBtn.onclick = viewAllFieldTasks;
+          updateDueToday(cachedActiveTasks.filter(t => !t.completed));
+        }
+      }
+
+      function renderAllTasks(tasks) {
+        const container = document.getElementById('tasks-container');
+        if (!tasks.length) {
+          container.innerHTML = `<div class="text-center text-on-surface-variant py-4">No tasks found.</div>`;
+          return;
+        }
+        container.innerHTML = tasks.map(task => `
+          <div onclick="openTaskDetailModal(${task.id})" class="bg-white dark:bg-stone-900 p-4 rounded-[20px] flex items-center gap-4 shadow-sm cursor-pointer hover:shadow-md transition-shadow active:scale-[0.98]">
+            <div class="w-12 h-12 rounded-full bg-[#f1f3ee] dark:bg-stone-800 flex items-center justify-center text-[#47573b] dark:text-[#d5e9c1]">
+              <span class="material-symbols-outlined" style="font-size: 20px;">${getTaskIcon(task.task_type)}</span>
+            </div>
+            <div class="flex-1 min-w-0">
+              <h5 class="text-sm font-bold text-on-surface truncate">${escapeHtml(task.title || 'Untitled Task')}</h5>
+              <p class="text-[11px] text-on-surface-variant font-medium truncate">${escapeHtml(getTaskSubtitle(task))}</p>
+            </div>
+            <span class="text-[10px] font-bold ${task.completed ? 'text-primary' : 'text-amber-600'} uppercase">${task.completed ? 'Done' : 'Pending'}</span>
+          </div>
+        `).join('');
+      }
+
+      async function viewAllFields() {
+        const container = document.getElementById('fields-container');
         container.innerHTML = `
           <div class="flex-none w-full text-center text-on-surface-variant py-10">
-            No active fields found.
+            Loading all fields...
           </div>
         `;
-        return;
-      }
 
-      container.innerHTML = fields.map(field => {
-        const cropName = field.crop?.name || 'No Crop';
-        const score = clampScore(field.field_score);
+        try {
+          if (!cachedAllFields) {
+            const response = await fetch(`${API_BASE}/fields`);
+            if (!response.ok) throw new Error('Failed to fetch fields');
+            const data = await response.json();
+            cachedAllFields = Array.isArray(data.field_cards) ? data.field_cards : [];
+            cachedAllFieldTasks = Array.isArray(data.field_task_cards) ? data.field_task_cards : [];
+          }
 
-        return `
-          <div
-            class="field-card flex-none w-[200px] bg-surface-container-low rounded-[24px] overflow-hidden flex flex-col cursor-pointer hover:shadow-md transition-shadow"
-            data-field-id="${field.id}"
-            onclick="openFieldDetailsModal(${field.id})"
-            >
-            <div class="h-28 relative">
-              <img
-                class="w-full h-full object-cover"
-                alt="${escapeHtml(field.name || 'Field')}"
-                src="${getFieldImage(cropName)}"
-                onerror="this.src='/static/images/field_default.jpg'"
-              />
-              <div class="absolute top-2 right-2 bg-white/90 backdrop-blur rounded-full p-1.5 shadow-sm">
-                <span class="material-symbols-outlined ${getStatusClass(field.health_status)} text-sm" style="font-variation-settings: 'FILL' 1;">
-                  ${getStatusIcon(field.health_status)}
-                </span>
-              </div>
-              <button
-                onclick="deleteField(${field.id}, event)"
-                class="absolute top-2 left-2 bg-white/90 backdrop-blur rounded-full p-1.5 shadow-sm hover:bg-red-50 transition-colors"
-                title="Delete field"
-              >
-                <span class="material-symbols-outlined text-error text-sm">delete</span>
-              </button>
-              <button
-                onclick="EditField(${field.id}, event)"
-                class="absolute top-2 left-9 bg-white/90 backdrop-blur rounded-full p-1.5 shadow-sm hover:bg-red-50 transition-colors"
-                title="Edit field"
-              >
-                <span class="material-symbols-outlined text-primary text-sm">edit</span>
-              </button>
-            </div>
-
-            <div class="p-4 space-y-3">
-              <div>
-                <h4 class="font-bold text-on-surface text-sm truncate">${escapeHtml(field.name || 'Unnamed Field')}</h4>
-                <div class="flex justify-between items-center mt-0.5 gap-2">
-                  <p class="text-[10px] text-on-surface-variant font-medium truncate">
-                    ${escapeHtml(cropName)} • ${field.acreage ?? 0} AC
-                  </p>
-                  <span class="text-[10px] font-bold ${getHealthColor(field.health_status)}">${score}%</span>
-                </div>
-              </div>
-
-              <div class="flex items-center gap-2 py-1">
-                <div class="flex-1 h-1.5 bg-surface-variant rounded-full overflow-hidden">
-                  <div class="${getHealthProgressColor(field.health_status)} h-full" style="width: ${score}%"></div>
-                </div>
-              </div>
-
-              <div class="flex justify-between items-center pt-1 border-t border-outline-variant/20">
-                <div class="flex gap-2">
-                  <div class="relative group cursor-help">
-                    <span class="material-symbols-outlined text-xs text-secondary opacity-70 hover:opacity-100 transition-opacity">opacity</span>
-                    <div class="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-on-surface text-surface text-[9px] rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-10">
-                      Moisture: ${field.moisture_level ?? 0}%
-                    </div>
-                  </div>
-                  <div class="relative group cursor-help">
-                    <span class="material-symbols-outlined text-xs text-secondary opacity-70 hover:opacity-100 transition-opacity">thermostat</span>
-                    <div class="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-on-surface text-surface text-[9px] rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-10">
-                      Temperature: ${field.heat_level ?? 0}°C
-                    </div>
-                  </div>
-                </div>
-                <span class="text-[10px] font-bold ${getHealthColor(field.health_status)} uppercase">
-                  ${escapeHtml(field.growth_stage || 'Unknown')}
-                </span>
-              </div>
-            </div>
-          </div>
-        `;
-      }).join('');
-    }
-
-    async function openFieldDetailsModal(fieldId) {
-      try {
-        const response = await fetch(`${API_BASE}/fields/${fieldId}`);
-        if (!response.ok) throw new Error('Failed to fetch field details');
-
-        const field = await response.json();
-        populateFieldModal(field);
-        document.getElementById('fieldDetailsModal').classList.remove('hidden');
-        document.querySelector('nav').classList.add('hidden');
-      } catch (error) {
-        console.error('Error loading field details:', error);
-        showError('Failed to load field details');
-      }
-    }
-
-    function populateFieldModal(field) {
-      const cropName = field.crop?.name || 'Unknown';
-      const score = clampScore(field.field_score);
-      const normalizedStatus = normalizeStatus(field.health_status);
-
-      document.getElementById('fieldDetailsModalTitle').textContent = field.name || 'Field Details';
-      document.getElementById('fieldName').textContent = field.name || 'Unknown';
-      document.getElementById('fieldCrop').textContent = cropName;
-      document.getElementById('fieldAcreage').textContent = `${field.acreage ?? 0} AC`;
-      document.getElementById('fieldGrowthStage').textContent = field.growth_stage || 'Unknown';
-
-      document.getElementById('fieldStatusIcon').textContent = getStatusIcon(normalizedStatus);
-      document.getElementById('fieldStatusIcon').className = `material-symbols-outlined text-sm ${getStatusClass(normalizedStatus)}`;
-      document.getElementById('fieldStatusText').textContent = capitalize(normalizedStatus);
-      document.getElementById('fieldStatusText').className = getHealthColor(normalizedStatus);
-
-      document.getElementById('fieldHealthPercent').textContent = `${score}%`;
-      document.getElementById('fieldHealthPercent').className = `font-medium ${getHealthColor(normalizedStatus)}`;
-      document.getElementById('fieldHealthBar').style.width = `${score}%`;
-      document.getElementById('fieldHealthBar').className = `h-full ${getHealthProgressColor(normalizedStatus)}`;
-
-      document.getElementById('fieldMoisture').textContent = `${Math.round(Number(field.moisture_level || 0))}%`;
-      document.getElementById('fieldTemperature').textContent = `${Math.round(Number(field.heat_level || 0))}°C`;
-      document.getElementById('fieldStress').textContent = getStressLabel(field.stress_risk);
-      document.getElementById('fieldDiseaseRisk').textContent = field.disease_risk || 'Unknown';
-
-      renderFieldTasks(field.tasks || []);
-    }
-
-    function renderFieldTasks(tasks) {
-      const container = document.getElementById('fieldTasksList');
-
-      if (!tasks.length) {
-        container.innerHTML = `<div class="text-sm text-on-surface-variant">No tasks found.</div>`;
-        return;
-      }
-
-      container.innerHTML = tasks.map(task => `
-        <div onclick="openTaskDetailModal(${task.id})" class="bg-white dark:bg-stone-900 p-4 rounded-[20px] flex items-center gap-4 shadow-sm cursor-pointer hover:shadow-md transition-shadow active:scale-[0.98]">
-          <div class="w-12 h-12 rounded-full bg-[#f1f3ee] dark:bg-stone-800 flex items-center justify-center text-[#47573b] dark:text-[#d5e9c1]">
-            <span class="material-symbols-outlined" style="font-size: 20px;">
-              ${getTaskIcon(task.task_type)}
-            </span>
-          </div>
-          <div class="flex-1 min-w-0">
-            <h5 class="text-sm font-bold text-on-surface truncate">${escapeHtml(task.title || 'Untitled Task')}</h5>
-            <p class="text-[11px] text-on-surface-variant font-medium truncate">
-              ${escapeHtml(getTaskSubtitle(task))}
-            </p>
-          </div>
-          <span class="material-symbols-outlined text-outline-variant">chevron_right</span>
-        </div>
-      `).join('');
-    }
-
-    function closeFieldDetailsModal() {
-      document.getElementById('fieldDetailsModal').classList.add('hidden');
-      document.querySelector('nav').classList.remove('hidden');
-    }
-
-    function renderTasks(tasks) {
-      const container = document.getElementById('tasks-container');
-
-      const pendingTasks = tasks.filter(task => !task.completed);
-
-      if (!pendingTasks.length) {
-        container.innerHTML = `
-          <div class="text-center text-on-surface-variant py-4">
-            No pending tasks found.
-          </div>
-        `;
-        updateDueToday([]);
-        return;
-      }
-
-      container.innerHTML = pendingTasks.map(task => `
-        <div onclick="openTaskDetailModal(${task.id})" class="bg-white dark:bg-stone-900 p-4 rounded-[20px] flex items-center gap-4 shadow-sm cursor-pointer hover:shadow-md transition-shadow active:scale-[0.98]">
-          <div class="w-12 h-12 rounded-full bg-[#f1f3ee] dark:bg-stone-800 flex items-center justify-center text-[#47573b] dark:text-[#d5e9c1]">
-            <span class="material-symbols-outlined" style="font-size: 20px;">
-              ${getTaskIcon(task.task_type)}
-            </span>
-          </div>
-          <div class="flex-1 min-w-0">
-            <h5 class="text-sm font-bold text-on-surface truncate">${escapeHtml(task.title || 'Untitled Task')}</h5>
-            <p class="text-[11px] text-on-surface-variant font-medium truncate">
-              ${escapeHtml(getTaskSubtitle(task))}
-            </p>
-          </div>
-          <span class="material-symbols-outlined text-outline-variant">chevron_right</span>
-        </div>
-      `).join('');
-
-      updateDueToday(pendingTasks);
-    }
-
-    function updateDueToday(tasks) {
-      const today = new Date().toISOString().split('T')[0];
-      const dueToday = tasks.filter(task => {
-        if (!task.due_date) return false;
-        return String(task.due_date).split('T')[0] === today;
-      }).length;
-
-      document.getElementById('tasks-due-today').textContent = `${dueToday} DUE TODAY`;
-    }
-
-    function updateTotalAcreage(fields) {
-      const total = fields.reduce((sum, field) => sum + (parseFloat(field.acreage) || 0), 0);
-      document.getElementById('total-acreage').textContent = total.toFixed(1);
-    }
-
-    function updateOverallStats(fields) {
-      if (!fields.length) {
-        document.getElementById('overall-moisture-value').textContent = '0%';
-        document.getElementById('overall-progress-ring').style.setProperty('--progress', 0);
-        document.getElementById('avg-heat').textContent = '0°C';
-        document.getElementById('avg-stress').textContent = 'Low';
-        document.getElementById('overall-threats').textContent = 'Clear';
-        document.getElementById('overall-health-message').textContent = 'No active fields available.';
-        return;
-      }
-
-      const avgMoisture = average(fields.map(f => Number(f.moisture_level || 0)));
-      const avgHeat = average(fields.map(f => Number(f.heat_level || 0)));
-      const avgStress = average(fields.map(f => Number(f.stress_risk || 0)));
-
-      const criticalCount = fields.filter(f => normalizeStatus(f.health_status) === 'critical').length;
-      const alertCount = fields.filter(f => normalizeStatus(f.health_status) === 'alert').length;
-
-      document.getElementById('overall-moisture-value').textContent = `${Math.round(avgMoisture)}%`;
-      document.getElementById('overall-progress-ring').style.setProperty('--progress', Math.round(avgMoisture));
-      document.getElementById('avg-heat').textContent = `${Math.round(avgHeat)}°C`;
-      document.getElementById('avg-stress').textContent = getStressLabel(avgStress);
-      document.getElementById('overall-threats').textContent =
-        criticalCount > 0 ? 'Critical' :
-        alertCount > 0 ? 'Watch' :
-        'Clear';
-
-      document.getElementById('overall-health-message').textContent =
-        criticalCount > 0
-          ? 'One or more active fields need urgent attention. Review moisture, stress, and disease indicators immediately.'
-          : alertCount > 0
-          ? 'Some active fields show early warning signs. Monitor health trends and pending tasks closely.'
-          : 'Average soil moisture and temperature levels across active fields are within a stable range.';
-    }
-
-    function getTaskSubtitle(task) {
-      if (task.field_name) return `${task.field_name} • ${formatTaskType(task.task_type)}`;
-      if (task.crop_name) return `${task.crop_name} • ${formatTaskType(task.task_type)}`;
-      if (task.task_category) return `${capitalize(task.task_category)} • ${formatTaskType(task.task_type)}`;
-      return formatTaskType(task.task_type);
-    }
-
-    function getTaskIcon(type) {
-      const iconMap = {
-        irrigation: 'water_drop',
-        spraying: 'science',
-        inspection: 'monitoring',
-        harvesting: 'agriculture',
-        fertilizing: 'eco',
-        maintenance: 'build',
-        planning: 'event_note',
-        monitoring: 'monitoring'
-      };
-      return iconMap[String(type || '').toLowerCase()] || 'assignment';
-    }
-
-    function formatTaskType(type) {
-      if (!type) return 'Task';
-      return capitalize(String(type).replace(/_/g, ' '));
-    }
-
-    function getFieldImage(cropType) {
-      const imageMap = {
-        Corn: '/static/images/Corn.jpg',
-        Wheat: '/static/images/Wheat.jpg',
-        Soybeans: '/static/images/Soybeans.jpg',
-        Sunflower: '/static/images/Sunflower.jpg'
-      };
-      return imageMap[cropType] || '/static/images/field_default.jpg';
-    }
-
-    function normalizeStatus(status) {
-      const value = String(status || '').toLowerCase();
-      if (value === 'healthy') return 'healthy';
-      if (value === 'alert') return 'alert';
-      if (value === 'critical') return 'critical';
-      return 'healthy';
-    }
-
-    function getStatusIcon(status) {
-      const iconMap = {
-        healthy: 'check_circle',
-        alert: 'warning',
-        critical: 'error'
-      };
-      return iconMap[normalizeStatus(status)] || 'help';
-    }
-
-    function getStatusClass(status) {
-      const classMap = {
-        healthy: 'text-primary',
-        alert: 'text-amber-600',
-        critical: 'text-error'
-      };
-      return classMap[normalizeStatus(status)] || 'text-primary';
-    }
-
-    function getHealthColor(status) {
-      const colorMap = {
-        healthy: 'text-primary',
-        alert: 'text-amber-600',
-        critical: 'text-error'
-      };
-      return colorMap[normalizeStatus(status)] || 'text-primary';
-    }
-
-    function getHealthProgressColor(status) {
-      const colorMap = {
-        healthy: 'bg-primary',
-        alert: 'bg-amber-500',
-        critical: 'bg-error'
-      };
-      return colorMap[normalizeStatus(status)] || 'bg-primary';
-    }
-
-    function clampScore(value) {
-      const num = Number(value || 0);
-      return Math.max(0, Math.min(100, Math.round(num)));
-    }
-
-    function getStressLabel(value) {
-      const num = Number(value || 0);
-      if (num >= 60) return 'High';
-      if (num >= 25) return 'Medium';
-      return 'Low';
-    }
-
-    function average(arr) {
-      if (!arr.length) return 0;
-      return arr.reduce((sum, n) => sum + n, 0) / arr.length;
-    }
-
-    function capitalize(text) {
-      const str = String(text || '');
-      return str.charAt(0).toUpperCase() + str.slice(1);
-    }
-
-    function escapeHtml(text) {
-      return String(text ?? '')
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;')
-        .replace(/'/g, '&#039;');
-    }
-
-    function openCreateFieldModal() {
-      document.getElementById('createFieldForm').reset();
-      document.getElementById('createFieldError').classList.add('hidden');
-      document.getElementById('createFieldModal').classList.remove('hidden');
-      document.querySelector('nav').classList.add('hidden');
-    }
-
-    function closeCreateFieldModal() {
-      document.getElementById('createFieldModal').classList.add('hidden');
-      document.querySelector('nav').classList.remove('hidden');
-    }
-
-    async function submitCreateField(event) {
-      event.preventDefault();
-      const form = event.target;
-      const submitBtn = document.getElementById('createFieldSubmitBtn');
-      const errorEl = document.getElementById('createFieldError');
-      errorEl.classList.add('hidden');
-
-      const formData = new FormData(form);
-      const body = {};
-      for (const [key, value] of formData.entries()) {
-        if (value !== '') body[key] = isNaN(value) || key === 'name' || key === 'growth_stage' || key === 'disease_risk' || key === 'health_status' ? value : Number(value);
-      }
-
-      submitBtn.disabled = true;
-      submitBtn.textContent = 'Creating...';
-
-      try {
-        const response = await fetch(`${API_BASE}/fields`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(body)
-        });
-
-        if (!response.ok) {
-          const err = await response.json();
-          throw new Error(err.errors ? JSON.stringify(err.errors) : 'Failed to create field');
+          renderFieldCards(cachedAllFields);
+          setFieldsViewMode('all');
+          isViewingAll = true;
+        } catch (error) {
+          console.error('Error loading all fields:', error);
+          renderFieldCards(cachedActiveFields);
+          showError('Failed to load all fields');
         }
-
-        cachedAllFields = null;
-        cachedAllFieldTasks = null;
-        closeCreateFieldModal();
-        await loadFieldsPage();
-      } catch (error) {
-        errorEl.textContent = error.message;
-        errorEl.classList.remove('hidden');
-      } finally {
-        submitBtn.disabled = false;
-        submitBtn.textContent = 'Create Field';
-      }
-    }
-
-    async function deleteField(fieldId, event) {
-      event.stopPropagation();
-      if (!confirm('Delete this field? This action cannot be undone.')) return;
-
-      try {
-        const response = await fetch(`${API_BASE}/fields/${fieldId}`, { method: 'DELETE' });
-        if (!response.ok) throw new Error('Failed to delete field');
-
-        cachedActiveFields = cachedActiveFields.filter(f => f.id !== fieldId);
-        if (cachedAllFields) cachedAllFields = cachedAllFields.filter(f => f.id !== fieldId);
-
-        const card = document.querySelector(`[data-field-id="${fieldId}"]`);
-        if (card) card.remove();
-
-        updateTotalAcreage(cachedActiveFields);
-        updateOverallStats(cachedActiveFields);
-      } catch (error) {
-        console.error('Error deleting field:', error);
-      }
-    }
-
-    async function EditField(fieldId, event) {
-      event.stopPropagation();
-      try {
-        const response = await fetch(`${API_BASE}/fields/${fieldId}`);
-        if (!response.ok) throw new Error('Failed to fetch field details');
-
-        const field = await response.json();
-        populateEditFieldModal(field);
-        document.getElementById('editFieldModal').classList.remove('hidden');
-      } catch (error) {
-        console.error('Error loading field for editing:', error);
-        showError('Failed to load field for editing');
-      }
-    }
-
-    function populateEditFieldModal(field) {
-      const form = document.getElementById('editFieldForm');
-      form.fieldId = field.id;
-      form.name.value = field.name || '';
-      form.acreage.value = field.acreage ?? '';
-      form.growth_stage.value = field.growth_stage || '';
-      form.health_status.value = field.health_status || 'healthy';
-      form.field_score.value = field.field_score ?? '';
-      form.moisture_level.value = field.moisture_level ?? '';
-      form.heat_level.value = field.heat_level ?? '';
-      form.stress_risk.value = field.stress_risk ?? '';
-      form.disease_risk.value = field.disease_risk || '';
-      document.getElementById('editFieldError').classList.add('hidden');
-    }
-
-    function closeEditFieldModal() {
-      document.getElementById('editFieldModal').classList.add('hidden');
-      doc
-    }
-
-    async function submitEditField(event) {
-      event.preventDefault();
-      const form = event.target;
-      const fieldId = form.fieldId;
-      const submitBtn = document.getElementById('editFieldSubmitBtn');
-      const errorEl = document.getElementById('editFieldError');
-      errorEl.classList.add('hidden');
-
-      const formData = new FormData(form);
-      const body = {};
-      for (const [key, value] of formData.entries()) {
-        if (value !== '') body[key] = isNaN(value) || key === 'name' || key === 'growth_stage' || key === 'disease_risk' || key === 'health_status' ? value : Number(value);
       }
 
-      submitBtn.disabled = true;
-      submitBtn.textContent = 'Updating...';
-
-      try {
-        const response = await fetch(`${API_BASE}/fields/${fieldId}`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(body)
-        });
-
-        if (!response.ok) {
-          const err = await response.json();
-          throw new Error(err.errors ? JSON.stringify(err.errors) : 'Failed to update field');
-        }
-
-        cachedAllFields = null;
-        cachedAllFieldTasks = null;
-        closeEditFieldModal();
-        await loadFieldsPage();
-      } catch (error) {
-        errorEl.textContent = error.message;
-        errorEl.classList.remove('hidden');
-      } finally {
-        submitBtn.disabled = false;
-        submitBtn.textContent = 'Update Field';
-      }
-    }
-
-    async function openTaskDetailModal(taskId) {
-      document.getElementById('taskDetailModal').classList.remove('hidden');
-      document.getElementById('taskDetailTitle').textContent = 'Loading...';
-      try {
-        console.log('Fetching task details for task ID:', taskId);
-        const response = await fetch(`/mytasks/tasks/${taskId}`);
-        if (!response.ok) throw new Error('Failed to fetch task');
-        const task = await response.json();
-        populateTaskModal(task);
-        document.querySelector('nav').classList.add('hidden');
-      } catch (error) {
-        console.error('Error loading task:', error);
-        closeTaskDetailModal();
-      }
-    }
-
-    function closeTaskDetailModal() {
-      document.getElementById('taskDetailModal').classList.add('hidden');
-      document.querySelector('nav').classList.remove('hidden');
-    }
-
-    function populateTaskModal(task) {
-      document.getElementById('taskDetailTitle').textContent = task.title || 'Untitled Task';
-
-      const typeEl = document.getElementById('taskDetailType');
-      typeEl.textContent = formatTaskType(task.task_type);
-
-      const priorityEl = document.getElementById('taskDetailPriority');
-      const priorityColors = { high: 'bg-red-100 text-error', medium: 'bg-amber-100 text-amber-700', low: 'bg-primary/10 text-primary' };
-      priorityEl.textContent = capitalize(task.priority || 'low');
-      priorityEl.className = `text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wide ${priorityColors[task.priority] || priorityColors.low}`;
-
-      const statusEl = document.getElementById('taskDetailStatus');
-      statusEl.textContent = task.completed ? 'Completed' : 'Pending';
-      statusEl.className = `text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wide ${task.completed ? 'bg-primary/10 text-primary' : 'bg-amber-100 text-amber-700'}`;
-
-      document.getElementById('taskDetailField').textContent = task.field_name || '—';
-      document.getElementById('taskDetailCrop').textContent = task.crop_name || '—';
-      document.getElementById('taskDetailDue').textContent = task.due_date ? String(task.due_date) : '—';
-      document.getElementById('taskDetailAssigned').textContent = task.assigned_to || '—';
-
-      const descBlock = document.getElementById('taskDetailDescBlock');
-      if (task.description) {
-        document.getElementById('taskDetailDesc').textContent = task.description;
-        descBlock.classList.remove('hidden');
-      } else {
-        descBlock.classList.add('hidden');
-      }
-
-      const notesBlock = document.getElementById('taskDetailNotesBlock');
-      if (task.notes) {
-        document.getElementById('taskDetailNotes').textContent = task.notes;
-        notesBlock.classList.remove('hidden');
-      } else {
-        notesBlock.classList.add('hidden');
-      }
-    }
-
-    async function viewAllFieldTasks() {
-      const container = document.getElementById('tasks-container');
-      container.innerHTML = `<div class="text-center text-on-surface-variant py-4">Loading all tasks...</div>`;
-
-      try {
-        if (!cachedAllFieldTasks) {
-          const response = await fetch(`${API_BASE}/fields`);
-          if (!response.ok) throw new Error('Failed to fetch tasks');
-          const data = await response.json();
-          cachedAllFields = cachedAllFields || (Array.isArray(data.field_cards) ? data.field_cards : []);
-          cachedAllFieldTasks = Array.isArray(data.field_task_cards) ? data.field_task_cards : [];
-        }
-
-        renderAllTasks(cachedAllFieldTasks);
-        setTasksViewMode('all');
-        isViewingAllTasks = true;
-      } catch (error) {
-        console.error('Error loading all tasks:', error);
-        renderTasks(cachedActiveTasks);
-      }
-    }
-
-    function viewActiveFieldTasks() {
-      renderTasks(cachedActiveTasks);
-      setTasksViewMode('active');
-      isViewingAllTasks = false;
-    }
-
-    function setTasksViewMode(mode) {
-      const title = document.getElementById('tasks-section-title');
-      const badge = document.getElementById('tasks-due-today');
-      const toggleBtn = document.getElementById('tasks-view-toggle-btn');
-
-      if (mode === 'all') {
-        title.textContent = 'All Field Tasks';
-        badge.classList.add('hidden');
-        toggleBtn.innerHTML = `<span class="material-symbols-outlined text-sm align-middle mr-1">arrow_back</span> Active Tasks`;
-        toggleBtn.onclick = viewActiveFieldTasks;
-      } else {
-        title.textContent = 'Pending Tasks';
-        badge.classList.remove('hidden');
-        toggleBtn.innerHTML = 'View All Field Tasks';
-        toggleBtn.onclick = viewAllFieldTasks;
-        updateDueToday(cachedActiveTasks.filter(t => !t.completed));
-      }
-    }
-
-    function renderAllTasks(tasks) {
-      const container = document.getElementById('tasks-container');
-      if (!tasks.length) {
-        container.innerHTML = `<div class="text-center text-on-surface-variant py-4">No tasks found.</div>`;
-        return;
-      }
-      container.innerHTML = tasks.map(task => `
-        <div onclick="openTaskDetailModal(${task.id})" class="bg-white dark:bg-stone-900 p-4 rounded-[20px] flex items-center gap-4 shadow-sm cursor-pointer hover:shadow-md transition-shadow active:scale-[0.98]">
-          <div class="w-12 h-12 rounded-full bg-[#f1f3ee] dark:bg-stone-800 flex items-center justify-center text-[#47573b] dark:text-[#d5e9c1]">
-            <span class="material-symbols-outlined" style="font-size: 20px;">${getTaskIcon(task.task_type)}</span>
-          </div>
-          <div class="flex-1 min-w-0">
-            <h5 class="text-sm font-bold text-on-surface truncate">${escapeHtml(task.title || 'Untitled Task')}</h5>
-            <p class="text-[11px] text-on-surface-variant font-medium truncate">${escapeHtml(getTaskSubtitle(task))}</p>
-          </div>
-          <span class="text-[10px] font-bold ${task.completed ? 'text-primary' : 'text-amber-600'} uppercase">${task.completed ? 'Done' : 'Pending'}</span>
-        </div>
-      `).join('');
-    }
-
-    async function viewAllFields() {
-      const container = document.getElementById('fields-container');
-      container.innerHTML = `
-        <div class="flex-none w-full text-center text-on-surface-variant py-10">
-          Loading all fields...
-        </div>
-      `;
-
-      try {
-        if (!cachedAllFields) {
-          const response = await fetch(`${API_BASE}/fields`);
-          if (!response.ok) throw new Error('Failed to fetch fields');
-          const data = await response.json();
-          cachedAllFields = Array.isArray(data.field_cards) ? data.field_cards : [];
-          cachedAllFieldTasks = Array.isArray(data.field_task_cards) ? data.field_task_cards : [];
-        }
-
-        renderFieldCards(cachedAllFields);
-        setFieldsViewMode('all');
-        isViewingAll = true;
-      } catch (error) {
-        console.error('Error loading all fields:', error);
+      function viewActiveFields() {
         renderFieldCards(cachedActiveFields);
-        showError('Failed to load all fields');
-      }
-    }
-
-    function viewActiveFields() {
-      renderFieldCards(cachedActiveFields);
-      setFieldsViewMode('active');
-      isViewingAll = false;
-    }
-
-    function setFieldsViewMode(mode) {
-      const title = document.getElementById('fields-section-title');
-      const filterBtn = document.getElementById('fields-filter-btn');
-      const toggleBtn = document.getElementById('fields-view-toggle-btn');
-
-      if (mode === 'all') {
-        title.textContent = 'All Fields';
-        toggleBtn.innerHTML = `<span class="material-symbols-outlined text-sm">arrow_back</span> Active Fields`;
-        toggleBtn.onclick = viewActiveFields;
-      } else {
-        title.textContent = 'Active Fields';
-        toggleBtn.innerHTML = `View All Field Inventory <span class="material-symbols-outlined text-sm">arrow_forward</span>`;
-        toggleBtn.onclick = viewAllFields;
-      }
-    }
-
-    function openMap() { /* TODO: interactive map */ }
-    function openFilterModal() {
-      document.getElementById('filterModal').classList.remove('hidden');
-    }
-    function closeFilterModal() {
-      document.getElementById('filterModal').classList.add('hidden');
-    }
-    function resetFilters() {
-      document.getElementById('filterForm').reset();
-      cachedActiveFields = cachedAllFields || cachedActiveFields;
-      renderFieldCards(cachedActiveFields);
-    }
-    function applyFilters(event) {
-      event.preventDefault();
-      const form = event.target;
-      const healthStatus = form.health_status.value;
-      const growthStage = form.growth_stage.value.toLowerCase();
-      const minFieldScore = parseFloat(form.min_field_score.value) || 0;
-      const diseaseRisk = form.disease_risk.value.toLowerCase();
-
-      let filtered = cachedActiveFields.filter(field => {
-        const matchesHealth = !healthStatus || field.health_status === healthStatus;
-        const matchesStage = !growthStage || field.growth_stage.toLowerCase().includes(growthStage);
-        const matchesScore = field.field_score >= minFieldScore;
-        const matchesDisease = !diseaseRisk || field.disease_risk.toLowerCase().includes(diseaseRisk);
-        return matchesHealth && matchesStage && matchesScore && matchesDisease;
-      });
-
-      renderFieldCards(filtered);
-      closeFilterModal();
-    }
-
-    function openSearchModal() {
-      document.getElementById('searchModal').classList.remove('hidden');
-    }
-    function closeSearchModal() {
-      document.getElementById('searchModal').classList.add('hidden');
-    }
-    function performSearch(event) {
-      event.preventDefault();
-      const form = event.target;
-      const fieldName = form.field_name.value.toLowerCase().trim();
-      
-      if (!fieldName) {
-        document.getElementById('searchError').textContent = 'Please enter a field name to search';
-        document.getElementById('searchError').classList.remove('hidden');
-        return;
+        setFieldsViewMode('active');
+        isViewingAll = false;
       }
 
-      let searched = cachedActiveFields.filter(field => 
-        field.name.toLowerCase().includes(fieldName)
-      );
+      function setFieldsViewMode(mode) {
+        const title = document.getElementById('fields-section-title');
+        const filterBtn = document.getElementById('fields-filter-btn');
+        const toggleBtn = document.getElementById('fields-view-toggle-btn');
 
-      renderFieldCards(searched);
-      closeSearchModal();
-    }
-
-    function openSortModal() {
-      document.getElementById('sortModal').classList.remove('hidden');
-    }
-    function closeSortModal() {
-      document.getElementById('sortModal').classList.add('hidden');
-    }
-    function applySorting(event) {
-      event.preventDefault();
-      const form = event.target;
-      const sortField = form.sort_field.value;
-      const sortOrder = form.sort_order.value;
-
-      let sorted = [...cachedActiveFields];
-      sorted.sort((a, b) => {
-        let aVal = a[sortField];
-        let bVal = b[sortField];
-
-        if (typeof aVal === 'string') {
-          aVal = aVal.toLowerCase();
-          bVal = bVal.toLowerCase();
-        }
-
-        if (sortOrder === 'asc') {
-          return aVal > bVal ? 1 : aVal < bVal ? -1 : 0;
+        if (mode === 'all') {
+          title.textContent = 'All Fields';
+          toggleBtn.innerHTML = `<span class="material-symbols-outlined text-sm">arrow_back</span> Active Fields`;
+          toggleBtn.onclick = viewActiveFields;
         } else {
-          return aVal < bVal ? 1 : aVal > bVal ? -1 : 0;
+          title.textContent = 'Active Fields';
+          toggleBtn.innerHTML = `View All Field Inventory <span class="material-symbols-outlined text-sm">arrow_forward</span>`;
+          toggleBtn.onclick = viewAllFields;
         }
+      }
+
+      function openMap() { /* TODO: interactive map */ }
+      function openFilterModal() {
+        document.getElementById('filterModal').classList.remove('hidden');
+      }
+      function closeFilterModal() {
+        document.getElementById('filterModal').classList.add('hidden');
+      }
+      function resetFilters() {
+        document.getElementById('filterForm').reset();
+        renderFieldCards(isViewingAll ? (cachedAllFields || cachedActiveFields) : cachedActiveFields);
+      }
+      function applyFilters(event) {
+        event.preventDefault();
+        const form = event.target;
+        const healthStatus = form.health_status.value;
+        const growthStage = form.growth_stage.value.toLowerCase();
+        const minFieldScore = parseFloat(form.min_field_score.value) || 0;
+        const diseaseRisk = form.disease_risk.value.toLowerCase();
+
+        let filtered = cachedActiveFields.filter(field => {
+          const matchesHealth = !healthStatus || field.health_status === healthStatus;
+          const matchesStage = !growthStage || field.growth_stage.toLowerCase().includes(growthStage);
+          const matchesScore = field.field_score >= minFieldScore;
+          const matchesDisease = !diseaseRisk || field.disease_risk.toLowerCase().includes(diseaseRisk);
+          return matchesHealth && matchesStage && matchesScore && matchesDisease;
+        });
+
+        renderFieldCards(filtered);
+        closeFilterModal();
+      }
+
+      function openSearchModal() {
+        document.getElementById('searchModal').classList.remove('hidden');
+      }
+      function closeSearchModal() {
+        document.getElementById('searchModal').classList.add('hidden');
+      }
+      function performSearch(event) {
+        event.preventDefault();
+        const form = event.target;
+        const fieldName = form.field_name.value.toLowerCase().trim();
+        
+        if (!fieldName) {
+          document.getElementById('searchError').textContent = 'Please enter a field name to search';
+          document.getElementById('searchError').classList.remove('hidden');
+          return;
+        }
+
+        let searched = cachedActiveFields.filter(field => 
+          field.name.toLowerCase().includes(fieldName)
+        );
+
+        renderFieldCards(searched);
+        closeSearchModal();
+      }
+
+      function openSortModal() {
+        document.getElementById('sortModal').classList.remove('hidden');
+      }
+      function closeSortModal() {
+        document.getElementById('sortModal').classList.add('hidden');
+      }
+      function applySorting(event) {
+        event.preventDefault();
+        const form = event.target;
+        const sortField = form.sort_field.value;
+        const sortOrder = form.sort_order.value;
+
+        let sorted = [...cachedActiveFields];
+        sorted.sort((a, b) => {
+          let aVal = a[sortField];
+          let bVal = b[sortField];
+
+          if (typeof aVal === 'string') {
+            aVal = aVal.toLowerCase();
+            bVal = bVal.toLowerCase();
+          }
+
+          if (sortOrder === 'asc') {
+            return aVal > bVal ? 1 : aVal < bVal ? -1 : 0;
+          } else {
+            return aVal < bVal ? 1 : aVal > bVal ? -1 : 0;
+          }
+        });
+
+        renderFieldCards(sorted);
+        closeSortModal();
+      }
+
+      // Close modals on outside click
+      document.getElementById('fieldDetailsModal').addEventListener('click', function(e) {
+        if (e.target === this) closeFieldDetailsModal();
       });
 
-      renderFieldCards(sorted);
-      closeSortModal();
-    }
+      document.getElementById('createFieldModal').addEventListener('click', function(e) {
+        if (e.target === this) closeCreateFieldModal();
+      });
 
-    // Close modals on outside click
-    document.getElementById('fieldDetailsModal').addEventListener('click', function(e) {
-      if (e.target === this) closeFieldDetailsModal();
-    });
+      document.getElementById('editFieldModal').addEventListener('click', function(e) {
+        if (e.target === this) closeEditFieldModal();
+      });
 
-    document.getElementById('createFieldModal').addEventListener('click', function(e) {
-      if (e.target === this) closeCreateFieldModal();
-    });
+      document.getElementById('taskDetailModal').addEventListener('click', function(e) {
+        if (e.target === this) closeTaskDetailModal();
+      });
 
-    document.getElementById('editFieldModal').addEventListener('click', function(e) {
-      if (e.target === this) closeEditFieldModal();
-    });
+      document.getElementById('filterModal').addEventListener('click', function(e) {
+        if (e.target === this) closeFilterModal();
+      });
 
-    document.getElementById('taskDetailModal').addEventListener('click', function(e) {
-      if (e.target === this) closeTaskDetailModal();
-    });
+      document.getElementById('searchModal').addEventListener('click', function(e) {
+        if (e.target === this) closeSearchModal();
+      });
 
-    document.getElementById('filterModal').addEventListener('click', function(e) {
-      if (e.target === this) closeFilterModal();
-    });
-
-    document.getElementById('searchModal').addEventListener('click', function(e) {
-      if (e.target === this) closeSearchModal();
-    });
-
-    document.getElementById('sortModal').addEventListener('click', function(e) {
-      if (e.target === this) closeSortModal();
-    });  
+      document.getElementById('sortModal').addEventListener('click', function(e) {
+        if (e.target === this) closeSortModal();
+      });  
 
 
 
-    function openSearch() { /* TODO: search */ }
-    function showNotifications() { /* TODO: notifications */ }
-    function showError(message) { console.error(message); }
-  </script>
-</body>
+      function openSearch() { /* TODO: search */ }
+      function showNotifications() { /* TODO: notifications */ }
+      function showError(message) { console.error(message); }
+    </script>
+  </body>
 </html>

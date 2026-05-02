@@ -13,7 +13,7 @@ def start_scheduler(app):
 
     # DAILY UPDATE JOB -> 5 am every day
     scheduler.add_job(
-        func=lambda: run_with_context(app, DailyUpdateJob.run),
+        func=lambda: run_with_context(app, DailyUpdateJob().run),
         trigger="cron",
         hour=5,
         minute=0,
@@ -21,9 +21,9 @@ def start_scheduler(app):
         replace_existing=True,
     )
 
-    # DAILY UPDATE JOB -> 7pm every day
+    # TASK GENERATOR JOB -> 7pm every day
     scheduler.add_job(
-        func=lambda: run_with_context(app, taskGenerator.run),
+        func=lambda: run_with_context(app, TaskGeneratorJob().run),
         trigger="cron",
         hour=19,
         minute=0,
@@ -43,7 +43,7 @@ def start_scheduler(app):
 
     # WEEKLY PLANNING JOB
     scheduler.add_job(
-        func=lambda: run_with_context(app, WeeklyPlanJob.run),
+        func=lambda: run_with_context(app, WeeklyPlanJob().run),
         trigger="cron",
         day_of_week="mon",
         hour=3,
