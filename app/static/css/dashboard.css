@@ -1,0 +1,38 @@
+body {
+  font-family: 'Work Sans', sans-serif;
+  background-color: #fcf9f0;
+  min-height: max(884px, 100dvh);
+}
+
+h1, h2, h3 {
+  font-family: 'Manrope', sans-serif;
+}
+
+.material-symbols-outlined {
+  font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+}
+
+.soil-gauge-track {
+  background-color: #d5e9c1;
+  height: 8px;
+  border-radius: 4px;
+}
+
+.soil-gauge-indicator {
+  background-color: #47573b;
+  height: 8px;
+  border-radius: 4px;
+  transition: width 0.6s ease;
+}
+
+.organic-gradient {
+  background: linear-gradient(135deg, #47573b 0%, #5f6f52 100%);
+}
+
+.no-scrollbar {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}

@@ -281,15 +281,17 @@
         return;
       }
 
+      const CLICKABLE_TYPES = new Set(['warning', 'critical', 'recommendation']);
+
       el.innerHTML = notifs.map((n, i) => {
-        const meta = TYPE_META[n.notification_type] || TYPE_META.info;
-        const unread = !n.is_read;
-        const hasDetail = n.detail && n.detail !== n.message;
+        const meta      = TYPE_META[n.notification_type] || TYPE_META.info;
+        const unread    = !n.is_read;
+        const clickable = CLICKABLE_TYPES.has(n.notification_type);
         return `
           <div class="notif-card ${unread ? 'unread' : ''} notif-in rounded-xl px-4 py-3.5
-                      bg-surface-container-low dark:bg-[#222219] cursor-pointer"
+                      bg-surface-container-low dark:bg-[#222219] ${clickable ? 'cursor-pointer' : 'cursor-default'}"
                style="animation-delay:${i * 0.03}s"
-               onclick="handleClick(${n.id}, ${hasDetail})">
+               onclick="handleClick(${n.id}, ${clickable})">
             <div class="flex items-start gap-3">
               <span class="text-xl flex-shrink-0 mt-0.5">${meta.icon}</span>
               <div class="flex-1 min-w-0">
@@ -301,7 +303,7 @@
                   </div>
                 </div>
                 <p class="text-xs text-on-surface-variant dark:text-[#9e9e8e] mt-1 leading-relaxed line-clamp-2">${esc(n.message)}</p>
-                ${hasDetail ? `<p class="text-xs text-primary dark:text-[#d5e9c1] mt-1.5 font-medium">Tap for details →</p>` : ''}
+                ${clickable ? `<p class="text-xs text-primary dark:text-[#d5e9c1] mt-1.5 font-medium">Tap for details →</p>` : ''}
               </div>
             </div>
           </div>`;

@@ -9,7 +9,6 @@ class Field(db.Model):
 
     name = db.Column(db.String(100), nullable=False)
     acreage = db.Column(db.Float, nullable=True)
-    growth_stage = db.Column(db.String(100), nullable=True)
     health_status = db.Column(db.String(100), nullable=True)
     field_score = db.Column(db.Float, nullable=True)
     health_percentage = db.Column(db.Float, nullable=True)
@@ -17,6 +16,8 @@ class Field(db.Model):
     heat_level = db.Column(db.Float, nullable=True)
     stress_risk = db.Column(db.Float, nullable=True)
     disease_risk = db.Column(db.String(50), nullable=True)
+    water_source_id = db.Column(db.Integer, db.ForeignKey("water_source.id"))
+    soil_type_id = db.Column(db.Integer, db.ForeignKey("soil_type.id"))
 
     currently_active = db.Column(db.Boolean, default=True, nullable=False)
     user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=True)
@@ -26,8 +27,15 @@ class Field(db.Model):
 
     @property
     def crop(self):
+        # Eagerly access crop_name and growth_stage to avoid N+1 queries
+        _ = self.crops  # Ensure crops are loaded
         active = [c for c in self.crops if c.currently_active]
-        return active[0] if active else (self.crops[0] if self.crops else None)
+        result = active[0] if active else (self.crops[0] if self.crops else None)
+        # Access the relationships to ensure they're loaded
+        if result:
+            _ = result.crop_name_rel
+            _ = result.growth_stage_rel
+        return result
 
     def __repr__(self):
         return f"<Field {self.id} - {self.name}>"

@@ -81,10 +81,7 @@ def get_active_crops():
 
     for crop in crops:
         if crop.tasks:
-            all_tasks.extend([
-                task for task in crop.tasks
-                if task.task_category == "crop"
-            ])
+            all_tasks.extend([t for t in crop.tasks if t.task_category == 'crop'])
 
     # Remove duplicate tasks
     unique_tasks = list({task.id: task for task in all_tasks}.values())
@@ -96,6 +93,11 @@ def get_active_crops():
     }
 
     return jsonify(response), 200
+
+
+@crops_bp.route("/vocabulary", methods=["GET"])
+def get_crop_vocabulary():
+    return jsonify(CropService.get_vocabulary()), 200
 
 
 @crops_bp.route("/crops", methods=["POST"])

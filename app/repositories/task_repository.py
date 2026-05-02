@@ -1,3 +1,5 @@
+from sqlalchemy.orm import joinedload
+
 from app.models.task import Task
 from app.extensions import db
 
@@ -14,11 +16,19 @@ class TaskRepository:
     @staticmethod
     def get_all():
         """Returns a base query — callers may chain .filter(), .paginate(), etc."""
-        return Task.query
+        return Task.query.options(
+            joinedload(Task.crop),
+            joinedload(Task.field),
+        )
 
     @staticmethod
     def get_by_id(task_id: int):
-        return Task.query.get(task_id)
+        return (
+            Task.query
+            .options(joinedload(Task.crop), joinedload(Task.field))
+            .filter_by(id=task_id)
+            .first()
+        )
 
     @staticmethod
     def get_pending() -> list:
@@ -72,3 +82,12 @@ class TaskRepository:
             setattr(task, key, value)
         db.session.commit()
         return task
+
+    @staticmethod
+    def get_by_user_id(user_id: int) -> list:
+        return (
+            Task.query
+            .options(joinedload(Task.crop), joinedload(Task.field))
+            .filter_by(user_id=user_id)
+            .all()
+        )
