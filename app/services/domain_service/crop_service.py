@@ -1,13 +1,33 @@
+from datetime import timedelta
 from app.repositories.crop_repository import CropRepository
 from app.services.domain_service.task_service import TaskService
 from app.rules.vocabulary.crop_names import CropNames
 from app.rules.vocabulary.growth_stage import GrowthStage
 
+# Keyed by crop_name_id: 1=Maize, 2=Rice, 3=Cotton
+CROP_DURATION_DAYS = {
+    1: 120,   # Maize
+    2: 180,   # Rice
+    3: 220,   # Cotton
+}
+DEFAULT_DURATION_DAYS = 150
+
 
 class CropService:
 
     @staticmethod
+    def _calc_harvest_date(crop_name_id, planting_date):
+        if not planting_date or not crop_name_id:
+            return None
+        duration = CROP_DURATION_DAYS.get(crop_name_id, DEFAULT_DURATION_DAYS)
+        return planting_date + timedelta(days=duration)
+
+    @staticmethod
     def create_crop(data: dict):
+        if data.get('planting_date') and not data.get('expected_harvest_date'):
+            data['expected_harvest_date'] = CropService._calc_harvest_date(
+                data.get('crop_name_id'), data['planting_date']
+            )
         return CropRepository.create(data)
 
     @staticmethod
@@ -21,6 +41,11 @@ class CropService:
     def update_crop(crop_id: int, data: dict):
         crop = CropRepository.get_by_id(crop_id)
         if crop:
+            # recalculate harvest date if planting date or crop name changed
+            if 'planting_date' in data or 'crop_name_id' in data:
+                planting = data.get('planting_date') or crop.planting_date
+                name_id = data.get('crop_name_id') or crop.crop_name_id
+                data['expected_harvest_date'] = CropService._calc_harvest_date(name_id, planting)
             CropRepository.update(crop, data)
         return crop
 
@@ -60,8 +85,8 @@ class CropService:
 
     @staticmethod
     def get_vocabulary() -> dict:
-        crop_names = [c.name for c in CropNames.query.order_by(CropNames.name).all()]
-        growth_stages = [g.name for g in GrowthStage.query.order_by(GrowthStage.id).all()]
+        crop_names = [{"id": c.id, "name": c.name} for c in CropNames.query.order_by(CropNames.name).all()]
+        growth_stages = [{"id": g.id, "name": g.name} for g in GrowthStage.query.order_by(GrowthStage.id).all()]
         return {"crop_names": crop_names, "growth_stages": growth_stages}
 
     @staticmethod

@@ -15,6 +15,8 @@ class CreateFieldSchema(Schema):
     heat_level = fields.Float(allow_none=True)
     stress_risk = fields.Float(allow_none=True)
     disease_risk = fields.Str(allow_none=True)
+    soil_type_id = fields.Int(allow_none=True)
+    water_source_id = fields.Int(allow_none=True)
     currently_active = fields.Bool(load_default=True)
     user_id = fields.Int(allow_none=True)
 
@@ -45,13 +47,13 @@ class FieldCardSchema(Schema):
         return None
 
     def get_task_count(self, obj):
-        return len(obj.tasks)
+        return len([t for t in obj.tasks if t.task_category == 'field'])
 
     def get_pending_task_count(self, obj):
-        return len([t for t in obj.tasks if not t.completed])
+        return len([t for t in obj.tasks if t.task_category == 'field' and not t.completed])
 
     def get_tasks_preview(self, obj):
-        pending = [t for t in obj.tasks if not t.completed][:3]
+        pending = [t for t in obj.tasks if t.task_category == 'field' and not t.completed][:3]
         return TaskCardSchema(many=True).dump(pending)
 
 
@@ -67,6 +69,10 @@ class FieldDetailSchema(Schema):
     heat_level = fields.Float(allow_none=True)
     stress_risk = fields.Float(allow_none=True)
     disease_risk = fields.Str(allow_none=True)
+    soil_type_id = fields.Int(allow_none=True)
+    soil_type_name = fields.Str(allow_none=True)
+    water_source_id = fields.Int(allow_none=True)
+    water_source_name = fields.Str(allow_none=True)
     currently_active = fields.Bool()
 
     crop = fields.Method("get_crop")
@@ -82,7 +88,8 @@ class FieldDetailSchema(Schema):
         return None
 
     def get_tasks(self, obj):
-        return TaskCardSchema(many=True).dump(obj.tasks)
+        field_tasks = [t for t in obj.tasks if t.task_category == 'field']
+        return TaskCardSchema(many=True).dump(field_tasks)
 
 
 class MyFieldsPageSchema(Schema):
