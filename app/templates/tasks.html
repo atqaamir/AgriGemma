@@ -485,7 +485,7 @@
   </button>
 
   <!-- Bottom navigation -->
-  <nav class="fixed bottom-0 left-0 w-full z-50 bg-[#fcf9f0]/80 dark:bg-stone-950/80 backdrop-blur-md rounded-t-[24px] shadow-[0_-8px_24px_rgba(28,28,23,0.06)] flex justify-around items-center px-4 pb-6 pt-3">
+  <nav id="bottomNav" class="fixed bottom-0 left-0 w-full z-50 bg-[#fcf9f0]/80 dark:bg-stone-950/80 backdrop-blur-md rounded-t-[24px] shadow-[0_-8px_24px_rgba(28,28,23,0.06)] flex justify-around items-center px-4 pb-6 pt-3">
     <a class="flex flex-col items-center justify-center text-stone-500 dark:text-stone-400 px-3 py-1.5 transition-transform hover:scale-105 duration-150" href="/">
       <span class="material-symbols-outlined">dashboard</span>
       <span class="text-[11px] font-medium tracking-wide">Dashboard</span>
@@ -820,10 +820,10 @@
 
     // ── Task Detail Modal ──────────────────────────────────────────────────────
     async function openTaskDetailModal(taskId) {
-      document.querySelector('nav').classList.add('hidden');
+      document.getElementById('bottomNav').classList.add('hidden');
       document.getElementById('taskDetailModal').classList.remove('hidden');
       document.getElementById('taskDetailTitle').textContent = 'Loading...';
-      document.querySelector('nav').classList.add('hidden');
+      document.getElementById('bottomNav').classList.add('hidden');
       try {
         const res = await fetch(`${TASKS_API}/tasks/${taskId}`);
         if (!res.ok) throw new Error('Not found');
@@ -833,7 +833,7 @@
 
     function closeTaskDetailModal() {
       document.getElementById('taskDetailModal').classList.add('hidden');
-      document.querySelector('nav').classList.remove('hidden');
+      document.getElementById('bottomNav').classList.remove('hidden');
     }
 
     function populateTaskDetailModal(task) {
@@ -866,7 +866,7 @@
     // ── Create Task Modal ──────────────────────────────────────────────────────
     function openCreateTaskModal() {
       document.getElementById('createTaskForm').reset();
-      document.querySelector('nav').classList.add('hidden');
+      document.getElementById('bottomNav').classList.add('hidden');
       document.getElementById('createTaskError').classList.add('hidden');
       document.getElementById('createTaskModal').classList.remove('hidden');
       
@@ -874,7 +874,7 @@
 
     function closeCreateTaskModal() {
       document.getElementById('createTaskModal').classList.add('hidden');
-      document.querySelector('nav').classList.remove('hidden');
+      document.getElementById('bottomNav').classList.remove('hidden');
     }
 
     async function submitCreateTask(event) {
@@ -919,7 +919,7 @@
         if (!res.ok) throw new Error('Failed to fetch task');
         const task = await res.json();
         populateEditTaskModal(task);
-        document.querySelector('nav').classList.remove('hidden');
+        document.getElementById('bottomNav').classList.add('hidden');
         document.getElementById('editTaskModal').classList.remove('hidden');
         
       } catch (e) {
@@ -940,7 +940,7 @@
 
     function closeEditTaskModal() {
       document.getElementById('editTaskModal').classList.add('hidden');
-      document.querySelector('nav').classList.remove('hidden');
+      document.getElementById('bottomNav').classList.remove('hidden');
     }
 
     async function submitEditTask(event) {
@@ -990,13 +990,13 @@
       form.priority.value  = filterState.priority;
       form.task_type.value = filterState.task_type;
       document.getElementById('filter-status-wrap').classList.toggle('hidden', !isViewingAll);
-      document.querySelector('nav').classList.add('hidden');
+      document.getElementById('bottomNav').classList.add('hidden');
       document.getElementById('filterModal').classList.remove('hidden');
     }
 
     function closeFilterModal() {
       document.getElementById('filterModal').classList.add('hidden');
-      document.querySelector('nav').classList.remove('hidden');
+      document.getElementById('bottomNav').classList.remove('hidden');
     }
 
     function applyFilters(event) {
@@ -1021,13 +1021,13 @@
     function openSearchModal() {
       document.getElementById('searchForm').task_title.value = searchState;
       document.getElementById('searchError').classList.add('hidden');
-      document.querySelector('nav').classList.add('hidden');
+      document.getElementById('bottomNav').classList.add('hidden');
       document.getElementById('searchModal').classList.remove('hidden');
     }
 
     function closeSearchModal() {
       document.getElementById('searchModal').classList.add('hidden');
-      document.querySelector('nav').classList.remove('hidden');
+      document.getElementById('bottomNav').classList.remove('hidden');
     }
 
     function performSearch(event) {
@@ -1048,13 +1048,13 @@
     function openSortModal() {
       document.getElementById('sortForm').sort_field.value = sortState.field;
       document.getElementById('sortForm').sort_order.value = sortState.order;
-      document.querySelector('nav').classList.add('hidden');
+      document.getElementById('bottomNav').classList.add('hidden');
       document.getElementById('sortModal').classList.remove('hidden');
     }
 
     function closeSortModal() {
       document.getElementById('sortModal').classList.add('hidden');
-      document.querySelector('nav').classList.remove('hidden');
+      document.getElementById('bottomNav').classList.remove('hidden');
     }
 
     function applySorting(event) {

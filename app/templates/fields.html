@@ -525,7 +525,7 @@
     </button>
 
     <!-- BottomNavBar Section -->
-    <nav class="fixed bottom-0 left-0 w-full z-50 bg-[#fcf9f0]/80 dark:bg-stone-950/80 backdrop-blur-md rounded-t-[24px] shadow-[0_-8px_24px_rgba(28,28,23,0.06)] flex justify-around items-center px-4 pb-6 pt-3">
+    <nav id="bottomNav" class="fixed bottom-0 left-0 w-full z-50 bg-[#fcf9f0]/80 dark:bg-stone-950/80 backdrop-blur-md rounded-t-[24px] shadow-[0_-8px_24px_rgba(28,28,23,0.06)] flex justify-around items-center px-4 pb-6 pt-3">
       <a class="flex flex-col items-center justify-center text-stone-500 dark:text-stone-400 px-3 py-1.5 transition-transform hover:scale-105 duration-150" href="/">
         <span class="material-symbols-outlined" data-icon="dashboard">dashboard</span>
         <span class="font-['Work_Sans'] text-[11px] font-medium tracking-wide">Dashboard</span>
@@ -710,7 +710,7 @@
           const field = await response.json();
           populateFieldModal(field);
           document.getElementById('fieldDetailsModal').classList.remove('hidden');
-          document.querySelector('nav').classList.add('hidden');
+          document.getElementById('bottomNav').classList.add('hidden');
         } catch (error) {
           console.error('Error loading field details:', error);
           showError('Failed to load field details');
@@ -774,7 +774,7 @@
 
       function closeFieldDetailsModal() {
         document.getElementById('fieldDetailsModal').classList.add('hidden');
-        document.querySelector('nav').classList.remove('hidden');
+        document.getElementById('bottomNav').classList.remove('hidden');
       }
 
       function renderTasks(tasks) {
@@ -977,12 +977,12 @@
         document.getElementById('createFieldForm').reset();
         document.getElementById('createFieldError').classList.add('hidden');
         document.getElementById('createFieldModal').classList.remove('hidden');
-        document.querySelector('nav').classList.add('hidden');
+        document.getElementById('bottomNav').classList.add('hidden');
       }
 
       function closeCreateFieldModal() {
         document.getElementById('createFieldModal').classList.add('hidden');
-        document.querySelector('nav').classList.remove('hidden');
+        document.getElementById('bottomNav').classList.remove('hidden');
       }
 
       async function submitCreateField(event) {
@@ -1131,7 +1131,7 @@
           if (!response.ok) throw new Error('Failed to fetch task');
           const task = await response.json();
           populateTaskModal(task);
-          document.querySelector('nav').classList.add('hidden');
+          document.getElementById('bottomNav').classList.add('hidden');
         } catch (error) {
           console.error('Error loading task:', error);
           closeTaskDetailModal();
@@ -1140,7 +1140,7 @@
 
       function closeTaskDetailModal() {
         document.getElementById('taskDetailModal').classList.add('hidden');
-        document.querySelector('nav').classList.remove('hidden');
+        document.getElementById('bottomNav').classList.remove('hidden');
       }
 
       function populateTaskModal(task) {
