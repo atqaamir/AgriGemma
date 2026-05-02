@@ -246,20 +246,49 @@
             </select>
           </div>
           <div>
-            <label class="text-[10px] uppercase tracking-widest text-on-surface-variant block mb-1">Task Type</label>
-            <select name="task_type"
+            <label class="text-[10px] uppercase tracking-widest text-on-surface-variant block mb-1">Category</label>
+            <select name="task_category" id="createTaskCategory"
+              onchange="onTaskCategoryChange('createTaskCategory', 'createTaskType')"
               class="w-full bg-surface-container rounded-lg px-4 py-3 text-sm text-on-surface outline-none focus:ring-2 focus:ring-primary">
-              <option value="">— None —</option>
-              <option value="irrigation">Irrigation</option>
-              <option value="spraying">Spraying</option>
-              <option value="inspection">Inspection</option>
-              <option value="harvesting">Harvesting</option>
-              <option value="fertilizing">Fertilizing</option>
-              <option value="maintenance">Maintenance</option>
-              <option value="planning">Planning</option>
-              <option value="monitoring">Monitoring</option>
+              <option value="">— Select —</option>
+              <option value="crop">Crop</option>
+              <option value="field">Field</option>
+              <option value="general">General</option>
             </select>
           </div>
+        </div>
+        <div>
+          <label class="text-[10px] uppercase tracking-widest text-on-surface-variant block mb-1">Task Type</label>
+          <select name="task_type" id="createTaskType" disabled
+            class="w-full bg-surface-container rounded-lg px-4 py-3 text-sm text-on-surface outline-none focus:ring-2 focus:ring-primary disabled:opacity-50 disabled:cursor-not-allowed">
+            <option value="">— Select category first —</option>
+          </select>
+        </div>
+        <!-- Crop association — shown only when category = crop -->
+        <div id="createCropRow" class="hidden space-y-3">
+          <div>
+            <label class="text-[10px] uppercase tracking-widest text-on-surface-variant block mb-1">Linked Field</label>
+            <select id="createCropTaskField" onchange="onCropTaskFieldChange('create')"
+              class="w-full bg-surface-container rounded-lg px-4 py-3 text-sm text-on-surface outline-none focus:ring-2 focus:ring-primary">
+              <option value="">— Select Field —</option>
+            </select>
+          </div>
+          <div id="createLinkedCropDisplay" class="hidden bg-surface-container-low rounded-lg px-4 py-3 flex items-center gap-3">
+            <span class="material-symbols-outlined text-primary flex-shrink-0" style="font-size:18px; font-variation-settings:'FILL' 1;">eco</span>
+            <div>
+              <span class="text-[10px] uppercase tracking-widest text-on-surface-variant block">Linked Crop</span>
+              <span id="createLinkedCropName" class="text-sm font-medium text-on-surface">—</span>
+            </div>
+          </div>
+          <p id="createNoCropMsg" class="hidden text-xs text-on-surface-variant italic">No crop linked to this field.</p>
+        </div>
+        <!-- Field association — shown only when category = field -->
+        <div id="createFieldRow" class="hidden">
+          <label class="text-[10px] uppercase tracking-widest text-on-surface-variant block mb-1">Linked Field</label>
+          <select id="createTaskField"
+            class="w-full bg-surface-container rounded-lg px-4 py-3 text-sm text-on-surface outline-none focus:ring-2 focus:ring-primary">
+            <option value="">— None —</option>
+          </select>
         </div>
         <div>
           <label class="text-[10px] uppercase tracking-widest text-on-surface-variant block mb-1">Due Date</label>
@@ -311,20 +340,49 @@
             </select>
           </div>
           <div>
-            <label class="text-[10px] uppercase tracking-widest text-on-surface-variant block mb-1">Task Type</label>
-            <select name="task_type"
+            <label class="text-[10px] uppercase tracking-widest text-on-surface-variant block mb-1">Category</label>
+            <select name="task_category" id="editTaskCategory"
+              onchange="onTaskCategoryChange('editTaskCategory', 'editTaskType')"
               class="w-full bg-surface-container rounded-lg px-4 py-3 text-sm text-on-surface outline-none focus:ring-2 focus:ring-primary">
-              <option value="">— None —</option>
-              <option value="irrigation">Irrigation</option>
-              <option value="spraying">Spraying</option>
-              <option value="inspection">Inspection</option>
-              <option value="harvesting">Harvesting</option>
-              <option value="fertilizing">Fertilizing</option>
-              <option value="maintenance">Maintenance</option>
-              <option value="planning">Planning</option>
-              <option value="monitoring">Monitoring</option>
+              <option value="">— Select —</option>
+              <option value="crop">Crop</option>
+              <option value="field">Field</option>
+              <option value="general">General</option>
             </select>
           </div>
+        </div>
+        <div>
+          <label class="text-[10px] uppercase tracking-widest text-on-surface-variant block mb-1">Task Type</label>
+          <select name="task_type" id="editTaskType" disabled
+            class="w-full bg-surface-container rounded-lg px-4 py-3 text-sm text-on-surface outline-none focus:ring-2 focus:ring-primary disabled:opacity-50 disabled:cursor-not-allowed">
+            <option value="">— Select category first —</option>
+          </select>
+        </div>
+        <!-- Crop association — shown only when category = crop -->
+        <div id="editCropRow" class="hidden space-y-3">
+          <div>
+            <label class="text-[10px] uppercase tracking-widest text-on-surface-variant block mb-1">Linked Field</label>
+            <select id="editCropTaskField" onchange="onCropTaskFieldChange('edit')"
+              class="w-full bg-surface-container rounded-lg px-4 py-3 text-sm text-on-surface outline-none focus:ring-2 focus:ring-primary">
+              <option value="">— Select Field —</option>
+            </select>
+          </div>
+          <div id="editLinkedCropDisplay" class="hidden bg-surface-container-low rounded-lg px-4 py-3 flex items-center gap-3">
+            <span class="material-symbols-outlined text-primary flex-shrink-0" style="font-size:18px; font-variation-settings:'FILL' 1;">eco</span>
+            <div>
+              <span class="text-[10px] uppercase tracking-widest text-on-surface-variant block">Linked Crop</span>
+              <span id="editLinkedCropName" class="text-sm font-medium text-on-surface">—</span>
+            </div>
+          </div>
+          <p id="editNoCropMsg" class="hidden text-xs text-on-surface-variant italic">No crop linked to this field.</p>
+        </div>
+        <!-- Field association — shown only when category = field -->
+        <div id="editFieldRow" class="hidden">
+          <label class="text-[10px] uppercase tracking-widest text-on-surface-variant block mb-1">Linked Field</label>
+          <select id="editTaskField"
+            class="w-full bg-surface-container rounded-lg px-4 py-3 text-sm text-on-surface outline-none focus:ring-2 focus:ring-primary">
+            <option value="">— None —</option>
+          </select>
         </div>
         <div>
           <label class="text-[10px] uppercase tracking-widest text-on-surface-variant block mb-1">Due Date</label>
@@ -380,17 +438,9 @@
         </div>
         <div>
           <label class="text-[10px] uppercase tracking-widest text-on-surface-variant block mb-1">Task Type</label>
-          <select name="task_type"
+          <select name="task_type" id="filterTaskType"
             class="w-full bg-surface-container rounded-lg px-4 py-3 text-sm text-on-surface outline-none focus:ring-2 focus:ring-primary">
             <option value="">Any Type</option>
-            <option value="irrigation">Irrigation</option>
-            <option value="spraying">Spraying</option>
-            <option value="inspection">Inspection</option>
-            <option value="harvesting">Harvesting</option>
-            <option value="fertilizing">Fertilizing</option>
-            <option value="maintenance">Maintenance</option>
-            <option value="planning">Planning</option>
-            <option value="monitoring">Monitoring</option>
           </select>
         </div>
         <p id="filterError" class="text-error text-xs hidden"></p>
@@ -524,6 +574,13 @@
     let sortState    = { field: 'priority', order: 'asc' };
     let searchState  = '';
 
+    // Task type lookup  { crop: [{value, label},...], field: [...], general: [...] }
+    let taskTypeLookup = {};
+
+    // Crop & field caches for association dropdowns
+    let allCropsCache = [];   // [{id, name}]
+    let allFieldsCache = [];  // [{id, name}]
+
     // Notification state
     let notifPage      = 1;
     let notifHasNext   = false;
@@ -543,7 +600,159 @@
       loadPendingTasks();
       loadUnreadCount();
       loadCriticalQueue();
+      loadTaskLookup();
+      loadCropsAndFields();
     });
+
+    // ── Task Lookup (category → types) ────────────────────────────────────────
+    async function loadTaskLookup() {
+      try {
+        const res = await fetch(`${TASKS_API}/tasks/lookup`);
+        if (!res.ok) throw new Error('Failed');
+        taskTypeLookup = await res.json();
+        populateFilterTaskTypes();
+      } catch (e) {
+        console.error('loadTaskLookup:', e);
+      }
+    }
+
+    function populateFilterTaskTypes() {
+      const sel = document.getElementById('filterTaskType');
+      if (!sel) return;
+      sel.innerHTML = '<option value="">Any Type</option>';
+      for (const [cat, types] of Object.entries(taskTypeLookup)) {
+        const group = document.createElement('optgroup');
+        group.label = capitalize(cat);
+        types.forEach(t => {
+          const opt = document.createElement('option');
+          opt.value = t.value;
+          opt.textContent = t.label;
+          group.appendChild(opt);
+        });
+        sel.appendChild(group);
+      }
+    }
+
+    function onTaskCategoryChange(categorySelectId, typeSelectId) {
+      const cat = document.getElementById(categorySelectId).value;
+      const typeSel = document.getElementById(typeSelectId);
+
+      // Populate type dropdown
+      typeSel.innerHTML = '';
+      if (!cat) {
+        typeSel.disabled = true;
+        const opt = document.createElement('option');
+        opt.value = '';
+        opt.textContent = '— Select category first —';
+        typeSel.appendChild(opt);
+      } else {
+        typeSel.disabled = false;
+        const none = document.createElement('option');
+        none.value = '';
+        none.textContent = '— None —';
+        typeSel.appendChild(none);
+        (taskTypeLookup[cat] || []).forEach(t => {
+          const opt = document.createElement('option');
+          opt.value = t.value;
+          opt.textContent = t.label;
+          typeSel.appendChild(opt);
+        });
+      }
+
+      // Show/hide crop and field association rows
+      const prefix = categorySelectId.startsWith('create') ? 'create' : 'edit';
+      const cropRow  = document.getElementById(`${prefix}CropRow`);
+      const fieldRow = document.getElementById(`${prefix}FieldRow`);
+      if (cropRow)  cropRow.classList.toggle('hidden',  cat !== 'crop');
+      if (fieldRow) fieldRow.classList.toggle('hidden', cat !== 'field');
+    }
+
+    // ── Crops & Fields for association dropdowns ───────────────────────────────
+    async function loadCropsAndFields() {
+      try {
+        const [cropsRes, fieldsRes] = await Promise.all([
+          fetch('/mycrops/crops'),
+          fetch('/myfields/fields'),
+        ]);
+        if (cropsRes.ok) {
+          const data = await cropsRes.json();
+          allCropsCache = (data.crop_cards || []).map(c => ({ id: c.id, name: c.name }));
+        }
+        if (fieldsRes.ok) {
+          const data = await fieldsRes.json();
+          // Store crop info from each field (field→crop is 1:1)
+          allFieldsCache = (data.field_cards || []).map(f => ({
+            id: f.id,
+            name: f.name,
+            crop_id: f.crop ? f.crop.id : null,
+            crop_name: f.crop ? f.crop.name : null,
+          }));
+          populateFieldSelects();
+          populateCropTaskFieldSelects();
+        }
+      } catch (e) {
+        console.error('loadCropsAndFields:', e);
+      }
+    }
+
+    /** Populate the field dropdowns inside the "crop category" rows */
+    function populateCropTaskFieldSelects() {
+      ['createCropTaskField', 'editCropTaskField'].forEach(selId => {
+        const sel = document.getElementById(selId);
+        if (!sel) return;
+        const cur = sel.value;
+        sel.innerHTML = '<option value="">— Select Field —</option>';
+        allFieldsCache.forEach(f => {
+          const opt = document.createElement('option');
+          opt.value = f.id;
+          opt.textContent = f.name;
+          sel.appendChild(opt);
+        });
+        if (cur) { sel.value = cur; onCropTaskFieldChange(selId.startsWith('create') ? 'create' : 'edit'); }
+      });
+    }
+
+    /** When user picks a field in the crop-category row, auto-display its linked crop */
+    function onCropTaskFieldChange(prefix) {
+      const fieldSel     = document.getElementById(`${prefix}CropTaskField`);
+      const cropDisplay  = document.getElementById(`${prefix}LinkedCropDisplay`);
+      const cropNameEl   = document.getElementById(`${prefix}LinkedCropName`);
+      const noCropMsg    = document.getElementById(`${prefix}NoCropMsg`);
+
+      const fieldId   = parseInt(fieldSel.value);
+      const fieldData = allFieldsCache.find(f => f.id === fieldId);
+
+      // Reset
+      cropDisplay.classList.add('hidden');
+      noCropMsg.classList.add('hidden');
+      delete fieldSel.dataset.cropId;
+
+      if (!fieldData) return; // nothing selected
+
+      if (fieldData.crop_id) {
+        cropNameEl.textContent = fieldData.crop_name || 'Unknown crop';
+        cropDisplay.classList.remove('hidden');
+        fieldSel.dataset.cropId = fieldData.crop_id;
+      } else {
+        noCropMsg.classList.remove('hidden');
+      }
+    }
+
+    function populateFieldSelects() {
+      ['createTaskField', 'editTaskField'].forEach(selId => {
+        const sel = document.getElementById(selId);
+        if (!sel) return;
+        const cur = sel.value;
+        sel.innerHTML = '<option value="">— None —</option>';
+        allFieldsCache.forEach(f => {
+          const opt = document.createElement('option');
+          opt.value = f.id;
+          opt.textContent = f.name;
+          sel.appendChild(opt);
+        });
+        if (cur) sel.value = cur;
+      });
+    }
 
     // ── Load pending tasks ─────────────────────────────────────────────────────
     async function loadPendingTasks() {
@@ -866,10 +1075,17 @@
     // ── Create Task Modal ──────────────────────────────────────────────────────
     function openCreateTaskModal() {
       document.getElementById('createTaskForm').reset();
+      // Reset dependent type dropdown to disabled placeholder
+      document.getElementById('createTaskCategory').value = '';
+      onTaskCategoryChange('createTaskCategory', 'createTaskType');
+      // Reset crop-task field picker and auto-display
+      const cropTaskField = document.getElementById('createCropTaskField');
+      if (cropTaskField) { cropTaskField.value = ''; delete cropTaskField.dataset.cropId; }
+      document.getElementById('createLinkedCropDisplay').classList.add('hidden');
+      document.getElementById('createNoCropMsg').classList.add('hidden');
       document.getElementById('bottomNav').classList.add('hidden');
       document.getElementById('createTaskError').classList.add('hidden');
       document.getElementById('createTaskModal').classList.remove('hidden');
-      
     }
 
     function closeCreateTaskModal() {
@@ -886,6 +1102,21 @@
 
       const body = {};
       for (const [k, v] of new FormData(form).entries()) { if (v !== '') body[k] = v; }
+
+      // Inject crop_id / field_id based on category
+      const cat = body.task_category;
+      if (cat === 'crop') {
+        // Field drives crop — both IDs come from the crop-category field picker
+        const cropTaskField = document.getElementById('createCropTaskField');
+        if (cropTaskField && cropTaskField.value) {
+          body.field_id = parseInt(cropTaskField.value);
+          if (cropTaskField.dataset.cropId) body.crop_id = parseInt(cropTaskField.dataset.cropId);
+        }
+      } else if (cat === 'field') {
+        const fieldSel = document.getElementById('createTaskField');
+        if (fieldSel && fieldSel.value) body.field_id = parseInt(fieldSel.value);
+      }
+
       submitBtn.disabled = true;
       submitBtn.textContent = 'Creating...';
 
@@ -932,9 +1163,27 @@
       form.taskId = task.id;
       form.title.value       = task.title || '';
       form.priority.value    = task.priority || 'medium';
-      form.task_type.value   = task.task_type || '';
       form.due_date.value    = task.due_date ? String(task.due_date).split('T')[0] : '';
       form.description.value = task.description || '';
+
+      // Populate category → trigger type options + show/hide assoc rows → set type value
+      document.getElementById('editTaskCategory').value = task.task_category || '';
+      onTaskCategoryChange('editTaskCategory', 'editTaskType');
+      document.getElementById('editTaskType').value = task.task_type || '';
+
+      // Pre-fill association selects
+      if (task.task_category === 'crop') {
+        // Set the field picker inside the crop row, then auto-derive the crop display
+        const editCropField = document.getElementById('editCropTaskField');
+        if (editCropField) {
+          editCropField.value = task.field_id || '';
+          onCropTaskFieldChange('edit');
+        }
+      } else if (task.task_category === 'field') {
+        const editField = document.getElementById('editTaskField');
+        if (editField) editField.value = task.field_id || '';
+      }
+
       document.getElementById('editTaskError').classList.add('hidden');
     }
 
@@ -953,6 +1202,20 @@
 
       const body = {};
       for (const [k, v] of new FormData(form).entries()) { if (v !== '') body[k] = v; }
+
+      // Inject crop_id / field_id based on category
+      const cat = body.task_category;
+      if (cat === 'crop') {
+        const cropTaskField = document.getElementById('editCropTaskField');
+        if (cropTaskField && cropTaskField.value) {
+          body.field_id = parseInt(cropTaskField.value);
+          if (cropTaskField.dataset.cropId) body.crop_id = parseInt(cropTaskField.dataset.cropId);
+        }
+      } else if (cat === 'field') {
+        const fieldSel = document.getElementById('editTaskField');
+        if (fieldSel && fieldSel.value) body.field_id = parseInt(fieldSel.value);
+      }
+
       submitBtn.disabled = true;
       submitBtn.textContent = 'Updating...';
 
@@ -1262,9 +1525,24 @@
     // ── Helpers ────────────────────────────────────────────────────────────────
     function getTaskIcon(type) {
       return {
-        irrigation: 'water_drop', spraying: 'science', inspection: 'monitoring',
-        harvesting: 'agriculture', fertilizing: 'eco', maintenance: 'build',
-        planning: 'event_note', monitoring: 'monitoring'
+        // Crop tasks
+        irrigation:       'water_drop',
+        spraying:         'science',
+        harvesting:       'agriculture',
+        pruning:          'content_cut',
+        pollination:      'local_florist',
+        defoliation:      'yard',
+        // Field tasks
+        fertilizing:      'eco',
+        soil_testing:     'biotech',
+        drainage:         'water',
+        plowing:          'agriculture',
+        weeding:          'grass',
+        land_preparation: 'terrain',
+        // General tasks
+        maintenance:      'build',
+        inspection:       'search',
+        equipment_check:  'handyman',
       }[String(type || '').toLowerCase()] || 'assignment';
     }
 

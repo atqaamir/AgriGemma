@@ -6,6 +6,7 @@ class CreateCropSchema(Schema):
     crop_name_id = fields.Int(required=True)
     current_health_status = fields.Str(allow_none=True)
     planting_date = fields.Date(allow_none=True)
+    expected_harvest_date = fields.Date(allow_none=True, load_default=None)
     currently_water_requirement = fields.Float(allow_none=True)
     current_growth_stage_id = fields.Int(allow_none=True)
     field_id = fields.Int(required=True)
@@ -19,6 +20,7 @@ class CropCardSchema(Schema):
     growth_stage = fields.Str(allow_none=True)
     health_status = fields.Str(allow_none=True)
     planting_date = fields.Date(allow_none=True)
+    expected_harvest_date = fields.Date(allow_none=True)
     currently_active = fields.Bool()
 
     field = fields.Method("get_field")
@@ -32,25 +34,29 @@ class CropCardSchema(Schema):
         return None
 
     def get_task_count(self, obj):
-        return len(obj.tasks)
+        return len([t for t in obj.tasks if t.task_category == 'crop'])
 
     def get_pending_task_count(self, obj):
-        return len([task for task in obj.tasks if not task.completed])
+        return len([t for t in obj.tasks if t.task_category == 'crop' and not t.completed])
 
     def get_tasks_preview(self, obj):
-        pending_tasks = [task for task in obj.tasks if not task.completed][:3]
-        return TaskCardSchema(many=True).dump(pending_tasks)
+        pending = [t for t in obj.tasks if t.task_category == 'crop' and not t.completed][:3]
+        return TaskCardSchema(many=True).dump(pending)
 
 
 class CropDetailSchema(Schema):
     id = fields.Int()
     name = fields.Str()
+    crop_name_id = fields.Int(allow_none=True)
     growth_stage = fields.Str(allow_none=True)
+    current_growth_stage_id = fields.Int(allow_none=True)
     health_status = fields.Str(allow_none=True)
     soil_type = fields.Str(allow_none=True)
     water_requirement = fields.Float(allow_none=True)
     planting_date = fields.Date(allow_none=True)
+    expected_harvest_date = fields.Date(allow_none=True)
     currently_active = fields.Bool()
+    field_id = fields.Int(allow_none=True)
 
     field = fields.Method("get_field")
     tasks = fields.Method("get_tasks")
@@ -61,7 +67,8 @@ class CropDetailSchema(Schema):
         return None
 
     def get_tasks(self, obj):
-        return TaskCardSchema(many=True).dump(obj.tasks)
+        crop_tasks = [t for t in obj.tasks if t.task_category == 'crop']
+        return TaskCardSchema(many=True).dump(crop_tasks)
 
 
 class MyCropsPageSchema(Schema):
@@ -78,6 +85,7 @@ class UpdateCropSchema(Schema):
     current_growth_stage_id = fields.Int(allow_none=True)
     current_health_status = fields.Str(allow_none=True)
     planting_date = fields.Date(allow_none=True)
+    expected_harvest_date = fields.Date(allow_none=True)
     currently_water_requirement = fields.Float(allow_none=True)
     field_id = fields.Int(allow_none=True)
     currently_active = fields.Bool(required=False)

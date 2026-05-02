@@ -32,6 +32,12 @@ def tasks_page():
     return render_template("tasks.html")
 
 
+@tasks_bp.route("/tasks/lookup", methods=["GET"])
+def get_task_lookup():
+    from app.models.Lookup.task_lookup import TASK_TYPE_BY_CATEGORY
+    return jsonify(TASK_TYPE_BY_CATEGORY), 200
+
+
 # ── AI Intelligence ───────────────────────────────────────────────────────────
 
 @tasks_bp.route("/intelligence", methods=["GET"])

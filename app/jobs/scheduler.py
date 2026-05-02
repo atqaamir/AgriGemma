@@ -54,13 +54,13 @@ def start_scheduler(app):
 
     scheduler.start()
 
-    print("✅ Scheduler started")
+    print("[OK] Scheduler started")
 
 
 def run_with_context(app, job_func):
 
     with app.app_context():
 
-        print(f"\n🚀 Running job: {job_func.__name__}")
+        print(f"\n[RUN] Running job: {job_func.__name__}")
 
         job_func()

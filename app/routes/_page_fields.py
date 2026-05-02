@@ -22,6 +22,11 @@ def fields_page():
     return render_template("fields.html")
 
 
+@fields_bp.route("/fields/vocabulary", methods=["GET"])
+def get_field_vocabulary():
+    return jsonify(FieldService.get_vocabulary()), 200
+
+
 # ── Field collection endpoints ────────────────────────────────────────────────
 
 @fields_bp.route("/fields", methods=["GET"])

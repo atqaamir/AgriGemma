@@ -10,6 +10,7 @@ class Crop(db.Model):
     currently_active = db.Column(db.Boolean, default=True, nullable=False)
     current_health_status = db.Column(db.String(50), nullable=True)
     planting_date = db.Column(db.Date, nullable=True)
+    expected_harvest_date = db.Column(db.Date, nullable=True)
     currently_water_requirement = db.Column(db.Float, nullable=True)
     current_growth_stage_id = db.Column(db.Integer, db.ForeignKey("growth_stage.id"))
     field_id = db.Column(db.Integer, db.ForeignKey("field.id"), nullable=False)
