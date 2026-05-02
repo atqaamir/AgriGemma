@@ -1,0 +1,20 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npx cap *)",
+      "Bash(winget --version)",
+      "Bash(choco --version)",
+      "Bash(winget install *)",
+      "Bash(pip show *)",
+      "Bash(python -c \"import dateutil; print\\(dateutil.__version__\\); import dateutil._common; print\\(dir\\(dateutil._common\\)\\)\")",
+      "Bash(python -c \"from dateutil._common import weekday; print\\('OK'\\)\")",
+      "Bash(python -m flask --version)",
+      "Bash(\"venv\\\\Scripts\\\\python.exe\" -c \"from app import create_app; app = create_app\\(\\)\")",
+      "Bash('venv\\\\Scripts\\\\python.exe' -c ' *)",
+      "Bash(\"venv\\\\Scripts\\\\python.exe\" seed_data.py)",
+      "Bash(set PYTHONIOENCODING=utf-8)",
+      "Bash(\"venv\\\\Scripts\\\\python.exe\" run.py)",
+      "Bash(\"venv\\\\Scripts\\\\python.exe\" -c \"from app import create_app; app = create_app\\(\\); print\\('App created OK'\\)\")"
+    ]
+  }
+}

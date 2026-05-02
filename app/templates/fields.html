@@ -185,8 +185,28 @@
                 <span class="text-on-surface-variant">Growth Stage:</span>
                 <span id="fieldGrowthStage" class="font-medium text-on-surface block"></span>
               </div>
+              <div>
+                <span class="text-on-surface-variant">Soil Type:</span>
+                <span id="fieldSoilType" class="font-medium text-on-surface block">—</span>
+              </div>
+              <div>
+                <span class="text-on-surface-variant">Water Source:</span>
+                <span id="fieldWaterSource" class="font-medium text-on-surface block">—</span>
+              </div>
+            </div>
+            <div class="flex items-center justify-between mt-4 pt-4 border-t border-surface-variant">
+              <span class="text-on-surface-variant text-sm">Status</span>
+              <label class="flex items-center gap-2 cursor-pointer">
+                <span id="fieldDetailActiveLabel" class="text-sm font-medium text-on-surface">Active</span>
+                <div class="relative">
+                  <input type="checkbox" id="fieldDetailActive" class="sr-only peer" checked
+                    onchange="toggleFieldActive(this)">
+                  <div class="w-11 h-6 bg-surface-container-high rounded-full peer peer-checked:bg-primary peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all transition-colors"></div>
+                </div>
+              </label>
             </div>
           </div>
+        </div>
 
           <div class="bg-surface-container rounded-lg p-4">
             <h3 class="text-sm font-medium text-on-surface-variant mb-3">Health Status</h3>
@@ -207,6 +227,10 @@
                   <div id="fieldHealthBar" class="bg-primary h-full"></div>
                 </div>
               </div>
+              <div>
+                <span class="text-on-surface-variant">Disease Risk:</span>
+                <span id="fieldDiseaseRisk" class="font-medium text-on-surface block mt-1">—</span>
+              </div>
             </div>
           </div>
 
@@ -226,11 +250,6 @@
                 <span id="fieldStress" class="text-base font-bold text-on-surface"></span>
               </div>
             </div>
-          </div>
-
-          <div class="bg-surface-container rounded-lg p-4">
-            <h3 class="text-sm font-medium text-on-surface-variant mb-3">Disease Risk</h3>
-            <div id="fieldDiseaseRisk" class="font-medium text-on-surface"></div>
           </div>
 
           <div class="bg-surface-container rounded-lg p-4">
@@ -306,17 +325,21 @@
           </div>
           <div class="grid grid-cols-2 gap-3">
             <div>
+              <label class="text-[10px] uppercase tracking-widest text-on-surface-variant block mb-1">Soil Type</label>
+              <select id="createFieldSoilType" name="soil_type_id" class="w-full bg-surface-container rounded-lg px-4 py-3 text-sm text-on-surface outline-none focus:ring-2 focus:ring-primary">
+                <option value="">Select soil type...</option>
+              </select>
+            </div>
+            <div>
               <label class="text-[10px] uppercase tracking-widest text-on-surface-variant block mb-1">Acreage</label>
               <input type="number" name="acreage" step="0.1" min="0" class="w-full bg-surface-container rounded-lg px-4 py-3 text-sm text-on-surface outline-none focus:ring-2 focus:ring-primary" placeholder="0.0">
             </div>
-            <div>
-              <label class="text-[10px] uppercase tracking-widest text-on-surface-variant block mb-1">Health Status</label>
-              <select name="health_status" class="w-full bg-surface-container rounded-lg px-4 py-3 text-sm text-on-surface outline-none focus:ring-2 focus:ring-primary">
-                <option value="healthy">Healthy</option>
-                <option value="alert">Alert</option>
-                <option value="critical">Critical</option>
-              </select>
-            </div>
+          </div>
+          <div>
+            <label class="text-[10px] uppercase tracking-widest text-on-surface-variant block mb-1">Water Source</label>
+            <select id="createFieldWaterSource" name="water_source_id" class="w-full bg-surface-container rounded-lg px-4 py-3 text-sm text-on-surface outline-none focus:ring-2 focus:ring-primary">
+              <option value="">Select water source...</option>
+            </select>
           </div>
           <div class="grid grid-cols-3 gap-3">
             <div>
@@ -332,13 +355,23 @@
               <input type="number" name="stress_risk" min="0" max="100" class="w-full bg-surface-container rounded-lg px-4 py-3 text-sm text-on-surface outline-none focus:ring-2 focus:ring-primary" placeholder="0">
             </div>
           </div>
-          <div>
-            <label class="text-[10px] uppercase tracking-widest text-on-surface-variant block mb-1">Disease Risk</label>
-            <select name="disease_risk" class="w-full bg-surface-container rounded-lg px-4 py-3 text-sm text-on-surface outline-none focus:ring-2 focus:ring-primary">
-              <option value="low">Low</option>
-              <option value="medium">Medium</option>
-              <option value="high">High</option>
-            </select>
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="text-[10px] uppercase tracking-widest text-on-surface-variant block mb-1">Health Status</label>
+              <select name="health_status" class="w-full bg-surface-container rounded-lg px-4 py-3 text-sm text-on-surface outline-none focus:ring-2 focus:ring-primary">
+                <option value="healthy">Healthy</option>
+                <option value="alert">Alert</option>
+                <option value="critical">Critical</option>
+              </select>
+            </div>
+            <div>
+              <label class="text-[10px] uppercase tracking-widest text-on-surface-variant block mb-1">Disease Risk</label>
+              <select name="disease_risk" class="w-full bg-surface-container rounded-lg px-4 py-3 text-sm text-on-surface outline-none focus:ring-2 focus:ring-primary">
+                <option value="low">Low</option>
+                <option value="medium">Medium</option>
+                <option value="high">High</option>
+              </select>
+            </div>
           </div>
           <p id="createFieldError" class="text-error text-xs hidden"></p>
           <div class="flex gap-3 pt-2">
@@ -398,6 +431,31 @@
               <option value="medium">Medium</option>
               <option value="high">High</option>
             </select>
+          </div>
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="text-[10px] uppercase tracking-widest text-on-surface-variant block mb-1">Soil Type</label>
+              <select id="editFieldSoilType" name="soil_type_id" class="w-full bg-surface-container rounded-lg px-4 py-3 text-sm text-on-surface outline-none focus:ring-2 focus:ring-primary">
+                <option value="">Select soil type...</option>
+              </select>
+            </div>
+            <div>
+              <label class="text-[10px] uppercase tracking-widest text-on-surface-variant block mb-1">Water Source</label>
+              <select id="editFieldWaterSource" name="water_source_id" class="w-full bg-surface-container rounded-lg px-4 py-3 text-sm text-on-surface outline-none focus:ring-2 focus:ring-primary">
+                <option value="">Select water source...</option>
+              </select>
+            </div>
+          </div>
+          <div class="flex items-center justify-between py-1 px-1">
+            <span class="text-[10px] uppercase tracking-widest text-on-surface-variant">Status</span>
+            <label class="flex items-center gap-2 cursor-pointer">
+              <span id="editFieldActiveLabel" class="text-sm font-medium text-on-surface">Active</span>
+              <div class="relative">
+                <input type="checkbox" id="editFieldActive" class="sr-only peer" checked
+                  onchange="document.getElementById('editFieldActiveLabel').textContent = this.checked ? 'Active' : 'Inactive'">
+                <div class="w-11 h-6 bg-surface-container-high rounded-full peer peer-checked:bg-primary peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all transition-colors"></div>
+              </div>
+            </label>
           </div>
           <p id="editFieldError" class="text-error text-xs hidden"></p>
           <div class="flex gap-3 pt-2">
@@ -585,8 +643,45 @@
       let isViewingAll = false;
       let isViewingAllTasks = false;
 
+      let fieldVocabulary = { soil_types: [], water_sources: [] };
+
+      async function loadFieldVocabulary() {
+        try {
+          const response = await fetch(`${API_BASE}/fields/vocabulary`);
+          if (!response.ok) throw new Error('Failed to fetch field vocabulary');
+          fieldVocabulary = await response.json();
+          populateFieldVocabularySelects();
+        } catch (error) {
+          console.error('Error loading field vocabulary:', error);
+        }
+      }
+
+      function populateFieldVocabularySelects() {
+        const soilSelects = ['createFieldSoilType', 'editFieldSoilType'];
+        const waterSelects = ['createFieldWaterSource', 'editFieldWaterSource'];
+
+        soilSelects.forEach(id => {
+          const el = document.getElementById(id);
+          if (!el) return;
+          const current = el.value;
+          el.innerHTML = '<option value="">Select soil type...</option>' +
+            fieldVocabulary.soil_types.map(s => `<option value="${s.id}">${escapeHtml(s.name)}</option>`).join('');
+          if (current) el.value = current;
+        });
+
+        waterSelects.forEach(id => {
+          const el = document.getElementById(id);
+          if (!el) return;
+          const current = el.value;
+          el.innerHTML = '<option value="">Select water source...</option>' +
+            fieldVocabulary.water_sources.map(w => `<option value="${w.id}">${escapeHtml(w.name)}</option>`).join('');
+          if (current) el.value = current;
+        });
+      }
+
       document.addEventListener('DOMContentLoaded', function() {
         loadFieldsPage();
+        loadFieldVocabulary();
       });
 
       async function loadFieldsPage() {
@@ -625,6 +720,8 @@
         container.innerHTML = fields.map(field => {
           const cropName = field.crop?.name || 'No Crop';
           const score = clampScore(field.field_score);
+          // pending_task_count is pre-computed by FieldCardSchema (category=field, !completed)
+          const pendingCount = field.pending_task_count ?? 0;
 
           return `
             <div
@@ -678,6 +775,10 @@
                 </div>
 
                 <div class="flex justify-between items-center pt-1 border-t border-outline-variant/20">
+                  <div class="flex items-center gap-1">
+                    <span class="material-symbols-outlined text-primary" style="font-size:14px;">task_alt</span>
+                    <span class="text-[10px] font-bold text-primary field-task-badge" data-field-id="${field.id}" data-count="${pendingCount}">${pendingCount} task${pendingCount !== 1 ? 's' : ''}</span>
+                  </div>
                   <div class="flex gap-2">
                     <div class="relative group cursor-help">
                       <span class="material-symbols-outlined text-xs text-secondary opacity-70 hover:opacity-100 transition-opacity">opacity</span>
@@ -692,14 +793,121 @@
                       </div>
                     </div>
                   </div>
-                  <span class="text-[10px] font-bold ${getHealthColor(field.health_status)} uppercase">
-                    ${escapeHtml(field.crop?.growth_stage || 'Unknown')}
-                  </span>
                 </div>
               </div>
             </div>
           `;
         }).join('');
+      }
+
+      // ── Task mark done / pending ────────────────────────────────────────────────
+      const TASKS_API_BASE = '/mytasks';
+
+      function updateFieldCardBadge(fieldId, delta) {
+        const badge = document.querySelector(`.field-task-badge[data-field-id="${fieldId}"]`);
+        if (!badge) return;
+        const n = Math.max(0, parseInt(badge.dataset.count || '0') + delta);
+        badge.dataset.count = n;
+        badge.textContent = `${n} task${n !== 1 ? 's' : ''}`;
+      }
+
+      async function markFieldTask(taskId, completed, event) {
+        event.stopPropagation();
+        const btn = event.currentTarget;
+        btn.disabled = true;
+        try {
+          const res = await fetch(`${TASKS_API_BASE}/tasks/${taskId}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ completed }),
+          });
+          if (!res.ok) throw new Error('Failed');
+
+          const existing = cachedActiveTasks.find(t => t.id === taskId)
+            || (cachedAllFieldTasks || []).find(t => t.id === taskId);
+          const fieldId = existing?.field_id;
+
+          if (completed) {
+            cachedActiveTasks = cachedActiveTasks.filter(t => t.id !== taskId);
+            if (cachedAllFieldTasks) {
+              const idx = cachedAllFieldTasks.findIndex(t => t.id === taskId);
+              if (idx !== -1) cachedAllFieldTasks[idx] = { ...cachedAllFieldTasks[idx], completed: true };
+            }
+            if (fieldId) updateFieldCardBadge(fieldId, -1);
+          } else {
+            if (cachedAllFieldTasks) {
+              const idx = cachedAllFieldTasks.findIndex(t => t.id === taskId);
+              if (idx !== -1) {
+                cachedAllFieldTasks[idx] = { ...cachedAllFieldTasks[idx], completed: false };
+                if (!cachedActiveTasks.find(t => t.id === taskId))
+                  cachedActiveTasks.push(cachedAllFieldTasks[idx]);
+              }
+            }
+            if (fieldId) updateFieldCardBadge(fieldId, +1);
+          }
+
+          if (isViewingAllTasks) renderAllTasks(cachedAllFieldTasks);
+          else renderTasks(cachedActiveTasks);
+          updateDueToday(cachedActiveTasks);
+        } catch (e) {
+          console.error('markFieldTask:', e);
+        } finally {
+          btn.disabled = false;
+        }
+      }
+
+      async function markFieldDetailTask(taskId, completed, event) {
+        event.stopPropagation();
+        const btn = event.currentTarget;
+        btn.disabled = true;
+        try {
+          const res = await fetch(`${TASKS_API_BASE}/tasks/${taskId}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ completed }),
+          });
+          if (!res.ok) throw new Error('Failed');
+
+          // Update the row in-place
+          const row = document.getElementById(`field-detail-task-${taskId}`);
+          if (row) {
+            row.classList.toggle('opacity-60', completed);
+            const title = row.querySelector('h5');
+            if (title) title.classList.toggle('line-through', completed);
+            btn.className = `flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center transition-colors active:scale-90 ${completed ? 'hover:opacity-70' : 'border-2 border-primary text-primary hover:bg-primary hover:text-on-primary'}`;
+            btn.title = completed ? 'Mark pending' : 'Mark done';
+            btn.innerHTML = `<span class="material-symbols-outlined" style="font-size:${completed ? 20 : 16}px; ${completed ? "font-variation-settings:'FILL' 1;" : ''}">${completed ? 'check_circle' : 'check'}</span>`;
+            btn.onclick = (e) => markFieldDetailTask(taskId, !completed, e);
+          }
+
+          // Sync caches and badge (detailFieldId is set when modal was opened)
+          if (completed) {
+            cachedActiveTasks = cachedActiveTasks.filter(t => t.id !== taskId);
+            if (cachedAllFieldTasks) {
+              const idx = cachedAllFieldTasks.findIndex(t => t.id === taskId);
+              if (idx !== -1) cachedAllFieldTasks[idx] = { ...cachedAllFieldTasks[idx], completed: true };
+            }
+            updateFieldCardBadge(detailFieldId, -1);
+          } else {
+            if (cachedAllFieldTasks) {
+              const idx = cachedAllFieldTasks.findIndex(t => t.id === taskId);
+              if (idx !== -1) {
+                cachedAllFieldTasks[idx] = { ...cachedAllFieldTasks[idx], completed: false };
+                if (!cachedActiveTasks.find(t => t.id === taskId))
+                  cachedActiveTasks.push(cachedAllFieldTasks[idx]);
+              }
+            }
+            updateFieldCardBadge(detailFieldId, +1);
+          }
+
+          if (isViewingAllTasks) renderAllTasks(cachedAllFieldTasks);
+          else renderTasks(cachedActiveTasks);
+          updateDueToday(cachedActiveTasks);
+        } catch (e) {
+          console.error('markFieldDetailTask:', e);
+        } finally {
+          btn.disabled = false;
+        }
       }
 
       async function openFieldDetailsModal(fieldId) {
@@ -717,7 +925,26 @@
         }
       }
 
+      let detailFieldId = null;
+
+      async function toggleFieldActive(checkbox) {
+        const isActive = checkbox.checked;
+        document.getElementById('fieldDetailActiveLabel').textContent = isActive ? 'Active' : 'Inactive';
+        try {
+          await fetch(`${API_BASE}/fields/${detailFieldId}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ currently_active: isActive })
+          });
+          cachedAllFields = null; cachedActiveFields = null; cachedAllFieldTasks = null;
+        } catch (e) {
+          checkbox.checked = !isActive;
+          document.getElementById('fieldDetailActiveLabel').textContent = !isActive ? 'Active' : 'Inactive';
+        }
+      }
+
       function populateFieldModal(field) {
+        detailFieldId = field.id;
         const cropName = field.crop?.name || 'Unknown';
         const score = clampScore(field.field_score);
         const normalizedStatus = normalizeStatus(field.health_status);
@@ -738,10 +965,15 @@
         document.getElementById('fieldHealthBar').style.width = `${score}%`;
         document.getElementById('fieldHealthBar').className = `h-full ${getHealthProgressColor(normalizedStatus)}`;
 
+        document.getElementById('fieldSoilType').textContent = field.soil_type_name || '—';
+        document.getElementById('fieldWaterSource').textContent = field.water_source_name || '—';
+        const isActive = field.currently_active !== false;
+        document.getElementById('fieldDetailActive').checked = isActive;
+        document.getElementById('fieldDetailActiveLabel').textContent = isActive ? 'Active' : 'Inactive';
         document.getElementById('fieldMoisture').textContent = `${Math.round(Number(field.moisture_level || 0))}%`;
         document.getElementById('fieldTemperature').textContent = `${Math.round(Number(field.heat_level || 0))}°C`;
         document.getElementById('fieldStress').textContent = getStressLabel(field.stress_risk);
-        document.getElementById('fieldDiseaseRisk').textContent = field.disease_risk || 'Unknown';
+        document.getElementById('fieldDiseaseRisk').textContent = capitalize(field.disease_risk || '—');
 
         renderFieldTasks(field.tasks || []);
       }
@@ -755,19 +987,20 @@
         }
 
         container.innerHTML = tasks.map(task => `
-          <div onclick="openTaskDetailModal(${task.id})" class="bg-white dark:bg-stone-900 p-4 rounded-[20px] flex items-center gap-4 shadow-sm cursor-pointer hover:shadow-md transition-shadow active:scale-[0.98]">
+          <div id="field-detail-task-${task.id}" onclick="openTaskDetailModal(${task.id})"
+            class="bg-white dark:bg-stone-900 p-4 rounded-[20px] flex items-center gap-4 shadow-sm cursor-pointer hover:shadow-md transition-shadow active:scale-[0.98] ${task.completed ? 'opacity-60' : ''}">
             <div class="w-12 h-12 rounded-full bg-[#f1f3ee] dark:bg-stone-800 flex items-center justify-center text-[#47573b] dark:text-[#d5e9c1]">
-              <span class="material-symbols-outlined" style="font-size: 20px;">
-                ${getTaskIcon(task.task_type)}
-              </span>
+              <span class="material-symbols-outlined" style="font-size: 20px;">${getTaskIcon(task.task_type)}</span>
             </div>
             <div class="flex-1 min-w-0">
-              <h5 class="text-sm font-bold text-on-surface truncate">${escapeHtml(task.title || 'Untitled Task')}</h5>
-              <p class="text-[11px] text-on-surface-variant font-medium truncate">
-                ${escapeHtml(getTaskSubtitle(task))}
-              </p>
+              <h5 class="text-sm font-bold text-on-surface truncate ${task.completed ? 'line-through' : ''}">${escapeHtml(task.title || 'Untitled Task')}</h5>
+              <p class="text-[11px] text-on-surface-variant font-medium truncate">${escapeHtml(getTaskSubtitle(task))}</p>
             </div>
-            <span class="material-symbols-outlined text-outline-variant">chevron_right</span>
+            <button onclick="markFieldDetailTask(${task.id}, ${!task.completed}, event)"
+              class="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center transition-colors active:scale-90 ${task.completed ? 'hover:opacity-70' : 'border-2 border-primary text-primary hover:bg-primary hover:text-on-primary'}"
+              title="${task.completed ? 'Mark pending' : 'Mark done'}">
+              <span class="material-symbols-outlined" style="font-size:${task.completed ? '20' : '16'}px; ${task.completed ? "font-variation-settings:'FILL' 1;" : ''}">${task.completed ? 'check_circle' : 'check'}</span>
+            </button>
           </div>
         `).join('');
       }
@@ -778,11 +1011,10 @@
       }
 
       function renderTasks(tasks) {
+        // Backend returns only pending field tasks for active fields — no client-side filtering needed
         const container = document.getElementById('tasks-container');
 
-        const pendingTasks = tasks.filter(task => !task.completed);
-
-        if (!pendingTasks.length) {
+        if (!tasks.length) {
           container.innerHTML = `
             <div class="text-center text-on-surface-variant py-4">
               No pending tasks found.
@@ -792,24 +1024,24 @@
           return;
         }
 
-        container.innerHTML = pendingTasks.map(task => `
+        container.innerHTML = tasks.map(task => `
           <div onclick="openTaskDetailModal(${task.id})" class="bg-white dark:bg-stone-900 p-4 rounded-[20px] flex items-center gap-4 shadow-sm cursor-pointer hover:shadow-md transition-shadow active:scale-[0.98]">
             <div class="w-12 h-12 rounded-full bg-[#f1f3ee] dark:bg-stone-800 flex items-center justify-center text-[#47573b] dark:text-[#d5e9c1]">
-              <span class="material-symbols-outlined" style="font-size: 20px;">
-                ${getTaskIcon(task.task_type)}
-              </span>
+              <span class="material-symbols-outlined" style="font-size: 20px;">${getTaskIcon(task.task_type)}</span>
             </div>
             <div class="flex-1 min-w-0">
               <h5 class="text-sm font-bold text-on-surface truncate">${escapeHtml(task.title || 'Untitled Task')}</h5>
-              <p class="text-[11px] text-on-surface-variant font-medium truncate">
-                ${escapeHtml(getTaskSubtitle(task))}
-              </p>
+              <p class="text-[11px] text-on-surface-variant font-medium truncate">${escapeHtml(getTaskSubtitle(task))}</p>
             </div>
-            <span class="material-symbols-outlined text-outline-variant">chevron_right</span>
+            <button onclick="markFieldTask(${task.id}, true, event)"
+              class="flex-shrink-0 w-8 h-8 rounded-full border-2 border-primary flex items-center justify-center text-primary hover:bg-primary hover:text-on-primary transition-colors active:scale-90"
+              title="Mark done">
+              <span class="material-symbols-outlined" style="font-size:16px;">check</span>
+            </button>
           </div>
         `).join('');
 
-        updateDueToday(pendingTasks);
+        updateDueToday(tasks);
       }
 
       function updateDueToday(tasks) {
@@ -871,12 +1103,22 @@
 
       function getTaskIcon(type) {
         const iconMap = {
-          irrigation: 'water_drop',
-          spraying: 'science',
-          inspection: 'monitoring',
-          harvesting: 'agriculture',
-          fertilizing: 'eco',
-          maintenance: 'build',
+          irrigation:       'water_drop',
+          spraying:         'science',
+          harvesting:       'agriculture',
+          pruning:          'content_cut',
+          pollination:      'local_florist',
+          defoliation:      'yard',
+          fertilizing:      'eco',
+          soil_testing:     'biotech',
+          drainage:         'water',
+          plowing:          'agriculture',
+          weeding:          'grass',
+          land_preparation: 'terrain',
+          maintenance:      'build',
+          inspection:       'search',
+          equipment_check:  'handyman',
+          // legacy
           planning: 'event_note',
           monitoring: 'monitoring'
         };
@@ -1067,11 +1309,16 @@
         form.fieldId = field.id;
         form.name.value = field.name || '';
         form.acreage.value = field.acreage ?? '';
-        form.health_status.value = field.health_status || 'healthy';
+        form.health_status.value = (field.health_status || 'healthy').toLowerCase();
         form.moisture_level.value = field.moisture_level ?? '';
         form.heat_level.value = field.heat_level ?? '';
         form.stress_risk.value = field.stress_risk ?? '';
         form.disease_risk.value = (field.disease_risk || 'low').toLowerCase();
+        document.getElementById('editFieldSoilType').value = field.soil_type_id || '';
+        document.getElementById('editFieldWaterSource').value = field.water_source_id || '';
+        const isActive = field.currently_active !== false;
+        document.getElementById('editFieldActive').checked = isActive;
+        document.getElementById('editFieldActiveLabel').textContent = isActive ? 'Active' : 'Inactive';
         document.getElementById('editFieldError').classList.add('hidden');
       }
 
@@ -1093,6 +1340,7 @@
         for (const [key, value] of formData.entries()) {
           if (value !== '') body[key] = isNaN(value) || key === 'name' || key === 'growth_stage' || key === 'disease_risk' || key === 'health_status' ? value : Number(value);
         }
+        body['currently_active'] = document.getElementById('editFieldActive').checked;
 
         submitBtn.disabled = true;
         submitBtn.textContent = 'Updating...';
@@ -1234,15 +1482,29 @@
           return;
         }
         container.innerHTML = tasks.map(task => `
-          <div onclick="openTaskDetailModal(${task.id})" class="bg-white dark:bg-stone-900 p-4 rounded-[20px] flex items-center gap-4 shadow-sm cursor-pointer hover:shadow-md transition-shadow active:scale-[0.98]">
+          <div onclick="openTaskDetailModal(${task.id})" class="bg-white dark:bg-stone-900 p-4 rounded-[20px] flex items-center gap-4 shadow-sm cursor-pointer hover:shadow-md transition-shadow active:scale-[0.98] ${task.completed ? 'opacity-60' : ''}">
             <div class="w-12 h-12 rounded-full bg-[#f1f3ee] dark:bg-stone-800 flex items-center justify-center text-[#47573b] dark:text-[#d5e9c1]">
               <span class="material-symbols-outlined" style="font-size: 20px;">${getTaskIcon(task.task_type)}</span>
             </div>
             <div class="flex-1 min-w-0">
-              <h5 class="text-sm font-bold text-on-surface truncate">${escapeHtml(task.title || 'Untitled Task')}</h5>
+              <h5 class="text-sm font-bold text-on-surface truncate ${task.completed ? 'line-through' : ''}">${escapeHtml(task.title || 'Untitled Task')}</h5>
               <p class="text-[11px] text-on-surface-variant font-medium truncate">${escapeHtml(getTaskSubtitle(task))}</p>
             </div>
-            <span class="text-[10px] font-bold ${task.completed ? 'text-primary' : 'text-amber-600'} uppercase">${task.completed ? 'Done' : 'Pending'}</span>
+            <div class="flex items-center gap-2 flex-shrink-0">
+              <span class="text-[10px] font-bold ${task.completed ? 'text-primary' : 'text-amber-600'} uppercase">${task.completed ? 'Done' : 'Pending'}</span>
+              ${task.completed
+                ? `<button onclick="markFieldTask(${task.id}, false, event)"
+                    class="w-7 h-7 rounded-full flex items-center justify-center hover:opacity-70 transition-opacity active:scale-90"
+                    title="Mark pending">
+                    <span class="material-symbols-outlined text-primary" style="font-size:20px; font-variation-settings:'FILL' 1;">check_circle</span>
+                  </button>`
+                : `<button onclick="markFieldTask(${task.id}, true, event)"
+                    class="w-7 h-7 rounded-full border-2 border-primary flex items-center justify-center text-primary hover:bg-primary hover:text-on-primary transition-colors active:scale-90"
+                    title="Mark done">
+                    <span class="material-symbols-outlined" style="font-size:16px;">check</span>
+                  </button>`
+              }
+            </div>
           </div>
         `).join('');
       }

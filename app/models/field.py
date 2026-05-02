@@ -24,6 +24,16 @@ class Field(db.Model):
 
     crops = db.relationship("Crop", backref="field", lazy="select")
     tasks = db.relationship("Task", backref="field", lazy="select", foreign_keys="Task.field_id")
+    soil_type_rel = db.relationship("Soil_Type", foreign_keys=[soil_type_id], lazy="joined")
+    water_source_rel = db.relationship("WaterSource", foreign_keys=[water_source_id], lazy="joined")
+
+    @property
+    def soil_type_name(self):
+        return self.soil_type_rel.name if self.soil_type_rel else None
+
+    @property
+    def water_source_name(self):
+        return self.water_source_rel.name if self.water_source_rel else None
 
     @property
     def crop(self):

@@ -13,3 +13,9 @@ instance/
 
 # VS Code
 .vscode/
+
+# Node / Capacitor
+node_modules/
+android/.gradle/
+android/app/build/
+android/build/
