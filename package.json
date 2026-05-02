@@ -1,0 +1,26 @@
+{
+  "name": "smartfarming",
+  "version": "1.0.0",
+  "description": "A smart farming assistant that helps farmers adapt to climate change using weather data, soil conditions, crop monitoring, and AI-driven recommendations.",
+  "main": "tailwind.config.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/atqaamir/SmartFarming.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/atqaamir/SmartFarming/issues"
+  },
+  "homepage": "https://github.com/atqaamir/SmartFarming#readme",
+  "dependencies": {
+    "@capacitor/android": "^8.3.1",
+    "@capacitor/cli": "^8.3.1",
+    "@capacitor/core": "^8.3.1"
+  }
+}

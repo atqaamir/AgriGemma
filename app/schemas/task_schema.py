@@ -9,6 +9,8 @@ class TaskCardSchema(Schema):
     completed = fields.Bool()
     task_type = fields.Str(allow_none=True)
     task_category = fields.Str(allow_none=True)
+    crop_id = fields.Int(allow_none=True)
+    field_id = fields.Int(allow_none=True)
     field_name = fields.Method("get_field_name")
     crop_name = fields.Method("get_crop_name")
 

@@ -72,27 +72,23 @@ def get_crop(crop_id):
 
 @crops_bp.route("/crops/active", methods=["GET"])
 def get_active_crops():
-
-    # Get active crops
+    """Active crops with their PENDING crop-category tasks only."""
     crops = CropService.get_active_crops()
 
-    # Collect all crop-related tasks
     all_tasks = []
-
     for crop in crops:
         if crop.tasks:
-            all_tasks.extend([t for t in crop.tasks if t.task_category == 'crop'])
+            all_tasks.extend(
+                t for t in crop.tasks
+                if t.task_category == 'crop' and not t.completed
+            )
 
-    # Remove duplicate tasks
     unique_tasks = list({task.id: task for task in all_tasks}.values())
 
-    # Build response
-    response = {
+    return jsonify({
         "crop_cards": crop_card_schema.dump(crops),
         "crop_task_cards": task_card_schema.dump(unique_tasks),
-    }
-
-    return jsonify(response), 200
+    }), 200
 
 
 @crops_bp.route("/vocabulary", methods=["GET"])

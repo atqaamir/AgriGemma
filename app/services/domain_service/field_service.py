@@ -1,5 +1,7 @@
 from app.repositories.field_repository import FieldRepository
 from app.repositories.task_repository import TaskRepository
+from app.rules.vocabulary.soil_type import Soil_Type
+from app.rules.vocabulary.water_source import WaterSource
 
 
 class FieldService:
@@ -36,9 +38,16 @@ class FieldService:
 
     @staticmethod
     def get_active_fields_with_tasks():
+        """Active fields with their PENDING field-category tasks only."""
         fields = FieldRepository.get_all_active()
-        tasks = TaskRepository.get_pending_field_tasks()
-        return {"fields": fields, "tasks": tasks}
+        all_tasks = []
+        for field in fields:
+            all_tasks.extend(
+                t for t in field.tasks
+                if t.task_category == 'field' and not t.completed
+            )
+        unique_tasks = list({t.id: t for t in all_tasks}.values())
+        return {"fields": fields, "tasks": unique_tasks}
 
     @staticmethod
     def get_all_field_tasks():
@@ -51,6 +60,12 @@ class FieldService:
     @staticmethod
     def get_pending_tasks_by_field_id(field_id):
         return TaskRepository.get_pending_tasks_by_field_id(field_id)
+
+    @staticmethod
+    def get_vocabulary() -> dict:
+        soil_types = [{"id": s.id, "name": s.name} for s in Soil_Type.query.order_by(Soil_Type.name).all()]
+        water_sources = [{"id": w.id, "name": w.name} for w in WaterSource.query.order_by(WaterSource.name).all()]
+        return {"soil_types": soil_types, "water_sources": water_sources}
 
     @staticmethod
     def get_fields_by_user(user_id: int):

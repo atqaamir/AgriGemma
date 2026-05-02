@@ -1,0 +1,12 @@
+{
+  "appId": "com.smartfarming.app",
+  "appName": "Smart Farming",
+  "webDir": "mobile",
+  "server": {
+    "url": "http://192.168.100.41:5000",
+    "cleartext": true
+  },
+  "android": {
+    "allowMixedContent": true
+  }
+}
