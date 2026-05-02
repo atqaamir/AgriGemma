@@ -38,9 +38,9 @@ class CropService:
 
     @staticmethod
     def needs_irrigation(crop) -> bool:
-        """Heuristic: flag crops whose water requirement exceeds the threshold."""
+        """Heuristic: flag crops whose water requirement exceeds 700 mm (high demand)."""
         return bool(
-            crop.currently_water_requirement and crop.currently_water_requirement > 5.0
+            crop.currently_water_requirement and crop.currently_water_requirement > 700.0
         )
 
     @staticmethod

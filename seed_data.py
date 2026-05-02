@@ -25,7 +25,7 @@ def run():
     CurrentWeatherProfile.query.delete()
     db.session.commit()
 
-    # ---- user ----
+    # ---- USERS ----
     user = [
         User(name="Ahmad Khan", location="Punjab, Pakistan"),
         User(name="Ali Raza", location="Sindh, Pakistan"),
@@ -60,7 +60,7 @@ def run():
     	),
     	Field(
         	name="East Creek Basin",
-        	user_id=user[1].id,
+        	user_id=user[0].id,
         	acreage=34.2,
         	health_status="alert",
         	field_score=64.0,
@@ -75,7 +75,7 @@ def run():
     	),
     	Field(
         	name="South Hill Slope",
-        	user_id=user[2].id,
+        	user_id=user[0].id,
         	acreage=18.0,
         	health_status="critical",
         	field_score=88.0,
@@ -90,7 +90,7 @@ def run():
     	),
     	Field(
         	name="The Reservoir",
-        	user_id=user[3].id,
+        	user_id=user[0].id,
         	acreage=5.5,
         	health_status="healthy",
         	field_score=95.0,
@@ -105,7 +105,7 @@ def run():
     	),
     	Field(
         	name="Punjab Wheat Belt",
-        	user_id=user[4].id,
+        	user_id=user[0].id,
         	acreage=50.0,
         	health_status="alert",
         	field_score=72.0,
@@ -120,7 +120,7 @@ def run():
     	),
     	Field(
         	name="Sindh Canal Edge",
-        	user_id=user[5].id,
+        	user_id=user[0].id,
         	acreage=40.8,
         	health_status="healthy",
         	field_score=89.0,
@@ -135,7 +135,7 @@ def run():
     	),
     	Field(
         	name="KP Highland Terrace",
-        	user_id=user[6].id,
+        	user_id=user[0].id,
         	acreage=9.3,
         	health_status="alert",
         	field_score=70.0,
@@ -150,7 +150,7 @@ def run():
     	),
     	Field(
         	name="Lower Indus Plain",
-        	user_id=user[7].id,
+        	user_id=user[0].id,
         	acreage=60.0,
         	health_status="critical",
         	field_score=58.0,
@@ -165,7 +165,7 @@ def run():
     	),
     	Field(
         	name="Margalla Foothills Plot",
-        	user_id=user[8].id,
+        	user_id=user[0].id,
         	acreage=14.7,
         	health_status="healthy",
         	field_score=91.0,
@@ -203,7 +203,7 @@ def run():
         	planting_date=date.today(),
         	currently_water_requirement=750.0,
         	field_id=sample_fields[1].id,
-        	user_id=user[1].id,
+        	user_id=user[0].id,
     	),
 	Crop(
         	crop_name_id=1,
@@ -213,7 +213,7 @@ def run():
         	planting_date=date.today(),
         	currently_water_requirement=600.0,
         	field_id=sample_fields[2].id,
-        	user_id=user[2].id,
+        	user_id=user[0].id,
     	),
     	Crop(
         	crop_name_id=2,
@@ -223,7 +223,7 @@ def run():
         	planting_date=date.today(),
         	currently_water_requirement=1000.0,
         	field_id=sample_fields[3].id,
-        	user_id=user[3].id,
+        	user_id=user[0].id,
     	),
     	Crop(
         	crop_name_id=2,
@@ -233,7 +233,7 @@ def run():
         	planting_date=date.today(),
         	currently_water_requirement=450.0,
         	field_id=sample_fields[4].id,
-        	user_id=user[4].id,
+        	user_id=user[0].id,
     	),
     	Crop(
         	crop_name_id=3,
@@ -243,7 +243,7 @@ def run():
         	planting_date=date.today(),
         	currently_water_requirement=800.0,
         	field_id=sample_fields[5].id,
-        	user_id=user[5].id,
+        	user_id=user[0].id,
     	),
     	Crop(
         	crop_name_id=1,
@@ -253,7 +253,7 @@ def run():
         	planting_date=date.today(),
         	currently_water_requirement=400.0,
         	field_id=sample_fields[6].id,
-        	user_id=user[6].id,
+        	user_id=user[0].id,
     	),
     	Crop(
         	crop_name_id=2,
@@ -263,7 +263,7 @@ def run():
         	planting_date=date.today(),
         	currently_water_requirement=1100.0,
         	field_id=sample_fields[7].id,
-        	user_id=user[7].id,
+        	user_id=user[0].id,
     	),
     	Crop(
         	crop_name_id=1,
@@ -273,7 +273,7 @@ def run():
         	planting_date=date.today(),
         	currently_water_requirement=550.0,
         	field_id=sample_fields[8].id,
-        	user_id=user[8].id,
+        	user_id=user[0].id,
     	),
    ]
 
@@ -289,7 +289,7 @@ def run():
         	due_date=date.today(),
         	completed=False,
         	task_type="irrigation",
-        	task_category="field",
+        	task_category="crop",
         	description="Provide controlled irrigation to support vegetative rice growth in North Field Alpha.",
         	notes="Soil moisture currently stable.",
         	crop_id=sample_crops[0].id,
@@ -303,12 +303,12 @@ def run():
         	due_date=date.today(),
         	completed=False,
         	task_type="spraying",
-        	task_category="field",
+        	task_category="crop",
         	description="Apply preventive fungicide to cotton during flowering to reduce disease risk.",
         	notes="High humidity reported recently.",
         	crop_id=sample_crops[1].id,
         	field_id=sample_fields[1].id,
-        	user_id=user[1].id,
+        	user_id=user[0].id,
     	),
     	Task(
         	title="Check drainage",
@@ -322,7 +322,7 @@ def run():
         	notes="Uneven slope requires attention.",
         	crop_id=sample_crops[2].id,
         	field_id=sample_fields[2].id,
-        	user_id=user[2].id,
+        	user_id=user[0].id,
     	),
     	Task(
         	title="Check equipment",
@@ -336,7 +336,7 @@ def run():
         	notes="Routine preventive maintenance.",
         	crop_id=sample_crops[3].id,
         	field_id=sample_fields[3].id,
-        	user_id=user[3].id,
+        	user_id=user[0].id,
     	),
     	Task(
         	title="Inspect Growth",
@@ -350,7 +350,7 @@ def run():
         	notes="Wind conditions may affect crop stability.",
         	crop_id=sample_crops[4].id,
         	field_id=sample_fields[4].id,
-        	user_id=user[4].id,
+        	user_id=user[0].id,
     	),
     	Task(
         	title="Fertilize",
@@ -364,7 +364,7 @@ def run():
         	notes="Canal water supply is adequate.",
         	crop_id=sample_crops[5].id,
         	field_id=sample_fields[5].id,
-        	user_id=user[5].id,
+        	user_id=user[0].id,
     	),
     	Task(
         	title="Review weather forecast",
@@ -378,7 +378,7 @@ def run():
         	notes="Night temperatures are dropping.",
         	crop_id=sample_crops[6].id,
         	field_id=sample_fields[6].id,
-        	user_id=user[6].id,
+        	user_id=user[0].id,
     	),
     	Task(
         	title="Soil pH Testing",
@@ -392,7 +392,7 @@ def run():
         	notes="Previous nutrient imbalance suspected.",
         	crop_id=sample_crops[7].id,
         	field_id=sample_fields[7].id,
-        	user_id=user[7].id,
+        	user_id=user[0].id,
     	),
     	Task(
         	title="Monitor Flowering",
@@ -401,12 +401,12 @@ def run():
         	due_date=date.today(),
         	completed=False,
         	task_type="monitoring",
-        	task_category="general",
+        	task_category="crop",
         	description="General monitoring task to observe flowering indicators and field conditions.",
         	notes="Used as a reference monitoring task.",
         	crop_id=sample_crops[8].id,
         	field_id=sample_fields[8].id,
-        	user_id=user[8].id,
+        	user_id=user[0].id,
     	),
     ]
 
@@ -422,49 +422,49 @@ def run():
         	message="Rice crop requires irrigation support during vegetative stage."
     	),
     	Alert(
-       		user_id=user[1].id,
+       		user_id=user[0].id,
         	crop_id=sample_crops[1].id,
         	level="high",
         	message="High humidity increases fungal risk for flowering cotton."
     	),
     	Alert(
-        	user_id=user[2].id,
+        	user_id=user[0].id,
         	crop_id=sample_crops[2].id,
         	level="high",
         	message="Drainage issues may worsen maize crop stress."
     	),
     	Alert(
-        	user_id=user[3].id,
+        	user_id=user[0].id,
         	crop_id=sample_crops[3].id,
         	level="low",
         	message="Routine equipment check recommended near reservoir seedling field."
     	),
     	Alert(
-        	user_id=user[4].id,
+        	user_id=user[0].id,
         	crop_id=sample_crops[4].id,
         	level="high",
         	message="Crop in flowering stage requires inspection due to strong winds."
     	),
     	Alert(
-        	user_id=user[5].id,
+        	user_id=user[0].id,
         	crop_id=sample_crops[5].id,
         	level="medium",
         	message="Vegetative cotton crop would benefit from timely fertilization."
     	),
     	Alert(
-        	user_id=user[6].id,
+        	user_id=user[0].id,
         	crop_id=sample_crops[6].id,
         	level="medium",
         	message="Seedling-stage may be vulnerable to low temperatures in highland area."
     	),
     	Alert(
-        	user_id=user[7].id,
+        	user_id=user[0].id,
         	crop_id=sample_crops[7].id,
         	level="high",
         	message="Flowering rice crop is under high environmental stress in Lower Indus Plain."
     	),
     	Alert(
-        	user_id=user[8].id,
+        	user_id=user[0].id,
         	crop_id=sample_crops[8].id,
         	level="low",
         	message="Maize crop is stable but should continue routine monitoring."
@@ -486,7 +486,7 @@ def run():
         	created_at=datetime.utcnow(),
     	),
     	Notification(
-        	user_id=user[1].id,
+        	user_id=user[0].id,
         	title="Fungal risk warning for cotton",
         	message="High humidity conditions increase fungal risk in your East Creek Basin field.",
         	detail="Flowering cotton is especially sensitive to prolonged moisture. Preventive spraying can reduce future losses.",
@@ -495,7 +495,7 @@ def run():
         	created_at=datetime.utcnow(),
     	),
     	Notification(
-        	user_id=user[2].id,
+        	user_id=user[0].id,
         	title="Drainage issue detected",
         	message="Water drainage problems may impact maize health at South Hill Slope.",
         	detail="Poor drainage can result in root stress and nutrient imbalance. Clearing channels is advised as soon as possible.",
@@ -504,7 +504,7 @@ def run():
         	created_at=datetime.utcnow(),
     	),
     	Notification(
-        	user_id=user[3].id,
+        	user_id=user[0].id,
         	title="Routine equipment check",
         	message="This is a reminder to check irrigation and field equipment near the reservoir plot.",
         	detail=None,
@@ -513,7 +513,7 @@ def run():
         	created_at=datetime.utcnow(),
     	),
     	Notification(
-        	user_id=user[4].id,
+        	user_id=user[0].id,
         	title="Wheat flowering stage alert",
         	message="Your crop has entered the flowering stage and requires close monitoring.",
         	detail="Strong winds during flowering can affect yield. Regular inspection can help detect issues early.",
@@ -522,7 +522,7 @@ def run():
         	created_at=datetime.utcnow(),
     	),
     	Notification(
-        	user_id=user[5].id,
+        	user_id=user[0].id,
         	title="Fertilization recommended for cotton",
         	message="Cotton at the vegetative stage may benefit from balanced fertilization.",
         	detail="Timely nutrient application supports healthy canopy development and prepares the crop for flowering.",
@@ -531,7 +531,7 @@ def run():
         	created_at=datetime.utcnow(),
     	),
     	Notification(
-        	user_id=user[6].id,
+        	user_id=user[0].id,
         	title="Cold stress risk for wheat seedlings",
         	message="Seedlings may experience stress due to dropping night temperatures.",
         	detail="Early-stage wheat is sensitive to cold spells. Monitoring weather forecasts is strongly advised.",
@@ -540,7 +540,7 @@ def run():
         	created_at=datetime.utcnow(),
     	),
     	Notification(
-        	user_id=user[7].id,
+        	user_id=user[0].id,
         	title="High stress alert for rice crop",
         	message="Your rice crop is experiencing high environmental stress during flowering.",
         	detail="Combined heat and nutrient stress at this stage can significantly reduce yield. Immediate attention is required.",
@@ -549,7 +549,7 @@ def run():
         	created_at=datetime.utcnow(),
     	),
     	Notification(
-        	user_id=user[8].id,
+        	user_id=user[0].id,
         	title="Maize crop status update",
         	message="Your maize crop is healthy and progressing well in the vegetative stage.",
         	detail=None,
@@ -715,7 +715,7 @@ def run():
     db.session.commit()
 
     print("Sample data seeded successfully.")
-    print(f"user: {User.query.count()}")
+    print(f"Users: {User.query.count()}")
     print(f"Crops: {Crop.query.count()}")
     print(f"Fields: {Field.query.count()}")
     print(f"Tasks: {Task.query.count()}")
