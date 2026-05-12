@@ -1,6 +1,5 @@
 import re
 import json
-import os
 import warnings
 from typing import NamedTuple
 
@@ -32,13 +31,15 @@ from app.rules.rulebooks.action_rules.soil_moisture_action_rulebook         impo
 from app.rules.rulebooks.action_rules.ph_action_rulebook                    import PhActionRulebook
 from app.rules.rulebooks.action_rules.sunlight_action_rulebook              import SunlightActionRulebook
 from app.rules.rulebooks.action_rules.irrigation_frequency_action_rulebook  import IrrigationFrequencyActionRulebook
+from app.rules.rulebooks.action_rules.rainfall_action_rulebook              import RainfallActionRulebook
 
 warnings.filterwarnings('ignore')
 
 # ── Paths ─────────────────────────────────────────────────────────────────────
-_BASE     = os.path.dirname(__file__)
-CSV_PATH  = os.path.join(_BASE, '..', '..', 'Data_Setup', 'Datasets', 'crop_recommendationV3.csv')
-JSON_PATH = os.path.join(_BASE, '..', '..', 'Data_Setup', 'Datasets', 'crop_rules.json')
+from pathlib import Path
+_ROOT     = Path(__file__).parents[3]
+CSV_PATH  = str(_ROOT / 'Data_Setup' / 'Datasets' / 'crop_recommendationV3.csv')
+JSON_PATH = str(_ROOT / 'Data_Setup' / 'Datasets' / 'crop_rules.json')
 
 
 # ── Return types ──────────────────────────────────────────────────────────────
@@ -69,13 +70,17 @@ class ActionRulebooks(NamedTuple):
     ph_df:                   pd.DataFrame
     sunlight_df:             pd.DataFrame
     irrigation_frequency_df: pd.DataFrame
+    rainfall_df:             pd.DataFrame
 
 
 # ── Loaders ───────────────────────────────────────────────────────────────────
 def read_crop_data(file_path: str = CSV_PATH) -> pd.DataFrame | None:
     """Load crop CSV from disk."""
     try:
-        return pd.read_csv(file_path)
+        df = pd.read_csv(file_path)
+        df['label'] = df['label'].str.title()
+        df['season'] = df['season'].str.title()
+        return df
     except Exception as e:
         print(f"Error reading crop data: {e}")
         return None
@@ -350,6 +355,7 @@ def create_action_rules(rules: dict) -> ActionRulebooks:
     ph_df                   keys : crop_id, ph_category (str)
     sunlight_df             keys : crop_id, sunlight_range (str)
     irrigation_frequency_df keys : crop_id, irr_freq_range (str)
+    rainfall_df             keys : crop_id, rainfall_range (str)
 
     All tables include : feasibility, reasoning, actions (semicolon-joined)
     """
@@ -379,6 +385,8 @@ def create_action_rules(rules: dict) -> ActionRulebooks:
                                       'sunlight_range', CROP_ID),
         irrigation_frequency_df = _build_action_rows(rules, 'irrigation_frequency_adjustment_rules',
                                       'irr_freq_range', CROP_ID),
+        rainfall_df             = _build_action_rows(rules, 'rainfall_adjustment_rules',
+                                      'rainfall_range', CROP_ID),
     )
 
 
@@ -456,6 +464,7 @@ class RulebookSeeder:
         self._seed_df(PhActionRulebook,                    action_books.ph_df)
         self._seed_df(SunlightActionRulebook,              action_books.sunlight_df)
         self._seed_df(IrrigationFrequencyActionRulebook,   action_books.irrigation_frequency_df)
+        self._seed_df(RainfallActionRulebook,              action_books.rainfall_df)
 
         self.db.session.commit()
 
@@ -470,6 +479,7 @@ class RulebookSeeder:
             SoilActionRulebook, SeasonActionRulebook, WaterSourceActionRulebook,
             TemperatureActionRulebook, HumidityActionRulebook, SoilMoistureActionRulebook,
             PhActionRulebook, SunlightActionRulebook, IrrigationFrequencyActionRulebook,
+            RainfallActionRulebook,
             # Crop-type timeline
             CropTypeTimelineRulebook,
             # Compatibility rules

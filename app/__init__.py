@@ -9,6 +9,7 @@ from app.rules.vocabulary.crop_names import CropNames
 from app.rules.vocabulary.growth_stage import GrowthStage
 from app.rules.vocabulary.soil_type import Soil_Type
 from app.rules.vocabulary.water_source import WaterSource
+from app.rules.rulebooks.threshold_rules.irrigation_calender_rulebook import IrrigationCalenderRulebook
 from app.routes import register_routes
 from app.jobs.scheduler import start_scheduler
 
@@ -23,6 +24,10 @@ def create_app():
     admin.add_view(ModelView(Crop, db.session))
     admin.add_view(ModelView(Field, db.session))
     admin.add_view(ModelView(Notification, db.session))
+    admin.add_view(ModelView(CropNames, db.session))
+    admin.add_view(ModelView(WaterSource, db.session))
+    admin.add_view(ModelView(IrrigationCalenderRulebook, db.session))
+
     register_routes(app)
 
     with app.app_context():

@@ -1011,6 +1011,159 @@
       }
     }
   },
+  "rainfall_adjustment_rules": {
+    "Maize": {
+      "<50": {
+        "feasibility": "Not Feasible",
+        "reasoning": "Rainfall below 50mm cannot support maize germination or root development. Without heavy supplemental irrigation the crop will fail to establish.",
+        "actions": [
+          "Delay sowing until irrigation can guarantee soil moisture at 60-80% field capacity",
+          "Apply pre-sowing irrigation to wet the soil profile to 30cm depth",
+          "Use drought-tolerant hybrid varieties",
+          "Mulch with crop residue to conserve any available soil moisture"
+        ]
+      },
+      "50-100": {
+        "feasibility": "Conditional",
+        "reasoning": "Below minimum for rainfed maize. Supplemental irrigation is critical at germination and tasselling.",
+        "actions": [
+          "Schedule irrigation every 7-10 days to maintain adequate soil moisture",
+          "Prioritise irrigation at germination, knee-high, tasselling, and grain fill stages",
+          "Apply potassium fertiliser to improve drought tolerance",
+          "Monitor for drought stress leaf rolling and irrigate immediately"
+        ]
+      },
+      "100-200": {
+        "feasibility": "Ideal",
+        "reasoning": "Optimal rainfall for maize. Supports germination, vegetative growth, and grain fill without waterlogging risk.",
+        "actions": [
+          "Maintain standard irrigation schedule as a supplement",
+          "Skip irrigation after rain events above 20mm",
+          "Apply split nitrogen doses aligned with rainfall to improve uptake efficiency"
+        ]
+      },
+      "200-300": {
+        "feasibility": "Ideal",
+        "reasoning": "High end of the optimal range. Maize performs well; reduce supplemental irrigation to avoid over-saturation.",
+        "actions": [
+          "Reduce irrigation frequency by 30-40%",
+          "Ensure field drainage channels are clear",
+          "Monitor for fungal disease and apply fungicide if needed"
+        ]
+      },
+      ">300": {
+        "feasibility": "Conditional",
+        "reasoning": "Excessive rainfall raises waterlogging and root rot risk. Anaerobic root conditions cause significant yield loss.",
+        "actions": [
+          "Open furrow drainage between rows to remove standing water within 24 hours",
+          "Stop all supplemental irrigation",
+          "Apply fungicide to reduce root rot risk",
+          "Use ridge planting in future seasons to elevate the root zone"
+        ]
+      }
+    },
+    "Rice": {
+      "<50": {
+        "feasibility": "Not Feasible",
+        "reasoning": "Rice paddy requires standing water for transplanting and early growth. Below 50mm is wholly insufficient without a reliable irrigation source.",
+        "actions": [
+          "Do not sow without irrigation capable of maintaining 5-10cm standing water",
+          "Consider aerobic rice varieties which require less flooding",
+          "If irrigation is available apply 3-4 irrigations per week to maintain paddy conditions"
+        ]
+      },
+      "50-100": {
+        "feasibility": "Conditional",
+        "reasoning": "Well below paddy water requirements. Heavy supplemental irrigation is essential during transplanting and tillering.",
+        "actions": [
+          "Irrigate every 3-4 days to maintain 5cm standing water depth",
+          "Apply early weed management as low water levels favour weed competition",
+          "Use short-duration varieties to reduce total water window",
+          "Monitor for spikelet sterility during heading"
+        ]
+      },
+      "100-200": {
+        "feasibility": "Conditional",
+        "reasoning": "Moderate rainfall reduces irrigation demand but is still insufficient for fully flooded paddy. Supplemental irrigation remains necessary.",
+        "actions": [
+          "Supplement with irrigation every 5-7 days",
+          "Adopt alternate wetting and drying (AWD) technique to save water",
+          "Maintain water depth at 2-5cm during vegetative and flowering stages",
+          "Apply split nitrogen to improve efficiency under variable moisture"
+        ]
+      },
+      "200-300": {
+        "feasibility": "Ideal",
+        "reasoning": "Optimal rainfall for rice. Sustains flooded paddy with minimal supplemental irrigation and supports high tiller production and grain fill.",
+        "actions": [
+          "Supplement irrigation only during dry spells longer than 5 days",
+          "Maintain standard fertiliser schedule",
+          "Monitor for blast and bacterial blight under warm wet conditions"
+        ]
+      },
+      ">300": {
+        "feasibility": "Ideal",
+        "reasoning": "High rainfall benefits paddy rice. Manage drainage to prevent over-flooding above 15cm which causes lodging.",
+        "actions": [
+          "Stop all supplemental irrigation",
+          "Open drainage outlets if water depth exceeds 15cm",
+          "Monitor for sheath blight and apply fungicide if needed",
+          "Avoid nitrogen top-dressing during heavy rain to prevent leaching"
+        ]
+      }
+    },
+    "Cotton": {
+      "<50": {
+        "feasibility": "Conditional",
+        "reasoning": "Cotton has moderate drought tolerance but needs adequate moisture at sowing and boll development. Below 50mm boll shedding risk is high without irrigation.",
+        "actions": [
+          "Apply furrow or drip irrigation at sowing to ensure moisture to 30cm depth",
+          "Irrigate at square formation and boll development stages without fail",
+          "Apply mulch to conserve soil moisture",
+          "Use drought-tolerant cotton varieties"
+        ]
+      },
+      "50-100": {
+        "feasibility": "Conditional",
+        "reasoning": "Below optimal for cotton boll development. Irrigation is necessary during squaring and boll fill to prevent premature shedding.",
+        "actions": [
+          "Schedule irrigation every 10-14 days during vegetative stage",
+          "Increase to every 7-10 days during squaring and boll fill",
+          "Monitor for drought-induced boll shedding and adjust irrigation immediately",
+          "Apply potassium to improve drought tolerance"
+        ]
+      },
+      "100-200": {
+        "feasibility": "Ideal",
+        "reasoning": "Optimal rainfall for cotton. Supports strong vegetative growth and full boll development with minimal supplemental irrigation.",
+        "actions": [
+          "Maintain standard irrigation schedule skipping after rain events over 20mm",
+          "Apply standard fertiliser programme",
+          "Scout for bollworm which thrives in moderate humidity"
+        ]
+      },
+      "200-300": {
+        "feasibility": "Conditional",
+        "reasoning": "Above-optimal rainfall increases boll rot and fungal disease risk, particularly during boll opening.",
+        "actions": [
+          "Stop supplemental irrigation completely",
+          "Improve inter-row drainage to prevent waterlogging",
+          "Apply fungicide preventatively at boll formation stage",
+          "Reduce nitrogen to avoid excessive vegetative growth that traps moisture"
+        ]
+      },
+      ">300": {
+        "feasibility": "Not Feasible",
+        "reasoning": "Excessive rainfall causes severe boll rot, fibre staining, and root disease. Quality and yield will be significantly compromised.",
+        "actions": [
+          "Open all field drainage channels immediately",
+          "Apply copper-based fungicide to limit boll rot spread",
+          "Harvest any mature bolls early to salvage quality before further rain",
+          "Use raised beds or ridges in future seasons to improve drainage"
+        ]
+      }
+    }
+  },
   "crop_type_season_suitability": {
     "kharif": {
       "summer": 0.9,

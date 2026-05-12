@@ -16,7 +16,8 @@
       "Bash(\"venv\\\\Scripts\\\\python.exe\" run.py)",
       "Bash(\"venv\\\\Scripts\\\\python.exe\" -c \"from app import create_app; app = create_app\\(\\); print\\('App created OK'\\)\")",
       "Bash(python -c \"import json; f=open\\(r'D:\\\\Work\\\\Climate Adaption Planner\\\\SmartFarming\\\\app\\\\rules\\\\range_rules.ipynb'\\); content=f.read\\(\\); print\\(repr\\(content[:200]\\)\\)\")",
-      "Bash(python -c ' *)"
+      "Bash(python -c ' *)",
+      "Bash(python update_rainfall.py)"
     ]
   }
 }
