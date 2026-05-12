@@ -1,0 +1,1054 @@
+{
+  "_meta": {
+    "temperature_unit": "degrees Celsius",
+    "humidity_unit": "%",
+    "soil_moisture_unit": "% volumetric",
+    "sunlight_unit": "hours/day",
+    "irrigation_frequency_unit": "times/week",
+    "feasibility_values": [
+      "Ideal",
+      "Conditional",
+      "Not Feasible"
+    ],
+    "actions_for_ideal": "No action needed"
+  },
+  "CROP_RULES": {
+    "maize": {
+      "sowing": {
+        "rain_threshold_mm": 15,
+        "temp_min": 20,
+        "temp_max": 35
+      },
+      "irrigation": {
+        "days_after_sowing": 7
+      },
+      "fertilizer": {
+        "days_after_sowing": 15,
+        "avoid_rain_above_mm": 10
+      }
+    },
+    "rice": {
+      "sowing": {
+        "rain_threshold_mm": 50,
+        "temp_min": 22,
+        "temp_max": 35
+      },
+      "irrigation": {
+        "days_after_sowing": 3
+      },
+      "fertilizer": {
+        "days_after_sowing": 20,
+        "avoid_rain_above_mm": 20
+      }
+    },
+    "cotton": {
+      "sowing": {
+        "rain_threshold_mm": 10,
+        "temp_min": 18,
+        "temp_max": 32
+      },
+      "irrigation": {
+        "days_after_sowing": 10
+      },
+      "fertilizer": {
+        "days_after_sowing": 25,
+        "avoid_rain_above_mm": 5
+      }
+    }
+  },
+  "crop_season_score": {
+    "_note": "Sowing suitability score per season (0\u20131). High = good sowing window.",
+    "Rice": {
+      "Summer": 0.8,
+      "Rainy": 0.65,
+      "Fall": 0.1,
+      "Winter": 0.05
+    },
+    "Maize": {
+      "Summer": 0.9,
+      "Rainy": 0.4,
+      "Fall": 0.1,
+      "Winter": 0.05
+    },
+    "Cotton": {
+      "Summer": 0.85,
+      "Rainy": 0.35,
+      "Fall": 0.1,
+      "Winter": 0.05
+    }
+  },
+  "soil_compatibility": {
+    "_note": "Rice: Clay > Loamy > Sandy | Maize: Loamy > Sandy > Clay | Cotton: Loamy > Sandy > Clay",
+    "Rice": {
+      "Sandy": 0.2,
+      "Loamy": 0.7,
+      "Clay": 0.95
+    },
+    "Maize": {
+      "Sandy": 0.5,
+      "Loamy": 0.95,
+      "Clay": 0.3
+    },
+    "Cotton": {
+      "Sandy": 0.5,
+      "Loamy": 0.9,
+      "Clay": 0.2
+    }
+  },
+  "water_compatibility": {
+    "_note": "Rice: continuous/high | Maize: controlled moderate | Cotton: precise low-frequency",
+    "Rice": {
+      "River": 0.95,
+      "Canal": 0.95,
+      "Groundwater": 0.75,
+      "Reservoir": 0.85,
+      "Rainfed": 0.7,
+      "Recycled": 0.4
+    },
+    "Maize": {
+      "River": 0.7,
+      "Canal": 0.8,
+      "Groundwater": 0.9,
+      "Reservoir": 0.8,
+      "Rainfed": 0.65,
+      "Recycled": 0.55
+    },
+    "Cotton": {
+      "River": 0.65,
+      "Canal": 0.75,
+      "Groundwater": 0.9,
+      "Reservoir": 0.8,
+      "Rainfed": 0.6,
+      "Recycled": 0.5
+    }
+  },
+  "temperature_compatibility": {
+    "_note": "Rice: warm but suffers in extreme heat | Maize: balanced, sensitive at flowering | Cotton: loves heat",
+    "Rice": {
+      "15-20": 0.3,
+      "20-30": 0.8,
+      "30-40": 0.5
+    },
+    "Maize": {
+      "15-20": 0.4,
+      "20-30": 0.85,
+      "30-40": 0.7
+    },
+    "Cotton": {
+      "15-20": 0.2,
+      "20-30": 0.75,
+      "30-40": 0.9
+    }
+  },
+  "humidity_compatibility": {
+    "_note": "Rice: high humidity lover >70% | Maize: balanced, prefers medium | Cotton: dry climate, prefers low-medium",
+    "Rice": {
+      "<40": 0.2,
+      "40-70": 0.75,
+      ">70": 0.95
+    },
+    "Maize": {
+      "<40": 0.5,
+      "40-70": 0.8,
+      ">70": 0.5
+    },
+    "Cotton": {
+      "<40": 0.7,
+      "40-70": 0.7,
+      ">70": 0.4
+    }
+  },
+  "soil_moisture_compatibility": {
+    "_note": "Rice: high/flooded | Maize: moderate well-drained | Cotton: moderate avoids excess",
+    "Rice": {
+      "<30": 0.2,
+      "30-60": 0.75,
+      ">60": 0.95
+    },
+    "Maize": {
+      "<30": 0.5,
+      "30-60": 0.9,
+      ">60": 0.4
+    },
+    "Cotton": {
+      "<30": 0.5,
+      "30-60": 0.85,
+      ">60": 0.3
+    }
+  },
+  "sunlight_compatibility": {
+    "_note": "Rice: sensitive to extreme heat | Maize: thrives in strong sunlight | Cotton: prefers long sunny periods",
+    "Rice": {
+      "<4": 0.4,
+      "4-8": 0.8,
+      ">8": 0.8
+    },
+    "Maize": {
+      "<4": 0.4,
+      "4-8": 0.85,
+      ">8": 0.95
+    },
+    "Cotton": {
+      "<4": 0.3,
+      "4-8": 0.75,
+      ">8": 0.9
+    }
+  },
+  "irrigation_frequency_compatibility": {
+    "_note": "Rice: frequent/continuous | Maize: moderate controlled | Cotton: low-frequency drought-tolerant",
+    "Rice": {
+      "<2": 0.2,
+      "3-4": 0.7,
+      ">5": 0.9
+    },
+    "Maize": {
+      "<2": 0.4,
+      "3-4": 0.9,
+      ">5": 0.85
+    },
+    "Cotton": {
+      "<2": 0.5,
+      "3-4": 0.7,
+      ">5": 0.6
+    }
+  },
+  "ph_compatibility": {
+    "_note": "Rice: Acidic~Neutral > Alkaline | Maize: Neutral >> others | Cotton: Neutral >= Alkaline > Acidic",
+    "Rice": {
+      "Acidic": 0.8,
+      "Neutral": 0.85,
+      "Alkaline": 0.6
+    },
+    "Maize": {
+      "Acidic": 0.6,
+      "Neutral": 0.95,
+      "Alkaline": 0.6
+    },
+    "Cotton": {
+      "Acidic": 0.55,
+      "Neutral": 0.9,
+      "Alkaline": 0.75
+    }
+  },
+  "soil_adjustment_rules": {
+    "Rice": {
+      "Clay": {
+        "feasibility": "Ideal",
+        "reasoning": "Clay retains water exceptionally well, supporting the flooded paddy conditions rice requires. Natural puddling minimises percolation loss.",
+        "actions": [
+          "No action needed"
+        ]
+      },
+      "Loamy": {
+        "feasibility": "Conditional",
+        "reasoning": "Loamy soil has moderate water retention. Rice can grow but water is lost faster than in clay, requiring closer irrigation management.",
+        "actions": [
+          "Maintain frequent irrigation to compensate for drainage",
+          "Level the field to ensure uniform water distribution",
+          "Use bunding to retain standing water",
+          "Add organic matter to improve water-holding capacity"
+        ]
+      },
+      "Sandy": {
+        "feasibility": "Not Feasible",
+        "reasoning": "Sandy soil cannot retain the standing water rice paddies require. Excessive percolation makes maintaining flood conditions impractical and uneconomical.",
+        "actions": [
+          "Avoid rice cultivation on sandy soils where possible",
+          "If unavoidable: apply heavy clay amendments to reduce percolation",
+          "Use puddling technique to create an impermeable layer",
+          "Significantly increase irrigation frequency and volume",
+          "Consider alternative crops such as maize or sorghum"
+        ]
+      }
+    },
+    "Maize": {
+      "Loamy": {
+        "feasibility": "Ideal",
+        "reasoning": "Loamy soil offers optimal drainage and aeration while retaining sufficient nutrients and moisture for vigorous maize development.",
+        "actions": [
+          "No action needed"
+        ]
+      },
+      "Sandy": {
+        "feasibility": "Conditional",
+        "reasoning": "Sandy soil drains too rapidly, causing nutrient leaching and moisture stress that limits maize yield potential.",
+        "actions": [
+          "Add compost or manure to improve nutrient and water retention",
+          "Apply split fertilizer doses to reduce leaching losses",
+          "Increase irrigation frequency slightly",
+          "Use mulching to reduce surface evaporation"
+        ]
+      },
+      "Clay": {
+        "feasibility": "Not Feasible",
+        "reasoning": "Clay causes waterlogging and poor aeration. Maize roots are highly sensitive to oxygen deficiency, leading to stunted growth and root rot.",
+        "actions": [
+          "Avoid maize on heavy clay soils where possible",
+          "Install subsurface drainage or raised beds if no alternative",
+          "Avoid over-irrigation at all stages",
+          "Add sand and organic matter to improve soil structure",
+          "Consider alternative crops tolerant of poor drainage"
+        ]
+      }
+    },
+    "Cotton": {
+      "Loamy": {
+        "feasibility": "Ideal",
+        "reasoning": "Loamy soil supports cotton's deep taproot system with good drainage and aeration, enabling strong boll development and fibre quality.",
+        "actions": [
+          "No action needed"
+        ]
+      },
+      "Sandy": {
+        "feasibility": "Conditional",
+        "reasoning": "Sandy soil lacks the nutrient retention needed for cotton's high fertility demands during boll development.",
+        "actions": [
+          "Apply organic matter to boost nutrient and water retention",
+          "Use frequent low-dose fertilization throughout the season",
+          "Apply mulch to conserve soil moisture",
+          "Monitor soil moisture closely and irrigate proactively"
+        ]
+      },
+      "Clay": {
+        "feasibility": "Not Feasible",
+        "reasoning": "Cotton is highly susceptible to root rot from waterlogging. Clay's poor drainage creates consistently saturated conditions that damage the root system.",
+        "actions": [
+          "Avoid cotton on heavy clay soils",
+          "If unavoidable: construct raised beds and install drainage channels",
+          "Reduce irrigation frequency significantly",
+          "Add gypsum to improve clay structure and permeability",
+          "Consider drought-tolerant alternatives"
+        ]
+      }
+    }
+  },
+  "season_adjustment_rules": {
+    "Rice": {
+      "Rainy": {
+        "feasibility": "Ideal",
+        "reasoning": "The rainy season provides the high rainfall and humidity that rice thrives on. Natural flood conditions reduce irrigation demand and support paddy culture.",
+        "actions": [
+          "No action needed"
+        ]
+      },
+      "Winter": {
+        "feasibility": "Not Feasible",
+        "reasoning": "Cold and dry winter conditions fall below rice's minimum germination temperature and cannot support the water availability required for paddy cultivation.",
+        "actions": [
+          "Do not cultivate rice in winter without controlled greenhouse conditions",
+          "Shift planting to the rainy season",
+          "Consider cold-tolerant crops such as wheat or barley as alternatives"
+        ]
+      },
+      "Summer": {
+        "feasibility": "Conditional",
+        "reasoning": "Summer heat can exceed optimal temperatures during flowering, reducing grain set. High irrigation demand without monsoon rainfall increases production costs.",
+        "actions": [
+          "Ensure continuous and sufficient irrigation throughout the season",
+          "Use heat-tolerant or short-duration rice varieties",
+          "Apply mulching around bunds to reduce evaporation",
+          "Schedule sowing to avoid peak heat during the flowering stage"
+        ]
+      }
+    },
+    "Maize": {
+      "Rainy": {
+        "feasibility": "Ideal",
+        "reasoning": "Rainy season provides adequate moisture and warm temperatures that align well with maize's water and heat requirements during the vegetative phase.",
+        "actions": [
+          "No action needed"
+        ]
+      },
+      "Winter": {
+        "feasibility": "Conditional",
+        "reasoning": "Cool winter temperatures slow maize germination and growth. Frost risk during early stages can cause significant crop loss.",
+        "actions": [
+          "Use cold-tolerant or early-maturing varieties",
+          "Delay sowing until soil temperature exceeds 15\u00c2\u00b0C",
+          "Use row covers or plastic mulch to warm soil at planting",
+          "Ensure adequate irrigation as winter rainfall may be insufficient"
+        ]
+      },
+      "Summer": {
+        "feasibility": "Conditional",
+        "reasoning": "Maize can tolerate summer heat but is sensitive to moisture stress and high temperatures during the critical tasselling and silking stages.",
+        "actions": [
+          "Increase irrigation frequency especially during flowering",
+          "Use drought-tolerant and heat-tolerant hybrids",
+          "Avoid planting so that flowering coincides with peak heat",
+          "Apply mulch to reduce soil temperature and water loss"
+        ]
+      }
+    },
+    "Cotton": {
+      "Rainy": {
+        "feasibility": "Ideal",
+        "reasoning": "The rainy season provides warm temperatures and adequate moisture for cotton establishment and vegetative growth. Conditions align with cotton's natural growing season.",
+        "actions": [
+          "No action needed"
+        ]
+      },
+      "Winter": {
+        "feasibility": "Not Feasible",
+        "reasoning": "Cotton is extremely frost-sensitive. Cold winter temperatures damage growing points and inhibit boll development. The crop cannot complete its long growing cycle.",
+        "actions": [
+          "Do not plant cotton in winter",
+          "Shift to the rainy or early summer season",
+          "Consider alternative crops such as wheat or vegetables"
+        ]
+      },
+      "Summer": {
+        "feasibility": "Conditional",
+        "reasoning": "Cotton is heat-loving but dry summer conditions increase water stress. Insufficient moisture during the boll-filling stage directly reduces fibre yield and quality.",
+        "actions": [
+          "Ensure drip or furrow irrigation during boll formation",
+          "Use moisture conservation techniques such as mulching",
+          "Monitor for heat and moisture stress at the flowering stage",
+          "Apply potassium to improve drought tolerance"
+        ]
+      }
+    }
+  },
+  "temperature_adjustment_rules": {
+    "Rice": {
+      "15-20": {
+        "feasibility": "Not Feasible",
+        "reasoning": "Temperatures below 20\u00c2\u00b0C inhibit rice germination and early growth. Prolonged cold delays tillering and can cause sterility during the reproductive stage.",
+        "actions": [
+          "Do not cultivate rice in these conditions",
+          "Wait for temperatures to rise above 20\u00c2\u00b0C before sowing",
+          "Consider cold-tolerant crops such as barley or oats"
+        ]
+      },
+      "20-30": {
+        "feasibility": "Ideal",
+        "reasoning": "The 20\u00e2\u20ac\u201c30\u00c2\u00b0C range is optimal for rice growth, supporting rapid tillering, efficient photosynthesis, and high grain fill rates.",
+        "actions": [
+          "No action needed"
+        ]
+      },
+      "30-40": {
+        "feasibility": "Conditional",
+        "reasoning": "Temperatures above 30\u00c2\u00b0C during flowering cause pollen sterility and reduce grain set. Prolonged heat also increases water demand significantly.",
+        "actions": [
+          "Ensure continuous and adequate irrigation to cool the crop",
+          "Use heat-tolerant rice varieties",
+          "Adjust sowing date so that flowering occurs in cooler periods",
+          "Apply foliar potassium to improve heat tolerance"
+        ]
+      }
+    },
+    "Maize": {
+      "15-20": {
+        "feasibility": "Conditional",
+        "reasoning": "Cool temperatures slow germination and early establishment. Risk of chilling injury if temperatures drop near 10\u00c2\u00b0C, particularly at seedling stage.",
+        "actions": [
+          "Use cold-tolerant or early-maturing varieties",
+          "Delay sowing until soil temperature is consistently above 15\u00c2\u00b0C",
+          "Use plastic mulch to raise soil temperature",
+          "Ensure good soil moisture to support slow germination"
+        ]
+      },
+      "20-30": {
+        "feasibility": "Ideal",
+        "reasoning": "Optimal temperature range for maize. Supports vigorous vegetative growth, efficient nutrient uptake, and successful pollination.",
+        "actions": [
+          "No action needed"
+        ]
+      },
+      "30-40": {
+        "feasibility": "Conditional",
+        "reasoning": "High temperatures reduce pollen viability during tasselling. Yield losses of 5\u00e2\u20ac\u201c8% per degree above 30\u00c2\u00b0C during the reproductive stage have been documented.",
+        "actions": [
+          "Increase irrigation frequency to reduce canopy temperature",
+          "Time sowing so tasselling does not coincide with peak heat",
+          "Use heat-tolerant hybrid varieties",
+          "Apply micro-irrigation during critical flowering period"
+        ]
+      }
+    },
+    "Cotton": {
+      "15-20": {
+        "feasibility": "Not Feasible",
+        "reasoning": "Cotton requires a minimum soil temperature of 18\u00c2\u00b0C for germination. Temperatures in this range prevent establishment and inhibit fibre development.",
+        "actions": [
+          "Do not plant cotton below 18\u00c2\u00b0C soil temperature",
+          "Wait for consistent warm conditions before sowing",
+          "Consider alternative warm-season crops"
+        ]
+      },
+      "20-30": {
+        "feasibility": "Conditional",
+        "reasoning": "Adequate for cotton growth but below its optimal range. Yields may be 15\u00e2\u20ac\u201c20% lower than achievable at 30\u00e2\u20ac\u201c35\u00c2\u00b0C. Boll development is slower.",
+        "actions": [
+          "Use early-maturing varieties to complete the season within the warm window",
+          "Apply balanced NPK fertilization to compensate for slower growth",
+          "Monitor soil temperature and sow only when consistently above 20\u00c2\u00b0C"
+        ]
+      },
+      "30-40": {
+        "feasibility": "Ideal",
+        "reasoning": "Cotton thrives in warm conditions. The 30\u00e2\u20ac\u201c40\u00c2\u00b0C range accelerates boll maturation and fibre development, producing high yields and quality.",
+        "actions": [
+          "Maintain adequate irrigation to prevent drought stress at high temperatures",
+          "Monitor for spider mites which proliferate in hot dry conditions"
+        ]
+      }
+    }
+  },
+  "humidity_adjustment_rules": {
+    "Rice": {
+      "<40": {
+        "feasibility": "Not Feasible",
+        "reasoning": "Rice requires high atmospheric humidity to limit transpiration losses from paddy crops. Very dry air accelerates leaf water deficit and reduces grain fill.",
+        "actions": [
+          "Avoid cultivating rice in arid conditions without supplemental systems",
+          "If unavoidable: maintain continuous standing water to create local microclimate humidity",
+          "Use windbreaks to reduce drying wind exposure",
+          "Consider more drought-adapted crops"
+        ]
+      },
+      "40-70": {
+        "feasibility": "Conditional",
+        "reasoning": "Moderate humidity is below the ideal for rice but manageable with irrigation. Transpiration demand is elevated and disease pressure from blast may be lower.",
+        "actions": [
+          "Increase irrigation frequency to compensate for elevated evapotranspiration",
+          "Maintain standing water in paddies at all times",
+          "Monitor for water stress symptoms and respond promptly"
+        ]
+      },
+      ">70": {
+        "feasibility": "Ideal",
+        "reasoning": "High humidity reduces transpiration stress in rice paddies and supports the moist microclimate required for optimal growth and grain development.",
+        "actions": [
+          "No action needed"
+        ]
+      }
+    },
+    "Maize": {
+      "<40": {
+        "feasibility": "Conditional",
+        "reasoning": "Low humidity increases evapotranspiration and moisture stress risk, particularly during the critical silking and grain-fill stages.",
+        "actions": [
+          "Increase irrigation frequency to offset elevated water demand",
+          "Apply mulching to conserve soil moisture",
+          "Use drought-tolerant varieties in chronically dry regions"
+        ]
+      },
+      "40-70": {
+        "feasibility": "Ideal",
+        "reasoning": "Moderate humidity balances moisture availability and disease risk, providing optimal growing conditions for maize across its life cycle.",
+        "actions": [
+          "No action needed"
+        ]
+      },
+      ">70": {
+        "feasibility": "Conditional",
+        "reasoning": "High humidity promotes fungal diseases including northern leaf blight and grey leaf spot, which can cause significant yield losses in maize.",
+        "actions": [
+          "Apply preventive fungicide during the vegetative and early reproductive stages",
+          "Ensure adequate plant spacing to promote airflow",
+          "Choose disease-resistant hybrid varieties",
+          "Avoid overhead irrigation that wets foliage"
+        ]
+      }
+    },
+    "Cotton": {
+      "<40": {
+        "feasibility": "Conditional",
+        "reasoning": "Cotton prefers drier conditions but very low humidity increases water demand and can cause bud and boll shedding due to moisture stress.",
+        "actions": [
+          "Apply drip irrigation to deliver consistent moisture at the root zone",
+          "Use mulch to conserve soil moisture between irrigations",
+          "Monitor for spider mite infestations which thrive in hot dry conditions"
+        ]
+      },
+      "40-70": {
+        "feasibility": "Conditional",
+        "reasoning": "Acceptable humidity range for cotton though slightly elevated. Monitor for the onset of fungal diseases as humidity approaches 70%.",
+        "actions": [
+          "Maintain good field drainage to avoid surface wetness",
+          "Scout regularly for early signs of boll rot or Alternaria leaf spot",
+          "Ensure adequate plant spacing for airflow"
+        ]
+      },
+      ">70": {
+        "feasibility": "Not Feasible",
+        "reasoning": "Persistently high humidity causes boll rot, Alternaria blight, and bacterial blight \u00e2\u20ac\u201d all of which devastate cotton fibre yield and quality.",
+        "actions": [
+          "Avoid cotton cultivation in persistently humid environments",
+          "If unavoidable: apply preventive fungicide and bactericide programmes",
+          "Implement strict drainage management to reduce surface moisture",
+          "Consider a more humidity-tolerant crop alternative"
+        ]
+      }
+    }
+  },
+  "soil_moisture_adjustment_rules": {
+    "Rice": {
+      "<30": {
+        "feasibility": "Not Feasible",
+        "reasoning": "Rice paddy cultivation requires saturated or flooded soil conditions. Soil moisture below 30% volumetric cannot sustain the anaerobic root environment rice needs.",
+        "actions": [
+          "Do not cultivate rice under these moisture conditions",
+          "Establish reliable irrigation infrastructure before planting",
+          "Consider drought-adapted crops such as sorghum or millet"
+        ]
+      },
+      "30-60": {
+        "feasibility": "Conditional",
+        "reasoning": "Moisture in this range is below the saturated conditions rice prefers. Growth is possible with active water management but yield potential is reduced.",
+        "actions": [
+          "Increase irrigation to establish and maintain standing water",
+          "Use bunding to retain applied water in the field",
+          "Monitor soil moisture daily during critical growth stages"
+        ]
+      },
+      ">60": {
+        "feasibility": "Ideal",
+        "reasoning": "High soil moisture approaching saturation replicates natural paddy conditions, supporting anaerobic decomposition and the root microenvironment rice requires.",
+        "actions": [
+          "No action needed"
+        ]
+      }
+    },
+    "Maize": {
+      "<30": {
+        "feasibility": "Conditional",
+        "reasoning": "Maize under drought stress at vegetative stages loses yield potential rapidly. Below 30% volumetric moisture, permanent wilting begins to affect leaf tissue.",
+        "actions": [
+          "Apply supplemental irrigation immediately",
+          "Prioritise irrigation during tasselling and grain fill stages",
+          "Use mulching to reduce evaporative losses",
+          "Consider drought-tolerant hybrids for dryland areas"
+        ]
+      },
+      "30-60": {
+        "feasibility": "Ideal",
+        "reasoning": "Well-drained, moderately moist soil in the 30\u00e2\u20ac\u201c60% range provides optimal aeration and water availability for maize root development and nutrient uptake.",
+        "actions": [
+          "No action needed"
+        ]
+      },
+      ">60": {
+        "feasibility": "Not Feasible",
+        "reasoning": "Waterlogged soil deprives maize roots of oxygen within 48 hours, causing root rot, nutrient deficiencies and yield collapse. Even short flooding events are damaging.",
+        "actions": [
+          "Install subsurface drainage immediately",
+          "Avoid irrigation until soil moisture drops below 60%",
+          "Use raised bed cultivation to keep roots above the water table",
+          "Consider alternative crops better suited to poorly drained conditions"
+        ]
+      }
+    },
+    "Cotton": {
+      "<30": {
+        "feasibility": "Conditional",
+        "reasoning": "Cotton is relatively drought-tolerant but moisture below 30% during boll development causes premature shedding, directly reducing fibre yield.",
+        "actions": [
+          "Apply drip or furrow irrigation to restore root-zone moisture",
+          "Use deficit irrigation strategy to apply water at critical growth stages",
+          "Apply mulch to conserve available soil moisture"
+        ]
+      },
+      "30-60": {
+        "feasibility": "Ideal",
+        "reasoning": "Moderate soil moisture supports cotton's deep taproot development and sustains boll filling without the waterlogging risk that causes root disease.",
+        "actions": [
+          "No action needed"
+        ]
+      },
+      ">60": {
+        "feasibility": "Not Feasible",
+        "reasoning": "Waterlogged conditions rapidly cause Pythium and Phytophthora root rot in cotton. Boll drop and fibre staining also occur under prolonged wet soil conditions.",
+        "actions": [
+          "Cease irrigation immediately and allow drainage",
+          "Install drainage channels or subsoil drains",
+          "Apply fungicide drench to protect root zone",
+          "Avoid cotton on fields prone to seasonal waterlogging"
+        ]
+      }
+    }
+  },
+  "ph_adjustment_rules": {
+    "Rice": {
+      "Acidic": {
+        "feasibility": "Conditional",
+        "reasoning": "Rice tolerates mildly acidic soils well and even benefits from iron and manganese availability in flooded acidic conditions. However, very acidic soils may cause aluminium toxicity.",
+        "actions": [
+          "Monitor soil pH and apply lime if pH falls below 5.0",
+          "Check for aluminium and manganese toxicity symptoms",
+          "Add organic matter to buffer extreme acidity"
+        ]
+      },
+      "Neutral": {
+        "feasibility": "Ideal",
+        "reasoning": "Neutral pH maximises nutrient availability and microbial activity for rice, supporting efficient uptake of nitrogen, phosphorus and potassium.",
+        "actions": [
+          "No action needed"
+        ]
+      },
+      "Alkaline": {
+        "feasibility": "Conditional",
+        "reasoning": "Alkaline conditions reduce iron and zinc availability, causing deficiency symptoms in rice that directly reduce grain yield and quality.",
+        "actions": [
+          "Apply gypsum or elemental sulfur to lower pH",
+          "Use chelated zinc and iron fertilizers as foliar sprays",
+          "Apply organic matter to improve nutrient cycling",
+          "Use acidifying nitrogen fertilizers such as ammonium sulfate"
+        ]
+      }
+    },
+    "Maize": {
+      "Acidic": {
+        "feasibility": "Conditional",
+        "reasoning": "Acidic soils risk aluminium and manganese toxicity in maize while reducing phosphorus availability. Even moderate acidity reduces yield if not managed.",
+        "actions": [
+          "Apply agricultural lime to raise pH to 6.0\u00e2\u20ac\u201c6.5",
+          "Add organic matter to chelate toxic metals",
+          "Monitor plant tissue for early deficiency or toxicity symptoms",
+          "Use phosphorus-efficient maize varieties where available"
+        ]
+      },
+      "Neutral": {
+        "feasibility": "Ideal",
+        "reasoning": "Neutral pH (6.0\u00e2\u20ac\u201c7.0) provides optimal conditions for all macronutrient and micronutrient availability and microbial nitrogen fixation supporting maize.",
+        "actions": [
+          "No action needed"
+        ]
+      },
+      "Alkaline": {
+        "feasibility": "Conditional",
+        "reasoning": "Alkaline soils cause iron, zinc and manganese deficiencies in maize, producing interveinal chlorosis and stunted growth if not corrected.",
+        "actions": [
+          "Apply elemental sulfur or acidifying fertilizers to lower pH",
+          "Use chelated micronutrient supplements especially zinc and iron",
+          "Incorporate organic matter to improve nutrient cycling",
+          "Apply ammonium-based nitrogen to gradually acidify the root zone"
+        ]
+      }
+    },
+    "Cotton": {
+      "Acidic": {
+        "feasibility": "Conditional",
+        "reasoning": "Cotton is sensitive to aluminium toxicity at low pH. Acidic soils reduce phosphorus uptake and impair root development, limiting boll set.",
+        "actions": [
+          "Apply lime to raise soil pH to at least 6.0",
+          "Add organic matter to buffer soil acidity",
+          "Monitor for phosphorus deficiency and supplement as needed"
+        ]
+      },
+      "Neutral": {
+        "feasibility": "Ideal",
+        "reasoning": "Neutral pH delivers optimal availability of all nutrients needed for cotton growth, fibre development and boll filling.",
+        "actions": [
+          "No action needed"
+        ]
+      },
+      "Alkaline": {
+        "feasibility": "Conditional",
+        "reasoning": "Cotton is more alkaline-tolerant than most crops. Mild alkalinity is manageable; however, micronutrient deficiencies emerge at pH above 8.0.",
+        "actions": [
+          "Monitor micronutrient levels especially zinc, iron and manganese",
+          "Apply chelated micronutrients as foliar sprays if deficiency appears",
+          "Incorporate sulfur or gypsum if pH exceeds 8.0"
+        ]
+      }
+    }
+  },
+  "sunlight_adjustment_rules": {
+    "Rice": {
+      "<4": {
+        "feasibility": "Conditional",
+        "reasoning": "Fewer than 4 hours of sunlight significantly reduces photosynthesis in rice, leading to poor tillering, weak stems and reduced grain fill.",
+        "actions": [
+          "Choose high-yielding varieties adapted to low-light conditions",
+          "Reduce plant density to minimise inter-plant shading",
+          "Increase nitrogen supply cautiously to support growth under low light",
+          "Evaluate field orientation and surrounding shade sources"
+        ]
+      },
+      "4-8": {
+        "feasibility": "Ideal",
+        "reasoning": "4\u00e2\u20ac\u201c8 hours of sunlight meets rice's photosynthetic requirements across all growth stages, supporting tillering, grain development and yield.",
+        "actions": [
+          "No action needed"
+        ]
+      },
+      ">8": {
+        "feasibility": "Ideal",
+        "reasoning": "Rice handles high sunlight well when water supply is adequate. Longer days boost dry matter accumulation without significant heat or radiation damage.",
+        "actions": [
+          "Ensure sufficient irrigation to compensate for increased evapotranspiration on sunny days"
+        ]
+      }
+    },
+    "Maize": {
+      "<4": {
+        "feasibility": "Conditional",
+        "reasoning": "Maize is a C4 plant with high light-use efficiency; however, fewer than 4 hours of sunlight is insufficient for adequate photosynthesis and ear development.",
+        "actions": [
+          "Avoid shaded planting sites",
+          "Reduce crop density to limit mutual shading",
+          "Use early-maturing varieties that can complete growth in low-light periods",
+          "Supplement with balanced fertilization to support limited growth"
+        ]
+      },
+      "4-8": {
+        "feasibility": "Ideal",
+        "reasoning": "Good light availability drives the high photosynthetic rate maize requires for rapid vegetative growth and cob development.",
+        "actions": [
+          "No action needed"
+        ]
+      },
+      ">8": {
+        "feasibility": "Ideal",
+        "reasoning": "Maize thrives under high sunlight. Full sun conditions maximise biomass production and kernel filling, especially during the grain-fill stage.",
+        "actions": [
+          "No action needed"
+        ]
+      }
+    },
+    "Cotton": {
+      "<4": {
+        "feasibility": "Not Feasible",
+        "reasoning": "Cotton requires high light intensity for boll development and fibre maturation. Fewer than 4 hours of sunlight leads to excessive boll shedding and poor fibre quality.",
+        "actions": [
+          "Do not cultivate cotton in persistently low-light environments",
+          "Assess field location for shade-causing obstacles and address if possible",
+          "Consider alternative crops suited to low-light conditions"
+        ]
+      },
+      "4-8": {
+        "feasibility": "Conditional",
+        "reasoning": "Adequate sunlight for cotton survival but below the high-light optimum. Boll retention and fibre length may be reduced compared to full-sun conditions.",
+        "actions": [
+          "Optimise plant spacing to maximise light interception per plant",
+          "Apply growth regulators to improve boll retention under moderate light",
+          "Choose high-yielding varieties with efficient light-use characteristics"
+        ]
+      },
+      ">8": {
+        "feasibility": "Ideal",
+        "reasoning": "Prolonged high sunlight maximises cotton photosynthesis, accelerates boll maturation and produces the highest fibre yields and quality.",
+        "actions": [
+          "Ensure adequate irrigation to match the high evapotranspiration demand on sunny days"
+        ]
+      }
+    }
+  },
+  "irrigation_frequency_adjustment_rules": {
+    "Rice": {
+      "<2": {
+        "feasibility": "Not Feasible",
+        "reasoning": "Rice paddy cultivation requires nearly continuous water supply. Fewer than 2 irrigations per week cannot maintain the standing water essential for paddy culture and weed suppression.",
+        "actions": [
+          "Do not rely on infrequent irrigation for paddy rice",
+          "Establish reliable water delivery infrastructure before planting",
+          "Consider alternate wetting-and-drying (AWD) techniques only with precise monitoring"
+        ]
+      },
+      "3-4": {
+        "feasibility": "Conditional",
+        "reasoning": "Manageable with careful water scheduling but requires close monitoring to prevent the soil from drying out between irrigations, particularly during flowering.",
+        "actions": [
+          "Monitor water levels daily and irrigate before soil dries beyond 30% moisture",
+          "Use AWD technique with a perforated tube to track water table depth",
+          "Apply mulch on bunds to reduce lateral evaporation losses",
+          "Prioritise irrigation during the reproductive stage"
+        ]
+      },
+      ">5": {
+        "feasibility": "Ideal",
+        "reasoning": "Frequent irrigation maintains the flooded or near-saturated conditions that rice requires, suppresses weeds and supports consistent grain filling.",
+        "actions": [
+          "No action needed"
+        ]
+      }
+    },
+    "Maize": {
+      "<2": {
+        "feasibility": "Conditional",
+        "reasoning": "Infrequent irrigation risks moisture stress between events, particularly during the tasselling and silking stages when water demand peaks.",
+        "actions": [
+          "Apply larger volumes per irrigation to increase soil water storage",
+          "Use mulching to extend time between irrigations",
+          "Prioritise irrigation scheduling around tasselling and grain fill",
+          "Use soil moisture sensors to irrigate based on need rather than schedule"
+        ]
+      },
+      "3-4": {
+        "feasibility": "Ideal",
+        "reasoning": "Moderate irrigation frequency provides consistent soil moisture for maize without waterlogging risk. Aligns well with maize's weekly evapotranspiration demand.",
+        "actions": [
+          "No action needed"
+        ]
+      },
+      ">5": {
+        "feasibility": "Conditional",
+        "reasoning": "Very frequent irrigation risks shallow root development and nutrient leaching. On poorly drained soils, disease pressure from root rot increases.",
+        "actions": [
+          "Ensure soil has adequate drainage before applying frequent irrigation",
+          "Reduce volume per event to avoid waterlogging",
+          "Monitor root health and adjust schedule if root rot symptoms appear",
+          "Transition to a soil-moisture-based scheduling approach"
+        ]
+      }
+    },
+    "Cotton": {
+      "<2": {
+        "feasibility": "Conditional",
+        "reasoning": "Cotton is drought-tolerant but needs minimum moisture to support boll formation. Fewer than 2 irrigations per week risks boll shedding during dry spells.",
+        "actions": [
+          "Apply drip irrigation to deliver water directly to the root zone efficiently",
+          "Monitor soil moisture and irrigate when it drops below 40% field capacity",
+          "Prioritise water supply during squaring and boll development stages"
+        ]
+      },
+      "3-4": {
+        "feasibility": "Conditional",
+        "reasoning": "Slightly above cotton's preferred low-frequency irrigation regime. Manageable but requires attention to drainage to avoid excess moisture at the root zone.",
+        "actions": [
+          "Ensure good field drainage to prevent root zone saturation between irrigations",
+          "Reduce frequency after boll opening to speed maturation and prevent staining",
+          "Monitor soil moisture to avoid over-irrigation"
+        ]
+      },
+      ">5": {
+        "feasibility": "Not Feasible",
+        "reasoning": "Excessively frequent irrigation waterloggs cotton's root zone, promoting Pythium and Phytophthora root rot and causing widespread boll shedding.",
+        "actions": [
+          "Reduce irrigation frequency immediately",
+          "Improve field drainage before resuming irrigation",
+          "Apply fungicide drench to protect the root zone from disease",
+          "Reassess the irrigation scheduling and system design"
+        ]
+      }
+    }
+  },
+  "water_source_adjustment_rules": {
+    "Rice": {
+      "River": {
+        "feasibility": "Ideal",
+        "reasoning": "River water provides abundant, continuous and naturally mineralised supply well suited to maintaining flooded paddy conditions throughout the season.",
+        "actions": [
+          "No action needed"
+        ]
+      },
+      "Groundwater": {
+        "feasibility": "Conditional",
+        "reasoning": "Groundwater is reliable and clean but continuous pumping for rice paddy is energy-intensive and can contribute to aquifer depletion in water-stressed regions.",
+        "actions": [
+          "Implement alternate wetting-and-drying (AWD) to reduce groundwater use by up to 30%",
+          "Monitor well yield and local water table levels seasonally",
+          "Consider drip-irrigated upland rice varieties to reduce extraction"
+        ]
+      },
+      "Recycled": {
+        "feasibility": "Not Feasible",
+        "reasoning": "Recycled water often contains elevated salts, pathogens and heavy metals that accumulate in flooded paddy soils and transfer to the edible grain.",
+        "actions": [
+          "Avoid recycled water for paddy rice intended for human consumption",
+          "If no alternative: test water quality and ensure EC below 1.5 dS/m and pathogen-free",
+          "Consider using recycled water only for non-food crops"
+        ]
+      }
+    },
+    "Maize": {
+      "River": {
+        "feasibility": "Conditional",
+        "reasoning": "River water is suitable but may deliver more water than maize needs if poorly managed, increasing waterlogging and nutrient leaching risk.",
+        "actions": [
+          "Use controlled furrow or drip delivery rather than flood irrigation",
+          "Schedule irrigations based on crop demand and evapotranspiration estimates",
+          "Monitor drainage to prevent waterlogging"
+        ]
+      },
+      "Groundwater": {
+        "feasibility": "Ideal",
+        "reasoning": "Groundwater allows precise, on-demand irrigation that matches maize's moderate water requirements without flood or timing constraints.",
+        "actions": [
+          "No action needed"
+        ]
+      },
+      "Recycled": {
+        "feasibility": "Conditional",
+        "reasoning": "Recycled water can be used for maize with quality monitoring. Risk exists from pathogen contact with edible portions and salt accumulation over time.",
+        "actions": [
+          "Test recycled water for EC, pathogens and heavy metals before use",
+          "Apply below the canopy to avoid contact with edible grain",
+          "Rotate with fresh water irrigations to prevent salt buildup in soil",
+          "Monitor soil EC seasonally and leach if necessary"
+        ]
+      }
+    },
+    "Cotton": {
+      "River": {
+        "feasibility": "Conditional",
+        "reasoning": "River water is clean and adequate for cotton but volume control is harder with gravity flood systems, risking over-irrigation on clay-prone fields.",
+        "actions": [
+          "Use furrow irrigation with cut-off criteria based on advance ratio",
+          "Avoid excessive applications during the boll-opening period",
+          "Monitor soil moisture to avoid waterlogging"
+        ]
+      },
+      "Groundwater": {
+        "feasibility": "Ideal",
+        "reasoning": "Groundwater offers precise, low-volume delivery matching cotton's low-frequency irrigation needs and minimises disease risk from wet foliage.",
+        "actions": [
+          "No action needed"
+        ]
+      },
+      "Recycled": {
+        "feasibility": "Conditional",
+        "reasoning": "Cotton fibre is not consumed directly, making recycled water more acceptable than for food crops. However, high salt content reduces germination and boll set.",
+        "actions": [
+          "Ensure recycled water EC is below 2.0 dS/m before application",
+          "Apply only during vegetative stage and avoid sensitive reproductive period",
+          "Monitor soil salinity and apply leaching irrigations if EC accumulates",
+          "Test for heavy metals to avoid fibre contamination affecting market value"
+        ]
+      }
+    }
+  },
+  "crop_type_season_suitability": {
+    "kharif": {
+      "summer": 0.9,
+      "rainy": 0.5,
+      "fall": 0.1,
+      "winter": 0.05
+    },
+    "rabi": {
+      "fall": 0.9,
+      "winter": 0.7,
+      "rainy": 0.1,
+      "summer": 0.05
+    },
+    "zaid": {
+      "summer": 0.9,
+      "winter": 0.6,
+      "fall": 0.2,
+      "rainy": 0.1
+    }
+  },
+  "crop_type_calendar": {
+    "kharif": {
+      "sow_start": 4,
+      "sow_end": 7,
+      "harvest_start": 9,
+      "harvest_end": 10
+    },
+    "rabi": {
+      "sow_start": 10,
+      "sow_end": 12,
+      "harvest_start": 3,
+      "harvest_end": 4
+    },
+    "zaid": {
+      "sow_start": 3,
+      "sow_end": 4,
+      "harvest_start": 5,
+      "harvest_end": 6
+    }
+  }
+}
