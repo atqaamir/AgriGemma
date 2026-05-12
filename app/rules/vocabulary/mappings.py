@@ -23,10 +23,10 @@ def get_vocabulary():
         },
         # Four real agricultural seasons for Pakistan.
         "Season": {
-            1: "rainy",
-            2: "winter",
-            3: "summer",
-            4: "fall"
+            1: "Rainy",
+            2: "Winter",
+            3: "Summer",
+            4: "Fall"
         },
         # Crop type vocabulary (Kharif/Rabi/Zaid classification).
         "Crop_Type": {
@@ -60,8 +60,8 @@ CROP_TYPE_MAP = {
 #   summer (pre-monsoon hot) : Apr – Jun  (04–06)
 #   fall   (post-monsoon)    : Oct – Nov  (10–11)
 SEASON_MONTHS = {
-    "rainy":  {"start": 7,  "end": 9},
-    "winter": {"start": 11, "end": 3},
-    "summer": {"start": 4,  "end": 6},
-    "fall":   {"start": 10, "end": 11},
+    "Rainy":  {"start": 7,  "end": 9},
+    "Winter": {"start": 11, "end": 3},
+    "Summer": {"start": 4,  "end": 6},
+    "Fall":   {"start": 10, "end": 11},
 }
