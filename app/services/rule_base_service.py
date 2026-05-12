@@ -1,28 +1,22 @@
 # This is the ONLY place that reads crop_rules
 
-from app.rules.predictive.crop_rules import CROP_RULES
-
-
 class RuleBaseService:
 
     @staticmethod
     def get_crop_rules(crop: str) -> dict:
-        return CROP_RULES.get(crop, {})
+        pass
 
     @staticmethod
     def get_sowing_rules(crop: str) -> dict:
-        rules = CROP_RULES.get(crop, {})
-        return rules.get("sowing", {})
+        pass
 
     @staticmethod
     def get_irrigation_rules(crop: str) -> dict:
-        rules = CROP_RULES.get(crop, {})
-        return rules.get("irrigation", {})
+        pass
 
     @staticmethod
     def get_fertilizer_rules(crop: str) -> dict:
-        rules = CROP_RULES.get(crop, {})
-        return rules.get("fertilizer", {})
+        pass
 
 
 rule_base_service = RuleBaseService()
