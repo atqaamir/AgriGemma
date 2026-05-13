@@ -1,3 +1,3 @@
-from app.rules.predictive.rule_engine import rule_engine
+from app.rules.rule_engine.rule_engine import rule_engine
 
 decision = rule_engine.evaluate_sowing(rain_mm=20, crop="maize")

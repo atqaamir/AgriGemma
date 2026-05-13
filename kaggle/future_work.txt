@@ -16,3 +16,4 @@
 - Add other measurements/checks for soil - such as ph, S, EC etc
 - Add Irrigation Need (0/1) check according to growth stage and environment levels
 - Make Health Status Dictionary
+- Change scenarios where the task needs to be performed earlier than initially planned.

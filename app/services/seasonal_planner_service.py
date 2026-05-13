@@ -1,4 +1,4 @@
-from app.rules.predictive.rule_engine import RuleEngine
+from app.rules.rule_engine.rule_engine import RuleEngine
 
 class SeasonalPlannerService:
     
