@@ -11,7 +11,7 @@ import pandas as pd
 app = create_app()
 
 with app.app_context():
-    sow_start, sow_end = rule_base_service.get_timeline_by_crop_type(1).sow_start_month, rule_base_service.get_timeline_by_crop_type(1).sow_end_month
-    crop_type = rule_base_service.get_initial_dates("Maize").name
-# print(sow_start, sow_end)
-print(crop_type)
+    # sow_start, sow_end = rule_base_service.get_timeline_by_crop_type(1).sow_start_month, rule_base_service.get_timeline_by_crop_type(1).sow_end_month
+    score_type, score_crop = rule_base_service.get_initial_dates("Maize")
+
+print(score_crop, score_type)

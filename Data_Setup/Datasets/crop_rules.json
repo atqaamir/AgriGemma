@@ -13,7 +13,7 @@
     "actions_for_ideal": "No action needed"
   },
   "CROP_RULES": {
-    "maize": {
+    "Maize": {
       "sowing": {
         "rain_threshold_mm": 15,
         "temp_min": 20,
@@ -27,7 +27,7 @@
         "avoid_rain_above_mm": 10
       }
     },
-    "rice": {
+    "Rice": {
       "sowing": {
         "rain_threshold_mm": 50,
         "temp_min": 22,
@@ -41,7 +41,7 @@
         "avoid_rain_above_mm": 20
       }
     },
-    "cotton": {
+    "Cotton": {
       "sowing": {
         "rain_threshold_mm": 10,
         "temp_min": 18,
@@ -1166,22 +1166,22 @@
   },
   "crop_type_season_suitability": {
     "Kharif": {
-      "summer": 0.9,
-      "rainy": 0.5,
-      "fall": 0.1,
-      "winter": 0.05
+      "Summer": 0.9,
+      "Rainy": 0.5,
+      "Fall": 0.1,
+      "Winter": 0.05
     },
     "Rabi": {
-      "fall": 0.9,
-      "winter": 0.7,
-      "rainy": 0.1,
-      "summer": 0.05
+      "Fall": 0.9,
+      "Winter": 0.7,
+      "Rainy": 0.1,
+      "Summer": 0.05
     },
     "Zaid": {
-      "summer": 0.9,
-      "winter": 0.6,
-      "fall": 0.2,
-      "rainy": 0.1
+      "Summer": 0.9,
+      "Winter": 0.6,
+      "Fall": 0.2,
+      "Rainy": 0.1
     }
   },
   "crop_type_calendar": {
