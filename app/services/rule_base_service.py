@@ -195,8 +195,8 @@ class RuleBaseService:
         return CompatibilityRulesRepository.get_crop_season_compatibility_by_crop(crop_id)
 
     @staticmethod
-    def get_crop_season_compatibility_by_crop_and_season(crop_id: int, season: str):
-        return CompatibilityRulesRepository.get_crop_season_compatibility_by_crop_and_season(crop_id, season)
+    def get_crop_season_compatibility_by_crop_and_season(crop_id: int, season_id: int):
+        return CompatibilityRulesRepository.get_crop_season_compatibility_by_crop_and_season(crop_id, season_id)
 
     @staticmethod
     def get_all_water_source_compatibility() -> list:
@@ -227,8 +227,8 @@ class RuleBaseService:
         return CompatibilityRulesRepository.get_crop_type_season_compatibility_by_type(crop_type_id)
 
     @staticmethod
-    def get_crop_type_season_compatibility_by_type_and_season(crop_type_id: int, season: str):
-        return CompatibilityRulesRepository.get_crop_type_season_compatibility_by_type_and_season(crop_type_id, season)
+    def get_crop_type_season_compatibility_by_type_and_season(crop_type_id: int, season_id: int):
+        return CompatibilityRulesRepository.get_crop_type_season_compatibility_by_type_and_season(crop_type_id, season_id)
 
     # ------------------------------------------------------------------ #
     #  Action Rules
@@ -431,6 +431,24 @@ class RuleBaseService:
     # ------------------------------------------------------------------ #
 
     def get_initial_dates(self, crop_name):
-        return self.get_crop_type_by_id(self.get_crop_type_by_crop(crop_name))
+
+        # Step 1: Get Crop Type -> Type_Season_Compatibility_Score -> Best Suited Season for Crop Type
+        best_scored_by_crop_type = max(self.get_crop_type_season_compatibility_by_type(self.get_crop_type_by_crop(crop_name)), key=lambda r: r.score).season
+
+        # Step 1: Get Crop_Id -> Crop_Season_Compatibility_Score -> Best Suited Season for Crop
+        best_scored_by_crop = max(self.get_crop_season_compatibility_by_crop(self.get_crop_by_name(crop_name).id), key=lambda r: r.score).season
+
+        #steps: 
+        # 1. get crop_type -> 2. get type_season_compatibility -> 3. choose best season
+        # 4. get crop_season_compatibility -> 5. choose best season
+        # 7. get crop_type months -> 8 get season months -> compare to be same & overlap months
+        # 8. get sow + harvest dates from months -> generate random dates from those month
+        # 9. get crop_irrigation_timeline -> generate irrigation start date & end date -> get irrigation_frequency
+        # 10. next comes the adjustment rules. 
+
+
+        return best_scored_by_crop_type, best_scored_by_crop
+    
+
 
 rule_base_service = RuleBaseService()

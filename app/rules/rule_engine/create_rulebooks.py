@@ -316,9 +316,10 @@ def create_compatibility_rules(rules: dict) -> CompatibilityRulebooks:
     SOIL_ID      = _maps['Soil_Type']
     WATER_ID     = _maps['Water_Source']
     CROP_TYPE_ID = _maps['Crop_Type']
+    SEASON_ID    = _maps['Season']
 
     crop_type_season_rows = [
-        {'crop_type_id': CROP_TYPE_ID[ct], 'season': season, 'score': score}
+        {'crop_type_id': CROP_TYPE_ID[ct], 'season_id': SEASON_ID[season.title()], 'score': score}
         for ct, seasons in rules['crop_type_season_suitability'].items()
         if not ct.startswith('_')
         for season, score in seasons.items()
@@ -326,7 +327,7 @@ def create_compatibility_rules(rules: dict) -> CompatibilityRulebooks:
 
     return CompatibilityRulebooks(
         crop_soil_df    = _build_long(rules, 'soil_compatibility',  'soil_type_id',    CROP_ID, inner_id_map=SOIL_ID),
-        crop_season_df  = _build_long(rules, 'crop_season_score',   'season',          CROP_ID),
+        crop_season_df  = _build_long(rules, 'crop_season_score',   'season_id',       CROP_ID, inner_id_map=SEASON_ID),
         water_source_df = _build_long(rules, 'water_compatibility', 'water_source_id', CROP_ID,
                               inner_id_map=WATER_ID, filter_keys=list(WATER_ID.keys())),
         climate_df      = (

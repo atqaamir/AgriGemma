@@ -40,7 +40,7 @@ class CompatibilityRulesRepository:
     def get_crop_soil_compatibility_by_crop_and_soil(crop_id: int, soil_type_id: int) -> CropSoilCompatibilityRulebook:
         return CropSoilCompatibilityRulebook.query.filter_by(crop_id=crop_id, soil_type_id=soil_type_id).first()
 
-    # Crop Season Compatibility (keys: crop_id, season)
+    # Crop Season Compatibility (keys: crop_id, season_id)
     @staticmethod
     def get_all_crop_season_compatibility() -> list:
         return CropSeasonCompatibilityRulebook.query.all()
@@ -50,8 +50,8 @@ class CompatibilityRulesRepository:
         return CropSeasonCompatibilityRulebook.query.filter_by(crop_id=crop_id).all()
 
     @staticmethod
-    def get_crop_season_compatibility_by_crop_and_season(crop_id: int, season: str) -> CropSeasonCompatibilityRulebook:
-        return CropSeasonCompatibilityRulebook.query.filter_by(crop_id=crop_id, season=season).first()
+    def get_crop_season_compatibility_by_crop_and_season(crop_id: int, season_id: int) -> CropSeasonCompatibilityRulebook:
+        return CropSeasonCompatibilityRulebook.query.filter_by(crop_id=crop_id, season_id=season_id).first()
 
     # Water Source Compatibility (keys: crop_id, water_source_id)
     @staticmethod
@@ -75,7 +75,7 @@ class CompatibilityRulesRepository:
     def get_irrigation_frequency_compatibility_by_crop(crop_id: int) -> IrrigationFrequencyCompatibilityRulebook:
         return IrrigationFrequencyCompatibilityRulebook.query.filter_by(crop_id=crop_id).first()
 
-    # Crop Type Season Compatibility (keys: crop_type_id, season)
+    # Crop Type Season Compatibility (keys: crop_type_id, season_id)
     @staticmethod
     def get_all_crop_type_season_compatibility() -> list:
         return CropTypeSeasonCompatibilityRulebook.query.all()
@@ -85,5 +85,5 @@ class CompatibilityRulesRepository:
         return CropTypeSeasonCompatibilityRulebook.query.filter_by(crop_type_id=crop_type_id).all()
 
     @staticmethod
-    def get_crop_type_season_compatibility_by_type_and_season(crop_type_id: int, season: str) -> CropTypeSeasonCompatibilityRulebook:
-        return CropTypeSeasonCompatibilityRulebook.query.filter_by(crop_type_id=crop_type_id, season=season).first()
+    def get_crop_type_season_compatibility_by_type_and_season(crop_type_id: int, season_id: int) -> CropTypeSeasonCompatibilityRulebook:
+        return CropTypeSeasonCompatibilityRulebook.query.filter_by(crop_type_id=crop_type_id, season_id=season_id).first()
