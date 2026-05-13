@@ -1165,19 +1165,19 @@
     }
   },
   "crop_type_season_suitability": {
-    "kharif": {
+    "Kharif": {
       "summer": 0.9,
       "rainy": 0.5,
       "fall": 0.1,
       "winter": 0.05
     },
-    "rabi": {
+    "Rabi": {
       "fall": 0.9,
       "winter": 0.7,
       "rainy": 0.1,
       "summer": 0.05
     },
-    "zaid": {
+    "Zaid": {
       "summer": 0.9,
       "winter": 0.6,
       "fall": 0.2,
@@ -1185,19 +1185,19 @@
     }
   },
   "crop_type_calendar": {
-    "kharif": {
+    "Kharif": {
       "sow_start": 4,
       "sow_end": 7,
       "harvest_start": 9,
       "harvest_end": 10
     },
-    "rabi": {
+    "Rabi": {
       "sow_start": 10,
       "sow_end": 12,
       "harvest_start": 3,
       "harvest_end": 4
     },
-    "zaid": {
+    "Zaid": {
       "sow_start": 3,
       "sow_end": 4,
       "harvest_start": 5,

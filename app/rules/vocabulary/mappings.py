@@ -30,9 +30,9 @@ def get_vocabulary():
         },
         # Crop type vocabulary (Kharif/Rabi/Zaid classification).
         "Crop_Type": {
-            1: "kharif",
-            2: "rabi",
-            3: "zaid"
+            1: "Kharif",
+            2: "Rabi",
+            3: "Zaid"
         },
     }
 
@@ -47,9 +47,9 @@ def get_id_maps():
 # Crop → crop-type label.  Kept here (not in DB) to avoid a redundant FK column.
 # All current crops are Kharif; update when Rabi/Zaid crops are added.
 CROP_TYPE_MAP = {
-    "Maize":  "kharif",
-    "Rice":   "kharif",
-    "Cotton": "kharif",
+    "Maize":  1,
+    "Rice":   1,
+    "Cotton": 1,
 }
 
 # Pakistan 4-season month ranges (for UI / avoid-sowing logic).
