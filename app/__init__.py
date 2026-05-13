@@ -5,6 +5,7 @@ from flask_admin.contrib.sqla import ModelView
 from app.models.crop import Crop
 from app.models.field import Field
 from app.models.notification import Notification
+from app.models.task import Task
 from app.rules.vocabulary.crop_names import CropNames
 from app.rules.vocabulary.growth_stage import GrowthStage
 from app.rules.vocabulary.soil_type import Soil_Type

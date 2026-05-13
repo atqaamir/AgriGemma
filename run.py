@@ -6,6 +6,7 @@ from app.extensions import db
 # import your seed scripts
 from app.rules.populate_vocabulary import run as populate_vocabulary_run
 from seed_data import run as seed_data_run   # adjust import if path differs
+from app.services.demo_scenario_service import DemoScenarioService
 
 
 def reset_database(db_path="app.db"):
@@ -23,6 +24,7 @@ def bootstrap():
         # run seeders
         populate_vocabulary_run()
         seed_data_run()
+        DemoScenarioService.setup(user_id=1)
 
     return app
 

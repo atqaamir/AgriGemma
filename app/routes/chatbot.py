@@ -126,3 +126,18 @@ def get_messages(conversation_id):
         return jsonify({"error": str(e)}), 403
     except Exception as e:
         return jsonify({"error": str(e)}), 400
+
+
+@chatbot_bp.route("/setup-demo", methods=["POST"])
+def setup_demo():
+    """Seed the weather-change demo scenario (pre-rain tasks done, irrigation tasks pending).
+
+    After calling this, ask the chatbot:
+        "Why are you asking me to do irrigation tasks in May?"
+    """
+    from app.services.demo_scenario_service import DemoScenarioService
+    try:
+        result = DemoScenarioService.setup(USER_ID)
+        return jsonify(result), 201
+    except Exception as e:
+        return jsonify({"error": str(e)}), 400

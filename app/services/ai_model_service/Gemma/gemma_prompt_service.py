@@ -26,32 +26,38 @@ Keep the response concise, practical, and farmer-friendly.
 """.strip()
 
 
-def build_chat_prompt(user_input: str, weather: dict, soil: dict, crop: dict) -> str:
-    return f"""
-You are a multilingual smart farming assistant.
+def build_chat_prompt(
+    user_input: str,
+    weather: dict,
+    soil: dict,
+    crop: dict,
+    tasks: list = None,
+) -> str:
+    task_section = ""
+    if tasks:
+        task_lines = []
+        for t in tasks[:6]:
+            line = f"- [{t.get('priority','?').upper()}] {t.get('title','?')}"
+            if t.get("description"):
+                line += f": {t['description']}"
+            task_lines.append(line)
+        task_section = "\n\nPending tasks:\n" + "\n".join(task_lines)
 
-Farmer question:
-{user_input}
+    return f"""You are a smart farming assistant. Answer in 2–5 sentences. Use the exact data given.
+
+Farmer question: {user_input}
 
 Farm context:
-Weather:
-{weather}
+Weather: {weather}
+Soil: {soil}
+Crop: {crop}{task_section}
 
-Soil:
-{soil}
+Rules:
+- If the farmer questions why a task was recommended: cite the specific weather or soil number that triggered it
+- If they push back on timing ("we never do this in May"): acknowledge their experience, then explain what changed this year using the forecast or sensor data
+- No generic advice when you have actual numbers
 
-Crop:
-{crop}
-
-Instructions:
-- Respond simply and clearly
-- Give practical advice
-- Focus on farming decisions
-- Mention risks if relevant
-- Keep the answer easy for non-technical users
-
-Answer:
-""".strip()
+Answer:""".strip()
 
 
 
