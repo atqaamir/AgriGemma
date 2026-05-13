@@ -2,7 +2,6 @@
 Chatbot Service - Main orchestration layer for farmer chatbot.
 Manages conversation context, integrates with AI model, and handles farming knowledge.
 """
-import json
 import logging
 from datetime import datetime
 
@@ -26,25 +25,25 @@ class ChatbotService:
     - Provider-agnostic (works with any AI backend)
     """
 
-    # System prompt template for the chatbot
-    SYSTEM_PROMPT_TEMPLATE = """You are an expert agricultural advisor with deep knowledge of farming practices.
-You are helping a farmer with their farm management and decision-making.
+    # To customise this prompt edit SYSTEM_PROMPT_TEMPLATE below.
+    # For Gemma-specific prompt functions see:
+    #   app/services/ai_model_service/Gemma/gemma_prompt_service.py
+    SYSTEM_PROMPT_TEMPLATE = """You are a trusted farm advisor — like a knowledgeable friend who has been helping this farmer for years.
 
-{knowledge_base}
-
-FARMER CONTEXT:
+FARM DATA RIGHT NOW:
 {farmer_context}
 
-Your responsibilities:
-1. Provide practical, actionable farming advice
-2. Use the knowledge base to give informed recommendations
-3. Consider the farmer's current situation (fields, crops, weather, tasks)
-4. Be specific and avoid generic advice
-5. Explain reasoning behind recommendations
-6. Ask clarifying questions if needed
-7. Provide both immediate actions and long-term strategies
+FARMING KNOWLEDGE (only what is relevant):
+{knowledge_base}
 
-Format your response as helpful, conversational advice. Be friendly and supportive."""
+HOW TO RESPOND:
+- Address the farmer by their name (it is in the farm data above) at the start of your first reply or whenever it feels natural.
+- Talk like a person, not a report. Warm, direct, no jargon.
+- Keep replies short: 3–4 sentences. Only use a list if there are 3+ steps.
+- Use the farmer's exact field names, crop names, and task titles from the data above.
+- When the farmer questions why a task was recommended: start by saying "I know [name]..." or "I understand [name]..." to acknowledge their experience or tradition FIRST, then in plain language explain what changed this season using the specific weather reading or soil number from the task description.
+- Never open with "The current weather forecast indicates..." or any formal report-style phrase.
+- Sound like you are speaking directly to the farmer, not writing a document."""
 
     @staticmethod
     def get_or_create_conversation(user_id: int, conversation_id: int = None) -> int:
@@ -90,13 +89,14 @@ Format your response as helpful, conversational advice. Be friendly and supporti
             message=user_message,
         )
 
-        # Get conversation history for context
+        # Get conversation history — cap at 8 to keep prompt size manageable
         messages = ChatRepository.get_messages(conversation_id)
-        history = "\n".join([f"{m.sender.upper()}: {m.message}" for m in messages[:-1]])  # Exclude current
+        recent_history = messages[:-1][-8:]
+        history = "\n".join([f"{m.sender.upper()}: {m.message}" for m in recent_history])
 
-        # Build context
+        # Build context — only include KB sections relevant to this question
         farmer_context = ContextAggregationService.build_task_context(user_id)
-        knowledge_base = FarmingKnowledgeBase.to_prompt_context()
+        knowledge_base = FarmingKnowledgeBase.to_prompt_context(user_message)
 
         # Build system prompt
         farmer_context_str = ChatbotService._format_farmer_context(farmer_context)
@@ -197,57 +197,57 @@ ADVISOR: """
 
     @staticmethod
     def _format_farmer_context(context: dict) -> str:
-        """Format farmer context for prompt."""
+        farmer_name = context.get("farmer_name", "Farmer")
         farm = context.get("farm", {})
-        tasks = context.get("tasks", {})
+        tasks_ctx = context.get("tasks", {})
         weather = context.get("weather", {})
 
-        return f"""
-Farm Overview:
-- Active fields: {farm.get('active_fields', 0)}
-- Total crops: {farm.get('total_crops', 0)}
+        lines = [f"Farmer's name: {farmer_name}"]
 
-Task Status:
-- Pending: {tasks.get('pending_count', 0)}
-- Overdue: {tasks.get('overdue_count', 0)}
-- Completed: {tasks.get('completed_count', 0)}
-
-Active Fields:
-{ChatbotService._format_fields(farm.get('active_fields_data', []))}
-
-Current Weather:
-{ChatbotService._format_weather(weather)}
-"""
-
-    @staticmethod
-    def _format_fields(fields: list) -> str:
-        """Format field information."""
-        if not fields:
-            return "  No active fields"
-        return "\n".join([
-            f"  - {f.get('name')}: {f.get('crop', 'unknown')} "
-            f"(health: {f.get('health_status', 'unknown')}, "
-            f"moisture: {f.get('moisture_level', 'N/A')}%)"
-            for f in fields
-        ])
-
-    @staticmethod
-    def _format_weather(weather: dict) -> str:
-        """Format weather information."""
+        # Weather first — it's usually the trigger for "why" questions
         current = weather.get("current", {})
+        if current:
+            lines.append(
+                f"Weather: {current.get('temp', '?')}°C, "
+                f"{current.get('condition', '?')}, "
+                f"humidity {current.get('humidity', '?')}%"
+            )
         forecast = weather.get("forecast", [])
-
-        result = f"  Temperature: {current.get('temp', 'N/A')}°C, "
-        result += f"Humidity: {current.get('humidity', 'N/A')}%, "
-        result += f"Condition: {current.get('condition', 'unknown')}"
-
         if forecast:
-            result += "\n  Forecast: " + ", ".join([
-                f"{f.get('date')}: {f.get('condition')}"
-                for f in forecast[:3]
-            ])
+            fc_parts = [f"{f.get('date', f.get('day','?'))}: {f.get('condition','?')}" for f in forecast[:4]]
+            lines.append("Forecast: " + ", ".join(fc_parts))
 
-        return result
+        # Farm overview
+        lines.append(
+            f"\nFarm: {farm.get('active_fields', 0)} active fields, "
+            f"{farm.get('total_crops', 0)} active crops"
+        )
+        for f in farm.get("active_fields_data", []):
+            lines.append(
+                f"  Field '{f['name']}': moisture {f.get('moisture_level', '?')}%, "
+                f"health {f.get('health_status', '?')}, "
+                f"score {f.get('field_score', '?')}"
+            )
+
+        # Pending tasks WITH descriptions — this is what the AI needs to explain "why"
+        pending = tasks_ctx.get("pending_list", [])
+        pending_count = tasks_ctx.get("pending_count", 0)
+        overdue_count = tasks_ctx.get("overdue_count", 0)
+        if pending:
+            lines.append(
+                f"\nPending tasks ({pending_count} total"
+                + (f", {overdue_count} overdue" if overdue_count else "")
+                + "):"
+            )
+            for t in pending[:10]:
+                badge = f"[{t['priority'].upper()}]"
+                due = f" — due {t['due_date']}" if t.get("due_date") else ""
+                overdue = " ⚠ OVERDUE" if t.get("is_overdue") else ""
+                lines.append(f"  {badge} {t['title']}{due}{overdue}")
+                if t.get("description"):
+                    lines.append(f"    → {t['description']}")
+
+        return "\n".join(lines)
 
     @staticmethod
     def _generate_title(first_message: str) -> str:

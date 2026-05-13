@@ -23,8 +23,10 @@ class ContextAggregationService:
         task_ctx = ContextAggregationService._collect_task_context(today)
         alert_ctx = ContextAggregationService._collect_alert_context(field_ctx.get("_active_fields", []))
         weather_ctx = ContextAggregationService._collect_weather_context(user_id)
+        farmer_name = ContextAggregationService._collect_farmer_name(user_id)
 
         return {
+            "farmer_name": farmer_name,
             "farm": {
                 "total_fields": field_ctx["total"],
                 "active_fields": field_ctx["active"],
@@ -38,6 +40,15 @@ class ContextAggregationService:
         }
 
     # ── Private collectors ────────────────────────────────────────────────────
+
+    @staticmethod
+    def _collect_farmer_name(user_id: int) -> str:
+        try:
+            from app.services.domain_service.user_service import UserService
+            user = UserService.get_user_by_id(user_id)
+            return user.name if user and user.name else "Farmer"
+        except Exception:
+            return "Farmer"
 
     @staticmethod
     def _collect_field_context() -> dict:
@@ -118,6 +129,7 @@ class ContextAggregationService:
                         "field_name": t.field.name if t.field else None,
                         "crop_name": t.crop.name if t.crop else None,
                         "is_overdue": bool(t.due_date and t.due_date < today),
+                        "description": t.description,
                     }
                     for t in pending[:25]
                 ],

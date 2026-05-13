@@ -218,29 +218,38 @@ class FarmingKnowledgeBase:
         ))
 
     @classmethod
-    def to_prompt_context(cls) -> str:
-        """Convert knowledge base to text for AI prompt."""
-        return f"""
-You are an expert agricultural advisor. Use this knowledge base to provide farming guidance:
+    def to_prompt_context(cls, query: str = "") -> str:
+        """Convert knowledge base to text for AI prompt.
 
-IRRIGATION GUIDELINES:
-{cls._format_dict(cls.IRRIGATION_RULES)}
+        When query is provided only sections relevant to the question are
+        included, which reduces prompt size and speeds up inference.
+        """
+        q = query.lower()
+        sections = []
 
-DISEASE MANAGEMENT:
-{cls._format_dict(cls.DISEASE_RULES)}
+        if not q or any(w in q for w in ("water", "irrigat", "moisture", "dry", "flood")):
+            sections.append(f"IRRIGATION:\n{cls._format_dict(cls.IRRIGATION_RULES)}")
 
-PLANTING GUIDELINES:
-{cls._format_dict(cls.PLANTING_RULES)}
+        if not q or any(w in q for w in ("disease", "blight", "mildew", "rot", "fungus", "sick", "health")):
+            sections.append(f"DISEASE:\n{cls._format_dict(cls.DISEASE_RULES)}")
 
-FERTILIZATION GUIDELINES:
-{cls._format_dict(cls.FERTILIZATION_RULES)}
+        if not q or any(w in q for w in ("plant", "sow", "seed", "grow", "germina")):
+            sections.append(f"PLANTING:\n{cls._format_dict(cls.PLANTING_RULES)}")
 
-PEST MANAGEMENT:
-{cls._format_dict(cls.PEST_RULES)}
+        if not q or any(w in q for w in ("fertil", "nutrient", "npk", "nitrogen", "phosphor")):
+            sections.append(f"FERTILIZATION:\n{cls._format_dict(cls.FERTILIZATION_RULES)}")
 
-WEATHER-BASED RECOMMENDATIONS:
-{cls._format_dict(cls.WEATHER_RULES)}
-"""
+        if not q or any(w in q for w in ("pest", "insect", "bug", "aphid", "worm", "caterpill")):
+            sections.append(f"PESTS:\n{cls._format_dict(cls.PEST_RULES)}")
+
+        if not q or any(w in q for w in ("weather", "rain", "drought", "frost", "heat", "cold", "forecast")):
+            sections.append(f"WEATHER ACTIONS:\n{cls._format_dict(cls.WEATHER_RULES)}")
+
+        # Fall back to full context if nothing matched
+        if not sections:
+            return cls.to_prompt_context()
+
+        return "\n\n".join(sections)
 
     @staticmethod
     def _format_dict(d: dict, indent: int = 0) -> str:
