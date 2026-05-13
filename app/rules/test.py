@@ -1,23 +1,17 @@
 import sys
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
-
 from app import create_app
 from app.extensions import db
-from app.rules.rulebooks.action_rules.irrigation_frequency_action_rulebook import IrrigationFrequencyActionRulebook
+
+from app.rules.rule_respositories.vocabulary_repository import VocabularyRepository
+from app.services.rule_base_service import rule_base_service
 import pandas as pd
 
 app = create_app()
 
 with app.app_context():
-    rows = IrrigationFrequencyActionRulebook.query.all()
-    df = pd.DataFrame([{
-        'id':             r.id,
-        'crop_id':        r.crop_id,
-        'irr_freq_range': r.irr_freq_range,
-        'feasibility':    r.feasibility,
-        'reasoning':      r.reasoning,
-        'actions':        r.actions,
-    } for r in rows])
-
-print(df.to_string())
+    sow_start, sow_end = rule_base_service.get_timeline_by_crop_type(1).sow_start_month, rule_base_service.get_timeline_by_crop_type(1).sow_end_month
+    crop_type = rule_base_service.get_initial_dates("Maize").name
+# print(sow_start, sow_end)
+print(crop_type)
