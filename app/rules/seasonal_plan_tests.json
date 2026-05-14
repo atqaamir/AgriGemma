@@ -1,0 +1,75 @@
+{
+  "plan_5": {
+    "plan_id": 5,
+    "growth_stage": "Sowing",
+    "currently_active": false,
+    "total_crops": 1,
+    "crops": [
+      {
+        "crop": "Maize",
+        "soil_type": "Sandy",
+        "water_source": "Recycled",
+        "feasible": true,
+        "schedule": {
+          "sowing_date": "04/17/2027",
+          "harvesting_date": "10/04/2027",
+          "irrigation_start_date": "04/24/2027",
+          "irrigation_frequency": "3 times per week",
+          "fertilization_date": "05/02/2027"
+        },
+        "adjustments": [
+          "Maize is not well-suited to Sandy soil type - irrigation frequency increased by 4",
+          "Maize sowing delayed by 4 days due to Sandy soil type - harvesting, irrigation and fertilization dates shifted accordingly",
+          "Maize requires increased fertilization on Sandy soil type",
+          "Maize is not well-suited to Recycled water source - irrigation frequency decreased by 4"
+        ]
+      }
+    ]
+  },
+  "plan_6": {
+    "plan_id": 6,
+    "growth_stage": "Sowing",
+    "currently_active": true,
+    "total_crops": 3,
+    "crops": [
+      {
+        "crop": "Cotton",
+        "soil_type": "Loamy",
+        "water_source": "Groundwater",
+        "feasible": true,
+        "schedule": {
+          "sowing_date": "04/19/2027",
+          "harvesting_date": "09/17/2027",
+          "irrigation_start_date": "04/29/2027",
+          "irrigation_frequency": "2 times per week",
+          "fertilization_date": "05/14/2027"
+        },
+        "adjustments": []
+      },
+      {
+        "crop": "Maize",
+        "soil_type": "Clay",
+        "water_source": "River",
+        "feasible": false,
+        "schedule": null,
+        "adjustments": [
+          "Maize is extremely incompatible with Clay soil type - please consider a different field or a different crop"
+        ]
+      },
+      {
+        "crop": "Rice",
+        "soil_type": "Loamy",
+        "water_source": "River",
+        "feasible": true,
+        "schedule": {
+          "sowing_date": "07/13/2026",
+          "harvesting_date": "09/24/2026",
+          "irrigation_start_date": "07/16/2026",
+          "irrigation_frequency": "4 times per week",
+          "fertilization_date": "08/02/2026"
+        },
+        "adjustments": []
+      }
+    ]
+  }
+}

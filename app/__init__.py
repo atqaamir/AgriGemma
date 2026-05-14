@@ -21,6 +21,7 @@ from app.rules.rulebooks.action_rules.soil_action_rulebook import SoilActionRule
 from app.rules.rulebooks.compatibility_rules.crop_soil_compatibility_rulebook import CropSoilCompatibilityRulebook
 from app.rules.rulebooks.threshold_rules.irrigation_calender_rulebook import IrrigationCalenderRulebook
 from app.models.seasonal_plan import SeasonalPlan
+from app.models.seasonal_plan import SeasonalPlanEntry
 from app.routes import register_routes
 from app.jobs.scheduler import start_scheduler
 
@@ -41,6 +42,8 @@ def create_app():
     admin.add_view(ModelView(CropSoilCompatibilityRulebook, db.session))
     admin.add_view(ModelView(SoilActionRulebook, db.session))
     admin.add_view(ModelView(SeasonalPlan, db.session))
+    admin.add_view(ModelView(SeasonalPlanEntry, db.session))
+    admin.add_view(ModelView(GrowthStage, db.session))
 
     register_routes(app)
 

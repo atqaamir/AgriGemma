@@ -294,24 +294,33 @@ def create_range_rules(crop_data: pd.DataFrame) -> RangeRulebooks:
     )
 
 
-def create_irrigation_rules(crop_data: pd.DataFrame) -> pd.DataFrame:
-    """Build irrigation frequency rulebook from CSV data.
+def create_irrigation_rules(rules: dict) -> pd.DataFrame:
+    """Build irrigation frequency rulebook from crop_rules.json.
+
+    All 45 combinations (3 crops x 5 growth stages x 3 soil types) are
+    explicitly defined in the JSON, so no CSV-derived gaps or missing stages.
 
     Keys    : crop_id, growth_stage_id, soil_type_id
-    Columns : recommended_per_week, mean, n
+    Columns : recommended_frequency, mean_frequency
     """
-    CROP_ID = get_id_maps()['Crop_Name']
+    _maps    = get_id_maps()
+    CROP_ID  = _maps['Crop_Name']
+    STAGE_ID = _maps['Growth_Stage']
+    SOIL_ID  = _maps['Soil_Type']
+
     records = []
-    for (crop, stage, soil), grp in crop_data.groupby(
-        ['label', 'growth_stage', 'soil_type']
-    )['irrigation_frequency']:
-        records.append({
-            'crop_id':              CROP_ID[crop],
-            'growth_stage_id':      int(stage),
-            'soil_type_id':         int(soil),
-            'recommended_per_week': int(round(grp.mean())),
-            'mean':                 round(float(grp.mean()), 3),
-        })
+    for crop, stages in rules['irrigation_frequency_rules'].items():
+        if crop.startswith('_'):
+            continue
+        for stage, soils in stages.items():
+            for soil, freq in soils.items():
+                records.append({
+                    'crop_id':               CROP_ID[crop],
+                    'growth_stage_id':       STAGE_ID[stage],
+                    'soil_type_id':          SOIL_ID[soil],
+                    'recommended_frequency': int(freq),
+                    'mean_frequency':        float(freq),
+                })
     return pd.DataFrame(records)
 
 
@@ -504,7 +513,7 @@ class RulebookSeeder:
 
     def seed_all(self, crop_data: pd.DataFrame, rules: dict) -> None:
         range_books      = create_range_rules(crop_data)
-        irr_df           = create_irrigation_rules(crop_data)
+        irr_df           = create_irrigation_rules(rules)
         threshold_df     = create_threshold_rules(crop_data)
         irr_start_df          = create_irrigation_calender_rules(rules)
         fert_calendar_df      = create_fertilization_calendar_rules(rules)
@@ -520,12 +529,8 @@ class RulebookSeeder:
         self._seed_df(WaterClimateRulebook,  range_books.water_df)
         self._seed_df(SeasonClimateRulebook, range_books.season_climate_df)
 
-        # Threshold rules (rename cols to match model field names)
-        irr_renamed = irr_df.rename(columns={
-            'recommended_per_week': 'recommended_frequency',
-            'mean':                 'mean_frequency',
-        })
-        self._seed_df(IrrigationFrequencyRulebook, irr_renamed)
+        # Threshold rules
+        self._seed_df(IrrigationFrequencyRulebook, irr_df)
         self._seed_df(IrrigationCalenderRulebook, irr_start_df)
         self._seed_df(FertilizationCalendarRulebook, fert_calendar_df)
         self._seed_df(ThresholdRulebook, threshold_df)
