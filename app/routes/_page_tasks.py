@@ -3,7 +3,7 @@ from marshmallow import ValidationError
 
 from app.agents.coordinator_agent import CoordinatorAgent
 from app.services.domain_service.task_service import TaskService
-from app.services.task_event_service import TaskEventService
+from Info_files.task_event_service import TaskEventService
 from app.schemas.task_schema import (
     TaskCardSchema,
     TaskDetailSchema,

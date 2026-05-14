@@ -1,6 +1,6 @@
 import logging
 
-from app.services.context_aggregation_service import ContextAggregationService
+from app.services.intelligence_service.chatbot_service.context_aggregation_service import ContextAggregationService
 from app.services.task_intelligence_service import TaskIntelligenceService
 
 logger = logging.getLogger(__name__)
@@ -11,6 +11,10 @@ class TaskIntelligenceAgent:
     Thin orchestration agent responsible for the task intelligence pipeline.
     Delegates context aggregation to ContextAggregationService and AI
     generation to TaskIntelligenceService.  Never contains business logic.
+
+
+
+    Tasks + Critical tasks overview
     """
 
     def __init__(self) -> None:

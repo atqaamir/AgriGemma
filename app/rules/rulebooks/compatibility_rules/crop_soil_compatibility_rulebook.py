@@ -8,7 +8,8 @@ class CropSoilCompatibilityRulebook(db.Model):
     crop_id      = db.Column(db.Integer, nullable=False)
     soil_type_id = db.Column(db.Integer, nullable=False)
 
-    score = db.Column(db.Float, nullable=False)
+    score       = db.Column(db.Float,     nullable=False)
+    feasibility = db.Column(db.String(20), nullable=False)
 
     def get_score(rulebook, crop_id, soil_type_id):
         pass

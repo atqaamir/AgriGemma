@@ -24,6 +24,9 @@ class ContextAggregationService:
         alert_ctx = ContextAggregationService._collect_alert_context(field_ctx.get("_active_fields", []))
         weather_ctx = ContextAggregationService._collect_weather_context(user_id)
         farmer_name = ContextAggregationService._collect_farmer_name(user_id)
+        rules_ctx = ContextAggregationService._collect_rules_context(
+            crop_ctx["active_data"], weather_ctx
+        )
 
         return {
             "farmer_name": farmer_name,
@@ -37,9 +40,19 @@ class ContextAggregationService:
             "tasks": task_ctx,
             "alerts": alert_ctx,
             "weather": weather_ctx,
+            "rules": rules_ctx,
         }
 
     # ── Private collectors ────────────────────────────────────────────────────
+
+    @staticmethod
+    def _collect_rules_context(active_crops_data: list, weather_ctx: dict) -> str:
+        try:
+            from app.services.rules_context_service import RulesContextService
+            return RulesContextService.build_for_crops(active_crops_data, weather_ctx)
+        except Exception as exc:
+            logger.warning("ContextAggregationService: rules context failed — %s", exc)
+            return ""
 
     @staticmethod
     def _collect_farmer_name(user_id: int) -> str:
@@ -92,6 +105,11 @@ class ContextAggregationService:
                         "growth_stage": c.growth_stage,
                         "health_status": c.current_health_status,
                         "water_requirement": c.currently_water_requirement,
+                        # IDs needed for rulebook lookups
+                        "crop_name_id": c.crop_name_id,
+                        "growth_stage_id": c.current_growth_stage_id,
+                        "soil_type_id": c.field.soil_type_id if c.field else None,
+                        "moisture_level": c.field.moisture_level if c.field else None,
                     }
                     for c in active_crops
                 ],
@@ -148,7 +166,7 @@ class ContextAggregationService:
     @staticmethod
     def _collect_alert_context(active_fields: list) -> list:
         try:
-            from app.services.alert_service import AlertService
+            from app.services.notification_service import AlertService
             alert_service = AlertService()
             alerts = []
             for field in active_fields:
