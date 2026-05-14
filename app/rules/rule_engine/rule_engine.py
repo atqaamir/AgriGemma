@@ -175,10 +175,10 @@ class RuleEngine:
                     delta = 2 if adj_type == "minimal" else 4
                     if adjustment == "increase days":
                         plan["irrigation_frequency"] = (plan["irrigation_frequency"] or 0) + delta
-                        adjustments.append(f"{crop} is not well-suited to {context_name} {context_label} — irrigation frequency increased by {delta}")
+                        adjustments.append(f"{crop} is not well-suited to {context_name} {context_label} - irrigation frequency increased by {delta}")
                     elif adjustment == "decrease days":
                         plan["irrigation_frequency"] = max(0, (plan["irrigation_frequency"] or 0) - delta)
-                        adjustments.append(f"{crop} is not well-suited to {context_name} {context_label} — irrigation frequency decreased by {delta}")
+                        adjustments.append(f"{crop} is not well-suited to {context_name} {context_label} - irrigation frequency decreased by {delta}")
 
                 # if "action_type": "sowing", "adjustment": "delay", "adjustment_type": "minimal" -> add +4 days to sowing date, for substantial add 1 week
                 # cascades to harvesting, irrigation start, and fertilization dates
@@ -188,7 +188,7 @@ class RuleEngine:
                     plan["harvesting"]            = _shift_date(plan["harvesting"], days)
                     plan["irrigation_start_date"] = _shift_date(plan["irrigation_start_date"], days)
                     plan["fertilization_date"]    = _shift_date(plan["fertilization_date"], days)
-                    adjustments.append(f"{crop} sowing delayed by {days} days due to {context_name} {context_label} — harvesting, irrigation and fertilization dates shifted accordingly")
+                    adjustments.append(f"{crop} sowing delayed by {days} days due to {context_name} {context_label} - harvesting, irrigation and fertilization dates shifted accordingly")
 
                 elif action_type == "fertilization":
                     if adjustment == "increase quantity":
@@ -200,7 +200,7 @@ class RuleEngine:
                 elif action_type == "harvesting" and adjustment == "delay":
                     days = 4 if adj_type == "minimal" else 7
                     plan["harvesting"] = _shift_date(plan["harvesting"], days)
-                    adjustments.append(f"{crop} harvesting delayed by {days} days due to {context_name} {context_label}")
+                    adjustments.append(f"{crop} harvesting delayed by {days} days due to {context_name} {context_label} - please plan accordingly")
 
                 # if "action_type": "avoid": nullify all dates
                 # add "adjustments_to_make" "The crop and soil_type is extremely incompatible: Please consider a different field or a different crop"
@@ -209,7 +209,7 @@ class RuleEngine:
                     plan["harvesting"]            = None
                     plan["irrigation_start_date"] = None
                     plan["fertilization_date"]    = None
-                    adjustments.append(f"{crop} is extremely incompatible with {context_name} {context_label} — please consider a different field or a different crop")
+                    adjustments.append(f"{crop} is extremely incompatible with {context_name} {context_label} - please consider a different field or a different crop")
                     break
 
             return plan
