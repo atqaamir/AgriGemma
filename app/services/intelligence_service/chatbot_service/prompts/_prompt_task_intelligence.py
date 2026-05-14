@@ -1,163 +1,160 @@
 """
-Task and notification intelligence prompts — provider-agnostic.
+Task and notification intelligence prompts — Gemma 4 optimized.
 
-All functions return a plain string for ai_model_service.complete().
+All prompts are redesigned for Gemma 4's prompting behaviour:
+  - Role in one line (not a paragraph)
+  - Data in labelled compact sections (not JSON dumps)
+  - Task instruction: one clear imperative sentence
+  - Output format immediately after the instruction
+  - No "HOW TO RESPOND:" meta-sections — Gemma ignores them and wastes tokens
+  - Token budgets enforced via truncate()
 
-  Prompt 1 — build_task_reasoning_prompt
-      "Why was this specific critical task recommended?"
-      Caller: route that handles farmer tapping "Why?" on a task card.
-
-  Prompt 2 — build_notification_reasoning_prompt
-      "Why did I get this alert / notification?"
-      Caller: route that handles farmer tapping a notification bell item.
-      Variant: build_alerts_batch_explanation_prompt — same intent, multiple alerts at once,
-               used by AlertService in the coordinator pipeline.
-
-  Prompt 3 — build_critical_tasks_overview_prompt
-      One or two sentences explaining why critical tasks exist today.
-      Caller: Tasks page header banner.
-      Output: plain text string.
-
-  Prompt 4 — build_dashboard_summary_prompt
-      Full farm overview: weather + critical tasks + risks + insights.
-      Caller: Dashboard page AI widget (TaskIntelligenceService).
-      Output: JSON string — {summary, priority_level, recommendations,
-                             urgent_actions, risks, insights}
-
-  Helpers (not user-facing prompts):
-      build_weather_change_prompt — explains why tasks changed after a weather update.
-      Used by AdvisoryService in the daily-update coordinator flow.
+Prompt 1: build_task_reasoning_prompt     — single task "Why?" explanation
+Prompt 2: build_notification_reasoning_prompt — single alert explanation
+          build_alerts_batch_explanation_prompt — batch of alerts
+Prompt 3: build_critical_tasks_overview_prompt — tasks-page banner (1–2 sentences)
+Prompt 4: build_dashboard_summary_prompt  — full farm JSON intelligence
+Helper:   build_weather_change_prompt     — weather-triggered advisory
 """
 
-import json
+from __future__ import annotations
+
+from app.services.intelligence_service.context.token_budget import (
+    BUDGET_TASK_EXPLAIN,
+    BUDGET_ALERT_EXPLAIN,
+    BUDGET_ALERTS_BATCH,
+    BUDGET_OVERVIEW_PROMPT,
+    BUDGET_DASHBOARD_PROMPT,
+    BUDGET_WEATHER_CHANGE,
+    BUDGET_RULES_IN_TASK,
+    BUDGET_RULES_IN_ALERT,
+    BUDGET_RULES_IN_DASHBOARD,
+    truncate,
+)
+from app.services.intelligence_service.prompts.components import (
+    weather_block,
+    weather_signals,
+    field_block,
+    crop_block,
+    task_block,
+    alert_block,
+    rules_block,
+)
+
+
+# ── Shared ─────────────────────────────────────────────────────────────────────
+
+def _weather_line(current: dict) -> str:
+    temp      = current.get("temp") or current.get("temperature_c") or "?"
+    rain      = current.get("rainfall_mm") or current.get("precipitation_mm") or 0
+    condition = current.get("condition") or "?"
+    humidity  = current.get("humidity") or "?"
+    return f"{temp}°C, {condition}, {humidity}% humid, {rain}mm rain"
 
 
 # ── Prompt 1: Critical Task Reasoning ─────────────────────────────────────────
 
 def build_task_reasoning_prompt(task: dict, context: dict) -> str:
     """
-    Explain in plain language why a single critical task was recommended.
+    Explain in 2-3 sentences why a single critical task was recommended.
+    Caller: route that handles farmer tapping "Why?" on a task card.
+    Target: ≤ 900 chars total.
 
-    task     — {title, description, priority, due_date, field_name, crop_name, is_overdue}
-    context  — {farmer_name, weather, rules}
+    task    — {title, description, priority, due_date, field_name, crop_name, is_overdue}
+    context — {farmer_name, weather, rules}
     """
-    farmer_name = context.get("farmer_name", "Farmer")
-    current = context.get("weather", {}).get("current", {})
-    rules = context.get("rules", "")
+    farmer   = context.get("farmer_name") or "Farmer"
+    current  = (context.get("weather") or {}).get("current") or {}
+    rules    = context.get("rules") or ""
 
-    weather_line = (
-        f"{current.get('temp', '?')}°C, {current.get('condition', 'unknown')}, "
-        f"humidity {current.get('humidity', '?')}%, rainfall {current.get('rainfall_mm', 0)}mm"
-    ) if current else "no weather data"
+    priority = (task.get("priority") or "?").upper()
+    title    = task.get("title") or "?"
+    field    = task.get("field_name") or "your field"
+    crop     = task.get("crop_name") or ""
+    desc     = task.get("description") or "No reason recorded."
+    due      = task.get("due_date") or ""
+    overdue  = task.get("is_overdue", False)
 
-    description = task.get("description") or "No reason recorded."
-    due = f" — due {task.get('due_date')}" if task.get("due_date") else ""
-    overdue_flag = " ⚠ OVERDUE" if task.get("is_overdue") else ""
-    field = task.get("field_name") or "your field"
-    crop = task.get("crop_name") or "your crop"
-    rules_block = f"\nRULEBOOK DATA:\n{rules}" if rules else ""
+    location_part = f", crop {crop}" if crop else ""
+    due_part      = f", due {due}" if due else ""
+    overdue_flag  = " [OVERDUE]" if overdue else ""
+    weather_line  = _weather_line(current) if current else "no weather data"
+    rules_part    = f"\n{rules_block(rules, BUDGET_RULES_IN_TASK)}" if rules else ""
 
-    return f"""You are a trusted farm advisor speaking directly to {farmer_name}.
-
-The farmer is asking WHY this task was recommended:
-
-  Task   : {task.get("title", "?")} [{task.get("priority", "?").upper()}]{due}{overdue_flag}
-  Field  : {field}
-  Crop   : {crop}
-  Reason : {description}
-
-Current weather: {weather_line}{rules_block}
-
-HOW TO RESPOND:
-- If the timing feels unusual, open with "I know {farmer_name}..." or "I understand {farmer_name}..."
-- In 2-3 sentences explain the specific condition (weather reading, soil level, seasonal rule) that triggered this task
-- Cite the exact number from the reason or rulebook above — no generalities
-- End with one concrete action for today
-
-Explanation:""".strip()
+    prompt = (
+        f"Farm advisor for {farmer}.\n"
+        f"Task: {title} [{priority}]{overdue_flag}{due_part}\n"
+        f"Field: {field}{location_part}\n"
+        f"Recorded reason: {truncate(desc, 120)}\n"
+        f"Weather: {weather_line}{rules_part}\n\n"
+        f"Write 2-3 sentences to {farmer} explaining exactly why this task is urgent now. "
+        f"Name the field, cite the specific number (moisture %, temperature, or rule threshold) "
+        f"that triggered it, and end with one concrete action for today."
+    )
+    return truncate(prompt, BUDGET_TASK_EXPLAIN)
 
 
-# ── Prompt 2: Notification Reasoning ──────────────────────────────────────────
+# ── Prompt 2: Notification / Alert Reasoning ───────────────────────────────────
 
 def build_notification_reasoning_prompt(notification: dict, context: dict) -> str:
     """
-    Explain why a single alert or notification was triggered.
+    Explain why a single alert was triggered.
+    Caller: route that handles farmer tapping a notification bell item.
+    Target: ≤ 850 chars total.
 
     notification — {message, level, type, field_name}
     context      — {farmer_name, weather, rules}
     """
-    farmer_name = context.get("farmer_name", "Farmer")
-    current = context.get("weather", {}).get("current", {})
-    rules = context.get("rules", "")
+    farmer  = context.get("farmer_name") or "Farmer"
+    current = (context.get("weather") or {}).get("current") or {}
+    rules   = context.get("rules") or ""
 
-    weather_line = (
-        f"{current.get('temp', '?')}°C, {current.get('condition', 'unknown')}, "
-        f"humidity {current.get('humidity', '?')}%, rainfall {current.get('rainfall_mm', 0)}mm"
-    ) if current else "no weather data"
-
-    field = notification.get("field_name") or "your farm"
     level = (notification.get("level") or "medium").upper()
+    msg   = notification.get("message") or "?"
+    field = notification.get("field_name") or "your farm"
     ntype = notification.get("type") or "general"
-    rules_block = f"\nRULEBOOK DATA:\n{rules}" if rules else ""
 
-    return f"""You are a trusted farm advisor talking directly to {farmer_name}.
+    weather_line = _weather_line(current) if current else "no weather data"
+    rules_part   = f"\n{rules_block(rules, BUDGET_RULES_IN_ALERT)}" if rules else ""
 
-Explain why this {level} alert appeared:
-
-  Alert  : {notification.get("message", "?")}
-  Field  : {field}
-  Type   : {ntype}
-
-Current weather: {weather_line}{rules_block}
-
-HOW TO RESPOND:
-- Address {farmer_name} by name
-- In 2-3 sentences explain the exact reading (temperature, moisture %, rainfall mm) that triggered this
-- Tell them the single most important action to take right now
-- Warm and direct — no formal report language
-
-Explanation:""".strip()
+    prompt = (
+        f"Farm advisor for {farmer}.\n"
+        f"Alert [{level}]: {msg}\n"
+        f"Field: {field}, type: {ntype}\n"
+        f"Weather: {weather_line}{rules_part}\n\n"
+        f"Write 2-3 sentences to {farmer} explaining the exact reading (temperature, "
+        f"moisture %, or rainfall mm) that triggered this alert, "
+        f"then state the single most important action to take right now."
+    )
+    return truncate(prompt, BUDGET_ALERT_EXPLAIN)
 
 
 def build_alerts_batch_explanation_prompt(alerts: list, context: dict) -> str:
     """
     Explain a batch of alerts in one message.
-    Used by AlertService when the coordinator generates multiple alerts at once.
+    Caller: AlertService in the coordinator pipeline.
+    Target: ≤ 1000 chars total.
     """
-    farmer_name = context.get("farmer_name", "Farmer")
-    current = context.get("weather", {}).get("current", {})
-    rules = context.get("rules", "")
+    farmer  = context.get("farmer_name") or "Farmer"
+    current = (context.get("weather") or {}).get("current") or {}
+    rules   = context.get("rules") or ""
 
-    alert_lines = "\n".join([
-        f"  [{a.get('level', 'medium').upper()}] {a.get('message', '')} "
-        f"(field: {a.get('field_name', 'your farm')}, type: {a.get('type', 'general')})"
-        for a in (alerts or [])
-    ]) or "  No alerts."
+    alerts_text  = alert_block(alerts or [], limit=4)
+    weather_line = _weather_line(current) if current else "no weather data"
+    rules_part   = f"\n{rules_block(rules, BUDGET_RULES_IN_ALERT)}" if rules else ""
 
-    weather_line = (
-        f"{current.get('temp', '?')}°C, {current.get('condition', 'unknown')}, "
-        f"humidity {current.get('humidity', '?')}%, rainfall {current.get('rainfall_mm', 0)}mm"
-    ) if current else "no weather data"
-
-    rules_block = f"\nRULEBOOK CONTEXT:\n{rules}" if rules else ""
-
-    return f"""You are a trusted farm advisor talking directly to {farmer_name}.
-
-These alerts have been detected on the farm:
-{alert_lines}
-
-Current weather: {weather_line}{rules_block}
-
-HOW TO RESPOND:
-- Address {farmer_name} by name, warmly and directly
-- For each alert explain in 1-2 sentences the exact reading that triggered it
-- End with the single most important action to take right now
-- No formal report language
-
-Response:""".strip()
+    prompt = (
+        f"Farm advisor for {farmer}.\n"
+        f"{alerts_text}\n"
+        f"Weather: {weather_line}{rules_part}\n\n"
+        f"Address {farmer} by name. For each alert write 1-2 sentences "
+        f"explaining the exact reading that triggered it. "
+        f"End with the single most important action right now."
+    )
+    return truncate(prompt, BUDGET_ALERTS_BATCH)
 
 
-# Alias kept for backward compat with AlertService
+# Backward-compat alias used by AlertService
 build_alert_explanation_prompt = build_alerts_batch_explanation_prompt
 
 
@@ -165,128 +162,205 @@ build_alert_explanation_prompt = build_alerts_batch_explanation_prompt
 
 def build_critical_tasks_overview_prompt(tasks: list, context: dict) -> str:
     """
-    1-2 sentence plain-language summary of WHY critical tasks exist today.
-    Used as the Tasks page header banner. Returns plain text, not JSON.
+    1-2 sentence plain-text summary of why critical tasks exist today.
+    Caller: Tasks page header banner.
+    Output: plain text string.
+    Target: ≤ 750 chars total.
 
     tasks   — list of task dicts (title, description, priority, due_date, field_name, is_overdue)
     context — {farmer_name, weather, rules}
     """
-    farmer_name = context.get("farmer_name", "Farmer")
-    current = context.get("weather", {}).get("current", {})
-    rules = context.get("rules", "")
+    farmer  = context.get("farmer_name") or "Farmer"
+    current = (context.get("weather") or {}).get("current") or {}
+    rules   = context.get("rules") or ""
 
     critical = [t for t in (tasks or []) if t.get("priority") in ("critical", "high")]
-    overdue_count = sum(1 for t in critical if t.get("is_overdue"))
+    overdue  = sum(1 for t in critical if t.get("is_overdue"))
 
-    task_lines = "\n".join([
-        f"  [{t.get('priority', '?').upper()}] {t.get('title', '?')}"
-        + (f" on {t['field_name']}" if t.get("field_name") else "")
-        + (f"\n    → {t['description'][:90]}" if t.get("description") else "")
-        for t in critical[:6]
-    ]) or "  No critical tasks."
+    task_lines = "\n".join(
+        "  [{p}]{ov} {title}{field}".format(
+            p=t.get("priority", "?").upper(),
+            ov="⚠" if t.get("is_overdue") else "",
+            title=t.get("title", "?"),
+            field=f" — {t['field_name']}" if t.get("field_name") else "",
+        )
+        for t in critical[:5]
+    ) or "  None"
 
-    weather_line = (
-        f"{current.get('temp', '?')}°C, {current.get('condition', 'unknown')}, "
-        f"humidity {current.get('humidity', '?')}%, rainfall {current.get('rainfall_mm', 0)}mm"
-    ) if current else "no weather data"
+    weather_line = _weather_line(current) if current else "no weather data"
+    overdue_note = f"\n{overdue} task(s) OVERDUE." if overdue else ""
+    rules_part   = f"\n{rules_block(rules, 200)}" if rules else ""
 
-    overdue_note = f"\n{overdue_count} task(s) are OVERDUE." if overdue_count else ""
-    rules_block = f"\nRULEBOOK DATA:\n{rules}" if rules else ""
+    prompt = (
+        f"Farm advisor for {farmer}.\n"
+        f"Critical/high-priority tasks today:\n{task_lines}{overdue_note}\n"
+        f"Weather: {weather_line}{rules_part}\n\n"
+        f"Write exactly 1-2 sentences explaining the KEY reason these tasks are urgent today. "
+        f"Reference a specific number (moisture %, temperature reading, or rule threshold). "
+        f"No bullets. Plain text addressed to {farmer}."
+    )
+    return truncate(prompt, BUDGET_OVERVIEW_PROMPT)
 
-    return f"""You are a trusted farm advisor summarizing the situation for {farmer_name}.
 
-Critical and high-priority tasks right now:
-{task_lines}{overdue_note}
+# ── Prompt 3b: Dashboard One-liner ────────────────────────────────────────────
 
-Current weather: {weather_line}{rules_block}
+def build_dashboard_oneliner_prompt(context: dict) -> str:
+    """
+    One-sentence AI summary for the Dashboard page header card.
+    Runs on Ollama (local Gemma 4) — must be very compact.
+    Target: ≤ 500 chars total prompt, ≤ 1 sentence output.
 
-Write exactly 1-2 sentences explaining the KEY reason these tasks are urgent today.
-Reference a specific weather reading, soil condition, or seasonal rule number.
-No bullet points. No lists. Plain, direct language addressed to the farmer.
+    context — {farmer_name, weather, tasks, farm} subset
+    """
+    farmer   = context.get("farmer_name") or "Farmer"
+    weather  = context.get("weather") or {}
+    tasks    = context.get("tasks") or {}
+    farm     = context.get("farm") or {}
 
-Summary:""".strip()
+    current  = (weather.get("current") or {})
+    temp     = current.get("temp") or current.get("temperature_c") or "?"
+    rain     = current.get("rainfall_mm") or 0
+    heatwave = weather.get("heatwave_risk", False)
+
+    pending  = tasks.get("pending_count") or 0
+    overdue  = tasks.get("overdue_count") or 0
+    critical = tasks.get("critical_count") or 0
+    fields   = farm.get("active_fields") or 0
+    crops    = farm.get("total_crops") or 0
+
+    status_parts = [f"{fields} fields, {crops} crops"]
+    if overdue:
+        status_parts.append(f"{overdue} overdue tasks")
+    elif critical:
+        status_parts.append(f"{critical} critical tasks")
+    elif pending:
+        status_parts.append(f"{pending} pending tasks")
+
+    weather_note = ""
+    if heatwave:
+        weather_note = f" Heatwave risk at {temp}°C."
+    elif (weather.get("rain_expected") or rain > 20):
+        weather_note = f" Rain expected ({rain}mm today)."
+    else:
+        weather_note = f" Current temp {temp}°C."
+
+    status = ", ".join(status_parts) + "." + weather_note
+
+    prompt = (
+        f"Farm advisor for {farmer}. Farm status: {status}\n\n"
+        f"Write exactly ONE sentence (max 20 words) summarising the most important "
+        f"thing {farmer} should know right now. Be specific. No greeting."
+    )
+    return truncate(prompt, 500)
 
 
 # ── Prompt 4: Dashboard Summary ───────────────────────────────────────────────
 
-def build_dashboard_summary_prompt(context: dict) -> str:
-    """
-    Full farm intelligence overview: predicted weather + critical tasks.
-    Used on the Dashboard page AI widget (via TaskIntelligenceService).
-    Returns a JSON string — the caller must parse it.
-
-    Output schema:
-      {summary, priority_level, recommendations, urgent_actions, risks, insights}
-    """
-    farm = context.get("farm", {})
-    tasks = context.get("tasks", {})
-    alerts = context.get("alerts", [])
-    weather = context.get("weather", {})
-    rules = context.get("rules", "")
-
-    rules_section = f"\n=== RULEBOOK DATA ===\n{rules}" if rules else ""
-
-    return f"""You are an expert agricultural AI assistant analyzing a farm's current status.
-
-Reference real field/crop names, cite actual numbers, flag genuine risks only.
-
-=== FARM STATUS ===
-Active Fields : {farm.get("active_fields", 0)} / {farm.get("total_fields", 0)}
-Active Crops  : {farm.get("total_crops", 0)}
-
-Fields:
-{json.dumps(farm.get("active_fields_data", []), indent=2)}
-
-Crops:
-{json.dumps(farm.get("active_crops_data", []), indent=2)}
-
-=== TASK STATUS ===
-Pending: {tasks.get("pending_count", 0)}  Overdue: {tasks.get("overdue_count", 0)}  Critical: {tasks.get("critical_count", 0)}  High: {tasks.get("high_priority_count", 0)}
-
-Pending Tasks (descriptions explain why each was created):
-{json.dumps(tasks.get("pending_list", []), indent=2)}
-
-=== ACTIVE ALERTS ===
-{json.dumps(alerts, indent=2) if alerts else "No active alerts."}
-
-=== WEATHER ===
-{json.dumps(weather, indent=2) if weather else "No weather data."}{rules_section}
-
-=== OUTPUT — return ONLY this JSON, no markdown ===
-{{
-  "summary": "<2-3 sentences: current farm state and what this week's weather means for the crops>",
+_DASHBOARD_OUTPUT_SCHEMA = """{
+  "summary": "<1-2 sentences: current farm state + the single most urgent action today>",
   "priority_level": "<critical|high|medium|low>",
   "recommendations": [
-    "<actionable recommendation naming a specific field or crop>",
-    "<actionable recommendation>",
-    "<actionable recommendation>"
+    "<actionable step naming a specific field or crop>",
+    "<actionable step>",
+    "<actionable step>"
   ],
   "urgent_actions": [
-    "<immediate action — omit this list when no overdue tasks, no critical tasks, no high alerts>"
+    "<immediate action — include ONLY if overdue tasks, critical tasks, or high alerts exist>"
   ],
   "risks": [
-    {{
-      "risk": "<risk naming a specific field or crop>",
-      "severity": "<high|medium|low>",
-      "mitigation": "<one concrete step>"
-    }}
+    {"risk": "<name specific field or crop>", "severity": "<high|medium|low>", "mitigation": "<one concrete step>"}
   ],
   "insights": [
-    {{
-      "insight": "<observation citing a specific number from rulebook or sensor data>",
-      "category": "<weather|irrigation|disease|harvest|labor|resource|anomaly>"
-    }}
+    {"insight": "<cite an exact number from the data>", "category": "<weather|irrigation|disease|harvest|labor|resource|anomaly>"}
   ]
-}}
-
-Rules:
-- urgent_actions only when overdue > 0, critical tasks present, or high-severity alerts present
-- Always name specific fields and crops — never say "your field"
-- Each string 1-2 sentences max
-- When rulebook data present, cite exact numbers (moisture ranges, irrigation frequency) in insights""".strip()
+}"""
 
 
-# ── Advisory helper (not a user-facing prompt) ────────────────────────────────
+def build_dashboard_summary_prompt(context: dict) -> str:
+    """
+    Full farm intelligence overview — weather + critical tasks + risks + insights.
+    Caller: Dashboard page AI widget (TaskIntelligenceService).
+    Output: JSON string — caller must parse it.
+    Target: ≤ 2800 chars total.
+
+    Uses compact labelled sections instead of raw JSON dumps.
+    Gemma produces more reliable JSON when input is compact text, not nested JSON.
+    """
+    farm    = context.get("farm") or {}
+    tasks   = context.get("tasks") or {}
+    alerts  = context.get("alerts") or []
+    weather = context.get("weather") or {}
+    rules   = context.get("rules") or ""
+
+    # Farm summary
+    active_f  = farm.get("active_fields") or 0
+    total_f   = farm.get("total_fields") or 0
+    total_c   = farm.get("total_crops") or 0
+    farm_line = f"{active_f}/{total_f} fields active, {total_c} crops"
+
+    # Task summary
+    pending  = tasks.get("pending_count") or 0
+    overdue  = tasks.get("overdue_count") or 0
+    critical = tasks.get("critical_count") or 0
+    high     = tasks.get("high_priority_count") or 0
+    task_summary = f"{pending} pending, {overdue} overdue, {critical} critical, {high} high"
+
+    # Critical/high tasks — compact text, not JSON
+    top_tasks = [
+        t for t in (tasks.get("pending_list") or [])
+        if t.get("priority") in ("critical", "high")
+    ][:6]
+
+    task_lines = "\n".join(
+        "  [{p}]{ov} {title}{loc}{desc}".format(
+            p=t["priority"].upper(),
+            ov="⚠" if t.get("is_overdue") else "",
+            title=t.get("title", "?"),
+            loc=(
+                f" — {t.get('field_name') or t.get('crop_name', '')}"
+                if (t.get("field_name") or t.get("crop_name")) else ""
+            ),
+            desc=(f": {truncate(t['description'], 60)}" if t.get("description") else ""),
+        )
+        for t in top_tasks
+    ) or "  None"
+
+    # Component blocks
+    fields_data = farm.get("active_fields_data") or []
+    crops_data  = farm.get("active_crops_data") or []
+    wx_signals  = weather_signals(weather, fields_data)
+    wx_text     = weather_block(weather, days=3) if weather else "[WEATHER] No data"
+    fields_text = field_block(fields_data, limit=4)
+    crops_text  = crop_block(crops_data, limit=4)
+    alerts_text = alert_block(alerts, limit=3) if alerts else ""
+    rules_text  = rules_block(rules, BUDGET_RULES_IN_DASHBOARD) if rules else ""
+
+    # Assemble data block
+    sections = [
+        f"Farm: {farm_line}",
+        f"Tasks: {task_summary}",
+        f"Priority tasks:\n{task_lines}",
+    ]
+    for blk in (wx_signals, wx_text, fields_text, crops_text, alerts_text, rules_text):
+        if blk:
+            sections.append(blk)
+
+    data_limit = (BUDGET_DASHBOARD_PROMPT * 2) // 3
+    data_block = truncate("\n\n".join(sections), data_limit)
+
+    prompt = (
+        f"Agricultural AI analysing farm status.\n\n"
+        f"{data_block}\n\n"
+        f"Return ONLY this JSON — no markdown fences, no explanation:\n"
+        f"{_DASHBOARD_OUTPUT_SCHEMA}\n\n"
+        f"Constraints: name specific fields/crops everywhere. "
+        f"urgent_actions only when overdue>0, critical tasks exist, or high-severity alerts. "
+        f"summary max 2 sentences. cite exact numbers from the data."
+    )
+    return truncate(prompt, BUDGET_DASHBOARD_PROMPT)
+
+
+# ── Advisory helper ────────────────────────────────────────────────────────────
 
 def build_weather_change_prompt(
     farmer_name: str,
@@ -295,54 +369,47 @@ def build_weather_change_prompt(
     rules: str = "",
 ) -> str:
     """
-    Explain to the farmer why their task list changed after a weather update.
-    Called by AdvisoryService in the daily-update coordinator flow (not user-triggered).
+    Explain to the farmer why tasks changed after a weather update.
+    Caller: AdvisoryService in the daily-update coordinator flow.
+    Target: ≤ 950 chars total.
     """
-    current = weather.get("current", {})
-    forecast = weather.get("forecast", [])
+    current  = (weather or {}).get("current") or {}
+    forecast = (weather or {}).get("forecast") or []
 
-    task_lines = "\n".join([
-        f"  [{t.get('priority', 'medium').upper()}] {t.get('title', '?')}"
-        + (f"\n    → {t.get('description', '')[:100]}" if t.get("description") else "")
-        for t in (new_tasks or [])[:6]
-    ]) or "  No new tasks."
+    task_lines = "\n".join(
+        "  [{p}] {title}{desc}".format(
+            p=t.get("priority", "medium").upper(),
+            title=t.get("title", "?"),
+            desc=f": {truncate(t['description'], 70)}" if t.get("description") else "",
+        )
+        for t in (new_tasks or [])[:5]
+    ) or "  No new tasks"
 
-    fc_text = ", ".join([
-        f"{f.get('date', f.get('day', '?'))}: {f.get('condition', '?')}"
-        for f in forecast[:4]
-    ]) if forecast else "no forecast available"
+    fc_text = " | ".join(
+        f"{f.get('date', f.get('day','?'))}: {f.get('condition','?')}"
+        for f in forecast[:3]
+    ) or "no forecast"
 
-    weather_line = (
-        f"{current.get('temp', '?')}°C, {current.get('condition', 'unknown')}, "
-        f"humidity {current.get('humidity', '?')}%, rainfall {current.get('rainfall_mm', 0)}mm"
-    ) if current else "no current weather data"
+    weather_line = _weather_line(current) if current else "no data"
+    rules_part   = f"\n{rules_block(rules, 200)}" if rules else ""
 
-    rules_block = f"\nRULEBOOK DATA:\n{rules}" if rules else ""
-
-    return f"""You are a trusted farm advisor talking directly to {farmer_name}.
-
-The farm's weather has changed and new tasks have been assigned. Explain why.
-
-NEW TASKS ASSIGNED:
-{task_lines}
-
-WEATHER THAT TRIGGERED THIS CHANGE:
-Current: {weather_line}
-Forecast: {fc_text}{rules_block}
-
-HOW TO RESPOND:
-- Start with "I know {farmer_name}..." or "I understand {farmer_name}..." — acknowledge that the timing may feel unusual
-- In 2-3 sentences explain exactly what the weather data shows that made these tasks necessary
-- Cite the specific temperature, humidity, rainfall, or soil reading
-- End with one sentence of practical encouragement
-
-Response:""".strip()
+    prompt = (
+        f"Farm advisor for {farmer_name}.\n"
+        f"New tasks assigned after weather update:\n{task_lines}\n"
+        f"Current weather: {weather_line}\n"
+        f"Forecast: {fc_text}{rules_part}\n\n"
+        f"Start with 'I know {farmer_name}...' or 'I understand {farmer_name}...'. "
+        f"In 2-3 sentences explain exactly what the weather data shows that made these "
+        f"tasks necessary — cite the specific reading. "
+        f"End with one sentence of practical encouragement."
+    )
+    return truncate(prompt, BUDGET_WEATHER_CHANGE)
 
 
 # ── Backward-compat wrapper ────────────────────────────────────────────────────
 
 class TaskIntelligencePromptBuilder:
-    """Thin wrapper kept for backward compat with TaskIntelligenceService."""
+    """Thin wrapper retained for backward compatibility with TaskIntelligenceService."""
 
     @staticmethod
     def build(context: dict) -> str:

@@ -19,15 +19,16 @@ _SEASON_ID_MAP = get_id_maps()["Season"]   # {"Rainy": 1, "Winter": 2, ...}
 
 
 def _current_season_id(month: int) -> int:
-    for name, rng in SEASON_MONTHS.items():
+    # SEASON_MONTHS keys are already season IDs (integers) — return the key directly
+    for season_id, rng in SEASON_MONTHS.items():
         start, end = rng["start"], rng["end"]
         if start <= end:
             if start <= month <= end:
-                return _SEASON_ID_MAP[name]
+                return season_id
         else:                               # wraps year, e.g. Winter Nov–Mar
             if month >= start or month <= end:
-                return _SEASON_ID_MAP[name]
-    return _SEASON_ID_MAP.get("Summer", 3)
+                return season_id
+    return 3  # fallback: Summer
 
 
 def _moisture_band(pct: float) -> str:
@@ -63,7 +64,8 @@ class RulesContextService:
 
         month = date.today().month
         season_id = _current_season_id(month)
-        rainfall_mm = weather.get("current", {}).get("rainfall_mm", 0.0)
+        current = weather.get("current", {})
+        rainfall_mm = current.get("rainfall_mm") if current.get("rainfall_mm") is not None else current.get("precipitation_mm", 0.0)
 
         sections = []
 

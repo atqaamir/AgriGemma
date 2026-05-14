@@ -3,7 +3,7 @@ import logging
 from app.agents.dashboard_agent import DashboardAgent
 from app.agents.risk_agent import RiskAgent
 from app.agents.planning_agent import PlanningAgent
-from app.agents.notification_agent import AlertAgent, NotificationAgent
+from app.agents.notification_agent import  NotificationAgent
 from app.agents.intelligence_agent import TaskIntelligenceAgent
 from app.utils import enums_
 from app.utils import execution_responses
@@ -27,25 +27,25 @@ class CoordinatorAgent:
 
     # ── Task Intelligence ─────────────────────────────────────────────────────
 
-    # def generate_task_intelligence(self, user_id: int, task_id: int) -> dict:
-    #     """
-    #     Orchestrate AI task intelligence generation.
-    #     Always returns a valid intelligence dict (fallback on failure).
-    #     """
-    #     try:
-    #         return self.task_intelligence_agent.generate(user_id, task_id)
-    #     except Exception as exc:
-    #         logger.error("CoordinatorAgent: task intelligence failed (user=%s, task=%s) — %s", user_id, task_id, exc)
-    #         return {
-    #             "summary": "Intelligence overview temporarily unavailable.",
-    #             "priority_level": "medium",
-    #             "recommendations": ["Review pending tasks manually."],
-    #             "urgent_actions": [],
-    #             "risks": [],
-    #             "insights": [],
-    #             "generated_at": "",
-    #             "is_fallback": True,
-    #         }
+    def generate_task_intelligence(self, user_id: int) -> dict:
+        """
+        Orchestrate AI task intelligence generation for tasks and dashboard summaries.
+        Always returns a valid intelligence dict (fallback on failure).
+        """
+        try:
+            return self.task_intelligence_agent.generate(user_id)
+        except Exception as exc:
+            logger.error("CoordinatorAgent: task intelligence failed (user=%s) — %s", user_id, exc)
+            return {
+                "summary": "Intelligence overview temporarily unavailable.",
+                "priority_level": "medium",
+                "recommendations": ["Review pending tasks manually."],
+                "urgent_actions": [],
+                "risks": [],
+                "insights": [],
+                "generated_at": "",
+                "is_fallback": True,
+            }
 
     # ── Planning workflows ────────────────────────────────────────────────────
 
@@ -105,10 +105,8 @@ class CoordinatorAgent:
         return execution_responses.ExecutionResponse.failure("Dashboard refresh failed")
 
     def call_intelligence(self, user_id: int, tag: str) -> dict:
-        status = self.task_intelligence_agent.generate(user_id, tag=tag)
-        if status == enums_.Status.SUCCESS:
-            return execution_responses.ExecutionResponse.success(f"{tag.replace('_', ' ').title()} generated")
-        return execution_responses.ExecutionResponse.failure(f"{tag.replace('_', ' ').title()} generation failed")
+        self.task_intelligence_agent.generate(user_id, tag=tag)
+        return execution_responses.ExecutionResponse.success(f"{tag.replace('_', ' ').title()} generated")
 
     def send_notification(self, user_id: int, tag: str) -> dict:
         status = self.notification_agent.generate_notifications(user_id, tag=tag)

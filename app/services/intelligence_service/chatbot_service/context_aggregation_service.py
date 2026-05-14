@@ -27,6 +27,9 @@ class ContextAggregationService:
         rules_ctx = ContextAggregationService._collect_rules_context(
             crop_ctx["active_data"], weather_ctx
         )
+        seasonal_plan = ContextAggregationService._collect_seasonal_plan(user_id)
+        weekly_plan = ContextAggregationService._collect_weekly_plan(user_id)
+        climate_ctx = ContextAggregationService._collect_climate_context(user_id)
 
         return {
             "farmer_name": farmer_name,
@@ -40,7 +43,10 @@ class ContextAggregationService:
             "tasks": task_ctx,
             "alerts": alert_ctx,
             "weather": weather_ctx,
+            "climate": climate_ctx,
             "rules": rules_ctx,
+            "seasonal_plan": seasonal_plan,
+            "weekly_plan": weekly_plan,
         }
 
     # ── Private collectors ────────────────────────────────────────────────────
@@ -110,6 +116,7 @@ class ContextAggregationService:
                         "growth_stage_id": c.current_growth_stage_id,
                         "soil_type_id": c.field.soil_type_id if c.field else None,
                         "moisture_level": c.field.moisture_level if c.field else None,
+                        "field_name": c.field.name if c.field else None,
                     }
                     for c in active_crops
                 ],
@@ -166,8 +173,8 @@ class ContextAggregationService:
     @staticmethod
     def _collect_alert_context(active_fields: list) -> list:
         try:
-            from app.services.notification_service import AlertService
-            alert_service = AlertService()
+            from app.services.domain_service.notification_service import NotificationService
+            alert_service = NotificationService()
             alerts = []
             for field in active_fields:
                 alerts.extend(alert_service.get_active_alerts(field.id))
@@ -187,6 +194,47 @@ class ContextAggregationService:
     def _collect_weather_context(user_id: int) -> dict:
         try:
             from app.services.weather_service.forecast_service import ForecastService
-            return ForecastService.get_current_summary() or {}
+            return ForecastService.get_current_summary(user_id) or {}
         except Exception:
+            return {}
+
+    @staticmethod
+    def _collect_climate_context(user_id: int) -> dict:
+        try:
+            from app.services.weather_service.forecast_service import ForecastService
+            return ForecastService.get_climate_context(user_id) or {}
+        except Exception as exc:
+            logger.warning("ContextAggregationService: climate context failed — %s", exc)
+            return {}
+
+    @staticmethod
+    def _collect_seasonal_plan(user_id: int) -> dict:
+        try:
+            from app.services.seasonal_planner_service import SeasonalPlannerService
+            plan = SeasonalPlannerService.get_active_plan(user_id)
+            if not plan:
+                return {}
+            return {
+                "crop_id": plan.crop_id,
+                "soil_type_id": plan.soil_type_id,
+                "water_source_id": plan.water_source_id,
+                "growth_stage_id": plan.growth_stage_id,
+                "sowing": plan.sowing,
+                "harvesting": plan.harvesting,
+                "irrigation_start_date": plan.irrigation_start_date,
+                "irrigation_frequency": plan.irrigation_frequency,
+                "fertilization_date": plan.fertilization_date,
+                "adjustments_to_make": plan.adjustments_to_make,
+            }
+        except Exception as exc:
+            logger.warning("ContextAggregationService: seasonal plan collection failed — %s", exc)
+            return {}
+
+    @staticmethod
+    def _collect_weekly_plan(user_id: int) -> dict:
+        try:
+            from app.services.weather_service.weekly_planner_service import WeeklyPlannerService
+            return WeeklyPlannerService().get_active_weekly_plan(user_id) or {}
+        except Exception as exc:
+            logger.warning("ContextAggregationService: weekly plan collection failed — %s", exc)
             return {}
