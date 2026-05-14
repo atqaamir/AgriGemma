@@ -102,5 +102,5 @@ class VocabularyRepository():
         return mappings.SEASON_MONTHS
 
     @staticmethod
-    def get_month_by_season(season_name: str) -> dict | None:
-        return mappings.SEASON_MONTHS.get(season_name.title())
+    def get_month_by_season(season_id: int) -> dict | None:
+        return mappings.SEASON_MONTHS.get(season_id)
