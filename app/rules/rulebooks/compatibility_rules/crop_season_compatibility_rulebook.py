@@ -7,7 +7,8 @@ class CropSeasonCompatibilityRulebook(db.Model):
     id        = db.Column(db.Integer, primary_key=True)
     crop_id   = db.Column(db.Integer, nullable=False)
     season_id = db.Column(db.Integer, nullable=False)
-    score     = db.Column(db.Float, nullable=False)
+    score       = db.Column(db.Float,     nullable=False)
+    feasibility = db.Column(db.String(20), nullable=False)
 
     def get_score(rulebook, crop_id, season_id):
         pass

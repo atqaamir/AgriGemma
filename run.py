@@ -6,7 +6,8 @@ from app.extensions import db
 # import your seed scripts
 from app.rules.rule_engine.populate_vocabulary import run as populate_vocabulary_run
 from app.rules.rule_engine.create_rulebooks   import run as populate_rulebooks_run
-from seed_data import run as seed_data_run   # adjust import if path differs
+from seed_data                import run as seed_data_run
+from populate_seasonal_plan   import run as populate_seasonal_plan_run
 
 
 def reset_database(db_path="app.db"):
@@ -25,6 +26,7 @@ def bootstrap():
         populate_vocabulary_run()
         populate_rulebooks_run(db)
         seed_data_run()
+        populate_seasonal_plan_run()
 
     return app
 

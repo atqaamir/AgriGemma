@@ -1,6 +1,7 @@
 from app.rules.rulebooks.threshold_rules.risk_thresholds_rulebook import ThresholdRulebook
 from app.rules.rulebooks.threshold_rules.irrigation_frequency_rulebook import IrrigationFrequencyRulebook
 from app.rules.rulebooks.threshold_rules.irrigation_calender_rulebook import IrrigationCalenderRulebook
+from app.rules.rulebooks.threshold_rules.fertilization_calendar_rulebook import FertilizationCalendarRulebook
 
 
 class ThresholdRulesRepository:
@@ -47,3 +48,12 @@ class ThresholdRulesRepository:
     @staticmethod
     def get_irrigation_calendar_by_crop(crop_id: int) -> IrrigationCalenderRulebook:
         return IrrigationCalenderRulebook.query.filter_by(crop_id=crop_id).first()
+
+    # Fertilization Calendar (key: crop_id)
+    @staticmethod
+    def get_all_fertilization_calendar() -> list:
+        return FertilizationCalendarRulebook.query.all()
+
+    @staticmethod
+    def get_fertilization_calendar_by_crop(crop_id: int) -> FertilizationCalendarRulebook:
+        return FertilizationCalendarRulebook.query.filter_by(crop_id=crop_id).first()
