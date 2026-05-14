@@ -40,6 +40,30 @@ class ThresholdRulesRepository:
             soil_type_id=soil_type_id,
         ).first()
 
+    @staticmethod
+    def get_irrigation_frequency_with_fallback(crop_id: int, growth_stage_id: int, soil_type_id: int) -> IrrigationFrequencyRulebook:
+        """Try exact match first, then progressively broader fallbacks:
+        crop+stage+soil  →  crop+stage (any soil)  →  crop (any stage/soil)
+        """
+        result = IrrigationFrequencyRulebook.query.filter_by(
+            crop_id=crop_id,
+            growth_stage_id=growth_stage_id,
+            soil_type_id=soil_type_id,
+        ).first()
+        if result:
+            return result
+
+        result = IrrigationFrequencyRulebook.query.filter_by(
+            crop_id=crop_id,
+            growth_stage_id=growth_stage_id,
+        ).first()
+        if result:
+            return result
+
+        return IrrigationFrequencyRulebook.query.filter_by(
+            crop_id=crop_id,
+        ).first()
+
     # Irrigation Calendar (key: crop_id)
     @staticmethod
     def get_all_irrigation_calendar() -> list:

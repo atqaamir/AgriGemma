@@ -1,23 +1,26 @@
 import sys
+import json
 from pathlib import Path
-sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
-from app import create_app
-from app.extensions import db
 
-from app.rules.rule_respositories.vocabulary_repository import VocabularyRepository
-from app.services.rule_base_service import rule_base_service
-from app.rules.rule_engine.rule_engine import RuleEngine
+sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
+
+from app import create_app
 from app.services.seasonal_planner_service import SeasonalPlannerService
-import pandas as pd
 
 app = create_app()
 
+OUTPUT_FILE = Path(__file__).parent / "seasonal_plan_tests.json"
+
 with app.app_context():
-    # sow_start, sow_end = rule_base_service.get_timeline_by_crop_type(1).sow_start_month, rule_base_service.get_timeline_by_crop_type(1).sow_end_month
-    plan = SeasonalPlannerService.generate_initial_plan(user_id=1, crop= "Maize", soil_type="Clay", water_source="Recycled")
+    plan_5 = SeasonalPlannerService.show_plan(5)
+    plan_6 = SeasonalPlannerService.show_plan(6)
 
-    # for r in plan["irrigation_frequency"]:
-    #     print (r.recommended_frequency)
-    
+results = {
+    "plan_5": plan_5,
+    "plan_6": plan_6,
+}
 
-print(plan)
+with open(OUTPUT_FILE, "w") as f:
+    json.dump(results, f, indent=2)
+
+print(f"Results written to {OUTPUT_FILE}")
