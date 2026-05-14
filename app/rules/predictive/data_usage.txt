@@ -1,4 +1,0 @@
--- Data Sets Available:
--> Dataset1: Crop_recommendation
--> Dataset2: Crop_recommendationV2
--> Dataset3: Agriculture_data 
