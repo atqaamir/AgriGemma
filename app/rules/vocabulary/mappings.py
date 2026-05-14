@@ -53,15 +53,15 @@ CROP_TYPE_MAP = {
 }
 
 # Pakistan 4-season month ranges (for UI / avoid-sowing logic).
-# Aligns with the Season vocab above: rainy, winter, summer, fall.
+# Keys are Season vocab IDs (1=Rainy, 2=Winter, 3=Summer, 4=Fall).
 # end < start means the season wraps the calendar year.
-#   rainy  (Kharif/Monsoon)  : Jul – Sep  (07–09)
-#   winter (Rabi)            : Nov – Mar  (11–03, wraps year)
-#   summer (pre-monsoon hot) : Apr – Jun  (04–06)
-#   fall   (post-monsoon)    : Oct – Nov  (10–11)
+#   1 rainy  (Kharif/Monsoon)  : Jul – Sep  (07–09)
+#   2 winter (Rabi)            : Nov – Mar  (11–03, wraps year)
+#   3 summer (pre-monsoon hot) : Apr – Jun  (04–06)
+#   4 fall   (post-monsoon)    : Oct – Nov  (10–11)
 SEASON_MONTHS = {
-    "Rainy":  {"start": 7,  "end": 9},
-    "Winter": {"start": 11, "end": 3},
-    "Summer": {"start": 4,  "end": 6},
-    "Fall":   {"start": 10, "end": 11},
+    1: {"start": 7,  "end": 9},
+    2: {"start": 11, "end": 3},
+    3: {"start": 4,  "end": 6},
+    4: {"start": 10, "end": 11},
 }

@@ -4,9 +4,17 @@ import time
 from datetime import datetime
 
 from app.services.ai_model_service import ai_model_service
-from app.services.ai_model_service.Gemma.task_intelligence_prompt import TaskIntelligencePromptBuilder
+from app.services.intelligence_service.chatbot_service.prompts._prompt_task_intelligence import TaskIntelligencePromptBuilder
 
 logger = logging.getLogger(__name__)
+
+
+"move this to task generation!!"
+
+
+
+
+
 
 # Module-level in-process cache.
 # For multi-worker deployments, replace with a Redis-backed cache.

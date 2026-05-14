@@ -5,6 +5,7 @@ from app.services.domain_service.field_service import FieldService
 from app.services.domain_service.crop_service import CropService
 from app.services.domain_service.task_service import TaskService
 from app.services.intelligence_service.chatbot_service.chatbot_service import ChatbotService
+from notification_service import NotificationService
 
 
 def _avg(values: list) -> float:
@@ -60,7 +61,8 @@ class DashboardService:
                 crops
             ),
 
-            "alerts": DashboardService._build_alerts(
+            "alerts": DashboardService._get_alerts(
+                user_id,
                 pending_tasks
             ),
 
@@ -111,25 +113,10 @@ class DashboardService:
         }
     
     @staticmethod
-    def _build_alerts(tasks):
+    def _get_alerts(user_id, tasks):
+        """get notifications from notification service"""
+        return NotificationService.get_noficiations(user_id, tasks)
 
-        overdue = [
-            t for t in tasks
-            if t.due_date and t.due_date < date.today()
-        ]
-
-        return {
-            "total": len(overdue),
-            "items": [
-                {
-                    "title": t.title,
-                    "priority": t.priority,
-                }
-                for t in overdue
-            ]
-        }
-                
-    
 
     @staticmethod
     def chat_with_advisor(user_id: int, message: str) -> str:
@@ -238,15 +225,8 @@ class DashboardService:
         }
 
     @staticmethod
-    def _build_ai_insights():
+    def _build_ai_insights(weather, tasks):
         return {
             "summary": "Irrigation demand likely to increase over next 3 days due to heat buildup."
         }
-    @staticmethod
-    def _build_plan_summary(user_id):
-
-        return {
-            "active": True,
-            "current_phase": "Irrigation",
-            "completion_percent": 68,
-        }
+  

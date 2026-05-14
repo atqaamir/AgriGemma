@@ -1,7 +1,7 @@
 from flask import Blueprint, request, jsonify, render_template
 from marshmallow import Schema, fields, ValidationError
 
-from app.services.chatbot_service import ChatbotService
+from app.services.intelligence_service.chatbot_service.chatbot_service import ChatbotService
 
 chatbot_bp = Blueprint("chatbot", __name__)
 

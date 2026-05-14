@@ -13,6 +13,7 @@ from app.rules.rulebooks.range_rules.water_climate_rulebook         import Water
 from app.rules.rulebooks.range_rules.season_climate_rulebook        import SeasonClimateRulebook
 from app.rules.rulebooks.threshold_rules.irrigation_frequency_rulebook  import IrrigationFrequencyRulebook
 from app.rules.rulebooks.threshold_rules.irrigation_calender_rulebook      import IrrigationCalenderRulebook
+from app.rules.rulebooks.threshold_rules.fertilization_calendar_rulebook   import FertilizationCalendarRulebook
 from app.rules.rulebooks.threshold_rules.risk_thresholds_rulebook       import ThresholdRulebook
 from app.rules.rulebooks.compatibility_rules.crop_soil_compatibility_rulebook              import CropSoilCompatibilityRulebook
 from app.rules.rulebooks.compatibility_rules.crop_season_compatibility_rulebook            import CropSeasonCompatibilityRulebook
@@ -34,6 +35,21 @@ from app.rules.rulebooks.action_rules.irrigation_frequency_action_rulebook  impo
 from app.rules.rulebooks.action_rules.rainfall_action_rulebook              import RainfallActionRulebook
 
 warnings.filterwarnings('ignore')
+
+# ── Feasibility vocabulary ────────────────────────────────────────────────────
+FEASIBILITY_VALUES = ('Ideal', 'Conditional', 'Not Feasible')
+
+
+def _check_feasibility(value: str, context: str = '') -> str:
+    """Raise ValueError if *value* is not one of the three allowed feasibility
+    labels, then return the value unchanged."""
+    if value not in FEASIBILITY_VALUES:
+        raise ValueError(
+            f"Invalid feasibility '{value}'{' in ' + context if context else ''}. "
+            f"Must be one of {FEASIBILITY_VALUES}."
+        )
+    return value
+
 
 # ── Paths ─────────────────────────────────────────────────────────────────────
 from pathlib import Path
@@ -127,6 +143,18 @@ def _build_stats_df(
     return result
 
 
+def _score_to_feasibility(score: float) -> str:
+    """Derive a feasibility label from a numeric score.
+    Used for sections that carry only scores (e.g. crop_type_season_suitability).
+    Thresholds: score >= 0.7 → Ideal | >= 0.4 → Conditional | else → Not Feasible
+    """
+    if score >= 0.7:
+        return FEASIBILITY_VALUES[0]   # 'Ideal'
+    if score >= 0.4:
+        return FEASIBILITY_VALUES[1]   # 'Conditional'
+    return FEASIBILITY_VALUES[2]       # 'Not Feasible'
+
+
 def _clean_key(key: str) -> str:
     """'>70' → 'above_70', '<40' → 'below_40', '15-20' → '15_20'."""
     key = re.sub(r'^>', 'above_', str(key))
@@ -142,16 +170,27 @@ def _build_long(
     inner_id_map: dict | None = None,
     filter_keys: list | None = None,
 ) -> pd.DataFrame:
-    """One row per (crop, inner_key). Maps inner key to int ID when inner_id_map is provided."""
+    """Build a long-format compatibility DataFrame — one row per (crop, inner_key).
+
+    Reads 'score' and 'feasibility' from each combined *_adjustment_rules entry.
+    Maps the inner key to an integer ID when inner_id_map is provided.
+
+    Output columns: crop_id, <inner_key_col>, score, feasibility
+    """
     rows = []
-    for crop, scores in rules[section_key].items():
+    for crop, entries in rules[section_key].items():
         if crop.startswith('_'):
             continue
-        for key in (filter_keys or scores.keys()):
+        for key in (filter_keys or entries.keys()):
+            entry = entries[key]
             rows.append({
                 'crop_id':     crop_id_map[crop],
                 inner_key_col: inner_id_map[key] if inner_id_map else key,
-                'score':       scores[key],
+                'score':       float(entry['score']),
+                'feasibility': _check_feasibility(
+                    entry['feasibility'],
+                    context=f"{section_key}[{crop}][{key}]",
+                ),
             })
     return pd.DataFrame(rows)
 
@@ -164,10 +203,13 @@ def _build_action_rows(
     inner_id_map: dict | None = None,
     filter_keys: list | None = None,
 ) -> pd.DataFrame:
-    """One row per (crop, band) with feasibility/reasoning/actions columns.
-    actions list is joined as a semicolon-separated string.
-    inner_id_map: when provided, maps band string keys to integer IDs.
-    filter_keys: when provided, only these band keys are included.
+    """Build an action/adjustment DataFrame — one row per (crop, band).
+
+    Reads ONLY feasibility, reasoning, and actions from each entry.
+    The 'score' key present in combined sections is intentionally excluded —
+    adjustment rulebook models do not store a score column.
+
+    Output columns: crop_id, <band_col>, feasibility, reasoning, actions (JSON string)
     """
     rows = []
     for crop, bands in rules[section_key].items():
@@ -176,23 +218,39 @@ def _build_action_rows(
         for key in (filter_keys or bands.keys()):
             entry = bands[key]
             rows.append({
-                'crop_id': crop_id_map[crop],
-                band_col:  inner_id_map[key] if inner_id_map else key,
-                'feasibility': entry['feasibility'],
+                'crop_id':     crop_id_map[crop],
+                band_col:      inner_id_map[key] if inner_id_map else key,
+                'feasibility': _check_feasibility(
+                    entry['feasibility'],
+                    context=f"{section_key}[{crop}][{key}]",
+                ),
                 'reasoning':   entry['reasoning'],
-                'actions':     '; '.join(entry['actions']),
+                'actions':     json.dumps(entry['actions']),
             })
     return pd.DataFrame(rows)
 
 
 def _build_wide(rules: dict, section_key: str, prefix: str, crop_id_map: dict) -> pd.DataFrame:
-    """One row per crop with prefixed score columns."""
+    """Build a wide-format compatibility DataFrame — one row per crop.
+
+    Creates a pair of columns per range key in the section:
+      {prefix}{clean_key}             → score         (float)
+      {prefix}{clean_key}_feasibility → feasibility   (str, one of FEASIBILITY_VALUES)
+
+    Output columns: crop_id, {prefix}*, {prefix}*_feasibility  (interleaved per key)
+    """
     rows = []
-    for crop, scores in rules[section_key].items():
+    for crop, entries in rules[section_key].items():
         if crop.startswith('_'):
             continue
         row = {'crop_id': crop_id_map[crop]}
-        row.update({f"{prefix}{_clean_key(k)}": v for k, v in scores.items()})
+        for k, entry in entries.items():
+            col = f"{prefix}{_clean_key(k)}"
+            row[col]                  = float(entry['score'])
+            row[f"{col}_feasibility"] = _check_feasibility(
+                entry['feasibility'],
+                context=f"{section_key}[{crop}][{k}]",
+            )
         rows.append(row)
     return pd.DataFrame(rows)
 
@@ -300,16 +358,38 @@ def create_irrigation_calender_rules(rules: dict) -> pd.DataFrame:
     return pd.DataFrame(records)
 
 
+def create_fertilization_calendar_rules(rules: dict) -> pd.DataFrame:
+    """Build fertilization start rulebook from crop rules JSON.
+
+    Keys    : crop_id
+    Columns : days_after_sowing
+    """
+    CROP_ID = get_id_maps()['Crop_Name']
+    records = []
+    for crop, data in rules['CROP_RULES'].items():
+        if crop.startswith('_'):
+            continue
+        records.append({
+            'crop_id':           CROP_ID[crop.title()],
+            'days_after_sowing': data['fertilizer']['days_after_sowing'],
+        })
+    return pd.DataFrame(records)
+
+
 def create_compatibility_rules(rules: dict) -> CompatibilityRulebooks:
     """Build all compatibility DataFrames from the crop rules JSON dict.
+    Scores and feasibility labels are read from the combined *_adjustment_rules sections.
 
-    crop_soil_df         keys : crop_id, soil_type_id        columns : score
-    crop_season_df       keys : crop_id, season              columns : score
-    water_source_df      keys : crop_id, water_source_id     columns : score
-    climate_df           key  : crop_id   columns : temp_*, humidity_*, sunlight_*
-    soil_climate_df      key  : crop_id   columns : moisture_*, ph_*
-    irrigation_frequency_df key : crop_id  columns : irr_freq_*
-    crop_type_season_df  keys : crop_type_id, season         columns : score
+    crop_soil_df         keys : crop_id, soil_type_id        columns : score, feasibility
+    crop_season_df       keys : crop_id, season_id           columns : score, feasibility
+    water_source_df      keys : crop_id, water_source_id     columns : score, feasibility
+    climate_df           key  : crop_id   columns : temp_*, temp_*_feasibility,
+                                                    humidity_*, humidity_*_feasibility,
+                                                    sunlight_*, sunlight_*_feasibility
+    soil_climate_df      key  : crop_id   columns : moisture_*, moisture_*_feasibility,
+                                                    ph_*, ph_*_feasibility
+    irrigation_frequency_df key : crop_id  columns : irr_freq_*, irr_freq_*_feasibility
+    crop_type_season_df  keys : crop_type_id, season_id  columns : score, feasibility
     """
     _maps        = get_id_maps()
     CROP_ID      = _maps['Crop_Name']
@@ -319,27 +399,32 @@ def create_compatibility_rules(rules: dict) -> CompatibilityRulebooks:
     SEASON_ID    = _maps['Season']
 
     crop_type_season_rows = [
-        {'crop_type_id': CROP_TYPE_ID[ct], 'season_id': SEASON_ID[season.title()], 'score': score}
+        {
+            'crop_type_id': CROP_TYPE_ID[ct],
+            'season_id':    SEASON_ID[season.title()],
+            'score':        score,
+            'feasibility':  _score_to_feasibility(score),
+        }
         for ct, seasons in rules['crop_type_season_suitability'].items()
         if not ct.startswith('_')
         for season, score in seasons.items()
     ]
 
     return CompatibilityRulebooks(
-        crop_soil_df    = _build_long(rules, 'soil_compatibility',  'soil_type_id',    CROP_ID, inner_id_map=SOIL_ID),
-        crop_season_df  = _build_long(rules, 'crop_season_score',   'season_id',       CROP_ID, inner_id_map=SEASON_ID),
-        water_source_df = _build_long(rules, 'water_compatibility', 'water_source_id', CROP_ID,
+        crop_soil_df    = _build_long(rules, 'soil_adjustment_rules',         'soil_type_id',    CROP_ID, inner_id_map=SOIL_ID),
+        crop_season_df  = _build_long(rules, 'season_adjustment_rules',       'season_id',       CROP_ID, inner_id_map=SEASON_ID),
+        water_source_df = _build_long(rules, 'water_source_adjustment_rules', 'water_source_id', CROP_ID,
                               inner_id_map=WATER_ID, filter_keys=list(WATER_ID.keys())),
         climate_df      = (
-                          _build_wide(rules, 'temperature_compatibility', 'temp_',     CROP_ID)
-                          .merge(_build_wide(rules, 'humidity_compatibility',  'humidity_',  CROP_ID), on='crop_id')
-                          .merge(_build_wide(rules, 'sunlight_compatibility',  'sunlight_',  CROP_ID), on='crop_id')
+                          _build_wide(rules, 'temperature_adjustment_rules', 'temp_',     CROP_ID)
+                          .merge(_build_wide(rules, 'humidity_adjustment_rules',            'humidity_',  CROP_ID), on='crop_id')
+                          .merge(_build_wide(rules, 'sunlight_adjustment_rules',            'sunlight_',  CROP_ID), on='crop_id')
                           ),
         soil_climate_df = (
-                          _build_wide(rules, 'soil_moisture_compatibility', 'moisture_', CROP_ID)
-                          .merge(_build_wide(rules, 'ph_compatibility',     'ph_',       CROP_ID), on='crop_id')
+                          _build_wide(rules, 'soil_moisture_adjustment_rules', 'moisture_', CROP_ID)
+                          .merge(_build_wide(rules, 'ph_adjustment_rules',                  'ph_',        CROP_ID), on='crop_id')
                           ),
-        irrigation_frequency_df = _build_wide(rules, 'irrigation_frequency_compatibility', 'irr_freq_', CROP_ID),
+        irrigation_frequency_df = _build_wide(rules, 'irrigation_frequency_adjustment_rules', 'irr_freq_', CROP_ID),
         crop_type_season_df     = pd.DataFrame(crop_type_season_rows),
     )
 
@@ -358,7 +443,7 @@ def create_action_rules(rules: dict) -> ActionRulebooks:
     irrigation_frequency_df keys : crop_id, irr_freq_range (str)
     rainfall_df             keys : crop_id, rainfall_range (str)
 
-    All tables include : feasibility, reasoning, actions (semicolon-joined)
+    All tables include : feasibility, reasoning, actions (JSON-serialised array of action objects)
     """
     _maps    = get_id_maps()
     CROP_ID  = _maps['Crop_Name']
@@ -422,6 +507,7 @@ class RulebookSeeder:
         irr_df           = create_irrigation_rules(crop_data)
         threshold_df     = create_threshold_rules(crop_data)
         irr_start_df          = create_irrigation_calender_rules(rules)
+        fert_calendar_df      = create_fertilization_calendar_rules(rules)
         crop_type_timeline_df = create_crop_type_timeline(rules)
         compat_books          = create_compatibility_rules(rules)
         action_books          = create_action_rules(rules)
@@ -441,6 +527,7 @@ class RulebookSeeder:
         })
         self._seed_df(IrrigationFrequencyRulebook, irr_renamed)
         self._seed_df(IrrigationCalenderRulebook, irr_start_df)
+        self._seed_df(FertilizationCalendarRulebook, fert_calendar_df)
         self._seed_df(ThresholdRulebook, threshold_df)
 
         # Crop-type timeline
@@ -490,7 +577,7 @@ class RulebookSeeder:
             CropTypeSeasonCompatibilityRulebook,
             # Range / threshold rules
             ClimateRulebook, SoilClimateRulebook, WaterClimateRulebook, SeasonClimateRulebook,
-            IrrigationFrequencyRulebook, IrrigationCalenderRulebook, ThresholdRulebook,
+            IrrigationFrequencyRulebook, IrrigationCalenderRulebook, FertilizationCalendarRulebook, ThresholdRulebook,
         ]:
             model.query.delete()
 
