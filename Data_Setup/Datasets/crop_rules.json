@@ -1194,6 +1194,30 @@
       "Rainy": 0.1
     }
   },
+  "irrigation_frequency_rules": {
+    "_note": "Recommended irrigation frequency (times/week) per crop x growth_stage x soil_type. Sandy drains fastest so needs most; Clay retains water so needs least.",
+    "Maize": {
+      "Sowing":     { "Sandy": 3, "Loamy": 2, "Clay": 1 },
+      "Seedling":   { "Sandy": 4, "Loamy": 3, "Clay": 2 },
+      "Vegetative": { "Sandy": 5, "Loamy": 4, "Clay": 3 },
+      "Flowering":  { "Sandy": 6, "Loamy": 5, "Clay": 4 },
+      "Harvesting": { "Sandy": 3, "Loamy": 2, "Clay": 1 }
+    },
+    "Rice": {
+      "Sowing":     { "Sandy": 5, "Loamy": 4, "Clay": 3 },
+      "Seedling":   { "Sandy": 7, "Loamy": 6, "Clay": 5 },
+      "Vegetative": { "Sandy": 7, "Loamy": 7, "Clay": 6 },
+      "Flowering":  { "Sandy": 7, "Loamy": 6, "Clay": 5 },
+      "Harvesting": { "Sandy": 4, "Loamy": 3, "Clay": 2 }
+    },
+    "Cotton": {
+      "Sowing":     { "Sandy": 3, "Loamy": 2, "Clay": 1 },
+      "Seedling":   { "Sandy": 4, "Loamy": 3, "Clay": 2 },
+      "Vegetative": { "Sandy": 4, "Loamy": 3, "Clay": 2 },
+      "Flowering":  { "Sandy": 5, "Loamy": 4, "Clay": 3 },
+      "Harvesting": { "Sandy": 2, "Loamy": 2, "Clay": 1 }
+    }
+  },
   "crop_type_calendar": {
     "Kharif": {
       "sow_start": 4,

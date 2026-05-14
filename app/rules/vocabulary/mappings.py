@@ -9,7 +9,9 @@ def get_vocabulary():
         "Growth_Stage": {
             1: "Seedling",
             2: "Vegetative",
-            3: "Flowering"
+            3: "Flowering",
+            4: "Sowing",
+            5: "Harvesting"
         },
         "Soil_Type": {
             1: "Sandy",

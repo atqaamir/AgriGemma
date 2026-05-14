@@ -387,6 +387,10 @@ class RuleBaseService:
         return ThresholdRulesRepository.get_irrigation_frequency_by_crop_stage_soil(crop_id, growth_stage_id, soil_type_id)
 
     @staticmethod
+    def get_irrigation_frequency_with_fallback(crop_id: int, growth_stage_id: int, soil_type_id: int):
+        return ThresholdRulesRepository.get_irrigation_frequency_with_fallback(crop_id, growth_stage_id, soil_type_id)
+
+    @staticmethod
     def get_all_irrigation_calendar() -> list:
         return ThresholdRulesRepository.get_all_irrigation_calendar()
 

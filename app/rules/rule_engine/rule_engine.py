@@ -118,8 +118,8 @@ class RuleEngine:
         irrigation_calendar = rule_base_service.get_irrigation_calendar_by_crop(crop_id)
         irrigation_start_date = (sowing_date + timedelta(days=irrigation_calendar.days_after_sowing)).strftime("%m/%d/%Y") if irrigation_calendar else None
 
-        # Step 6: Get Irigation frequency for crop
-        irrigation_freq_rule = rule_base_service.get_irrigation_frequency_by_crop_stage_soil(crop_id, growth_stage_id, soil_type_id)
+        # Step 6: Get irrigation frequency for crop (fallback: stage+soil → stage → crop)
+        irrigation_freq_rule = rule_base_service.get_irrigation_frequency_with_fallback(crop_id, growth_stage_id, soil_type_id)
         irrigation_frequency = irrigation_freq_rule.recommended_frequency if irrigation_freq_rule else None
 
         fertilization_calendar = rule_base_service.get_fertilization_calendar_by_crop(crop_id)
