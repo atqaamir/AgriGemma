@@ -34,6 +34,7 @@ class TaskRepository:
     def get_pending() -> list:
         return (
             Task.query
+            .options(joinedload(Task.crop), joinedload(Task.field))
             .filter_by(completed=False)
             .order_by(
                 db.case(

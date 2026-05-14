@@ -4,7 +4,10 @@ from app.services.domain_service.user_service import UserService
 from app.services.domain_service.field_service import FieldService
 from app.services.domain_service.crop_service import CropService
 from app.services.domain_service.task_service import TaskService
+from app.services.domain_service.notification_service import NotificationService
 from app.services.intelligence_service.chatbot_service.chatbot_service import ChatbotService
+from app.services.intelligence_service.task_intelligence_service import TaskIntelligenceService
+from app.services.intelligence_service.chatbot_service.context_aggregation_service import ContextAggregationService
 
 
 def _avg(values: list) -> float:
@@ -26,15 +29,12 @@ class DashboardService:
 
         tasks = TaskService.get_tasks_by_user(user_id)
         pending_tasks = [t for t in tasks if not t.completed]
+        context = ContextAggregationService.build_task_context(user_id)
+        ai_insights = TaskIntelligenceService.generate_intelligence(context, user_id)
 
         return {
-
             "user": DashboardService._build_user_section(user),
-
-            "weather": DashboardService._build_weather_section(
-                active_fields
-            ),
-
+            "weather": DashboardService._build_weather_section(active_fields),
             "overview": DashboardService._build_farm_overview(
                 fields,
                 active_fields,
@@ -42,33 +42,15 @@ class DashboardService:
                 tasks,
                 pending_tasks,
             ),
-
-            "critical_tasks": DashboardService._get_critical_tasks(
-                pending_tasks
-            ),
-
-            "soil_condition": DashboardService._build_soil_condition(
-                active_fields
-            ),
-
-            "field_condition": DashboardService._build_field_condition(
-                fields,
-                active_fields
-            ),
-
-            "crop_condition": DashboardService._build_crop_condition(
-                crops
-            ),
-
-            "alerts": DashboardService._build_alerts(
-                pending_tasks
-            ),
-
-            "insights": DashboardService._build_ai_insights(),
-
-            "seasonal_plan": DashboardService._build_plan_summary(
-                user_id
-            ),
+            "critical_tasks": DashboardService._get_critical_tasks(pending_tasks),
+            "soil_condition": DashboardService._build_soil_condition(active_fields),
+            "field_condition": DashboardService._build_field_condition(fields, active_fields),
+            "crop_condition": DashboardService._build_crop_condition(crops),
+            "alerts": DashboardService._get_alerts(user_id, pending_tasks),
+            "insights": ai_insights.get("insights", []),
+            "dashboard_summary": ai_insights.get("summary"),
+            "dashboard_recommendations": ai_insights.get("recommendations", []),
+            "seasonal_plan": DashboardService._build_plan_summary(user_id),
         }
     
     @staticmethod
@@ -111,25 +93,21 @@ class DashboardService:
         }
     
     @staticmethod
-    def _build_alerts(tasks):
-
-        overdue = [
-            t for t in tasks
-            if t.due_date and t.due_date < date.today()
+    def _get_alerts(user_id, tasks):
+        """Return unread notifications in a serializable form."""
+        alerts = NotificationService.get_unread(user_id)
+        return [
+            {
+                "id": alert.id,
+                "title": alert.title,
+                "message": alert.message,
+                "detail": alert.detail,
+                "notification_type": alert.notification_type,
+                "created_at": alert.created_at.isoformat() if getattr(alert, "created_at", None) else None,
+            }
+            for alert in alerts
         ]
 
-        return {
-            "total": len(overdue),
-            "items": [
-                {
-                    "title": t.title,
-                    "priority": t.priority,
-                }
-                for t in overdue
-            ]
-        }
-                
-    
 
     @staticmethod
     def chat_with_advisor(user_id: int, message: str) -> str:
@@ -238,15 +216,30 @@ class DashboardService:
         }
 
     @staticmethod
-    def _build_ai_insights():
+    def _build_ai_insights(weather, tasks):
         return {
             "summary": "Irrigation demand likely to increase over next 3 days due to heat buildup."
         }
-    @staticmethod
-    def _build_plan_summary(user_id):
 
+    @staticmethod
+    def _build_plan_summary(user_id: int) -> dict:
+        from app.services.seasonal_planner_service import SeasonalPlannerService
+
+        plan = SeasonalPlannerService.get_active_plan(user_id)
+        if not plan:
+            return {}
         return {
-            "active": True,
-            "current_phase": "Irrigation",
-            "completion_percent": 68,
+            "id": plan.id,
+            "crop_id": plan.crop_id,
+            "soil_type_id": plan.soil_type_id,
+            "water_source_id": plan.water_source_id,
+            "growth_stage_id": plan.growth_stage_id,
+            "sowing": plan.sowing,
+            "harvesting": plan.harvesting,
+            "irrigation_start_date": plan.irrigation_start_date,
+            "irrigation_frequency": plan.irrigation_frequency,
+            "fertilization_date": plan.fertilization_date,
+            "adjustments_to_make": plan.adjustments_to_make,
+            "currently_active": plan.currently_active,
         }
+  

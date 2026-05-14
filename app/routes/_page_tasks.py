@@ -3,7 +3,6 @@ from marshmallow import ValidationError
 
 from app.agents.coordinator_agent import CoordinatorAgent
 from app.services.domain_service.task_service import TaskService
-from app.services.task_event_service import TaskEventService
 from app.schemas.task_schema import (
     TaskCardSchema,
     TaskDetailSchema,
@@ -98,7 +97,6 @@ def create_task():
         return jsonify({"errors": err.messages}), 400
 
     task = TaskService.create_task(valid_data)
-    TaskEventService.on_task_change(USER_ID, current_app._get_current_object())
     return jsonify(task_detail_schema.dump(task)), 201
 
 
@@ -115,7 +113,6 @@ def update_task(task_id):
         return jsonify({"errors": err.messages}), 400
 
     updated = TaskService.update_task(task_id, valid_data)
-    TaskEventService.on_task_change(USER_ID, current_app._get_current_object())
     return jsonify(task_detail_schema.dump(updated)), 200
 
 
@@ -125,5 +122,4 @@ def delete_task(task_id):
     if not task:
         return jsonify({"error": "Task not found"}), 404
     TaskService.delete_task(task_id)
-    TaskEventService.on_task_change(USER_ID, current_app._get_current_object())
     return jsonify({"message": "Task deleted successfully"}), 200

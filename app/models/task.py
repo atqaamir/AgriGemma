@@ -19,6 +19,8 @@ class Task(db.Model):
     description = db.Column(db.Text, nullable=True)
     notes = db.Column(db.Text, nullable=True)
 
+    ai_explanation = db.Column(db.Text, nullable=True)  # AI-generated explanation of critical tasks or changes
+
     crop_id = db.Column(db.Integer, db.ForeignKey("crop.id"), nullable=True)
     field_id = db.Column(db.Integer, db.ForeignKey("field.id"), nullable=True)
     user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=True)

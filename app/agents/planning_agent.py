@@ -2,6 +2,7 @@ from app.services.weather_service.weekly_planner_service import WeeklyPlannerSer
 from app.services.task_generation_service import TaskGenerationService
 from app.services.weekly_planning_service.weekly_update_service import TaskUpdateService
 from app.services.seasonal_planner_service import SeasonalPlannerService
+from app.utils import enums_
 
 
 class PlanningAgent:
@@ -14,18 +15,14 @@ class PlanningAgent:
         )
 
     @staticmethod
-    def generate_daily_tasks(field_id: str, weekly_plan: dict) -> list:
-        return TaskGenerationService().generate_daily_tasks(
-            field_id=field_id,
-            weekly_plan=weekly_plan,
-        )
+    def generate_daily_tasks(user_id: int, tag: str = "") -> str:
+        result = TaskGenerationService().generate_daily_tasks(user_id=user_id)
+        return enums_.Status.SUCCESS if result and isinstance(result, dict) else enums_.Status.FAILED
     
     @staticmethod
-    def generate_seasonal_plan(field_id: str, crop: str) -> dict:
-        return SeasonalPlannerService().generate_seasonal_plan(
-            field_id=field_id,
-            crop=crop,
-        )
+    def generate_seasonal_plan(user_id: int, tag: str = "") -> str:
+        plan = SeasonalPlannerService.get_active_plan(user_id)
+        return enums_.Status.SUCCESS if plan else enums_.Status.FAILED
 
     @staticmethod
     def evaluate_daily_update(field_id: str, context: dict, risk_context: dict) -> dict:
