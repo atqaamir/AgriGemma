@@ -1,7 +1,7 @@
 import logging
 
-from app.services.context_aggregation_service import ContextAggregationService
-from app.services.task_intelligence_service import TaskIntelligenceService
+from app.services.intelligence_service.chatbot_service.context_aggregation_service import ContextAggregationService
+from app.services.intelligence_service.task_intelligence_service import TaskIntelligenceService
 
 logger = logging.getLogger(__name__)
 
@@ -11,14 +11,20 @@ class TaskIntelligenceAgent:
     Thin orchestration agent responsible for the task intelligence pipeline.
     Delegates context aggregation to ContextAggregationService and AI
     generation to TaskIntelligenceService.  Never contains business logic.
+
+
+
+    Tasks + Critical tasks overview
     """
 
     def __init__(self) -> None:
         # Agents are thin — no state beyond the services they coordinate
         pass
 
-    def generate(self, user_id: int) -> dict:
+    def generate(self, user_id: int, tag: str | None = None) -> dict:
         context = self._aggregate_context(user_id)
+        if tag == "critical_task_overview":
+            return TaskIntelligenceService.generate_task_overview(context, user_id)
         return TaskIntelligenceService.generate_intelligence(context, user_id)
 
     def invalidate_cache(self, user_id: int) -> None:

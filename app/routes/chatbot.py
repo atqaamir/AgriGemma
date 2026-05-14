@@ -1,7 +1,12 @@
-from flask import Blueprint, request, jsonify, render_template
+import json
+import logging
+
+from flask import Blueprint, request, jsonify, render_template, Response, stream_with_context
 from marshmallow import Schema, fields, ValidationError
 
-from app.services.chatbot_service import ChatbotService
+logger = logging.getLogger(__name__)
+
+from app.services.intelligence_service.chatbot_service.chatbot_service import ChatbotService
 
 chatbot_bp = Blueprint("chatbot", __name__)
 
@@ -124,5 +129,45 @@ def get_messages(conversation_id):
         return jsonify({"messages": messages}), 200
     except ValueError as e:
         return jsonify({"error": str(e)}), 403
+    except Exception as e:
+        return jsonify({"error": str(e)}), 400
+
+
+@chatbot_bp.route("/send/stream", methods=["POST"])
+def send_message_stream():
+    """Send a message and receive pipeline status + AI response as SSE events."""
+    data = request.get_json() or {}
+    try:
+        valid_data = send_message_schema.load(data)
+    except ValidationError as err:
+        return jsonify({"errors": err.messages}), 400
+
+    def generate():
+        try:
+            yield from ChatbotService.send_message_stream(
+                USER_ID, valid_data["conversation_id"], valid_data["message"]
+            )
+        except Exception as exc:
+            logger.error("SSE route crashed: %s", exc, exc_info=True)
+            yield f"event: error\ndata: {json.dumps({'message': 'Something went wrong on the server.'})}\n\n"
+
+    return Response(
+        stream_with_context(generate()),
+        content_type="text/event-stream",
+        headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
+    )
+
+
+@chatbot_bp.route("/setup-demo", methods=["POST"])
+def setup_demo():
+    """Seed the weather-change demo scenario (pre-rain tasks done, irrigation tasks pending).
+
+    After calling this, ask the chatbot:
+        "Why are you asking me to do irrigation tasks in May?"
+    """
+    from app.services.demo_scenario_service import DemoScenarioService
+    try:
+        result = DemoScenarioService.setup(USER_ID)
+        return jsonify(result), 201
     except Exception as e:
         return jsonify({"error": str(e)}), 400

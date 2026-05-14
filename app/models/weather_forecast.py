@@ -1,10 +1,33 @@
-"""Keep weekly snapshot data records of the weather forecasts fechted from the API for change detection 
+"""Keep weekly snapshot data records of the weather forecasts fechted from the API for change detection
 This can help in understanding trends and making informed decisions for weekly plan changes.
 Fetched daily."""
 
 
 from datetime import datetime
 from app.extensions import db
+
+
+class WeatherForecast(db.Model):
+    __tablename__ = "weather_forecasts"
+
+    id = db.Column(db.Integer, primary_key=True)
+    region = db.Column(db.String(100), nullable=False)
+    date = db.Column(db.Date, nullable=False)
+    temperature_c = db.Column(db.Float, nullable=True)
+    precipitation_mm = db.Column(db.Float, nullable=True)
+    wind_speed_kph = db.Column(db.Float, nullable=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "region": self.region,
+            "date": self.date.isoformat() if self.date else None,
+            "temperature_c": self.temperature_c,
+            "precipitation_mm": self.precipitation_mm,
+            "wind_speed_kph": self.wind_speed_kph,
+            "created_at": self.created_at.isoformat() if self.created_at else None,
+        }
 
 
 class CurrentWeatherProfile(db.Model):
