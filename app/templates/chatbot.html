@@ -400,26 +400,88 @@
 
       hideWelcome();
       addMsg('user', msg, null, true);
-      addTyping();
+      addThinking('Analyzing your question…');
       scrollBottom();
 
+      let streamingMsgEl = null;
+      let streamingText = '';
+
       try {
-        const r = await fetch(`${API}/send`, {
+        const r = await fetch(`${API}/send/stream`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ conversation_id: activeId, message: msg })
         });
-        if (!r.ok) throw 0;
-        const d = await r.json();
-        removeTyping();
-        addMsg('bot', d.bot_message, d.timestamp, true);
-        scrollBottom();
-        loadConvs();
-      } catch {
-        removeTyping();
-        addMsg('bot', "Sorry, I couldn't reach the AI right now. Please try again.", null, true);
+        if (!r.ok) throw new Error(`HTTP ${r.status}`);
+
+        const reader = r.body.getReader();
+        const decoder = new TextDecoder();
+        let buffer = '';
+
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          buffer += decoder.decode(value, { stream: true });
+
+          // SSE events are separated by \n\n
+          const parts = buffer.split('\n\n');
+          buffer = parts.pop();               // last chunk may be incomplete
+
+          for (const block of parts) {
+            let eventType = 'message', dataStr = '';
+            for (const line of block.split('\n')) {
+              if (line.startsWith('event: ')) eventType = line.slice(7).trim();
+              if (line.startsWith('data: '))  dataStr  = line.slice(6).trim();
+            }
+            if (!dataStr) continue;
+
+            let data;
+            try { data = JSON.parse(dataStr); } catch { continue; }
+
+            if (eventType === 'status') {
+              updateThinking(data.message);
+              scrollBottom();
+            } else if (eventType === 'token') {
+              if (!streamingMsgEl) {
+                removeThinking();
+                streamingMsgEl = createStreamingMsg();
+              }
+              streamingText += data.text;
+              const textEl = document.getElementById('streamingText');
+              if (textEl) textEl.textContent = streamingText;
+              scrollBottom();
+            } else if (eventType === 'response') {
+              // Finalize: replace raw text with properly formatted version
+              const textEl = document.getElementById('streamingText');
+              if (textEl) {
+                textEl.removeAttribute('id');
+                textEl.innerHTML = fmtBot(data.bot_message || streamingText);
+              }
+              if (streamingMsgEl) {
+                const timeEl = streamingMsgEl.querySelector('span');
+                if (timeEl) timeEl.textContent = fmtTime(data.timestamp);
+              } else {
+                removeThinking();
+                addMsg('bot', data.bot_message, data.timestamp, true);
+              }
+              scrollBottom();
+              loadConvs();
+            } else if (eventType === 'error') {
+              removeThinking();
+              addMsg('bot', data.message || "Something went wrong.", null, true);
+              scrollBottom();
+              toast(data.message || 'An error occurred', 'error');
+            }
+          }
+        }
+      } catch(err) {
+        removeThinking();
+        if (!streamingMsgEl) {
+          addMsg('bot', "Sorry, I couldn't reach the AI right now. Please try again.", null, true);
+        }
         scrollBottom();
         toast('Message failed — check your connection', 'error');
+        console.error('[chatbot]', err);
       } finally {
         sending = false;
         setSendState(false);
@@ -484,7 +546,7 @@
       c.appendChild(el);
     }
 
-    function addTyping() {
+    function addThinking(statusText) {
       const c = document.getElementById('msgContainer');
       const el = document.createElement('div');
       el.id = 'typing';
@@ -495,14 +557,39 @@
             style="font-size:14px; font-variation-settings:'FILL' 1;">smart_toy</span>
         </div>
         <div class="bg-surface-container dark:bg-[#2a2a24] rounded-2xl rounded-bl-sm border border-outline-variant/20 px-4 py-3 shadow-sm">
-          <div class="flex gap-1.5 items-center h-4">
+          <div class="flex gap-1.5 items-center h-4 mb-1.5">
             <div class="dot"></div><div class="dot"></div><div class="dot"></div>
           </div>
+          <p id="thinkingStatus" class="text-[11px] text-on-surface-variant/60 dark:text-[#9e9e8e]/70 leading-tight">${esc(statusText)}</p>
         </div>`;
       c.appendChild(el);
     }
 
-    function removeTyping() { document.getElementById('typing')?.remove(); }
+    function updateThinking(text) {
+      const el = document.getElementById('thinkingStatus');
+      if (el) el.textContent = text;
+    }
+
+    function removeThinking() { document.getElementById('typing')?.remove(); }
+
+    function createStreamingMsg() {
+      const c = document.getElementById('msgContainer');
+      const el = document.createElement('div');
+      el.className = 'flex justify-start items-end gap-2 msg-in';
+      el.innerHTML = `
+        <div class="flex-shrink-0 w-7 h-7 rounded-lg bg-primary-fixed dark:bg-[#3a4a2e] flex items-center justify-center">
+          <span class="material-symbols-outlined text-primary dark:text-[#d5e9c1]"
+            style="font-size:14px; font-variation-settings:'FILL' 1;">smart_toy</span>
+        </div>
+        <div class="max-w-[78%] flex flex-col items-start gap-1">
+          <div class="bg-surface-container dark:bg-[#2a2a24] text-on-surface dark:text-[#e5e2da] rounded-2xl rounded-bl-sm border border-outline-variant/20 px-4 py-2.5 shadow-sm">
+            <div class="bot-text text-sm" id="streamingText"></div>
+          </div>
+          <span class="text-[10px] text-on-surface-variant/50 dark:text-[#9e9e8e]/50 px-1"></span>
+        </div>`;
+      c.appendChild(el);
+      return el;
+    }
 
     function addSystem(text) {
       const c = document.getElementById('msgContainer');

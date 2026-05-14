@@ -1,48 +1,37 @@
 import json
 import logging
-import time
-from datetime import datetime
+from datetime import datetime, timezone
 
 from app.services.ai_model_service import ai_model_service
-from app.services.intelligence_service.chatbot_service.prompts._prompt_task_intelligence import TaskIntelligencePromptBuilder
+from app.services.ai_model_service.ai_model_service import fast_complete as _fast_complete
+from app.services.intelligence_service.chatbot_service.prompts._prompt_task_intelligence import (
+    TaskIntelligencePromptBuilder,
+    build_task_reasoning_prompt,
+    build_critical_tasks_overview_prompt,
+    build_dashboard_oneliner_prompt,
+)
 
 logger = logging.getLogger(__name__)
 
 
-"move this to task generation!!"
 
 
 
 
-
-
-# Module-level in-process cache.
-# For multi-worker deployments, replace with a Redis-backed cache.
-_CACHE: dict = {}
-_CACHE_TTL_SECONDS = 300  # 5 minutes
 
 
 class TaskIntelligenceService:
     """
-    Generates an AI-driven task intelligence overview using Gemma4.
-    Responses are cached per user for TTL seconds to avoid blocking
-    the UI on every page load.  A rule-based fallback guarantees a
-    useful response even when the AI model is unavailable.
+    Generates AI task intelligence and task-specific explanations using Gemma.
+    Cache is intentionally removed so all intelligence is based on current farm state.
     """
 
     @staticmethod
     def generate_intelligence(context: dict, user_id: int) -> dict:
-        cache_key = f"task_intel_{user_id}"
-        cached = _CACHE.get(cache_key)
-
-        if cached and (time.monotonic() - cached["ts"]) < _CACHE_TTL_SECONDS:
-            logger.debug("task_intelligence cache hit for user %s", user_id)
-            return cached["data"]
-
         prompt = TaskIntelligencePromptBuilder.build(context)
 
         try:
-            raw = ai_model_service.complete(prompt)
+            raw = _fast_complete(prompt)
             intelligence = TaskIntelligenceService._parse_response(raw)
             intelligence["is_fallback"] = False
         except Exception as exc:
@@ -50,17 +39,114 @@ class TaskIntelligenceService:
             intelligence = TaskIntelligenceService._build_rule_based_fallback(context)
             intelligence["is_fallback"] = True
 
-        intelligence["generated_at"] = datetime.utcnow().isoformat() + "Z"
-
-        _CACHE[cache_key] = {"ts": time.monotonic(), "data": intelligence}
+        intelligence["generated_at"] = datetime.now(timezone.utc).isoformat()
         return intelligence
 
     @staticmethod
+    def generate_dashboard_oneliner(context: dict, user_id: int) -> dict:
+        """
+        Lightweight one-sentence dashboard header summary.
+        Runs on Ollama (local Gemma 4) — fast, minimal context, no JSON parsing.
+        Separate from generate_intelligence() so the dashboard card doesn't need
+        to fire the full JSON intelligence prompt just to get one sentence.
+        """
+        try:
+            prompt = build_dashboard_oneliner_prompt(context)
+            raw    = _fast_complete(prompt)
+            text   = TaskIntelligenceService._clean_text(raw)
+            return {
+                "summary":      text,
+                "generated_at": datetime.now(timezone.utc).isoformat(),
+                "is_fallback":  False,
+            }
+        except Exception as exc:
+            logger.warning("Dashboard one-liner failed (user=%s): %s", user_id, exc)
+            return {
+                "summary":      TaskIntelligenceService._build_dashboard_oneliner_fallback(context),
+                "generated_at": datetime.now(timezone.utc).isoformat(),
+                "is_fallback":  True,
+            }
+
+    @staticmethod
+    def generate_task_overview(context: dict, user_id: int) -> dict:
+        try:
+            prompt = build_critical_tasks_overview_prompt(
+                context.get("tasks", {}).get("pending_list", []),
+                {
+                    "farmer_name": context.get("farmer_name"),
+                    "weather": context.get("weather", {}),
+                    "rules": context.get("rules", ""),
+                },
+            )
+            raw = _fast_complete(prompt)
+            return {
+                "summary": TaskIntelligenceService._clean_text(raw),
+                "generated_at": datetime.now(timezone.utc).isoformat(),
+                "is_fallback": False,
+            }
+        except Exception as exc:
+            logger.warning("AI task overview failed (user=%s): %s", user_id, exc)
+            return {
+                "summary": TaskIntelligenceService._build_task_overview_fallback(context),
+                "generated_at": datetime.now(timezone.utc).isoformat(),
+                "is_fallback": True,
+            }
+
+    @staticmethod
+    def generate_task_explanation(task, context: dict) -> str:
+        try:
+            prompt = build_task_reasoning_prompt(
+                {
+                    "title": task.title,
+                    "description": task.description,
+                    "priority": task.priority,
+                    "due_date": str(task.due_date) if task.due_date else None,
+                    "field_name": task.field.name if task.field else None,
+                    "crop_name": task.crop.name if task.crop else None,
+                    "is_overdue": bool(task.due_date and task.due_date < datetime.now(timezone.utc).date()),
+                },
+                {
+                    "farmer_name": context.get("farmer_name", "Farmer"),
+                    "weather": context.get("weather", {}),
+                    "rules": context.get("rules", ""),
+                },
+            )
+            return TaskIntelligenceService._clean_text(_fast_complete(prompt))
+        except Exception as exc:
+            logger.warning("AI task explanation failed for task %s: %s", getattr(task, "id", None), exc)
+            return (
+                task.description
+                or f"This task is important because of current farm conditions affecting {task.field.name if task.field else 'your farm'}."
+            )
+
+    @staticmethod
+    def _build_dashboard_oneliner_fallback(context: dict) -> str:
+        tasks  = context.get("tasks") or {}
+        farm   = context.get("farm") or {}
+        fields = farm.get("active_fields") or 0
+        overdue  = tasks.get("overdue_count") or 0
+        critical = tasks.get("critical_count") or 0
+        pending  = tasks.get("pending_count") or 0
+        if overdue:
+            return f"{fields} active fields with {overdue} overdue task(s) requiring immediate attention."
+        if critical:
+            return f"{fields} active fields with {critical} critical task(s) — act today."
+        if pending:
+            return f"{fields} active fields, {pending} task(s) pending — farm is on track."
+        return f"{fields} active fields — no urgent tasks right now."
+
+    @staticmethod
     def invalidate_cache(user_id: int) -> None:
-        """Call this whenever tasks change and a fresh overview is needed."""
-        _CACHE.pop(f"task_intel_{user_id}", None)
+        """No-op cache invalidation retained for compatibility."""
+        return None
 
     # ── Private helpers ───────────────────────────────────────────────────────
+
+    @staticmethod
+    def _clean_text(raw) -> str:
+        if isinstance(raw, dict):
+            raw = raw.get("response") or raw.get("text") or raw.get("output") or ""
+        return str(raw).strip()
 
     @staticmethod
     def _parse_response(raw) -> dict:
@@ -84,6 +170,21 @@ class TaskIntelligenceService:
             raise ValueError(f"Gemma response missing keys: {required - parsed.keys()}")
 
         return parsed
+
+    @staticmethod
+    def _build_task_overview_fallback(context: dict) -> str:
+        tasks = [t for t in context.get("tasks", {}).get("pending_list", []) if t.get("priority") in ("critical", "high")]
+        if not tasks:
+            return "There are no critical or high-priority tasks right now."
+
+        top = tasks[0]
+        field = top.get("field_name") or top.get("crop_name") or "your farm"
+        count = len(tasks)
+        overdue = sum(1 for t in tasks if t.get("is_overdue"))
+        overdue_phrase = f" {overdue} are overdue." if overdue else ""
+        return (
+            f"{count} urgent tasks need attention today, starting with '{top['title']}' for {field}.{overdue_phrase}"
+        )
 
     @staticmethod
     def _build_rule_based_fallback(context: dict) -> dict:

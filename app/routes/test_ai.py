@@ -87,7 +87,7 @@ def _test_task_intelligence():
     """
     try:
         from app.services.intelligence_service.chatbot_service.context_aggregation_service import ContextAggregationService
-        from app.services.task_intelligence_service import TaskIntelligenceService
+        from app.services.intelligence_service.task_intelligence_service import TaskIntelligenceService
 
         TaskIntelligenceService.invalidate_cache(USER_ID)
         context = ContextAggregationService.build_task_context(USER_ID)

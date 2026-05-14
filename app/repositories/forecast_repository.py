@@ -1,7 +1,7 @@
 from app.models.weather_forecast import WeatherForecast
 from app.extensions import db
 
-class CurrentWeatherRepository:
+class ForecastRepository:
     @staticmethod
     def save_forecast(region, daily_data):
         # Save daily forecast to DB
