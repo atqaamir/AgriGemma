@@ -168,11 +168,8 @@
 
   const NAV_ITEMS = [
     { label: 'Dashboard',     href: '/',                   icon: 'dashboard'          },
-    { label: 'Crops',         href: '/mycrops',            icon: 'eco'                },
-    { label: 'Fields',        href: '/myfields',           icon: 'landscape'          },
-    { label: 'Tasks',         href: '/mytasks',            icon: 'assignment_turned_in'},
     { label: 'Season Plan',   href: '/1/seasonal-plan-page', icon: 'calendar_month'   },
-    { label: 'Chat',          href: '/chatbot',            icon: 'chat'               },
+    { label: 'Weekly Plan',   href: '/1/weekly-plan-page',  icon: 'event_note'        },
     { label: 'Notifications', href: '/notifications/page', icon: 'notifications'      },
   ];
 
@@ -184,7 +181,8 @@
     list.innerHTML = NAV_ITEMS.map(item => {
       const itemPath = item.href.replace(/\/$/, '') || '/';
       const isActive = current === itemPath ||
-        (item.href.includes('seasonal-plan-page') && current.includes('seasonal-plan-page'));
+        (item.href.includes('seasonal-plan-page') && current.includes('seasonal-plan-page')) ||
+        (item.href.includes('weekly-plan-page') && current.includes('weekly-plan-page'));
       return `
         <a href="${item.href}" class="drawer-nav-item${isActive ? ' active' : ''}">
           <span class="material-symbols-outlined drawer-nav-icon"
@@ -235,4 +233,12 @@
     init();
   }
 })();
+
+/* Global toggleTheme — available on every page that includes this header */
+if (typeof window.toggleTheme === 'undefined') {
+  window.toggleTheme = function () {
+    const dark = document.documentElement.classList.toggle('dark');
+    localStorage.setItem('theme', dark ? 'dark' : 'light');
+  };
+}
 </script>

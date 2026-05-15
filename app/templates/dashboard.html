@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html class="light" lang="en">
+<html lang="en">
 <head>
   <meta charset="utf-8"/>
   <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
@@ -77,9 +77,10 @@
       },
     }
   </script>
+  <script>(function(){if(localStorage.getItem('theme')==='dark')document.documentElement.classList.add('dark')})();</script>
 </head>
 
-<body class="text-on-surface pb-32">
+<body class="bg-surface dark:bg-[#1c1c17] text-on-surface dark:text-[#e5e2da] pb-32">
 
   <!-- Top Navigation -->
   {% include "_header.html" %}
@@ -95,7 +96,14 @@
       <div class="relative z-10 grid md:grid-cols-2 gap-8 items-end">
         <div>
           <h1 id="welcome-name" class="text-4xl md:text-5xl font-medium tracking-tight mb-2">Welcome back!</h1>
-          <p id="hero-subtitle" class="text-on-primary-container/80 text-lg max-w-md"></p>
+          <div class="flex items-start gap-2 max-w-md">
+            <p id="hero-subtitle" class="text-on-primary-container/80 text-lg flex-1"></p>
+            <button id="refresh-summary-btn" onclick="refreshSummary()"
+              title="Generate AI summary"
+              class="mt-1 shrink-0 text-on-primary-container/60 hover:text-on-primary-container transition-colors">
+              <span id="refresh-summary-icon" class="material-symbols-outlined text-xl">auto_awesome</span>
+            </button>
+          </div>
         </div>
         <div class="bg-white/10 backdrop-blur-xl rounded-3xl p-4 border border-white/10 flex items-center justify-between">
           <div class="flex items-center gap-4">
@@ -307,7 +315,7 @@
     // ── Hero ───────────────────────────────────────────────────────────────────
     function renderHero(data) {
       setText('welcome-name', `Welcome back, ${data.user?.name || 'Farmer'}!`);
-      setText('hero-subtitle', data.insights?.summary || '');
+      setText('hero-subtitle', data.dashboard_summary?.summary || '');
 
       const current = data.weather?.current || {};
       setText('weather-temp', `${current.temperature_c ?? '--'}°C`);
@@ -322,6 +330,24 @@
           <p class="text-sm font-medium">${f.temperature_c ?? '--'}°</p>
         </div>
       `).join('');
+    }
+
+    // ── AI Summary refresh ────────────────────────────────────────────────────
+    async function refreshSummary() {
+      const icon = document.getElementById('refresh-summary-icon');
+      icon.textContent = 'progress_activity';
+      icon.style.animation = 'spin 1s linear infinite';
+      try {
+        const res  = await fetch(`/${USER_ID}/dashboard/generate-summary`, { method: 'POST' });
+        if (!res.ok) throw new Error(res.status);
+        const data = await res.json();
+        setText('hero-subtitle', data.summary || '');
+      } catch (e) {
+        console.error('Summary refresh failed:', e);
+      } finally {
+        icon.style.animation = '';
+        icon.textContent = 'auto_awesome';
+      }
     }
 
     // ── Farm Overview ──────────────────────────────────────────────────────────
