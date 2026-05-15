@@ -28,6 +28,7 @@ class SeasonalPlanEntry(db.Model):
     plan_id         = db.Column(db.Integer, db.ForeignKey("seasonal_plan.id"), nullable=False)
 
     crop_id         = db.Column(db.Integer, nullable=False)
+    field_id        = db.Column(db.Integer, db.ForeignKey("field.id"), nullable=True)
     soil_type_id    = db.Column(db.Integer, nullable=True)
     water_source_id = db.Column(db.Integer, nullable=True)
 

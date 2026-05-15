@@ -6,6 +6,7 @@ class SunlightActionRulebook(db.Model):
 
     id             = db.Column(db.Integer, primary_key=True)
     crop_id        = db.Column(db.Integer, nullable=False)
+    growth_stage_id = db.Column(db.Integer, nullable=False)
     sunlight_range = db.Column(db.String(20), nullable=False)
 
     feasibility = db.Column(db.String(20), nullable=False)
