@@ -20,7 +20,12 @@
       "Bash(python update_rainfall.py)",
       "WebSearch",
       "WebFetch(domain:ai.google.dev)",
-      "WebFetch(domain:sudhamsr.medium.com)"
+      "WebFetch(domain:sudhamsr.medium.com)",
+      "Bash(Get-Content \"D:\\\\Work\\\\Climate Adaption Planner\\\\SmartFarming\\\\app\\\\models\\\\change_history\\\\weather_change_history.py\" -Raw)",
+      "Bash(cd /d \"D:\\\\Work\\\\Climate Adaption Planner\\\\SmartFarming\\\\Data_Setup\\\\Datasets\")",
+      "Bash(Get-Content crop_rules.json)",
+      "Bash(Select-String -Pattern '\"feasibility\"\\\\s*:\\\\s*\"Not Feasible\"' -Context 10,15)",
+      "PowerShell($filePath = \"D:\\\\Work\\\\Climate Adaption Planner\\\\SmartFarming\\\\Data_Setup\\\\Datasets\\\\crop_rules.json\"; $content = Get-Content $filePath -Raw; $matches = [regex]::Matches\\($content, '\"Not Feasible\"'\\); Write-Output \"Total 'Not Feasible' entries: $\\($matches.Count\\)\")"
     ]
   }
 }

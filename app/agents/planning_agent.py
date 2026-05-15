@@ -21,7 +21,7 @@ class PlanningAgent:
     
     @staticmethod
     def generate_seasonal_plan(user_id: int, tag: str = "") -> str:
-        plan = SeasonalPlannerService.get_active_plan(user_id)
+        plan = SeasonalPlannerService.generate_plan(user_id)
         return enums_.Status.SUCCESS if plan else enums_.Status.FAILED
 
     @staticmethod
