@@ -55,24 +55,6 @@ _SPECS: dict[FarmIntent, ContextSpec] = {
         needs_rules=True,
         max_tasks=5,
     ),
-    FarmIntent.DISEASE: ContextSpec(
-        needs_fields=True,
-        needs_crops=True,
-        needs_tasks=True,   task_types=frozenset({"inspection", "disease"}),
-        needs_weather=True, forecast_days=2,
-        needs_alerts=True,
-        needs_rules=True,
-        max_tasks=4,
-    ),
-    FarmIntent.PEST: ContextSpec(
-        needs_fields=True,
-        needs_crops=True,
-        needs_tasks=True,   task_types=frozenset({"inspection", "pest"}),
-        needs_weather=True, forecast_days=2,
-        needs_alerts=True,
-        needs_rules=True,
-        max_tasks=4,
-    ),
     FarmIntent.WEATHER: ContextSpec(
         needs_fields=False,
         needs_crops=True,
@@ -419,9 +401,17 @@ def _fetch_seasonal(user_id: int) -> dict:
     plan = SeasonalPlannerService.get_active_plan(user_id)
     if not plan:
         return {}
+    entries = plan.entries or []
     return {
-        "sowing":               plan.sowing,
-        "harvesting":           plan.harvesting,
-        "irrigation_frequency": plan.irrigation_frequency,
-        "adjustments":          plan.adjustments_to_make,
+        "growth_stage_id": plan.growth_stage_id,
+        "entries": [
+            {
+                "crop_id":              e.crop_id,
+                "sowing":               e.sowing,
+                "harvesting":           e.harvesting,
+                "irrigation_frequency": e.irrigation_frequency,
+                "adjustments":          e.adjustments_to_make,
+            }
+            for e in entries
+        ],
     }
