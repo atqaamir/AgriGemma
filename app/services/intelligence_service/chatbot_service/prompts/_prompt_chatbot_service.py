@@ -20,21 +20,51 @@ CHATBOT_SYSTEM = (
 )
 
 
+_GENERAL_NOTE = (
+    "This is a general question. The farm data above is background context only — "
+    "draw primarily on your expert agricultural knowledge and the web search results below "
+    "to answer fully and practically. Don't limit your answer to what the farm data says."
+)
+
+_GENERAL_NOTE_NO_WEB = (
+    "This is a general question. The farm data above is background context only — "
+    "draw primarily on your expert agricultural knowledge to answer fully and practically. "
+    "Don't limit your answer to what the farm data says."
+)
+
+
+def _web_block(web_results: list[dict]) -> str:
+    lines = ["WEB SEARCH RESULTS:"]
+    for i, r in enumerate(web_results, 1):
+        title   = r.get("title", "")
+        snippet = r.get("snippet", "")
+        lines.append(f"[{i}] {title}: {snippet}")
+    return "\n".join(lines)
+
+
 def build_chatbot_prompt(
     farmer_context: str,
     history: str,
     user_message: str,
+    intent: str = "general",
+    web_results: list | None = None,
 ) -> str:
     user_parts = [f"FARM DATA:\n{farmer_context}"]
+
+    if web_results:
+        user_parts.append(_web_block(web_results))
 
     if history.strip():
         user_parts.append(f"CONVERSATION:\n{history}")
 
+    question_block = f"FARMER ASKS: {user_message}"
+    if intent == "general":
+        note = _GENERAL_NOTE if web_results else _GENERAL_NOTE_NO_WEB
+        question_block += f"\n\nNOTE: {note}"
+
     user_parts.append(
-        f"FARMER ASKS: {user_message}\n\n"
-        "Reply using ONLY this format:\n"
-        "{RESPONSE: '<your answer>', URGENCY: '<low|medium|high>', ACTIONS: '<action1 | action2 | NONE>'}\n"
-        "One line. No text outside the curly braces."
+        f"{question_block}\n\n"
+        "Reply in the same format as the examples above. One line only."
     )
 
     user_content = "\n\n".join(user_parts)
