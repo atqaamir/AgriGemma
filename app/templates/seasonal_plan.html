@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html class="light" lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+  <title>Seasonal Planning</title>
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;700;800&family=Work_Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="/static/css/dashboard.css"/>
+  <script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            "surface": "#fcf9f0",
+            "secondary-fixed": "#d5e9c1",
+            "on-error-container": "#93000a",
+            "inverse-primary": "#bbccaa",
+            "on-tertiary-fixed": "#1e1c12",
+            "tertiary-fixed-dim": "#ccc6b6",
+            "surface-container-high": "#ebe8df",
+            "primary": "#47573b",
+            "on-secondary-fixed-variant": "#3b4b2e",
+            "secondary-fixed-dim": "#bacda7",
+            "surface-dim": "#dddad1",
+            "surface-variant": "#e5e2da",
+            "on-secondary-fixed": "#111f07",
+            "surface-container-highest": "#e5e2da",
+            "on-tertiary-container": "#f1ebda",
+            "on-secondary-container": "#586a4a",
+            "inverse-on-surface": "#f4f1e8",
+            "on-primary": "#ffffff",
+            "on-primary-fixed": "#121f09",
+            "on-primary-container": "#dff1cd",
+            "secondary-container": "#d5e9c1",
+            "background": "#fcf9f0",
+            "on-surface": "#1c1c17",
+            "outline": "#75786f",
+            "error": "#ba1a1a",
+            "on-error": "#ffffff",
+            "primary-container": "#5f6f52",
+            "tertiary-container": "#6e6a5d",
+            "surface-container-low": "#f7f3ea",
+            "tertiary": "#555246",
+            "on-surface-variant": "#444840",
+            "error-container": "#ffdad6",
+            "on-tertiary-fixed-variant": "#4a473b",
+            "primary-fixed": "#d6e8c5",
+            "primary-fixed-dim": "#bbccaa",
+            "on-primary-fixed-variant": "#3c4b31",
+            "tertiary-fixed": "#e8e2d2",
+            "inverse-surface": "#31312b",
+            "surface-bright": "#fcf9f0",
+            "surface-container-lowest": "#ffffff",
+            "secondary": "#536344",
+            "surface-container": "#f1eee5",
+            "on-secondary": "#ffffff",
+            "on-tertiary": "#ffffff",
+            "surface-tint": "#536347",
+            "outline-variant": "#c5c8bd",
+            "on-background": "#1c1c17"
+          },
+          borderRadius: {
+            "DEFAULT": "0.25rem",
+            "lg": "0.5rem",
+            "xl": "0.75rem",
+            "full": "9999px"
+          },
+          fontFamily: {
+            "headline": ["Manrope"],
+            "body": ["Work Sans"],
+            "label": ["Work Sans"]
+          }
+        },
+      },
+    }
+  </script>
+  <style>
+    body { font-family: 'Work Sans', sans-serif; }
+    .font-headline { font-family: 'Manrope', sans-serif; }
+    .material-symbols-outlined { font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+    .glass-card { background: rgba(255,255,255,0.8); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); }
+    .hide-scrollbar::-webkit-scrollbar { display: none; }
+    .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+  </style>
+</head>
+
+<body class="bg-background text-on-surface min-h-screen pb-32">
+
+<!-- Embed plan data for JS -->
+<script id="plan-data" type="application/json">{{ plan | tojson }}</script>
+<script id="ai-reasoning-data" type="application/json">{{ ai_reasoning | tojson }}</script>
+
+{% include "_header.html" %}
+
+<main class="pt-6 px-4 pb-40 max-w-screen-xl mx-auto space-y-8">
+
+  <!-- Hero Card -->
+  <section class="relative h-64 rounded-xl overflow-hidden shadow-[0_8px_24px_rgba(28,28,23,0.06)]">
+    <img class="absolute inset-0 w-full h-full object-cover"
+         src="https://lh3.googleusercontent.com/aida-public/AB6AXuBOdD_FWQKqUTSamYRzdjE2UN8llWu2iEX3OrlriGHlDabVdbU0yrucYSlDMJe3wSf8PvYDITHLNP2CvJbRElwSEGuxuGQi0XDqgy3SOe2nRwnLv3ycHuCGAlCs78JF7uRSEC0I7a_nyschhV2fiJ7v2yJNsp3GBoVZ29E4Rl7xqXNfeoVxRH1XCl3Yeg5Rri58eQqI_7KfmZ_NvmtI31A_vYe01yD3X8quj1HvPCGzXHcs9elG1PmoI6f_UV-m3u6czq4cl-ZW1vRs"
+         alt="Seasonal crop field">
+    <div class="absolute inset-0 bg-gradient-to-br from-primary/80 to-primary-container/40 flex flex-col justify-end p-6">
+      <div class="glass-card p-5 rounded-xl space-y-2">
+        <div class="flex items-start justify-between gap-2">
+          <h2 class="font-headline text-xl font-bold text-on-surface">
+            {% if plan and plan.get('total_crops') %}
+              Your Season Plan — {{ plan.total_crops }} Crop{{ 's' if plan.total_crops != 1 else '' }}
+            {% else %}
+              No Active Plan
+            {% endif %}
+          </h2>
+          {% if plan and plan.get('last_updated') %}
+          <span class="flex items-center gap-1 text-[10px] text-on-surface-variant/70 bg-surface-container/60 px-2 py-1 rounded-full whitespace-nowrap flex-shrink-0 mt-0.5">
+            <span class="material-symbols-outlined" style="font-size:12px;font-variation-settings:'FILL' 0,'wght' 400,'GRAD' 0,'opsz' 20;">update</span>
+            {{ plan.last_updated }}
+          </span>
+          {% endif %}
+        </div>
+        <p class="text-sm text-on-surface-variant leading-relaxed">
+          Based on soil health, weather forecasts, and water resources, we prepared the most suitable planting strategy.
+        </p>
+        <p class="text-xs text-on-surface-variant opacity-70 italic">
+          Growth stage: {{ plan.get('growth_stage', '—') if plan else '—' }}
+        </p>
+        <p id="ai-reasoning-text" class="text-[10px] text-on-surface-variant/70 leading-tight hidden"></p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Crop Cards -->
+  <section class="space-y-4">
+    <h3 class="font-headline text-lg font-bold text-on-surface">Recommended Crops</h3>
+    {% set ICONS = {'cotton': 'eco', 'rice': 'grass', 'maize': 'agriculture', 'wheat': 'grain', 'soybean': 'spa', 'sunflower': 'local_florist'} %}
+    <div id="crop-cards" class="flex overflow-x-auto hide-scrollbar gap-4 pb-2 snap-x">
+      {% if plan and plan.get('crops') %}
+        {% for crop in plan.crops %}
+          <button
+            class="crop-card flex-none w-[260px] snap-start bg-surface-container-low p-4 rounded-xl border-2 border-transparent flex items-center justify-between transition-all duration-300 text-left"
+            onclick="selectCrop(this, parseInt(this.dataset.index))"
+            data-index="{{ loop.index0 }}">
+            <div class="flex items-center gap-4">
+              <div class="crop-icon-wrap w-12 h-12 bg-surface-container rounded-lg flex items-center justify-center flex-shrink-0">
+                <span class="material-symbols-outlined text-primary text-3xl">{{ ICONS.get(crop.crop.lower(), 'eco') }}</span>
+              </div>
+              <div class="text-left">
+                <p class="font-headline font-bold text-on-surface">{{ crop.crop }}</p>
+                <p class="text-xs text-on-surface-variant">Soil: {{ crop.soil_type or '—' }}</p>
+                <p class="text-xs text-on-surface-variant">Water: {{ crop.water_source or '—' }}</p>
+              </div>
+            </div>
+            {% if not crop.feasible %}
+              <span class="bg-error text-on-error px-2 py-0.5 rounded-full text-[10px] font-bold whitespace-nowrap ml-2">Not Feasible</span>
+            {% elif crop.adjustments %}
+              <span class="bg-secondary-container text-on-secondary-container px-2 py-0.5 rounded-full text-[10px] font-bold whitespace-nowrap ml-2">Feasible</span>
+            {% else %}
+              <span class="bg-primary-fixed text-on-primary-fixed-variant px-2 py-0.5 rounded-full text-[10px] font-bold whitespace-nowrap ml-2">High Potential</span>
+            {% endif %}
+          </button>
+        {% endfor %}
+      {% else %}
+        <p class="text-on-surface-variant text-sm">No crops in your active plan.</p>
+      {% endif %}
+    </div>
+  </section>
+
+  <!-- Timeline / Adjustments panel -->
+  <section class="space-y-4">
+    <h3 class="font-headline text-lg font-bold text-on-surface" id="panel-header">Select a crop above</h3>
+
+    <!-- Timeline (feasible crops) -->
+    <div id="timeline-panel" class="hidden max-h-[420px] overflow-y-auto pr-2">
+      <div class="bg-surface-container-lowest p-6 rounded-xl space-y-6 shadow-sm" id="timeline-items"></div>
+    </div>
+
+    <!-- Adjustments (non-feasible crops) -->
+    <div id="adjustments-panel" class="hidden">
+      <div class="bg-surface-container-lowest p-6 rounded-xl shadow-sm space-y-4">
+        <div id="adjustment-cards" class="space-y-4"></div>
+        <div class="border-t border-outline-variant pt-4">
+          <p id="adjustment-reasoning" class="text-xs text-on-surface-variant leading-relaxed italic"></p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<!-- Bottom Navigation (shared) -->
+<nav class="fixed bottom-0 left-0 w-full z-50 bg-[#fcf9f0]/80 dark:bg-stone-950/80 backdrop-blur-md rounded-t-[24px] shadow-[0_-8px_24px_rgba(28,28,23,0.06)] flex justify-around items-center px-4 pb-6 pt-3">
+  <a class="flex flex-col items-center justify-center text-stone-500 dark:text-stone-400 px-3 py-1.5 transition-transform hover:scale-105 duration-150" href="/">
+    <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">dashboard</span>
+    <span class="font-['Work_Sans'] text-[11px] font-medium tracking-wide">Dashboard</span>
+  </a>
+  <a class="flex flex-col items-center justify-center text-stone-500 dark:text-stone-400 px-3 py-1.5 transition-transform hover:scale-105 duration-150" href="/myfields">
+    <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">landscape</span>
+    <span class="font-['Work_Sans'] text-[11px] font-medium tracking-wide">Fields</span>
+  </a>
+  <a class="flex flex-col items-center justify-center text-stone-500 dark:text-stone-400 px-3 py-1.5 transition-transform hover:scale-105 duration-150" href="/mycrops">
+    <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">eco</span>
+    <span class="font-['Work_Sans'] text-[11px] font-medium tracking-wide">Crops</span>
+  </a>
+  <a class="flex flex-col items-center justify-center text-stone-500 dark:text-stone-400 px-3 py-1.5 transition-transform hover:scale-105 duration-150" href="/mytasks">
+    <span class="material-symbols-outlined">assignment_turned_in</span>
+    <span class="font-['Work_Sans'] text-[11px] font-medium tracking-wide">Tasks</span>
+  </a>
+  <a class="flex flex-col items-center justify-center text-stone-500 dark:text-stone-400 px-3 py-1.5 transition-transform hover:scale-105 duration-150" href="/chatbot">
+    <span class="material-symbols-outlined">chat</span>
+    <span class="font-['Work_Sans'] text-[11px] font-medium tracking-wide">Chat</span>
+  </a>
+</nav>
+
+<script>
+const PLAN      = JSON.parse(document.getElementById('plan-data').textContent);
+const AI_REASON = JSON.parse(document.getElementById('ai-reasoning-data').textContent);
+const CROPS     = (PLAN && PLAN.crops) ? PLAN.crops : [];
+
+// Today's date injected by Python (date.today().isoformat()) — avoids client timezone drift
+const TODAY = new Date('{{ today_str }}');
+
+// Parse a "MM/DD/YYYY" schedule date string into a Date (midnight).
+// Returns null for missing / placeholder values.
+function parseMDY(str) {
+  if (!str || str === '—') return null;
+  const [m, d, y] = str.split('/');
+  return new Date(parseInt(y), parseInt(m) - 1, parseInt(d));
+}
+
+// Return the index of the timeline item whose month+year matches today.
+// Returns -1 when no phase falls in the current month.
+function currentPhaseIndex(items) {
+  const m = TODAY.getMonth();
+  const y = TODAY.getFullYear();
+  return items.findIndex(it => {
+    const d = parseMDY(it.label);
+    return d && d.getMonth() === m && d.getFullYear() === y;
+  });
+}
+
+const ADJUSTMENT_META = [
+  { pattern: /irrigation|water drop/i, icon: 'water_drop',    title: 'Irrigation Adjustment'     },
+  { pattern: /sowing|delay|harvest/i,  icon: 'calendar_month', title: 'Optimised Sowing Schedule' },
+  { pattern: /fertiliz/i,              icon: 'potted_plant',  title: 'Nutrient Supplementation'  },
+  { pattern: /water source/i,          icon: 'waves',         title: 'Water Source Calibration'  },
+];
+function metaForAdjustment(text) {
+  for (const m of ADJUSTMENT_META) {
+    if (m.pattern.test(text)) return m;
+  }
+  return { icon: 'warning', title: 'Required Adjustment' };
+}
+
+function buildTimelineItem(label, title, desc, isCurrent, isLast) {
+  const dotColor    = isCurrent ? 'bg-secondary' : isLast ? 'bg-primary-container' : 'bg-primary';
+  const connector   = isLast ? '' : `<div class="w-1 flex-1 bg-outline-variant/20 -mb-6"></div>`;
+  const highlight   = isCurrent ? 'bg-secondary-container/20 -mx-4 px-4 py-2 rounded-lg' : '';
+  const currentBadge = isCurrent
+    ? `<span class="ml-2 bg-secondary text-on-secondary text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-widest">Current</span>`
+    : '';
+  return `
+    <div class="relative flex gap-4 ${highlight}">
+      <div class="flex flex-col items-center">
+        <div class="w-3 h-3 rounded-full ${dotColor} z-10"></div>
+        ${connector}
+      </div>
+      <div class="pb-6">
+        <p class="text-xs font-bold text-primary uppercase tracking-wider">${label}</p>
+        ${currentBadge}
+        <h4 class="font-headline font-bold text-on-surface">${title}</h4>
+        <p class="text-sm text-on-surface-variant">${desc}</p>
+      </div>
+    </div>`;
+}
+
+function buildAdjustmentCard(adjustment) {
+  const meta = metaForAdjustment(adjustment);
+  return `
+    <div class="bg-surface-container-low rounded-xl shadow-sm border-l-4 border-error overflow-hidden flex items-start p-4 gap-4">
+      <div class="flex-shrink-0 w-12 h-12 rounded-lg bg-error/10 flex items-center justify-center">
+        <span class="material-symbols-outlined text-error text-2xl">${meta.icon}</span>
+      </div>
+      <div class="flex-1">
+        <h4 class="font-headline font-bold text-on-surface mb-1">${meta.title}</h4>
+        <p class="text-sm text-on-surface-variant leading-relaxed">${adjustment}</p>
+      </div>
+    </div>`;
+}
+
+function selectCrop(el, index) {
+  document.querySelectorAll('.crop-card').forEach(c => {
+    c.classList.remove('border-primary', 'ring-2', 'ring-primary-container/20');
+    c.classList.add('border-transparent');
+    c.querySelector('.crop-icon-wrap').classList.remove('bg-primary-container/20');
+    c.querySelector('.crop-icon-wrap').classList.add('bg-surface-container');
+  });
+
+  el.classList.remove('border-transparent');
+  el.classList.add('border-primary', 'ring-2', 'ring-primary-container/20');
+  el.querySelector('.crop-icon-wrap').classList.remove('bg-surface-container');
+  el.querySelector('.crop-icon-wrap').classList.add('bg-primary-container/20');
+
+  const crop = CROPS[index];
+  if (!crop) return;
+
+  const header      = document.getElementById('panel-header');
+  const timeline    = document.getElementById('timeline-panel');
+  const adjustments = document.getElementById('adjustments-panel');
+  const aiText      = document.getElementById('ai-reasoning-text');
+
+  if (crop.feasible) {
+    header.textContent = `Timeline for ${crop.crop}`;
+    timeline.classList.remove('hidden');
+    adjustments.classList.add('hidden');
+    aiText.classList.add('hidden');
+
+    const s = crop.schedule || {};
+    const items = [
+      { label: s.sowing_date || '—',           title: 'Sowing Date',      desc: 'Optimal soil temperature window predicted.' },
+      { label: s.irrigation_start_date || '—', title: 'Irrigation Start', desc: s.irrigation_frequency ? `${s.irrigation_frequency}.` : 'Precision hydration based on forecast.' },
+      { label: s.fertilization_date || '—',    title: 'Fertilization',    desc: 'Nitrogen application for peak growth.' },
+      { label: s.harvesting_date || '—',       title: 'Harvest Window',   desc: 'Estimated maximum yield period.' },
+    ];
+    const curIdx = currentPhaseIndex(items);
+    document.getElementById('timeline-items').innerHTML =
+      items.map((it, i) => buildTimelineItem(it.label, it.title, it.desc, i === curIdx, i === items.length - 1)).join('');
+
+  } else {
+    header.textContent = `Required Adjustments: ${crop.crop}`;
+    timeline.classList.add('hidden');
+    adjustments.classList.remove('hidden');
+
+    const cards = (crop.adjustments || []).map(buildAdjustmentCard).join('');
+    document.getElementById('adjustment-cards').innerHTML =
+      cards || '<p class="text-sm text-on-surface-variant">No specific adjustments recorded.</p>';
+
+    document.getElementById('adjustment-reasoning').textContent = AI_REASON || '';
+
+    aiText.textContent = AI_REASON || '';
+    aiText.classList.remove('hidden');
+  }
+}
+
+window.addEventListener('DOMContentLoaded', () => {
+  const firstCard = document.querySelector('.crop-card');
+  if (firstCard) firstCard.click();
+});
+</script>
+</body>
+</html>

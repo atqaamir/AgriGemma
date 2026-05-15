@@ -1,5 +1,7 @@
 from datetime import date, datetime, timedelta
 
+import json
+
 from app.extensions import db
 from app.models.notification import Notification
 from app.models.user import User
@@ -9,6 +11,7 @@ from app.models.task import Task
 from app.models.alert import Alert
 from app.models.weather import ClimateProfile
 from app.models.weather_forecast import CurrentWeatherProfile
+from app.models.seasonal_plan import SeasonalPlan, SeasonalPlanEntry
 
 
 def run():
@@ -20,6 +23,8 @@ def run():
     Notification.query.delete()
     Crop.query.delete()
     Field.query.delete()
+    SeasonalPlanEntry.query.delete()
+    SeasonalPlan.query.delete()
     User.query.delete()
     ClimateProfile.query.delete()
     CurrentWeatherProfile.query.delete()
@@ -634,6 +639,7 @@ def run():
 
     db.session.add_all(sample_weather_profile)
     db.session.commit()
+
 
     print("Sample data seeded successfully.")
     print(f"Users:        {User.query.count()}")
