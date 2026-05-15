@@ -40,15 +40,23 @@ _SYSTEM_SEP = "\x00SYS\x00"  # must match _prompt_chatbot_service.py
 def _strip_preamble(text: str) -> str:
     """
     If the model emitted inline thinking before the structured block, discard it.
-    Finds the first occurrence of RESPONSE: and returns from there.
-    Falls back to _extract_clean_response when RESPONSE: never appears.
+
+    Gemma 4 sometimes echoes the format template (RESPONSE: '<your answer>') before
+    the real answer, so we look for the LAST occurrence of RESPONSE: followed by an
+    actual quote — not a template placeholder like '<your answer>'.
     """
+    import re
+    # Find every RESPONSE: followed by a quote that is NOT a template placeholder (<...)
+    real_hits = list(re.finditer(r"RESPONSE\s*:\s*[\"'](?!<)", text, re.IGNORECASE))
+    if real_hits:
+        return text[real_hits[-1].start():]
+
+    # Fall back to first RESPONSE: regardless (covers edge cases)
     idx = text.find("RESPONSE:")
-    if idx > 0:
+    if idx >= 0:
         return text[idx:]
-    if idx == -1:
-        return _extract_clean_response(text)
-    return text
+
+    return _extract_clean_response(text)
 
 
 def _extract_clean_response(text: str) -> str:
