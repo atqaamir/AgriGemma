@@ -11,14 +11,14 @@ def dashboard_page():
 
 @dashboard_bp.route("/<int:user_id>/dashboard")
 def get_dashboard(user_id):
+    dashboard_data = DashboardService.build_dashboard_data(user_id)
+    return jsonify(dashboard_data), 200
 
-    dashboard_data = (
-        DashboardService.build_dashboard_data(
-            user_id
-        )
-    )
 
-    return jsonify(dashboard_data), 200 
+@dashboard_bp.route("/<int:user_id>/dashboard/generate-summary", methods=["POST"])
+def generate_summary(user_id):
+    result = DashboardService.generate_and_store_summary(user_id)
+    return jsonify(result), 200
 
 @dashboard_bp.route("/<int:user_id>/advisor", methods=["GET"])
 def get_advisor(user_id):

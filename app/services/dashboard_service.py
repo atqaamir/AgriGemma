@@ -1,5 +1,7 @@
-from datetime import date
+from datetime import datetime, timezone, date
 
+from app.extensions import db
+from app.models.dashboard_summary import DashboardSummary
 from app.services.domain_service.user_service import UserService
 from app.services.domain_service.field_service import FieldService
 from app.services.domain_service.crop_service import CropService
@@ -29,8 +31,8 @@ class DashboardService:
 
         tasks = TaskService.get_tasks_by_user(user_id)
         pending_tasks = [t for t in tasks if not t.completed]
-        context = ContextAggregationService.build_task_context(user_id)
-        ai_insights = TaskIntelligenceService.generate_intelligence(context, user_id)
+
+        stored = DashboardService._fetch_stored_summary(user_id)
 
         return {
             "user": DashboardService._build_user_section(user),
@@ -47,10 +49,44 @@ class DashboardService:
             "field_condition": DashboardService._build_field_condition(fields, active_fields),
             "crop_condition": DashboardService._build_crop_condition(crops),
             "alerts": DashboardService._get_alerts(user_id, pending_tasks),
-            "insights": ai_insights.get("insights", []),
-            "dashboard_summary": ai_insights.get("summary"),
-            "dashboard_recommendations": ai_insights.get("recommendations", []),
+            "dashboard_summary": stored,
             "seasonal_plan": DashboardService._build_plan_summary(user_id),
+        }
+
+    @staticmethod
+    def _fetch_stored_summary(user_id: int) -> dict | None:
+        row = (
+            DashboardSummary.query
+            .filter_by(user_id=user_id)
+            .order_by(DashboardSummary.generated_at.desc())
+            .first()
+        )
+        if not row:
+            return None
+        return {
+            "summary":      row.summary,
+            "is_fallback":  row.is_fallback,
+            "generated_at": row.generated_at.isoformat(),
+        }
+
+    @staticmethod
+    def generate_and_store_summary(user_id: int) -> dict:
+        context     = ContextAggregationService.build_task_context(user_id)
+        ai_insights = TaskIntelligenceService.generate_intelligence(context, user_id)
+
+        row = DashboardSummary(
+            user_id     = user_id,
+            summary     = ai_insights.get("summary", ""),
+            is_fallback = ai_insights.get("is_fallback", False),
+            generated_at= datetime.now(timezone.utc),
+        )
+        db.session.add(row)
+        db.session.commit()
+
+        return {
+            "summary":      row.summary,
+            "is_fallback":  row.is_fallback,
+            "generated_at": row.generated_at.isoformat(),
         }
     
     @staticmethod
