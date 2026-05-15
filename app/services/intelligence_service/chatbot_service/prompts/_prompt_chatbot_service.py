@@ -54,12 +54,9 @@ def build_chatbot_prompt(
     farmer_context: str,
     history: str,
     user_message: str,
-<<<<<<< HEAD
     language: str = 'en',
-=======
     intent: str = "general",
     web_results: list | None = None,
->>>>>>> main
 ) -> str:
     system = CHATBOT_SYSTEM + (_URDU_ADDENDUM if language == 'ur' else "")
     user_parts = [f"FARM DATA:\n{farmer_context}"]
