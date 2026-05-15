@@ -1,8 +1,0 @@
-{
-  "permissions": {
-    "allow": [
-      "Bash(ipconfig)",
-      "PowerShell(Get-NetConnectionProfile)"
-    ]
-  }
-}

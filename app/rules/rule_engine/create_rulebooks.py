@@ -20,7 +20,6 @@ from app.rules.rulebooks.compatibility_rules.crop_season_compatibility_rulebook 
 from app.rules.rulebooks.compatibility_rules.water_source_compatibility_rulebook           import WaterSourceCompatibilityRulebook
 from app.rules.rulebooks.compatibility_rules.climate_compatibility_rulebook                import ClimateCompatibilityRulebook
 from app.rules.rulebooks.compatibility_rules.soil_climate_compatibility_rulebook           import SoilClimateCompatibilityRulebook
-from app.rules.rulebooks.compatibility_rules.irrigation_frequency_compatibility_rulebook   import IrrigationFrequencyCompatibilityRulebook
 from app.rules.rulebooks.compatibility_rules.crop_type_season_compatibility_rulebook       import CropTypeSeasonCompatibilityRulebook
 from app.rules.rulebooks.event_timeline.crop_type_timeline_rulebook                        import CropTypeTimelineRulebook
 from app.rules.rulebooks.action_rules.soil_action_rulebook                  import SoilActionRulebook
@@ -31,7 +30,6 @@ from app.rules.rulebooks.action_rules.humidity_action_rulebook              impo
 from app.rules.rulebooks.action_rules.soil_moisture_action_rulebook         import SoilMoistureActionRulebook
 from app.rules.rulebooks.action_rules.ph_action_rulebook                    import PhActionRulebook
 from app.rules.rulebooks.action_rules.sunlight_action_rulebook              import SunlightActionRulebook
-from app.rules.rulebooks.action_rules.irrigation_frequency_action_rulebook  import IrrigationFrequencyActionRulebook
 from app.rules.rulebooks.action_rules.rainfall_action_rulebook              import RainfallActionRulebook
 
 warnings.filterwarnings('ignore')
@@ -67,26 +65,24 @@ class RangeRulebooks(NamedTuple):
 
 
 class CompatibilityRulebooks(NamedTuple):
-    crop_soil_df:             pd.DataFrame
-    crop_season_df:           pd.DataFrame
-    water_source_df:          pd.DataFrame
-    climate_df:               pd.DataFrame
-    soil_climate_df:          pd.DataFrame
-    irrigation_frequency_df:  pd.DataFrame
-    crop_type_season_df:      pd.DataFrame
+    crop_soil_df:        pd.DataFrame
+    crop_season_df:      pd.DataFrame
+    water_source_df:     pd.DataFrame
+    climate_df:          pd.DataFrame
+    soil_climate_df:     pd.DataFrame
+    crop_type_season_df: pd.DataFrame
 
 
 class ActionRulebooks(NamedTuple):
-    soil_df:                 pd.DataFrame
-    season_df:               pd.DataFrame
-    water_source_df:         pd.DataFrame
-    temperature_df:          pd.DataFrame
-    humidity_df:             pd.DataFrame
-    soil_moisture_df:        pd.DataFrame
-    ph_df:                   pd.DataFrame
-    sunlight_df:             pd.DataFrame
-    irrigation_frequency_df: pd.DataFrame
-    rainfall_df:             pd.DataFrame
+    soil_df:          pd.DataFrame
+    season_df:        pd.DataFrame
+    water_source_df:  pd.DataFrame
+    temperature_df:   pd.DataFrame
+    humidity_df:      pd.DataFrame
+    soil_moisture_df: pd.DataFrame
+    ph_df:            pd.DataFrame
+    sunlight_df:      pd.DataFrame
+    rainfall_df:      pd.DataFrame
 
 
 # ── Loaders ───────────────────────────────────────────────────────────────────
@@ -156,10 +152,10 @@ def _score_to_feasibility(score: float) -> str:
 
 
 def _clean_key(key: str) -> str:
-    """'>70' → 'above_70', '<40' → 'below_40', '15-20' → '15_20'."""
+    """'>70' → 'above_70', '<40' → 'below_40', '15-20' → '15_20', '>7.5' → 'above_7_5'."""
     key = re.sub(r'^>', 'above_', str(key))
     key = re.sub(r'^<', 'below_', key)
-    return key.replace('-', '_').lower()
+    return key.replace('-', '_').replace('.', '_').lower()
 
 
 def _build_long(
@@ -255,6 +251,77 @@ def _build_wide(rules: dict, section_key: str, prefix: str, crop_id_map: dict) -
     return pd.DataFrame(rows)
 
 
+def _build_wide_staged(
+    rules: dict,
+    section_key: str,
+    prefix: str,
+    crop_id_map: dict,
+    stage_id_map: dict,
+) -> pd.DataFrame:
+    """Build a wide-format compatibility DataFrame — one row per (crop, growth_stage).
+
+    JSON structure expected: crop → growth_stage → band → {score, feasibility, ...}
+
+    Creates a pair of columns per range key in the section:
+      {prefix}{clean_key}             → score         (float)
+      {prefix}{clean_key}_feasibility → feasibility   (str)
+
+    Output columns: crop_id, growth_stage_id, {prefix}*, {prefix}*_feasibility
+    """
+    rows = []
+    for crop, stages in rules[section_key].items():
+        if crop.startswith('_'):
+            continue
+        for stage, bands in stages.items():
+            row = {
+                'crop_id':         crop_id_map[crop],
+                'growth_stage_id': stage_id_map[stage],
+            }
+            for k, entry in bands.items():
+                col = f"{prefix}{_clean_key(k)}"
+                row[col]                  = float(entry['score'])
+                row[f"{col}_feasibility"] = _check_feasibility(
+                    entry['feasibility'],
+                    context=f"{section_key}[{crop}][{stage}][{k}]",
+                )
+            rows.append(row)
+    return pd.DataFrame(rows)
+
+
+def _build_action_rows_staged(
+    rules: dict,
+    section_key: str,
+    band_col: str,
+    crop_id_map: dict,
+    stage_id_map: dict,
+) -> pd.DataFrame:
+    """Build an action/adjustment DataFrame — one row per (crop, growth_stage, band).
+
+    JSON structure expected: crop → growth_stage → band → {feasibility, reasoning, actions, ...}
+    The 'score' key is intentionally excluded (action rulebook models do not store score).
+
+    Output columns: crop_id, growth_stage_id, <band_col>, feasibility, reasoning, actions (JSON str)
+    """
+    rows = []
+    for crop, stages in rules[section_key].items():
+        if crop.startswith('_'):
+            continue
+        for stage, bands in stages.items():
+            for key, entry in bands.items():
+                rows.append({
+                    'crop_id':         crop_id_map[crop],
+                    'growth_stage_id': stage_id_map[stage],
+                    band_col:          key,
+                    'feasibility':     _check_feasibility(
+                        entry['feasibility'],
+                        context=f"{section_key}[{crop}][{stage}][{key}]",
+                    ),
+                    'reasoning':       entry['reasoning'],
+                    'actions':         json.dumps(entry['actions']),
+                })
+    return pd.DataFrame(rows)
+
+
 # ── Rulebook builders ─────────────────────────────────────────────────────────
 def create_range_rules(crop_data: pd.DataFrame) -> RangeRulebooks:
     """Build climate, soil-chemistry, and water range rulebooks from CSV data.
@@ -306,21 +373,17 @@ def create_irrigation_rules(rules: dict) -> pd.DataFrame:
     _maps    = get_id_maps()
     CROP_ID  = _maps['Crop_Name']
     STAGE_ID = _maps['Growth_Stage']
-    SOIL_ID  = _maps['Soil_Type']
 
     records = []
     for crop, stages in rules['irrigation_frequency_rules'].items():
         if crop.startswith('_'):
             continue
-        for stage, soils in stages.items():
-            for soil, freq in soils.items():
-                records.append({
-                    'crop_id':               CROP_ID[crop],
-                    'growth_stage_id':       STAGE_ID[stage],
-                    'soil_type_id':          SOIL_ID[soil],
-                    'recommended_frequency': int(freq),
-                    'mean_frequency':        float(freq),
-                })
+        for stage, freq in stages.items():
+            records.append({
+                'crop_id':               CROP_ID[crop],
+                'growth_stage_id':       STAGE_ID[stage],
+                'recommended_frequency': int(freq),
+            })
     return pd.DataFrame(records)
 
 
@@ -389,16 +452,18 @@ def create_compatibility_rules(rules: dict) -> CompatibilityRulebooks:
     """Build all compatibility DataFrames from the crop rules JSON dict.
     Scores and feasibility labels are read from the combined *_adjustment_rules sections.
 
-    crop_soil_df         keys : crop_id, soil_type_id        columns : score, feasibility
-    crop_season_df       keys : crop_id, season_id           columns : score, feasibility
-    water_source_df      keys : crop_id, water_source_id     columns : score, feasibility
-    climate_df           key  : crop_id   columns : temp_*, temp_*_feasibility,
-                                                    humidity_*, humidity_*_feasibility,
-                                                    sunlight_*, sunlight_*_feasibility
-    soil_climate_df      key  : crop_id   columns : moisture_*, moisture_*_feasibility,
-                                                    ph_*, ph_*_feasibility
-    irrigation_frequency_df key : crop_id  columns : irr_freq_*, irr_freq_*_feasibility
-    crop_type_season_df  keys : crop_type_id, season_id  columns : score, feasibility
+    crop_soil_df         keys : crop_id, soil_type_id               columns : score, feasibility
+    crop_season_df       keys : crop_id, season_id                  columns : score, feasibility
+    water_source_df      keys : crop_id, water_source_id            columns : score, feasibility
+    climate_df           keys : crop_id, growth_stage_id
+                         columns : temp_*, temp_*_feasibility,
+                                   humidity_*, humidity_*_feasibility,
+                                   sunlight_*, sunlight_*_feasibility,
+                                   rainfall_*, rainfall_*_feasibility
+    soil_climate_df      keys : crop_id, growth_stage_id
+                         columns : moisture_*, moisture_*_feasibility,
+                                   ph_*, ph_*_feasibility
+    crop_type_season_df  keys : crop_type_id, season_id             columns : score, feasibility
     """
     _maps        = get_id_maps()
     CROP_ID      = _maps['Crop_Name']
@@ -406,6 +471,9 @@ def create_compatibility_rules(rules: dict) -> CompatibilityRulebooks:
     WATER_ID     = _maps['Water_Source']
     CROP_TYPE_ID = _maps['Crop_Type']
     SEASON_ID    = _maps['Season']
+    STAGE_ID     = _maps['Growth_Stage']
+
+    _STAGE_MERGE = ['crop_id', 'growth_stage_id']
 
     crop_type_season_rows = [
         {
@@ -425,63 +493,61 @@ def create_compatibility_rules(rules: dict) -> CompatibilityRulebooks:
         water_source_df = _build_long(rules, 'water_source_adjustment_rules', 'water_source_id', CROP_ID,
                               inner_id_map=WATER_ID, filter_keys=list(WATER_ID.keys())),
         climate_df      = (
-                          _build_wide(rules, 'temperature_adjustment_rules', 'temp_',     CROP_ID)
-                          .merge(_build_wide(rules, 'humidity_adjustment_rules',            'humidity_',  CROP_ID), on='crop_id')
-                          .merge(_build_wide(rules, 'sunlight_adjustment_rules',            'sunlight_',  CROP_ID), on='crop_id')
+                          _build_wide_staged(rules, 'temperature_adjustment_rules', 'temp_',     CROP_ID, STAGE_ID)
+                          .merge(_build_wide_staged(rules, 'humidity_adjustment_rules',   'humidity_', CROP_ID, STAGE_ID), on=_STAGE_MERGE)
+                          .merge(_build_wide_staged(rules, 'sunlight_adjustment_rules',   'sunlight_', CROP_ID, STAGE_ID), on=_STAGE_MERGE)
+                          .merge(_build_wide_staged(rules, 'rainfall_adjustment_rules',   'rainfall_', CROP_ID, STAGE_ID), on=_STAGE_MERGE)
                           ),
         soil_climate_df = (
-                          _build_wide(rules, 'soil_moisture_adjustment_rules', 'moisture_', CROP_ID)
-                          .merge(_build_wide(rules, 'ph_adjustment_rules',                  'ph_',        CROP_ID), on='crop_id')
+                          _build_wide_staged(rules, 'soil_moisture_adjustment_rules', 'moisture_', CROP_ID, STAGE_ID)
+                          .merge(_build_wide_staged(rules, 'ph_adjustment_rules', 'ph_', CROP_ID, STAGE_ID), on=_STAGE_MERGE)
                           ),
-        irrigation_frequency_df = _build_wide(rules, 'irrigation_frequency_adjustment_rules', 'irr_freq_', CROP_ID),
-        crop_type_season_df     = pd.DataFrame(crop_type_season_rows),
+        crop_type_season_df = pd.DataFrame(crop_type_season_rows),
     )
 
 
 def create_action_rules(rules: dict) -> ActionRulebooks:
     """Build all action/adjustment DataFrames from the crop rules JSON dict.
 
-    soil_df                 keys : crop_id, soil_type_id (int)
-    season_df               keys : crop_id, season_id (int)
-    water_source_df         keys : crop_id, water_source_id (int)
-    temperature_df          keys : crop_id, temp_range (str)
-    humidity_df             keys : crop_id, humidity_range (str)
-    soil_moisture_df        keys : crop_id, moisture_range (str)
-    ph_df                   keys : crop_id, ph_category (str)
-    sunlight_df             keys : crop_id, sunlight_range (str)
-    irrigation_frequency_df keys : crop_id, irr_freq_range (str)
-    rainfall_df             keys : crop_id, rainfall_range (str)
+    soil_df          keys : crop_id, soil_type_id (int)
+    season_df        keys : crop_id, season_id (int)
+    water_source_df  keys : crop_id, water_source_id (int)
+    temperature_df   keys : crop_id, growth_stage_id, temp_range (str)
+    humidity_df      keys : crop_id, growth_stage_id, humidity_range (str)
+    soil_moisture_df keys : crop_id, growth_stage_id, moisture_range (str)
+    ph_df            keys : crop_id, growth_stage_id, ph_category (str)
+    sunlight_df      keys : crop_id, growth_stage_id, sunlight_range (str)
+    rainfall_df      keys : crop_id, growth_stage_id, rainfall_range (str)
 
     All tables include : feasibility, reasoning, actions (JSON-serialised array of action objects)
     """
-    _maps    = get_id_maps()
-    CROP_ID  = _maps['Crop_Name']
-    SOIL_ID  = _maps['Soil_Type']
+    _maps     = get_id_maps()
+    CROP_ID   = _maps['Crop_Name']
+    SOIL_ID   = _maps['Soil_Type']
     SEASON_ID = _maps['Season']
-    WATER_ID = _maps['Water_Source']
+    WATER_ID  = _maps['Water_Source']
+    STAGE_ID  = _maps['Growth_Stage']
 
     return ActionRulebooks(
-        soil_df                 = _build_action_rows(rules, 'soil_adjustment_rules',
-                                      'soil_type_id', CROP_ID, inner_id_map=SOIL_ID),
-        season_df               = _build_action_rows(rules, 'season_adjustment_rules',
-                                      'season_id', CROP_ID, inner_id_map=SEASON_ID),
-        water_source_df         = _build_action_rows(rules, 'water_source_adjustment_rules',
-                                      'water_source_id', CROP_ID,
-                                      inner_id_map=WATER_ID, filter_keys=list(WATER_ID.keys())),
-        temperature_df          = _build_action_rows(rules, 'temperature_adjustment_rules',
-                                      'temp_range', CROP_ID),
-        humidity_df             = _build_action_rows(rules, 'humidity_adjustment_rules',
-                                      'humidity_range', CROP_ID),
-        soil_moisture_df        = _build_action_rows(rules, 'soil_moisture_adjustment_rules',
-                                      'moisture_range', CROP_ID),
-        ph_df                   = _build_action_rows(rules, 'ph_adjustment_rules',
-                                      'ph_category', CROP_ID),
-        sunlight_df             = _build_action_rows(rules, 'sunlight_adjustment_rules',
-                                      'sunlight_range', CROP_ID),
-        irrigation_frequency_df = _build_action_rows(rules, 'irrigation_frequency_adjustment_rules',
-                                      'irr_freq_range', CROP_ID),
-        rainfall_df             = _build_action_rows(rules, 'rainfall_adjustment_rules',
-                                      'rainfall_range', CROP_ID),
+        soil_df         = _build_action_rows(rules, 'soil_adjustment_rules',
+                              'soil_type_id', CROP_ID, inner_id_map=SOIL_ID),
+        season_df       = _build_action_rows(rules, 'season_adjustment_rules',
+                              'season_id', CROP_ID, inner_id_map=SEASON_ID),
+        water_source_df = _build_action_rows(rules, 'water_source_adjustment_rules',
+                              'water_source_id', CROP_ID,
+                              inner_id_map=WATER_ID, filter_keys=list(WATER_ID.keys())),
+        temperature_df  = _build_action_rows_staged(rules, 'temperature_adjustment_rules',
+                              'temp_range',     CROP_ID, STAGE_ID),
+        humidity_df     = _build_action_rows_staged(rules, 'humidity_adjustment_rules',
+                              'humidity_range',  CROP_ID, STAGE_ID),
+        soil_moisture_df= _build_action_rows_staged(rules, 'soil_moisture_adjustment_rules',
+                              'moisture_range',  CROP_ID, STAGE_ID),
+        ph_df           = _build_action_rows_staged(rules, 'ph_adjustment_rules',
+                              'ph_category',     CROP_ID, STAGE_ID),
+        sunlight_df     = _build_action_rows_staged(rules, 'sunlight_adjustment_rules',
+                              'sunlight_range',  CROP_ID, STAGE_ID),
+        rainfall_df     = _build_action_rows_staged(rules, 'rainfall_adjustment_rules',
+                              'rainfall_range',  CROP_ID, STAGE_ID),
     )
 
 
@@ -539,25 +605,23 @@ class RulebookSeeder:
         self._seed_df(CropTypeTimelineRulebook, crop_type_timeline_df)
 
         # Compatibility rules
-        self._seed_df(CropSoilCompatibilityRulebook,            compat_books.crop_soil_df)
-        self._seed_df(CropSeasonCompatibilityRulebook,          compat_books.crop_season_df)
-        self._seed_df(WaterSourceCompatibilityRulebook,         compat_books.water_source_df)
-        self._seed_df(ClimateCompatibilityRulebook,             compat_books.climate_df)
-        self._seed_df(SoilClimateCompatibilityRulebook,         compat_books.soil_climate_df)
-        self._seed_df(IrrigationFrequencyCompatibilityRulebook, compat_books.irrigation_frequency_df)
-        self._seed_df(CropTypeSeasonCompatibilityRulebook,      compat_books.crop_type_season_df)
+        self._seed_df(CropSoilCompatibilityRulebook,   compat_books.crop_soil_df)
+        self._seed_df(CropSeasonCompatibilityRulebook, compat_books.crop_season_df)
+        self._seed_df(WaterSourceCompatibilityRulebook, compat_books.water_source_df)
+        self._seed_df(ClimateCompatibilityRulebook,    compat_books.climate_df)
+        self._seed_df(SoilClimateCompatibilityRulebook, compat_books.soil_climate_df)
+        self._seed_df(CropTypeSeasonCompatibilityRulebook, compat_books.crop_type_season_df)
 
         # Action rules
-        self._seed_df(SoilActionRulebook,                  action_books.soil_df)
-        self._seed_df(SeasonActionRulebook,                action_books.season_df)
-        self._seed_df(WaterSourceActionRulebook,           action_books.water_source_df)
-        self._seed_df(TemperatureActionRulebook,           action_books.temperature_df)
-        self._seed_df(HumidityActionRulebook,              action_books.humidity_df)
-        self._seed_df(SoilMoistureActionRulebook,          action_books.soil_moisture_df)
-        self._seed_df(PhActionRulebook,                    action_books.ph_df)
-        self._seed_df(SunlightActionRulebook,              action_books.sunlight_df)
-        self._seed_df(IrrigationFrequencyActionRulebook,   action_books.irrigation_frequency_df)
-        self._seed_df(RainfallActionRulebook,              action_books.rainfall_df)
+        self._seed_df(SoilActionRulebook,        action_books.soil_df)
+        self._seed_df(SeasonActionRulebook,       action_books.season_df)
+        self._seed_df(WaterSourceActionRulebook,  action_books.water_source_df)
+        self._seed_df(TemperatureActionRulebook,  action_books.temperature_df)
+        self._seed_df(HumidityActionRulebook,     action_books.humidity_df)
+        self._seed_df(SoilMoistureActionRulebook, action_books.soil_moisture_df)
+        self._seed_df(PhActionRulebook,           action_books.ph_df)
+        self._seed_df(SunlightActionRulebook,     action_books.sunlight_df)
+        self._seed_df(RainfallActionRulebook,     action_books.rainfall_df)
 
         self.db.session.commit()
 
@@ -571,15 +635,13 @@ class RulebookSeeder:
             # Action rules first (no FK deps)
             SoilActionRulebook, SeasonActionRulebook, WaterSourceActionRulebook,
             TemperatureActionRulebook, HumidityActionRulebook, SoilMoistureActionRulebook,
-            PhActionRulebook, SunlightActionRulebook, IrrigationFrequencyActionRulebook,
-            RainfallActionRulebook,
+            PhActionRulebook, SunlightActionRulebook, RainfallActionRulebook,
             # Crop-type timeline
             CropTypeTimelineRulebook,
             # Compatibility rules
             CropSoilCompatibilityRulebook, CropSeasonCompatibilityRulebook,
             WaterSourceCompatibilityRulebook, ClimateCompatibilityRulebook,
-            SoilClimateCompatibilityRulebook, IrrigationFrequencyCompatibilityRulebook,
-            CropTypeSeasonCompatibilityRulebook,
+            SoilClimateCompatibilityRulebook, CropTypeSeasonCompatibilityRulebook,
             # Range / threshold rules
             ClimateRulebook, SoilClimateRulebook, WaterClimateRulebook, SeasonClimateRulebook,
             IrrigationFrequencyRulebook, IrrigationCalenderRulebook, FertilizationCalendarRulebook, ThresholdRulebook,
