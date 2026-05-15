@@ -3,29 +3,36 @@ from app.rules.rulebooks.compatibility_rules.soil_climate_compatibility_rulebook
 from app.rules.rulebooks.compatibility_rules.crop_soil_compatibility_rulebook import CropSoilCompatibilityRulebook
 from app.rules.rulebooks.compatibility_rules.crop_season_compatibility_rulebook import CropSeasonCompatibilityRulebook
 from app.rules.rulebooks.compatibility_rules.water_source_compatibility_rulebook import WaterSourceCompatibilityRulebook
-from app.rules.rulebooks.compatibility_rules.irrigation_frequency_compatibility_rulebook import IrrigationFrequencyCompatibilityRulebook
 from app.rules.rulebooks.compatibility_rules.crop_type_season_compatibility_rulebook import CropTypeSeasonCompatibilityRulebook
 
 
 class CompatibilityRulesRepository:
 
-    # Climate Compatibility (key: crop_id)
+    # Climate Compatibility (keys: crop_id, growth_stage_id)
     @staticmethod
     def get_all_climate_compatibility() -> list:
         return ClimateCompatibilityRulebook.query.all()
 
     @staticmethod
-    def get_climate_compatibility_by_crop(crop_id: int) -> ClimateCompatibilityRulebook:
-        return ClimateCompatibilityRulebook.query.filter_by(crop_id=crop_id).first()
+    def get_climate_compatibility_by_crop(crop_id: int) -> list:
+        return ClimateCompatibilityRulebook.query.filter_by(crop_id=crop_id).all()
 
-    # Soil Climate Compatibility (key: crop_id)
+    @staticmethod
+    def get_climate_compatibility_by_crop_and_stage(crop_id: int, growth_stage_id: int) -> ClimateCompatibilityRulebook:
+        return ClimateCompatibilityRulebook.query.filter_by(crop_id=crop_id, growth_stage_id=growth_stage_id).first()
+
+    # Soil Climate Compatibility (keys: crop_id, growth_stage_id)
     @staticmethod
     def get_all_soil_climate_compatibility() -> list:
         return SoilClimateCompatibilityRulebook.query.all()
 
     @staticmethod
-    def get_soil_climate_compatibility_by_crop(crop_id: int) -> SoilClimateCompatibilityRulebook:
-        return SoilClimateCompatibilityRulebook.query.filter_by(crop_id=crop_id).first()
+    def get_soil_climate_compatibility_by_crop(crop_id: int) -> list:
+        return SoilClimateCompatibilityRulebook.query.filter_by(crop_id=crop_id).all()
+
+    @staticmethod
+    def get_soil_climate_compatibility_by_crop_and_stage(crop_id: int, growth_stage_id: int) -> SoilClimateCompatibilityRulebook:
+        return SoilClimateCompatibilityRulebook.query.filter_by(crop_id=crop_id, growth_stage_id=growth_stage_id).first()
 
     # Crop Soil Compatibility (keys: crop_id, soil_type_id)
     @staticmethod
@@ -65,15 +72,6 @@ class CompatibilityRulesRepository:
     @staticmethod
     def get_water_source_compatibility_by_crop_and_source(crop_id: int, water_source_id: int) -> WaterSourceCompatibilityRulebook:
         return WaterSourceCompatibilityRulebook.query.filter_by(crop_id=crop_id, water_source_id=water_source_id).first()
-
-    # Irrigation Frequency Compatibility (key: crop_id)
-    @staticmethod
-    def get_all_irrigation_frequency_compatibility() -> list:
-        return IrrigationFrequencyCompatibilityRulebook.query.all()
-
-    @staticmethod
-    def get_irrigation_frequency_compatibility_by_crop(crop_id: int) -> IrrigationFrequencyCompatibilityRulebook:
-        return IrrigationFrequencyCompatibilityRulebook.query.filter_by(crop_id=crop_id).first()
 
     # Crop Type Season Compatibility (keys: crop_type_id, season_id)
     @staticmethod

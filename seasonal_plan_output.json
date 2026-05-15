@@ -1,0 +1,52 @@
+{
+  "user_1_active_seasonal_plan": {
+    "plan_id": 1,
+    "growth_stage": "Sowing",
+    "currently_active": true,
+    "total_crops": 3,
+    "crops": [
+      {
+        "crop": "Maize",
+        "soil_type": "Loamy",
+        "water_source": "Groundwater",
+        "feasible": true,
+        "schedule": {
+          "sowing_date": "04/11/2027",
+          "harvesting_date": "09/27/2027",
+          "irrigation_start_date": "04/18/2027",
+          "irrigation_frequency": "2 times per week",
+          "fertilization_date": "04/26/2027"
+        },
+        "adjustments": []
+      },
+      {
+        "crop": "Cotton",
+        "soil_type": "Loamy",
+        "water_source": "Groundwater",
+        "feasible": true,
+        "schedule": {
+          "sowing_date": "04/19/2027",
+          "harvesting_date": "09/29/2027",
+          "irrigation_start_date": "04/29/2027",
+          "irrigation_frequency": "2 times per week",
+          "fertilization_date": "05/14/2027"
+        },
+        "adjustments": []
+      },
+      {
+        "crop": "Rice",
+        "soil_type": "Clay",
+        "water_source": "River",
+        "feasible": true,
+        "schedule": {
+          "sowing_date": "07/30/2026",
+          "harvesting_date": "09/12/2026",
+          "irrigation_start_date": "08/02/2026",
+          "irrigation_frequency": "5 times per week",
+          "fertilization_date": "08/19/2026"
+        },
+        "adjustments": []
+      }
+    ]
+  }
+}

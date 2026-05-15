@@ -1,19 +1,21 @@
 {
   "_meta": {
-    "temperature_unit": "degrees Celsius",
-    "humidity_unit": "%",
-    "soil_moisture_unit": "% volumetric",
-    "sunlight_unit": "hours/day",
-    "irrigation_frequency_unit": "times/week",
-    "feasibility_values": [
-      "Ideal",
-      "Conditional",
-      "Not Feasible"
-    ],
+    "description": "Per-growth-stage environmental sensitivity scores for Pakistan Kharif crops.",
+    "crops": ["Maize", "Rice", "Cotton"],
+    "growth_stages": ["Sowing", "Seedling", "Vegetative", "Flowering", "Harvesting"],
+    "factors": ["temperature", "humidity", "soil_moisture", "ph", "sunlight", "rainfall"],
+    "score_range": "0.0 – 1.0",
     "feasibility_bands": {
       "Ideal": "score >= 0.7",
       "Conditional": "0.4 <= score < 0.7",
       "Not Feasible": "score < 0.4"
+    },
+    "units": {
+      "temperature": "°C",
+      "humidity": "%",
+      "soil_moisture": "% volumetric",
+      "sunlight": "hours/day",
+      "rainfall": "mm"
     },
     "action_schema": {
       "action_category": ["field", "crop", ""],
@@ -21,7 +23,14 @@
       "adjustment": ["increase quantity", "decrease quantity", "increase days", "decrease days", "delay", ""],
       "adjustment_type": ["significant", "minimal", ""],
       "notes": "avoid action_type always has empty adjustment and adjustment_type. sowing and harvesting use only 'delay' as adjustment. Not Feasible entries carry exactly one action with action_type 'avoid'. Ideal entries carry an empty actions array."
-    }
+    },
+    "temperature_bands": ["15-20", "20-30", "30-40"],
+    "humidity_bands": ["<40", "40-70", ">70"],
+    "soil_moisture_bands": ["<30", "30-60", ">60"],
+    "ph_bands": ["Acidic (<6.0)", "Neutral (6.0-7.5)", "Alkaline (>7.5)"],
+    "sunlight_bands": ["<4", "4-8", ">8"],
+    "rainfall_bands": ["<50", "50-100", "100-200", "200-300", ">300"]
+
   },
   "CROP_RULES": {
     "Maize": {
@@ -313,608 +322,1589 @@
     }
   },
   "temperature_adjustment_rules": {
-    "_note": "Rice: warm but suffers in extreme heat | Maize: balanced, sensitive at flowering | Cotton: loves heat",
+    "_note": "Keys: crop -> growth_stage -> temp_band. Rice optimal 20-30C; Maize balanced C4, flowering most sensitive; Cotton thermophilic, needs >25C for germination.",
     "Rice": {
-      "15-20": {
-        "score": 0.3,
-        "feasibility": "Not Feasible",
-        "reasoning": "Sub-optimal temperatures inhibit rice germination, delay tillering and cause pollen sterility at flowering; thermal accumulation is insufficient for grain fill.",
-        "actions": [
-          {
-            "action_category": "",
-            "action_type": "avoid",
-            "adjustment": "",
-            "adjustment_type": ""
-          }
-        ]
+      "Sowing": {
+        "15-20": {
+          "score": 0.30,
+          "feasibility": "Not Feasible",
+          "reasoning": "Soil temperatures below 20C prevent rice seed germination; minimum threshold is ~18C and consistent thermal energy is required for uniform crop establishment.",
+          "actions": [{"action_type":"sowing","adjustment":"delay","adjustment_type":"significant"},{"action_type":"monitoring","adjustment":"daily temperature monitoring; inspect seed-bed for germination failure","adjustment_type":"significant"}]
+        },
+        "20-30": {
+          "score": 0.85,
+          "feasibility": "Ideal",
+          "reasoning": "Optimal soil warmth for rice sowing ensures rapid, uniform germination and strong early root development.",
+          "actions": []
+        },
+        "30-40": {
+          "score": 0.60,
+          "feasibility": "Conditional",
+          "reasoning": "High temperatures accelerate germination but increase desiccation risk; early morning sowing and increased irrigation maintain adequate soil moisture.",
+          "actions": [
+            { "action_category": "field", "action_type": "irrigation", "adjustment": "increase quantity", "adjustment_type": "minimal" },
+            { "action_category": "crop", "action_type": "sowing", "adjustment": "delay", "adjustment_type": "minimal" }
+          ]
+        }
       },
-      "20-30": {
-        "score": 0.8,
-        "feasibility": "Ideal",
-        "reasoning": "The 20–30°C range is optimal for rice, supporting rapid tillering, efficient photosynthesis and high grain fill rates.",
-        "actions": []
+      "Seedling": {
+        "15-20": {
+          "score": 0.35,
+          "feasibility": "Not Feasible",
+          "reasoning": "Chilling temperatures slow tillering initiation and leaf area expansion in rice seedlings, substantially reducing biomass accumulation and stand establishment.",
+          "actions": [{"action_type":"monitoring","adjustment":"daily cold damage inspection; check for chilling injury on seedling leaves","adjustment_type":"significant"},{"action_type":"irrigation","adjustment":"decrease days","adjustment_type":"minimal"}]
+        },
+        "20-30": {
+          "score": 0.85,
+          "feasibility": "Ideal",
+          "reasoning": "Ideal thermal range for rapid rice seedling growth, supporting tillering, root proliferation and efficient nitrogen uptake.",
+          "actions": []
+        },
+        "30-40": {
+          "score": 0.55,
+          "feasibility": "Conditional",
+          "reasoning": "Temperatures above 35C during early seedling stage increase spikelet sterility risk later; increase irrigation frequency to buffer heat stress.",
+          "actions": [
+            { "action_category": "field", "action_type": "irrigation", "adjustment": "increase quantity", "adjustment_type": "minimal" }
+          ]
+        }
       },
-      "30-40": {
-        "score": 0.5,
-        "feasibility": "Conditional",
-        "reasoning": "Heat above 30°C during flowering causes pollen sterility and reduces grain set; increased irrigation and adjusted sowing dates limit yield loss.",
-        "actions": [
-          {
-            "action_category": "field",
-            "action_type": "irrigation",
-            "adjustment": "increase quantity",
-            "adjustment_type": "minimal"
-          },
-          {
-            "action_category": "crop",
-            "action_type": "sowing",
-            "adjustment": "delay",
-            "adjustment_type": "minimal"
-          }
-        ]
+      "Vegetative": {
+        "15-20": {
+          "score": 0.35,
+          "feasibility": "Not Feasible",
+          "reasoning": "Low temperatures during vegetative growth severely limit tillering and leaf area index development, reducing the photosynthetic base for grain yield.",
+          "actions": [{"action_type":"monitoring","adjustment":"daily chilling injury inspection; check tiller count and leaf discolouration","adjustment_type":"significant"},{"action_type":"irrigation","adjustment":"decrease days","adjustment_type":"minimal"}]
+        },
+        "20-30": {
+          "score": 0.90,
+          "feasibility": "Ideal",
+          "reasoning": "Optimal temperature range drives maximum tiller production, leaf area expansion and dry matter accumulation in rice.",
+          "actions": []
+        },
+        "30-40": {
+          "score": 0.55,
+          "feasibility": "Conditional",
+          "reasoning": "Heat stress above 33C begins to suppress photosynthesis and accelerates leaf senescence; supplemental irrigation and potassium top-dressing improve heat tolerance.",
+          "actions": [
+            { "action_category": "field", "action_type": "irrigation", "adjustment": "increase quantity", "adjustment_type": "minimal" },
+            { "action_category": "crop", "action_type": "fertilization", "adjustment": "increase quantity", "adjustment_type": "minimal" }
+          ]
+        }
+      },
+      "Flowering": {
+        "15-20": {
+          "score": 0.20,
+          "feasibility": "Not Feasible",
+          "reasoning": "Cool temperatures at anthesis cause extensive spikelet sterility in rice; pollen germination requires >22C and extended sub-optimal exposure collapses grain set.",
+          "actions": [{"action_type":"monitoring","adjustment":"daily spikelet sterility assessment; document percentage of open spikelets","adjustment_type":"significant"},{"action_type":"irrigation","adjustment":"decrease days","adjustment_type":"minimal"}]
+        },
+        "20-30": {
+          "score": 0.90,
+          "feasibility": "Ideal",
+          "reasoning": "Optimal temperature window ensures high pollen viability, successful fertilisation and maximum grain set across the panicle.",
+          "actions": []
+        },
+        "30-40": {
+          "score": 0.40,
+          "feasibility": "Conditional",
+          "reasoning": "Temperatures above 35C for even 1 hour at anthesis cause irreversible pollen sterility; flood irrigation and adjusted heading timing are critical mitigations.",
+          "actions": [
+            { "action_category": "field", "action_type": "irrigation", "adjustment": "increase quantity", "adjustment_type": "significant" },
+            { "action_category": "crop", "action_type": "sowing", "adjustment": "delay", "adjustment_type": "minimal" }
+          ]
+        }
+      },
+      "Harvesting": {
+        "15-20": {
+          "score": 0.55,
+          "feasibility": "Conditional",
+          "reasoning": "Cooler temperatures slow grain ripening and field drying, extending the harvest window but reducing throughput; schedule mechanised harvest during warmest part of day.",
+          "actions": [
+            { "action_category": "crop", "action_type": "sowing", "adjustment": "delay", "adjustment_type": "minimal" }
+          ]
+        },
+        "20-30": {
+          "score": 0.85,
+          "feasibility": "Ideal",
+          "reasoning": "Moderate warmth during harvest supports rapid grain drying and easy threshing with minimal chalkiness or breakage.",
+          "actions": []
+        },
+        "30-40": {
+          "score": 0.60,
+          "feasibility": "Conditional",
+          "reasoning": "Excessive heat accelerates grain ageing after maturity and increases chalk formation; harvest promptly at physiological maturity to limit quality losses.",
+          "actions": [
+            { "action_category": "field", "action_type": "irrigation", "adjustment": "decrease quantity", "adjustment_type": "minimal" }
+          ]
+        }
       }
     },
     "Maize": {
-      "15-20": {
-        "score": 0.4,
-        "feasibility": "Conditional",
-        "reasoning": "Cool temperatures slow germination and risk chilling injury at seedling stage; sowing should be delayed until soils warm sufficiently.",
-        "actions": [
-          {
-            "action_category": "crop",
-            "action_type": "sowing",
-            "adjustment": "delay",
-            "adjustment_type": "minimal"
-          }
-        ]
+      "Sowing": {
+        "15-20": {
+          "score": 0.45,
+          "feasibility": "Conditional",
+          "reasoning": "Cool soils below 18C slow maize germination and increase seed rot risk; delay sowing until soil temperature exceeds 18C for uniform stand establishment.",
+          "actions": [
+            { "action_category": "crop", "action_type": "sowing", "adjustment": "delay", "adjustment_type": "minimal" }
+          ]
+        },
+        "20-30": {
+          "score": 0.85,
+          "feasibility": "Ideal",
+          "reasoning": "Optimal soil temperature range for maize sowing ensures rapid, uniform germination and vigorous early root growth.",
+          "actions": []
+        },
+        "30-40": {
+          "score": 0.65,
+          "feasibility": "Conditional",
+          "reasoning": "Hot soils can crust and reduce germination uniformity; sow in early morning and irrigate lightly post-sowing to maintain surface moisture.",
+          "actions": [
+            { "action_category": "field", "action_type": "irrigation", "adjustment": "increase quantity", "adjustment_type": "minimal" }
+          ]
+        }
       },
-      "20-30": {
-        "score": 0.85,
-        "feasibility": "Ideal",
-        "reasoning": "Optimal range for maize, supporting vigorous vegetative growth, efficient nutrient uptake and successful pollination.",
-        "actions": []
+      "Seedling": {
+        "15-20": {
+          "score": 0.40,
+          "feasibility": "Conditional",
+          "reasoning": "Cold temperatures cause chilling injury in maize seedlings, reducing root growth and delaying early vigour; additional nitrogen helps compensate.",
+          "actions": [
+            { "action_category": "crop", "action_type": "fertilization", "adjustment": "increase quantity", "adjustment_type": "minimal" }
+          ]
+        },
+        "20-30": {
+          "score": 0.90,
+          "feasibility": "Ideal",
+          "reasoning": "Optimal range for rapid leaf area expansion, root development and nutrient uptake during early maize growth.",
+          "actions": []
+        },
+        "30-40": {
+          "score": 0.60,
+          "feasibility": "Conditional",
+          "reasoning": "Heat stress above 33C at seedling stage increases transpiration and can stunt early development; increase irrigation to maintain soil moisture.",
+          "actions": [
+            { "action_category": "field", "action_type": "irrigation", "adjustment": "increase quantity", "adjustment_type": "minimal" }
+          ]
+        }
       },
-      "30-40": {
-        "score": 0.65,
-        "feasibility": "Conditional",
-        "reasoning": "Heat above 30°C reduces pollen viability at tasselling and silking, causing 5–8% yield loss per degree; irrigation and adjusted planting dates are critical.",
-        "actions": [
-          {
-            "action_category": "field",
-            "action_type": "irrigation",
-            "adjustment": "increase quantity",
-            "adjustment_type": "minimal"
-          },
-          {
-            "action_category": "crop",
-            "action_type": "sowing",
-            "adjustment": "delay",
-            "adjustment_type": "minimal"
-          }
-        ]
+      "Vegetative": {
+        "15-20": {
+          "score": 0.35,
+          "feasibility": "Not Feasible",
+          "reasoning": "Sustained cool temperatures during vegetative growth limit internode elongation, leaf area index and dry matter accumulation, permanently reducing yield potential.",
+          "actions": [{"action_type":"monitoring","adjustment":"daily cold damage inspection; check internode elongation and leaf colour","adjustment_type":"significant"},{"action_type":"irrigation","adjustment":"decrease days","adjustment_type":"minimal"}]
+        },
+        "20-30": {
+          "score": 0.90,
+          "feasibility": "Ideal",
+          "reasoning": "Peak vegetative growth rates occur in this range; maize's C4 metabolism drives maximum dry matter production under ideal temperature.",
+          "actions": []
+        },
+        "30-40": {
+          "score": 0.70,
+          "feasibility": "Ideal",
+          "reasoning": "Maize C4 photosynthesis is heat-tolerant up to ~38C during vegetative stages; maintain irrigation to prevent water deficit compounding heat stress.",
+          "actions": [
+            { "action_category": "field", "action_type": "irrigation", "adjustment": "increase quantity", "adjustment_type": "minimal" }
+          ]
+        }
+      },
+      "Flowering": {
+        "15-20": {
+          "score": 0.20,
+          "feasibility": "Not Feasible",
+          "reasoning": "Cool temperatures at tasselling delay silk emergence and disrupt pollen shed timing, causing severe silk-tassel asynchrony and catastrophic yield loss.",
+          "actions": [{"action_type":"monitoring","adjustment":"daily silk-tassel synchrony assessment; document pollen shed timing carefully","adjustment_type":"significant"},{"action_type":"fertilization","adjustment":"increase quantity","adjustment_type":"minimal"}]
+        },
+        "20-30": {
+          "score": 0.90,
+          "feasibility": "Ideal",
+          "reasoning": "Optimal temperature for maize pollination; pollen viability and silk receptivity are maximised, ensuring high kernel set across the cob.",
+          "actions": []
+        },
+        "30-40": {
+          "score": 0.45,
+          "feasibility": "Conditional",
+          "reasoning": "Temperatures above 35C reduce pollen viability by 5-8% per degree; flood-irrigation during tasselling and adjusted planting date are the primary mitigations.",
+          "actions": [
+            { "action_category": "field", "action_type": "irrigation", "adjustment": "increase quantity", "adjustment_type": "significant" },
+            { "action_category": "crop", "action_type": "sowing", "adjustment": "delay", "adjustment_type": "minimal" }
+          ]
+        }
+      },
+      "Harvesting": {
+        "15-20": {
+          "score": 0.50,
+          "feasibility": "Conditional",
+          "reasoning": "Cool conditions slow kernel dry-down, requiring extended field drying or mechanical drying post-harvest to reach safe storage moisture.",
+          "actions": []
+        },
+        "20-30": {
+          "score": 0.85,
+          "feasibility": "Ideal",
+          "reasoning": "Moderate warmth facilitates uniform kernel dry-down and efficient combine harvesting at optimal moisture content.",
+          "actions": []
+        },
+        "30-40": {
+          "score": 0.75,
+          "feasibility": "Ideal",
+          "reasoning": "Hot dry conditions accelerate field dry-down and ease harvest logistics; cut irrigation to allow rapid desiccation to target moisture.",
+          "actions": [
+            { "action_category": "field", "action_type": "irrigation", "adjustment": "decrease quantity", "adjustment_type": "minimal" }
+          ]
+        }
       }
     },
     "Cotton": {
-      "15-20": {
-        "score": 0.2,
-        "feasibility": "Not Feasible",
-        "reasoning": "Below 18°C soil temperature cotton cannot germinate; this range prevents crop establishment and fibre development entirely.",
-        "actions": [
-          {
-            "action_category": "",
-            "action_type": "avoid",
-            "adjustment": "",
-            "adjustment_type": ""
-          }
-        ]
+      "Sowing": {
+        "15-20": {
+          "score": 0.10,
+          "feasibility": "Not Feasible",
+          "reasoning": "Cotton requires soil temperature above 18C for germination; below this threshold seeds fail to sprout or succumb to damping-off, making establishment impossible.",
+          "actions": [{"action_type":"sowing","adjustment":"delay","adjustment_type":"significant"},{"action_type":"monitoring","adjustment":"daily soil temperature monitoring; do not sow until soil exceeds 18°C for 3 consecutive days","adjustment_type":"significant"}]
+        },
+        "20-30": {
+          "score": 0.60,
+          "feasibility": "Conditional",
+          "reasoning": "Below cotton's optimal 28-32C sowing range, germination is slower and less uniform; delay sowing until conditions warm and apply starter fertiliser to compensate.",
+          "actions": [
+            { "action_category": "crop", "action_type": "sowing", "adjustment": "delay", "adjustment_type": "minimal" },
+            { "action_category": "crop", "action_type": "fertilization", "adjustment": "increase quantity", "adjustment_type": "minimal" }
+          ]
+        },
+        "30-40": {
+          "score": 0.90,
+          "feasibility": "Ideal",
+          "reasoning": "Warm soils in the 30-35C range provide optimal cotton germination conditions, ensuring rapid and uniform stand establishment.",
+          "actions": []
+        }
       },
-      "20-30": {
-        "score": 0.65,
-        "feasibility": "Conditional",
-        "reasoning": "Below cotton's 30–35°C optimum, yields are 15–20% lower and boll development is slower; balanced fertilisation and sowing timing partially compensate.",
-        "actions": [
-          {
-            "action_category": "crop",
-            "action_type": "fertilization",
-            "adjustment": "increase quantity",
-            "adjustment_type": "minimal"
-          },
-          {
-            "action_category": "crop",
-            "action_type": "sowing",
-            "adjustment": "delay",
-            "adjustment_type": "minimal"
-          }
-        ]
+      "Seedling": {
+        "15-20": {
+          "score": 0.15,
+          "feasibility": "Not Feasible",
+          "reasoning": "Chilling temperatures cause cotton seedling collapse and hypocotyl injury; thermal requirement for early growth simply cannot be met below 18C.",
+          "actions": [{"action_type":"monitoring","adjustment":"daily cold damage inspection; check hypocotyl and cotyledon tissue for chilling injury","adjustment_type":"significant"},{"action_type":"irrigation","adjustment":"decrease days","adjustment_type":"minimal"}]
+        },
+        "20-30": {
+          "score": 0.65,
+          "feasibility": "Conditional",
+          "reasoning": "Adequate but sub-optimal for cotton seedling growth; additional nitrogen and potassium support faster canopy closure under cooler conditions.",
+          "actions": [
+            { "action_category": "crop", "action_type": "fertilization", "adjustment": "increase quantity", "adjustment_type": "minimal" }
+          ]
+        },
+        "30-40": {
+          "score": 0.88,
+          "feasibility": "Ideal",
+          "reasoning": "Warm temperatures accelerate cotton seedling growth, enabling rapid canopy closure and weed suppression that underpins high yield potential.",
+          "actions": []
+        }
       },
-      "30-40": {
-        "score": 0.9,
-        "feasibility": "Ideal",
-        "reasoning": "Cotton's optimal thermal range accelerates boll maturation and maximises fibre quality; maintain irrigation and monitor for spider mites in hot, dry conditions.",
-        "actions": []
+      "Vegetative": {
+        "15-20": {
+          "score": 0.15,
+          "feasibility": "Not Feasible",
+          "reasoning": "Cold temperatures halt square initiation and slow leaf expansion in cotton; biomass accumulation is negligible and boll load cannot be established.",
+          "actions": [{"action_type":"monitoring","adjustment":"daily square initiation check; inspect for stunted growth and leaf curl","adjustment_type":"significant"},{"action_type":"irrigation","adjustment":"decrease days","adjustment_type":"minimal"}]
+        },
+        "20-30": {
+          "score": 0.65,
+          "feasibility": "Conditional",
+          "reasoning": "Below optimal growth temperature range delays square appearance and reduces the potential boll load; fertiliser applications help compensate for slower biomass accumulation.",
+          "actions": [
+            { "action_category": "crop", "action_type": "fertilization", "adjustment": "increase quantity", "adjustment_type": "minimal" }
+          ]
+        },
+        "30-40": {
+          "score": 0.90,
+          "feasibility": "Ideal",
+          "reasoning": "Optimal temperature drives rapid vegetative development, early square initiation and strong sympodial branching needed for high boll numbers.",
+          "actions": []
+        }
+      },
+      "Flowering": {
+        "15-20": {
+          "score": 0.10,
+          "feasibility": "Not Feasible",
+          "reasoning": "Cotton pollen germination requires >20C; cool temperatures at squaring and flowering cause severe boll shedding and prevent fibre development.",
+          "actions": [{"action_type":"monitoring","adjustment":"daily boll shedding count; document shed squares and apply foliar nutrition to support retention","adjustment_type":"significant"},{"action_type":"fertilization","adjustment":"increase quantity","adjustment_type":"minimal"}]
+        },
+        "20-30": {
+          "score": 0.60,
+          "feasibility": "Conditional",
+          "reasoning": "Below the 30-35C boll-set optimum, cotton retains fewer bolls per plant and boll filling is slower; targeted irrigation and potassium improve retention.",
+          "actions": [
+            { "action_category": "field", "action_type": "irrigation", "adjustment": "increase quantity", "adjustment_type": "minimal" },
+            { "action_category": "crop", "action_type": "fertilization", "adjustment": "increase quantity", "adjustment_type": "minimal" }
+          ]
+        },
+        "30-40": {
+          "score": 0.90,
+          "feasibility": "Ideal",
+          "reasoning": "Optimal heat for boll set and filling; maintain soil moisture to support high boll load and prevent heat-induced shedding above 38C.",
+          "actions": []
+        }
+      },
+      "Harvesting": {
+        "15-20": {
+          "score": 0.55,
+          "feasibility": "Conditional",
+          "reasoning": "Cool temperatures slow boll opening and lint drying, increasing the risk of fibre staining and difficult mechanical harvest; allow additional days for boll maturation.",
+          "actions": []
+        },
+        "20-30": {
+          "score": 0.75,
+          "feasibility": "Ideal",
+          "reasoning": "Moderate temperatures with low humidity support clean boll opening, dry lint and efficient mechanical harvesting with minimal fibre loss.",
+          "actions": []
+        },
+        "30-40": {
+          "score": 0.65,
+          "feasibility": "Conditional",
+          "reasoning": "Hot conditions can stress late-opening bolls and raise fibre micronaire; ensure irrigation is fully cut off to promote dry-down and schedule harvest promptly.",
+          "actions": [
+            { "action_category": "field", "action_type": "irrigation", "adjustment": "decrease quantity", "adjustment_type": "minimal" }
+          ]
+        }
       }
     }
   },
   "humidity_adjustment_rules": {
-    "_note": "Rice: high humidity lover >70% | Maize: balanced, prefers medium | Cotton: dry climate, prefers low-medium",
+    "_note": "Keys: crop -> growth_stage -> humidity_band. Rice high-humidity lover; Maize moderate; Cotton dry-climate crop. All crops invert preference at Harvesting (dry = ideal).",
     "Rice": {
-      "<40": {
-        "score": 0.2,
-        "feasibility": "Not Feasible",
-        "reasoning": "Very dry air accelerates transpiration from paddies, causing leaf water deficit and poor grain fill; incompatible with productive paddy cultivation.",
-        "actions": [
-          {
-            "action_category": "",
-            "action_type": "avoid",
-            "adjustment": "",
-            "adjustment_type": ""
-          }
-        ]
+      "Sowing": {
+        "<40": {
+          "score": 0.20,
+          "feasibility": "Not Feasible",
+          "reasoning": "Very dry air desiccates sown seeds and topsoil before germination; paddy sowing requires humid conditions to maintain surface moisture.",
+          "actions": [{"action_type":"irrigation","adjustment":"increase days","adjustment_type":"significant"},{"action_type":"monitoring","adjustment":"monitor seed-bed surface moisture and standing water depth twice daily","adjustment_type":"significant"}]
+        },
+        "40-70": {
+          "score": 0.60,
+          "feasibility": "Conditional",
+          "reasoning": "Moderate humidity is workable but elevates irrigation demand during establishment; increase irrigation frequency to compensate for higher evaporation.",
+          "actions": [{ "action_category": "field", "action_type": "irrigation", "adjustment": "increase quantity", "adjustment_type": "minimal" }]
+        },
+        ">70": {
+          "score": 0.90,
+          "feasibility": "Ideal",
+          "reasoning": "High ambient humidity reduces topsoil evaporation and supports even seed-to-soil contact moisture needed for uniform germination.",
+          "actions": []
+        }
       },
-      "40-70": {
-        "score": 0.6,
-        "feasibility": "Conditional",
-        "reasoning": "Moderate humidity raises rice's irrigation requirements; adequate yields are possible with closer water management to offset elevated transpiration.",
-        "actions": [
-          {
-            "action_category": "field",
-            "action_type": "irrigation",
-            "adjustment": "increase quantity",
-            "adjustment_type": "minimal"
-          }
-        ]
+      "Seedling": {
+        "<40": {
+          "score": 0.20,
+          "feasibility": "Not Feasible",
+          "reasoning": "Dry air at seedling stage accelerates transpiration beyond the young root system's capacity, causing wilting and poor stand establishment.",
+          "actions": [{"action_type":"irrigation","adjustment":"increase days","adjustment_type":"significant"},{"action_type":"monitoring","adjustment":"monitor wilting symptoms and topsoil moisture level daily","adjustment_type":"significant"}]
+        },
+        "40-70": {
+          "score": 0.60,
+          "feasibility": "Conditional",
+          "reasoning": "Moderate humidity increases seedling water demand; supplement irrigation to maintain standing water depth in nursery and transplanted fields.",
+          "actions": [{ "action_category": "field", "action_type": "irrigation", "adjustment": "increase quantity", "adjustment_type": "minimal" }]
+        },
+        ">70": {
+          "score": 0.90,
+          "feasibility": "Ideal",
+          "reasoning": "High humidity sustains the moist microclimate required for rapid rice seedling growth and tillering initiation.",
+          "actions": []
+        }
       },
-      ">70": {
-        "score": 0.95,
-        "feasibility": "Ideal",
-        "reasoning": "High humidity minimises transpiration stress and supports the moist microclimate required for optimal rice growth and grain development.",
-        "actions": []
+      "Vegetative": {
+        "<40": {
+          "score": 0.25,
+          "feasibility": "Not Feasible",
+          "reasoning": "Persistent low humidity during active tillering drives high evapotranspiration that paddy irrigation cannot fully offset, reducing tiller density and leaf area.",
+          "actions": [{"action_type":"irrigation","adjustment":"increase days","adjustment_type":"significant"},{"action_type":"monitoring","adjustment":"monitor tiller water status and paddy water depth twice daily","adjustment_type":"significant"}]
+        },
+        "40-70": {
+          "score": 0.65,
+          "feasibility": "Conditional",
+          "reasoning": "Below-optimal humidity requires closer irrigation monitoring to maintain adequate paddy water depth throughout vigorous vegetative growth.",
+          "actions": [{ "action_category": "field", "action_type": "irrigation", "adjustment": "increase quantity", "adjustment_type": "minimal" }]
+        },
+        ">70": {
+          "score": 0.95,
+          "feasibility": "Ideal",
+          "reasoning": "High humidity suppresses excessive transpiration and maintains the saturated root zone rice requires for peak tiller production.",
+          "actions": []
+        }
+      },
+      "Flowering": {
+        "<40": {
+          "score": 0.15,
+          "feasibility": "Not Feasible",
+          "reasoning": "Low humidity at anthesis desiccates rice pollen grains within minutes of release, causing near-total spikelet sterility regardless of irrigation management.",
+          "actions": [{"action_type":"irrigation","adjustment":"increase days","adjustment_type":"significant"},{"action_type":"monitoring","adjustment":"monitor spikelet moisture and pollen viability; increase canopy humidity by flood irrigation","adjustment_type":"significant"}]
+        },
+        "40-70": {
+          "score": 0.60,
+          "feasibility": "Conditional",
+          "reasoning": "Moderate humidity at flowering reduces pollen viability; maintain continuous flood and consider daytime misting where feasible to protect anthesis.",
+          "actions": [{ "action_category": "field", "action_type": "irrigation", "adjustment": "increase quantity", "adjustment_type": "significant" }]
+        },
+        ">70": {
+          "score": 0.95,
+          "feasibility": "Ideal",
+          "reasoning": "High humidity preserves pollen viability during the brief anthesis window and supports maximum grain set across the panicle.",
+          "actions": []
+        }
+      },
+      "Harvesting": {
+        "<40": {
+          "score": 0.85,
+          "feasibility": "Ideal",
+          "reasoning": "Dry air at harvest reduces field moisture, facilitates rapid grain dry-down and minimises fungal grain diseases during threshing and storage.",
+          "actions": []
+        },
+        "40-70": {
+          "score": 0.75,
+          "feasibility": "Ideal",
+          "reasoning": "Moderate humidity allows field dry-down with acceptable speed; schedule harvest at physiological maturity to avoid weather delays.",
+          "actions": []
+        },
+        ">70": {
+          "score": 0.25,
+          "feasibility": "Not Feasible",
+          "reasoning": "High humidity at harvest prevents grain dry-down, promotes brown spot and false smut, and leads to high post-harvest losses from mould in stored grain.",
+          "actions": [{"action_type":"harvesting","adjustment":"delay","adjustment_type":"minimal"},{"action_type":"monitoring","adjustment":"monitor grain moisture content and fungal symptoms daily; delay harvest until humidity drops below 70%","adjustment_type":"significant"}]
+        }
       }
     },
     "Maize": {
-      "<40": {
-        "score": 0.5,
-        "feasibility": "Conditional",
-        "reasoning": "Low humidity elevates evapotranspiration and moisture stress risk at silking and grain fill; proactive irrigation prevents yield-reducing deficits.",
-        "actions": [
-          {
-            "action_category": "field",
-            "action_type": "irrigation",
-            "adjustment": "increase quantity",
-            "adjustment_type": "minimal"
-          }
-        ]
+      "Sowing": {
+        "<40": {
+          "score": 0.50,
+          "feasibility": "Conditional",
+          "reasoning": "Low humidity at sowing increases topsoil evaporation; irrigate promptly post-sowing to maintain adequate seed-zone moisture for germination.",
+          "actions": [{ "action_category": "field", "action_type": "irrigation", "adjustment": "increase quantity", "adjustment_type": "minimal" }]
+        },
+        "40-70": {
+          "score": 0.80,
+          "feasibility": "Ideal",
+          "reasoning": "Moderate humidity provides optimal conditions for uniform maize germination with low disease risk at the seed and radicle.",
+          "actions": []
+        },
+        ">70": {
+          "score": 0.50,
+          "feasibility": "Conditional",
+          "reasoning": "High humidity at sowing promotes seed-bed fungal diseases (Pythium, Fusarium); ensure well-drained seed placement and fungicide seed treatment.",
+          "actions": [{ "action_category": "field", "action_type": "irrigation", "adjustment": "decrease quantity", "adjustment_type": "minimal" }]
+        }
       },
-      "40-70": {
-        "score": 0.8,
-        "feasibility": "Ideal",
-        "reasoning": "Moderate humidity balances moisture availability and disease risk, providing optimal growing conditions for maize across its life cycle.",
-        "actions": []
+      "Seedling": {
+        "<40": {
+          "score": 0.50,
+          "feasibility": "Conditional",
+          "reasoning": "Dry air increases seedling water demand; supplemental irrigation at establishment maintains soil moisture above wilting point.",
+          "actions": [{ "action_category": "field", "action_type": "irrigation", "adjustment": "increase quantity", "adjustment_type": "minimal" }]
+        },
+        "40-70": {
+          "score": 0.80,
+          "feasibility": "Ideal",
+          "reasoning": "Optimal humidity for early maize growth, balancing moisture availability with disease suppression during the critical stand establishment period.",
+          "actions": []
+        },
+        ">70": {
+          "score": 0.55,
+          "feasibility": "Conditional",
+          "reasoning": "Elevated humidity encourages early blight and damping-off at seedling stage; reduce irrigation frequency and improve field drainage.",
+          "actions": [{ "action_category": "field", "action_type": "irrigation", "adjustment": "decrease quantity", "adjustment_type": "minimal" }]
+        }
       },
-      ">70": {
-        "score": 0.5,
-        "feasibility": "Conditional",
-        "reasoning": "High humidity promotes northern leaf blight and grey leaf spot; avoid overhead irrigation that wets foliage and favour disease-resistant varieties.",
-        "actions": [
-          {
-            "action_category": "field",
-            "action_type": "irrigation",
-            "adjustment": "decrease quantity",
-            "adjustment_type": "minimal"
-          }
-        ]
+      "Vegetative": {
+        "<40": {
+          "score": 0.55,
+          "feasibility": "Conditional",
+          "reasoning": "Low humidity elevates evapotranspiration during rapid vegetative growth; proactive irrigation prevents moisture deficits that limit leaf area expansion.",
+          "actions": [{ "action_category": "field", "action_type": "irrigation", "adjustment": "increase quantity", "adjustment_type": "minimal" }]
+        },
+        "40-70": {
+          "score": 0.85,
+          "feasibility": "Ideal",
+          "reasoning": "Moderate humidity balances maize water supply and disease pressure, supporting maximum dry matter accumulation during vegetative growth.",
+          "actions": []
+        },
+        ">70": {
+          "score": 0.50,
+          "feasibility": "Conditional",
+          "reasoning": "High humidity at vegetative stage promotes northern leaf blight and grey leaf spot; avoid overhead irrigation that wets foliage.",
+          "actions": [{ "action_category": "field", "action_type": "irrigation", "adjustment": "decrease quantity", "adjustment_type": "minimal" }]
+        }
+      },
+      "Flowering": {
+        "<40": {
+          "score": 0.45,
+          "feasibility": "Conditional",
+          "reasoning": "Dry conditions reduce pollen viability and silk receptivity at silking; critical irrigation during tasselling offsets atmospheric moisture deficit.",
+          "actions": [{ "action_category": "field", "action_type": "irrigation", "adjustment": "increase quantity", "adjustment_type": "significant" }]
+        },
+        "40-70": {
+          "score": 0.80,
+          "feasibility": "Ideal",
+          "reasoning": "Optimal humidity for pollen viability and silk capture; moderate conditions support maximum kernel set across the cob.",
+          "actions": []
+        },
+        ">70": {
+          "score": 0.45,
+          "feasibility": "Conditional",
+          "reasoning": "Very high humidity at silking promotes ear rot pathogens and can clump pollen; ensure adequate plant spacing for air circulation.",
+          "actions": [{ "action_category": "field", "action_type": "irrigation", "adjustment": "decrease quantity", "adjustment_type": "minimal" }]
+        }
+      },
+      "Harvesting": {
+        "<40": {
+          "score": 0.80,
+          "feasibility": "Ideal",
+          "reasoning": "Dry air at harvest rapidly dries grain to safe storage moisture, reducing post-harvest losses and energy costs for mechanical drying.",
+          "actions": []
+        },
+        "40-70": {
+          "score": 0.85,
+          "feasibility": "Ideal",
+          "reasoning": "Moderate humidity allows timely field dry-down; combine at optimal kernel moisture to achieve quality grain.",
+          "actions": []
+        },
+        ">70": {
+          "score": 0.30,
+          "feasibility": "Not Feasible",
+          "reasoning": "High humidity prevents grain dry-down, promotes Aspergillus and Fusarium ear molds and renders safe storage impossible without high-energy artificial drying.",
+          "actions": [{"action_type":"harvesting","adjustment":"delay","adjustment_type":"minimal"},{"action_type":"monitoring","adjustment":"monitor ear mold development daily; delay harvest and arrange artificial drying equipment","adjustment_type":"significant"}]
+        }
       }
     },
     "Cotton": {
-      "<40": {
-        "score": 0.65,
-        "feasibility": "Conditional",
-        "reasoning": "Very low humidity raises cotton's water demand sharply, causing boll shedding without consistent root-zone moisture; drip irrigation and mulching are essential.",
-        "actions": [
-          {
-            "action_category": "field",
-            "action_type": "irrigation",
-            "adjustment": "increase quantity",
-            "adjustment_type": "minimal"
-          }
-        ]
+      "Sowing": {
+        "<40": {
+          "score": 0.65,
+          "feasibility": "Conditional",
+          "reasoning": "Low humidity increases topsoil moisture loss before germination; irrigate immediately post-sowing and apply mulch to conserve seed-zone moisture.",
+          "actions": [{ "action_category": "field", "action_type": "irrigation", "adjustment": "increase quantity", "adjustment_type": "minimal" }]
+        },
+        "40-70": {
+          "score": 0.75,
+          "feasibility": "Ideal",
+          "reasoning": "Moderate humidity supports cotton germination with low damping-off risk, providing a balanced environment for uniform stand establishment.",
+          "actions": []
+        },
+        ">70": {
+          "score": 0.20,
+          "feasibility": "Not Feasible",
+          "reasoning": "High humidity at sowing causes severe damping-off (Rhizoctonia, Pythium) and seed rot that prevent stand establishment.",
+          "actions": [{"action_type":"sowing","adjustment":"delay","adjustment_type":"significant"},{"action_type":"monitoring","adjustment":"monitor seed-bed disease pressure daily; delay sowing until humidity drops below 65%","adjustment_type":"significant"}]
+        }
       },
-      "40-70": {
-        "score": 0.7,
-        "feasibility": "Ideal",
-        "reasoning": "Moderate humidity supports healthy boll development with low fungal disease pressure; monitor for early disease signs as humidity approaches 70%.",
-        "actions": []
+      "Seedling": {
+        "<40": {
+          "score": 0.60,
+          "feasibility": "Conditional",
+          "reasoning": "Dry conditions increase seedling water stress and raise irrigation demand; apply drip irrigation to maintain adequate root-zone moisture.",
+          "actions": [{ "action_category": "field", "action_type": "irrigation", "adjustment": "increase quantity", "adjustment_type": "minimal" }]
+        },
+        "40-70": {
+          "score": 0.75,
+          "feasibility": "Ideal",
+          "reasoning": "Optimal humidity for cotton seedling development; supports rapid hypocotyl and tap-root growth without disease pressure.",
+          "actions": []
+        },
+        ">70": {
+          "score": 0.20,
+          "feasibility": "Not Feasible",
+          "reasoning": "Persistent high humidity at seedling stage causes Pythium seedling blight and bacterial blight, causing unacceptable stand loss.",
+          "actions": [{"action_type":"irrigation","adjustment":"decrease days","adjustment_type":"significant"},{"action_type":"spraying","adjustment":"apply preventive fungicide immediately for Pythium and bacterial blight","adjustment_type":"significant"},{"action_type":"monitoring","adjustment":"daily disease scouting; check for damping-off and stand loss","adjustment_type":"significant"}]
+        }
       },
-      ">70": {
-        "score": 0.2,
-        "feasibility": "Not Feasible",
-        "reasoning": "Persistent high humidity causes boll rot, Alternaria blight and bacterial blight that devastate cotton fibre yield and quality.",
-        "actions": [
-          {
-            "action_category": "",
-            "action_type": "avoid",
-            "adjustment": "",
-            "adjustment_type": ""
-          }
-        ]
+      "Vegetative": {
+        "<40": {
+          "score": 0.65,
+          "feasibility": "Conditional",
+          "reasoning": "Low humidity during vegetative growth elevates water demand; drip irrigation and mulching are essential to prevent moisture stress and boll-load reduction.",
+          "actions": [{ "action_category": "field", "action_type": "irrigation", "adjustment": "increase quantity", "adjustment_type": "minimal" }]
+        },
+        "40-70": {
+          "score": 0.75,
+          "feasibility": "Ideal",
+          "reasoning": "Moderate humidity supports healthy square initiation and canopy development with minimal risk of Alternaria or Bacterial Blight.",
+          "actions": []
+        },
+        ">70": {
+          "score": 0.25,
+          "feasibility": "Not Feasible",
+          "reasoning": "Prolonged high humidity at vegetative stage triggers Alternaria blight and bacterial blight, causing severe defoliation and limiting yield potential.",
+          "actions": [{"action_type":"irrigation","adjustment":"decrease days","adjustment_type":"significant"},{"action_type":"spraying","adjustment":"apply Alternaria and bacterial blight preventive spray","adjustment_type":"significant"},{"action_type":"monitoring","adjustment":"daily disease scouting; check leaf lesions and defoliation indicators","adjustment_type":"significant"}]
+        }
+      },
+      "Flowering": {
+        "<40": {
+          "score": 0.65,
+          "feasibility": "Conditional",
+          "reasoning": "Dry conditions increase boll shedding risk; precision irrigation at boll set stage maintains soil moisture to support retention.",
+          "actions": [{ "action_category": "field", "action_type": "irrigation", "adjustment": "increase quantity", "adjustment_type": "minimal" }]
+        },
+        "40-70": {
+          "score": 0.80,
+          "feasibility": "Ideal",
+          "reasoning": "Moderate humidity during flowering and boll set supports pollen viability and minimises boll rot risk, maximising boll retention.",
+          "actions": []
+        },
+        ">70": {
+          "score": 0.15,
+          "feasibility": "Not Feasible",
+          "reasoning": "High humidity at flowering causes boll rot (Colletotrichum, Phytophthora) and increases bacterial blight incidence, causing catastrophic boll loss.",
+          "actions": [{"action_type":"irrigation","adjustment":"decrease days","adjustment_type":"significant"},{"action_type":"spraying","adjustment":"apply boll rot preventive fungicide; focus on lower canopy","adjustment_type":"significant"},{"action_type":"monitoring","adjustment":"daily boll rot inspection; count and document infected bolls","adjustment_type":"significant"}]
+        }
+      },
+      "Harvesting": {
+        "<40": {
+          "score": 0.95,
+          "feasibility": "Ideal",
+          "reasoning": "Dry air is essential for cotton harvest; low humidity enables complete boll opening, clean dry lint and efficient mechanical picker or stripper operation.",
+          "actions": []
+        },
+        "40-70": {
+          "score": 0.70,
+          "feasibility": "Ideal",
+          "reasoning": "Moderate humidity is acceptable for harvest but lint may retain slight moisture; monitor and dry promptly before ginning to protect fibre grade.",
+          "actions": []
+        },
+        ">70": {
+          "score": 0.10,
+          "feasibility": "Not Feasible",
+          "reasoning": "High humidity at harvest prevents boll opening, causes severe fibre staining and boll rot, and makes mechanical harvesting highly inefficient.",
+          "actions": [{"action_type":"harvesting","adjustment":"delay","adjustment_type":"significant"},{"action_type":"monitoring","adjustment":"monitor boll opening and fibre staining daily; delay harvest until humidity drops and bolls are fully open","adjustment_type":"significant"}]
+        }
       }
     }
   },
   "soil_moisture_adjustment_rules": {
-    "_note": "Rice: high/flooded | Maize: moderate well-drained | Cotton: moderate avoids excess",
+    "_note": "Keys: crop -> growth_stage -> moisture_band. Rice: saturation needed except at harvest; Maize/Cotton: 30-60% optimal, invert at harvesting (drier = ideal).",
     "Rice": {
-      "<30": {
-        "score": 0.2,
-        "feasibility": "Not Feasible",
-        "reasoning": "Below 30% volumetric moisture, flooded paddy conditions cannot be established and rice fails to develop the anaerobic root environment it requires.",
-        "actions": [
-          {
-            "action_category": "",
-            "action_type": "avoid",
-            "adjustment": "",
-            "adjustment_type": ""
-          }
-        ]
+      "Sowing": {
+        "<30": {
+          "score": 0.20,
+          "feasibility": "Not Feasible",
+          "reasoning": "Paddy sowing requires saturated soil to establish standing water; below 30% volumetric moisture the field cannot hold the shallow flood needed for germination.",
+          "actions": [{"action_type":"irrigation","adjustment":"increase days","adjustment_type":"significant"},{"action_type":"monitoring","adjustment":"check standing water depth and soil saturation twice daily; prioritise full field flooding before sowing","adjustment_type":"significant"}]
+        },
+        "30-60": {
+          "score": 0.60,
+          "feasibility": "Conditional",
+          "reasoning": "Moderate soil moisture is insufficient for paddy sowing; intensive irrigation must be applied to bring soil to saturation before transplanting or direct seeding.",
+          "actions": [{ "action_category": "field", "action_type": "irrigation", "adjustment": "increase quantity", "adjustment_type": "significant" }]
+        },
+        ">60": {
+          "score": 0.90,
+          "feasibility": "Ideal",
+          "reasoning": "Near-saturated soil enables immediate establishment of standing water, ensuring uniform seed-to-water contact and rapid germination.",
+          "actions": []
+        }
       },
-      "30-60": {
-        "score": 0.6,
-        "feasibility": "Conditional",
-        "reasoning": "Moderate moisture falls below rice's saturation requirement; frequent irrigation must actively establish and maintain standing water for acceptable yields.",
-        "actions": [
-          {
-            "action_category": "field",
-            "action_type": "irrigation",
-            "adjustment": "increase quantity",
-            "adjustment_type": "significant"
-          }
-        ]
+      "Seedling": {
+        "<30": {
+          "score": 0.15,
+          "feasibility": "Not Feasible",
+          "reasoning": "Rice seedlings require continuous standing water for anaerobic root development; below 30% moisture, aerobic conditions persist and seedlings fail.",
+          "actions": [{"action_type":"irrigation","adjustment":"increase days","adjustment_type":"significant"},{"action_type":"monitoring","adjustment":"monitor standing water depth and seedling turgor twice daily","adjustment_type":"significant"}]
+        },
+        "30-60": {
+          "score": 0.55,
+          "feasibility": "Conditional",
+          "reasoning": "Insufficient moisture for paddy at seedling stage; rapidly increase irrigation to achieve saturation and maintain 3-5cm standing water depth.",
+          "actions": [{ "action_category": "field", "action_type": "irrigation", "adjustment": "increase quantity", "adjustment_type": "significant" }]
+        },
+        ">60": {
+          "score": 0.95,
+          "feasibility": "Ideal",
+          "reasoning": "Saturated root zone supports vigorous tiller production and weed suppression during the critical seedling establishment phase.",
+          "actions": []
+        }
       },
-      ">60": {
-        "score": 0.95,
-        "feasibility": "Ideal",
-        "reasoning": "Near-saturated soil replicates natural paddy conditions, supporting the anaerobic root microenvironment and weed suppression rice requires.",
-        "actions": []
+      "Vegetative": {
+        "<30": {
+          "score": 0.10,
+          "feasibility": "Not Feasible",
+          "reasoning": "Dry soil during peak vegetative growth completely disrupts rice's anaerobic metabolism, causes severe tiller loss and limits maximum yield potential.",
+          "actions": [{"action_type":"irrigation","adjustment":"increase days","adjustment_type":"significant"},{"action_type":"monitoring","adjustment":"monitor paddy water depth and tiller condition twice daily; restore continuous flooding immediately","adjustment_type":"significant"}]
+        },
+        "30-60": {
+          "score": 0.55,
+          "feasibility": "Conditional",
+          "reasoning": "Below saturation during tillering forces aerobic root conditions, reducing nitrogen-use efficiency and tiller density; intensive irrigation is required.",
+          "actions": [{ "action_category": "field", "action_type": "irrigation", "adjustment": "increase quantity", "adjustment_type": "significant" }]
+        },
+        ">60": {
+          "score": 0.95,
+          "feasibility": "Ideal",
+          "reasoning": "Continuous saturation throughout the vegetative phase maximises tiller number, leaf area and biomass accumulation for high grain yield.",
+          "actions": []
+        }
+      },
+      "Flowering": {
+        "<30": {
+          "score": 0.10,
+          "feasibility": "Not Feasible",
+          "reasoning": "Soil drying at anthesis causes immediate pollen sterility and spikelet failure in rice; even brief moisture deficit at heading leads to severe yield loss.",
+          "actions": [{"action_type":"irrigation","adjustment":"increase days","adjustment_type":"significant"},{"action_type":"monitoring","adjustment":"maintain flood depth at anthesis; inspect spikelet moisture status twice daily","adjustment_type":"significant"}]
+        },
+        "30-60": {
+          "score": 0.50,
+          "feasibility": "Conditional",
+          "reasoning": "Insufficient moisture at the most water-sensitive stage; apply heavy supplemental irrigation immediately to re-establish saturation and protect grain set.",
+          "actions": [{ "action_category": "field", "action_type": "irrigation", "adjustment": "increase quantity", "adjustment_type": "significant" }]
+        },
+        ">60": {
+          "score": 0.95,
+          "feasibility": "Ideal",
+          "reasoning": "Continuous saturation at anthesis protects pollen viability, maximises fertilisation rate and ensures full panicle grain set.",
+          "actions": []
+        }
+      },
+      "Harvesting": {
+        "<30": {
+          "score": 0.80,
+          "feasibility": "Ideal",
+          "reasoning": "Dry soil conditions allow combine harvesters to enter fields safely, facilitating rapid and efficient harvest with minimal grain loss.",
+          "actions": []
+        },
+        "30-60": {
+          "score": 0.85,
+          "feasibility": "Ideal",
+          "reasoning": "Moderately moist but trafficable soil supports mechanised harvest without bogging; cut irrigation 10-14 days before harvest to achieve this state.",
+          "actions": []
+        },
+        ">60": {
+          "score": 0.50,
+          "feasibility": "Conditional",
+          "reasoning": "Saturated soil at harvest makes fields inaccessible to machinery, forces manual harvest and increases post-harvest losses; cease irrigation well before cutting.",
+          "actions": [{ "action_category": "field", "action_type": "irrigation", "adjustment": "decrease quantity", "adjustment_type": "significant" }]
+        }
       }
     },
     "Maize": {
-      "<30": {
-        "score": 0.5,
-        "feasibility": "Conditional",
-        "reasoning": "Below 30% volumetric moisture, permanent wilting begins in maize leaf tissue; irrigation at critical stages prevents lasting yield loss.",
-        "actions": [
-          {
-            "action_category": "field",
-            "action_type": "irrigation",
-            "adjustment": "increase quantity",
-            "adjustment_type": "minimal"
-          }
-        ]
+      "Sowing": {
+        "<30": {
+          "score": 0.45,
+          "feasibility": "Conditional",
+          "reasoning": "Dry soil reduces seed-soil contact and slows germination; irrigate pre-planting to bring soil to field capacity before sowing maize.",
+          "actions": [{ "action_category": "field", "action_type": "irrigation", "adjustment": "increase quantity", "adjustment_type": "minimal" }]
+        },
+        "30-60": {
+          "score": 0.90,
+          "feasibility": "Ideal",
+          "reasoning": "Field capacity soil moisture provides optimal seed-bed conditions for rapid and uniform maize germination and radicle development.",
+          "actions": []
+        },
+        ">60": {
+          "score": 0.25,
+          "feasibility": "Not Feasible",
+          "reasoning": "Waterlogged seed-beds cause seed rot and oxygen deprivation before emergence; maize cannot establish under flooded conditions.",
+          "actions": [{"action_type":"sowing","adjustment":"delay","adjustment_type":"significant"},{"action_type":"irrigation","adjustment":"decrease days","adjustment_type":"significant"},{"action_type":"monitoring","adjustment":"activate drainage channels immediately; do not sow until soil moisture drops below 60%","adjustment_type":"significant"}]
+        }
       },
-      "30-60": {
-        "score": 0.9,
-        "feasibility": "Ideal",
-        "reasoning": "Moderately moist, well-drained soil provides optimal aeration and water availability for maize root development and nutrient uptake.",
-        "actions": []
+      "Seedling": {
+        "<30": {
+          "score": 0.50,
+          "feasibility": "Conditional",
+          "reasoning": "Low soil moisture at seedling stage approaches permanent wilting point; irrigation must maintain field capacity to prevent stunting.",
+          "actions": [{ "action_category": "field", "action_type": "irrigation", "adjustment": "increase quantity", "adjustment_type": "minimal" }]
+        },
+        "30-60": {
+          "score": 0.90,
+          "feasibility": "Ideal",
+          "reasoning": "Optimal aerobic soil moisture for maize root expansion, nutrient uptake and early leaf area development.",
+          "actions": []
+        },
+        ">60": {
+          "score": 0.20,
+          "feasibility": "Not Feasible",
+          "reasoning": "Waterlogging during early seedling stage deprives roots of oxygen within 24-48 hours, causing root rot and permanent stand loss.",
+          "actions": [{"action_type":"irrigation","adjustment":"decrease days","adjustment_type":"significant"},{"action_type":"monitoring","adjustment":"activate drainage immediately; inspect roots for rot symptoms twice daily","adjustment_type":"significant"}]
+        }
       },
-      ">60": {
-        "score": 0.25,
-        "feasibility": "Not Feasible",
-        "reasoning": "Waterlogging deprives maize roots of oxygen within 48 hours, causing root rot, nitrogen loss and rapid yield collapse even in short flooding events.",
-        "actions": [
-          {
-            "action_category": "",
-            "action_type": "avoid",
-            "adjustment": "",
-            "adjustment_type": ""
-          }
-        ]
+      "Vegetative": {
+        "<30": {
+          "score": 0.50,
+          "feasibility": "Conditional",
+          "reasoning": "Moisture deficit during rapid vegetative growth limits leaf area expansion and internode elongation; maintain irrigation to keep soil near field capacity.",
+          "actions": [{ "action_category": "field", "action_type": "irrigation", "adjustment": "increase quantity", "adjustment_type": "minimal" }]
+        },
+        "30-60": {
+          "score": 0.90,
+          "feasibility": "Ideal",
+          "reasoning": "Field capacity conditions support maximum dry matter accumulation, nitrogen uptake and canopy development during the vegetative phase.",
+          "actions": []
+        },
+        ">60": {
+          "score": 0.20,
+          "feasibility": "Not Feasible",
+          "reasoning": "Waterlogging deprives maize roots of oxygen and causes nitrogen losses through denitrification, rapidly collapsing vegetative growth.",
+          "actions": [{"action_type":"irrigation","adjustment":"decrease days","adjustment_type":"significant"},{"action_type":"monitoring","adjustment":"activate drainage; inspect for root rot and nitrogen leaching symptoms daily","adjustment_type":"significant"}]
+        }
+      },
+      "Flowering": {
+        "<30": {
+          "score": 0.35,
+          "feasibility": "Conditional",
+          "reasoning": "Moisture stress at silking and tasselling is the most yield-damaging event for maize; apply critical irrigation immediately to prevent pollen-silk asynchrony.",
+          "actions": [{ "action_category": "field", "action_type": "irrigation", "adjustment": "increase quantity", "adjustment_type": "significant" }]
+        },
+        "30-60": {
+          "score": 0.90,
+          "feasibility": "Ideal",
+          "reasoning": "Optimal soil moisture at flowering ensures synchronous pollen shed and silk emergence, maximising kernel set across the cob.",
+          "actions": []
+        },
+        ">60": {
+          "score": 0.20,
+          "feasibility": "Not Feasible",
+          "reasoning": "Waterlogging at the reproductive stage causes anaerobic root damage at a critical time when water uptake must be sustained; avoid entirely.",
+          "actions": [{"action_type":"irrigation","adjustment":"decrease days","adjustment_type":"significant"},{"action_type":"monitoring","adjustment":"maintain drainage operations; monitor root health and reproductive development daily","adjustment_type":"significant"}]
+        }
+      },
+      "Harvesting": {
+        "<30": {
+          "score": 0.80,
+          "feasibility": "Ideal",
+          "reasoning": "Dry soils allow combine access and accelerate kernel dry-down to target moisture; cut off irrigation 14-21 days before harvest.",
+          "actions": []
+        },
+        "30-60": {
+          "score": 0.85,
+          "feasibility": "Ideal",
+          "reasoning": "Trafficable field-capacity soil supports efficient mechanised harvest with minimal wheel ruts and good header performance.",
+          "actions": []
+        },
+        ">60": {
+          "score": 0.40,
+          "feasibility": "Conditional",
+          "reasoning": "Wet soils impede combine access and increase header losses; delay harvest until soil dries or use track-equipped machinery with care.",
+          "actions": [{ "action_category": "field", "action_type": "irrigation", "adjustment": "decrease quantity", "adjustment_type": "significant" }]
+        }
       }
     },
     "Cotton": {
-      "<30": {
-        "score": 0.5,
-        "feasibility": "Conditional",
-        "reasoning": "Moisture below 30% during boll development causes premature shedding; targeted irrigation at critical stages maintains productivity.",
-        "actions": [
-          {
-            "action_category": "field",
-            "action_type": "irrigation",
-            "adjustment": "increase quantity",
-            "adjustment_type": "minimal"
-          }
-        ]
+      "Sowing": {
+        "<30": {
+          "score": 0.45,
+          "feasibility": "Conditional",
+          "reasoning": "Dry soil slows cotton germination and increases chilling injury risk at sub-optimal temperatures; irrigate to field capacity before sowing.",
+          "actions": [{ "action_category": "field", "action_type": "irrigation", "adjustment": "increase quantity", "adjustment_type": "minimal" }]
+        },
+        "30-60": {
+          "score": 0.85,
+          "feasibility": "Ideal",
+          "reasoning": "Field-capacity seed-bed provides ideal conditions for cotton germination, ensuring adequate moisture without the root disease risk of saturation.",
+          "actions": []
+        },
+        ">60": {
+          "score": 0.25,
+          "feasibility": "Not Feasible",
+          "reasoning": "Waterlogged seed-beds cause Pythium seed rot and damping-off in cotton; cannot establish a stand under saturated conditions.",
+          "actions": [{"action_type":"sowing","adjustment":"delay","adjustment_type":"significant"},{"action_type":"irrigation","adjustment":"decrease days","adjustment_type":"significant"},{"action_type":"monitoring","adjustment":"activate drainage immediately; delay sowing until soil moisture drops below 55%","adjustment_type":"significant"}]
+        }
       },
-      "30-60": {
-        "score": 0.85,
-        "feasibility": "Ideal",
-        "reasoning": "Moderate soil moisture sustains boll filling and supports cotton's deep taproot without the waterlogging risk that triggers root disease.",
-        "actions": []
+      "Seedling": {
+        "<30": {
+          "score": 0.50,
+          "feasibility": "Conditional",
+          "reasoning": "Low moisture at seedling stage causes hypocotyl stress and reduces early leaf expansion; maintain irrigation to keep root zone near field capacity.",
+          "actions": [{ "action_category": "field", "action_type": "irrigation", "adjustment": "increase quantity", "adjustment_type": "minimal" }]
+        },
+        "30-60": {
+          "score": 0.85,
+          "feasibility": "Ideal",
+          "reasoning": "Optimal aerobic moisture for cotton tap-root development and early canopy establishment; balances water availability with disease suppression.",
+          "actions": []
+        },
+        ">60": {
+          "score": 0.25,
+          "feasibility": "Not Feasible",
+          "reasoning": "Saturated soil at seedling stage promotes Pythium root rot and hypocotyl rot, causing stand failure in cotton.",
+          "actions": [{"action_type":"irrigation","adjustment":"decrease days","adjustment_type":"significant"},{"action_type":"spraying","adjustment":"apply Pythium preventive drench to seed-row","adjustment_type":"significant"},{"action_type":"monitoring","adjustment":"activate drainage; check for hypocotyl rot and stand loss daily","adjustment_type":"significant"}]
+        }
       },
-      ">60": {
-        "score": 0.3,
-        "feasibility": "Not Feasible",
-        "reasoning": "Saturated soil causes Pythium and Phytophthora root rot in cotton; boll drop and fibre staining make production unviable under prolonged wet conditions.",
-        "actions": [
-          {
-            "action_category": "",
-            "action_type": "avoid",
-            "adjustment": "",
-            "adjustment_type": ""
-          }
-        ]
+      "Vegetative": {
+        "<30": {
+          "score": 0.50,
+          "feasibility": "Conditional",
+          "reasoning": "Soil moisture below 30% during square initiation reduces boll potential; targeted drip irrigation maintains field capacity at the root zone.",
+          "actions": [{ "action_category": "field", "action_type": "irrigation", "adjustment": "increase quantity", "adjustment_type": "minimal" }]
+        },
+        "30-60": {
+          "score": 0.85,
+          "feasibility": "Ideal",
+          "reasoning": "Field-capacity moisture sustains cotton square initiation, canopy closure and sympodia development needed for high boll number.",
+          "actions": []
+        },
+        ">60": {
+          "score": 0.25,
+          "feasibility": "Not Feasible",
+          "reasoning": "Saturated conditions trigger Phytophthora and Pythium root rot, rapidly killing cotton plants before they can achieve adequate boll load.",
+          "actions": [{"action_type":"irrigation","adjustment":"decrease days","adjustment_type":"significant"},{"action_type":"spraying","adjustment":"apply Phytophthora root rot preventive fungicide","adjustment_type":"significant"},{"action_type":"monitoring","adjustment":"maintain drainage; inspect roots and stem base for rot daily","adjustment_type":"significant"}]
+        }
+      },
+      "Flowering": {
+        "<30": {
+          "score": 0.45,
+          "feasibility": "Conditional",
+          "reasoning": "Soil drying at boll-set stage is the primary cause of boll shedding in cotton; precision irrigation at flowering is critical to maintain adequate root-zone moisture.",
+          "actions": [{ "action_category": "field", "action_type": "irrigation", "adjustment": "increase quantity", "adjustment_type": "significant" }]
+        },
+        "30-60": {
+          "score": 0.85,
+          "feasibility": "Ideal",
+          "reasoning": "Optimal moisture at boll set supports maximum boll retention and filling; sustain irrigation at regular intervals throughout the boll-development period.",
+          "actions": []
+        },
+        ">60": {
+          "score": 0.20,
+          "feasibility": "Not Feasible",
+          "reasoning": "Saturated soil during boll development promotes Phytophthora boll rot and root disease; cotton drops bolls under waterlogged conditions.",
+          "actions": [{"action_type":"irrigation","adjustment":"decrease days","adjustment_type":"significant"},{"action_type":"spraying","adjustment":"apply boll rot preventive fungicide; focus on lower boll zone","adjustment_type":"significant"},{"action_type":"monitoring","adjustment":"maintain drainage; monitor boll rot incidence and root health daily","adjustment_type":"significant"}]
+        }
+      },
+      "Harvesting": {
+        "<30": {
+          "score": 0.80,
+          "feasibility": "Ideal",
+          "reasoning": "Dry soil is ideal for cotton harvest; low moisture facilitates complete boll opening, clean lint and efficient picker or stripper operation.",
+          "actions": []
+        },
+        "30-60": {
+          "score": 0.80,
+          "feasibility": "Ideal",
+          "reasoning": "Trafficable field-capacity soil allows mechanical harvest without bogging; terminate irrigation 3-4 weeks before harvest to achieve this state.",
+          "actions": []
+        },
+        ">60": {
+          "score": 0.15,
+          "feasibility": "Not Feasible",
+          "reasoning": "Saturated fields at harvest prevent boll opening, cause severe fibre staining and make mechanical harvesting physically impossible.",
+          "actions": [{"action_type":"harvesting","adjustment":"delay","adjustment_type":"significant"},{"action_type":"irrigation","adjustment":"decrease days","adjustment_type":"significant"},{"action_type":"monitoring","adjustment":"maintain drainage; delay harvest until fields drain and bolls fully open","adjustment_type":"significant"}]
+        }
       }
     }
   },
   "ph_adjustment_rules": {
-    "_note": "Rice: Acidic~Neutral > Alkaline | Maize: Neutral >> others | Cotton: Neutral >= Alkaline > Acidic",
+    "_note": "Keys: crop -> growth_stage -> ph_band. Bands: <6.5 (Acidic), 6.5-7.5 (Neutral), >7.5 (Alkaline). Dataset ph is float (range 5.0-8.0). Rice: <6.5 and 6.5-7.5 ideal (flooding buffers acidity); Maize: 6.5-7.5 strictly best; Cotton: 6.5-7.5 and >7.5 ideal.",
     "Rice": {
-      "Acidic": {
-        "score": 0.8,
-        "feasibility": "Ideal",
-        "reasoning": "Rice is well adapted to acidic soils and benefits from increased iron and manganese availability in flooded conditions; high yields are achievable at pH above 4.5.",
-        "actions": []
+      "Sowing": {
+        "<6.5": {
+          "score": 0.80,
+          "feasibility": "Ideal",
+          "reasoning": "Rice germinates well in acidic soils; flooding rapidly moderates extreme acidity toward a near-neutral pH due to anaerobic chemistry, making establishment reliable above pH 4.5.",
+          "actions": []
+        },
+        "6.5-7.5": {
+          "score": 0.85,
+          "feasibility": "Ideal",
+          "reasoning": "Neutral pH at sowing maximises early nutrient availability and supports uniform germination and seedling establishment.",
+          "actions": []
+        },
+        ">7.5": {
+          "score": 0.60,
+          "feasibility": "Conditional",
+          "reasoning": "Alkaline soils reduce iron and zinc solubility, increasing seedling micronutrient deficiency risk; apply chelated iron and zinc at sowing to compensate.",
+          "actions": [{ "action_category": "crop", "action_type": "fertilization", "adjustment": "increase quantity", "adjustment_type": "minimal" }]
+        }
       },
-      "Neutral": {
-        "score": 0.85,
-        "feasibility": "Ideal",
-        "reasoning": "Neutral pH maximises nutrient availability and microbial activity, supporting efficient nitrogen, phosphorus and potassium uptake in rice.",
-        "actions": []
+      "Seedling": {
+        "<6.5": {
+          "score": 0.80,
+          "feasibility": "Ideal",
+          "reasoning": "Acidic flooded soils become progressively more neutral, providing adequate phosphorus and micronutrients for vigorous seedling growth in rice.",
+          "actions": []
+        },
+        "6.5-7.5": {
+          "score": 0.85,
+          "feasibility": "Ideal",
+          "reasoning": "Optimal nutrient availability at neutral pH drives rapid tillering and leaf area development during the seedling phase.",
+          "actions": []
+        },
+        ">7.5": {
+          "score": 0.60,
+          "feasibility": "Conditional",
+          "reasoning": "Alkaline conditions at seedling stage cause iron-deficiency yellowing in rice; foliar iron and zinc sprays correct deficiency without soil amendment.",
+          "actions": [{ "action_category": "crop", "action_type": "fertilization", "adjustment": "increase quantity", "adjustment_type": "minimal" }]
+        }
       },
-      "Alkaline": {
-        "score": 0.6,
-        "feasibility": "Conditional",
-        "reasoning": "Alkaline conditions reduce iron and zinc availability in rice, causing deficiency symptoms that reduce grain yield without targeted micronutrient correction.",
-        "actions": [
-          {
-            "action_category": "crop",
-            "action_type": "fertilization",
-            "adjustment": "increase quantity",
-            "adjustment_type": "minimal"
-          }
-        ]
+      "Vegetative": {
+        "<6.5": {
+          "score": 0.80,
+          "feasibility": "Ideal",
+          "reasoning": "Rice's strong adaptation to acidic paddy soils allows high tiller production and dry matter accumulation; nitrogen application compensates for any reduced availability.",
+          "actions": []
+        },
+        "6.5-7.5": {
+          "score": 0.85,
+          "feasibility": "Ideal",
+          "reasoning": "Neutral pH supports peak nutrient uptake efficiency during the most nutrient-demanding vegetative growth phase.",
+          "actions": []
+        },
+        ">7.5": {
+          "score": 0.55,
+          "feasibility": "Conditional",
+          "reasoning": "Prolonged alkalinity during vegetative growth depresses iron, zinc and phosphorus availability, slowing tiller production and dry matter accumulation.",
+          "actions": [{ "action_category": "crop", "action_type": "fertilization", "adjustment": "increase quantity", "adjustment_type": "minimal" }]
+        }
+      },
+      "Flowering": {
+        "<6.5": {
+          "score": 0.75,
+          "feasibility": "Ideal",
+          "reasoning": "Acidic paddy conditions support adequate micronutrient supply at anthesis; pollen viability is maintained when other conditions are met.",
+          "actions": []
+        },
+        "6.5-7.5": {
+          "score": 0.85,
+          "feasibility": "Ideal",
+          "reasoning": "Neutral pH ensures full nutrient supply to the panicle during flowering and grain fill, supporting maximum grain set.",
+          "actions": []
+        },
+        ">7.5": {
+          "score": 0.55,
+          "feasibility": "Conditional",
+          "reasoning": "Alkaline conditions at flowering reduce micronutrient availability to developing spikelets; targeted fertilisation is required to protect grain set.",
+          "actions": [{ "action_category": "crop", "action_type": "fertilization", "adjustment": "increase quantity", "adjustment_type": "minimal" }]
+        }
+      },
+      "Harvesting": {
+        "<6.5": {
+          "score": 0.80,
+          "feasibility": "Ideal",
+          "reasoning": "Soil pH has limited direct effect on grain maturation; acidic soils have supported yield development throughout the season without issue.",
+          "actions": []
+        },
+        "6.5-7.5": {
+          "score": 0.85,
+          "feasibility": "Ideal",
+          "reasoning": "Neutral pH is associated with well-managed paddy soils that deliver consistent yields and quality grain.",
+          "actions": []
+        },
+        ">7.5": {
+          "score": 0.60,
+          "feasibility": "Conditional",
+          "reasoning": "Any nutrient deficiencies accumulated during the season on alkaline soils may reduce grain filling rate and milling quality at harvest.",
+          "actions": [{ "action_category": "crop", "action_type": "fertilization", "adjustment": "increase quantity", "adjustment_type": "minimal" }]
+        }
       }
     },
     "Maize": {
-      "Acidic": {
-        "score": 0.6,
-        "feasibility": "Conditional",
-        "reasoning": "Acidic soils cause aluminium and manganese toxicity in maize and reduce phosphorus availability; liming and phosphorus supplementation are required.",
-        "actions": [
-          {
-            "action_category": "crop",
-            "action_type": "fertilization",
-            "adjustment": "increase quantity",
-            "adjustment_type": "minimal"
-          }
-        ]
+      "Sowing": {
+        "<6.5": {
+          "score": 0.55,
+          "feasibility": "Conditional",
+          "reasoning": "Acidic soils inhibit seed germination through aluminium toxicity and reduced phosphorus availability; apply lime before sowing to raise pH toward 6.0.",
+          "actions": [{ "action_category": "crop", "action_type": "fertilization", "adjustment": "increase quantity", "adjustment_type": "minimal" }]
+        },
+        "6.5-7.5": {
+          "score": 0.95,
+          "feasibility": "Ideal",
+          "reasoning": "Neutral pH (6.0-7.0) maximises early nutrient availability for germination and radicle development, providing an optimal seed-bed chemistry.",
+          "actions": []
+        },
+        ">7.5": {
+          "score": 0.55,
+          "feasibility": "Conditional",
+          "reasoning": "Alkaline soils reduce phosphorus and micronutrient availability at germination; apply starter phosphorus and chelated zinc to compensate.",
+          "actions": [{ "action_category": "crop", "action_type": "fertilization", "adjustment": "increase quantity", "adjustment_type": "minimal" }]
+        }
       },
-      "Neutral": {
-        "score": 0.95,
-        "feasibility": "Ideal",
-        "reasoning": "Neutral pH (6.0–7.0) optimises all nutrient availability and microbial nitrogen fixation, providing ideal conditions for maize.",
-        "actions": []
+      "Seedling": {
+        "<6.5": {
+          "score": 0.60,
+          "feasibility": "Conditional",
+          "reasoning": "Aluminium toxicity at low pH stunts maize root growth at seedling stage and reduces phosphorus uptake; early liming and starter phosphorus are critical.",
+          "actions": [{ "action_category": "crop", "action_type": "fertilization", "adjustment": "increase quantity", "adjustment_type": "minimal" }]
+        },
+        "6.5-7.5": {
+          "score": 0.95,
+          "feasibility": "Ideal",
+          "reasoning": "Optimal soil chemistry for early maize growth; all macro and micronutrients are fully available, driving vigorous early root and shoot development.",
+          "actions": []
+        },
+        ">7.5": {
+          "score": 0.60,
+          "feasibility": "Conditional",
+          "reasoning": "Alkaline soils cause zinc and iron deficiency chlorosis in young maize; foliar micronutrient sprays at the 3-4 leaf stage prevent lasting growth penalties.",
+          "actions": [{ "action_category": "crop", "action_type": "fertilization", "adjustment": "increase quantity", "adjustment_type": "minimal" }]
+        }
       },
-      "Alkaline": {
-        "score": 0.6,
-        "feasibility": "Conditional",
-        "reasoning": "Alkaline soils cause iron, zinc and manganese deficiency in maize, producing chlorosis and stunted growth without chelated micronutrient correction.",
-        "actions": [
-          {
-            "action_category": "crop",
-            "action_type": "fertilization",
-            "adjustment": "increase quantity",
-            "adjustment_type": "minimal"
-          }
-        ]
+      "Vegetative": {
+        "<6.5": {
+          "score": 0.60,
+          "feasibility": "Conditional",
+          "reasoning": "Persistent soil acidity during vegetative growth causes aluminium root toxicity and manganese excess, reducing nitrogen and phosphorus uptake and limiting dry matter accumulation.",
+          "actions": [{ "action_category": "crop", "action_type": "fertilization", "adjustment": "increase quantity", "adjustment_type": "minimal" }]
+        },
+        "6.5-7.5": {
+          "score": 0.95,
+          "feasibility": "Ideal",
+          "reasoning": "Neutral pH delivers maximum nitrogen, phosphorus and micronutrient availability during the period of highest nutrient demand in maize.",
+          "actions": []
+        },
+        ">7.5": {
+          "score": 0.60,
+          "feasibility": "Conditional",
+          "reasoning": "Iron and zinc deficiency on alkaline soils produces interveinal chlorosis in maize during vegetative growth; EDTA-chelated micronutrient applications are effective.",
+          "actions": [{ "action_category": "crop", "action_type": "fertilization", "adjustment": "increase quantity", "adjustment_type": "minimal" }]
+        }
+      },
+      "Flowering": {
+        "<6.5": {
+          "score": 0.55,
+          "feasibility": "Conditional",
+          "reasoning": "Nutrient deficiencies from acidic soils at tasselling impair pollen quality and silk development; corrective fertilisation before heading is required.",
+          "actions": [{ "action_category": "crop", "action_type": "fertilization", "adjustment": "increase quantity", "adjustment_type": "minimal" }]
+        },
+        "6.5-7.5": {
+          "score": 0.95,
+          "feasibility": "Ideal",
+          "reasoning": "Optimal nutrient availability at neutral pH supports full pollen viability, silk receptivity and kernel set during the most yield-critical stage.",
+          "actions": []
+        },
+        ">7.5": {
+          "score": 0.55,
+          "feasibility": "Conditional",
+          "reasoning": "Micronutrient deficiency on alkaline soils at flowering reduces pollen quality and kernel set; apply zinc and boron before tasselling to protect yield.",
+          "actions": [{ "action_category": "crop", "action_type": "fertilization", "adjustment": "increase quantity", "adjustment_type": "minimal" }]
+        }
+      },
+      "Harvesting": {
+        "<6.5": {
+          "score": 0.60,
+          "feasibility": "Conditional",
+          "reasoning": "Season-long nutrient deficiencies on acidic soils reduce grain fill and test weight; plan corrective liming before the next season.",
+          "actions": [{ "action_category": "crop", "action_type": "fertilization", "adjustment": "increase quantity", "adjustment_type": "minimal" }]
+        },
+        "6.5-7.5": {
+          "score": 0.90,
+          "feasibility": "Ideal",
+          "reasoning": "Grain maturation and dry-down proceed efficiently on well-buffered neutral soils; yield and quality outcomes are maximised.",
+          "actions": []
+        },
+        ">7.5": {
+          "score": 0.60,
+          "feasibility": "Conditional",
+          "reasoning": "Alkaline soils may have caused cumulative micronutrient deficiencies that reduce grain density; monitor test weight and plan soil amendment for next season.",
+          "actions": [{ "action_category": "crop", "action_type": "fertilization", "adjustment": "increase quantity", "adjustment_type": "minimal" }]
+        }
       }
     },
     "Cotton": {
-      "Acidic": {
-        "score": 0.55,
-        "feasibility": "Conditional",
-        "reasoning": "Low pH causes aluminium toxicity and phosphorus deficiency in cotton, limiting boll set; lime and phosphorus supplementation are required.",
-        "actions": [
-          {
-            "action_category": "crop",
-            "action_type": "fertilization",
-            "adjustment": "increase quantity",
-            "adjustment_type": "minimal"
-          }
-        ]
+      "Sowing": {
+        "<6.5": {
+          "score": 0.50,
+          "feasibility": "Conditional",
+          "reasoning": "Acidic soils cause aluminium toxicity and phosphorus deficiency that slow cotton germination and early root growth; apply lime and starter phosphorus before sowing.",
+          "actions": [{ "action_category": "crop", "action_type": "fertilization", "adjustment": "increase quantity", "adjustment_type": "minimal" }]
+        },
+        "6.5-7.5": {
+          "score": 0.90,
+          "feasibility": "Ideal",
+          "reasoning": "Neutral pH delivers optimal phosphorus and micronutrient availability for cotton germination and establishment.",
+          "actions": []
+        },
+        ">7.5": {
+          "score": 0.75,
+          "feasibility": "Ideal",
+          "reasoning": "Cotton is tolerant of mild alkalinity (pH up to 8.0) at sowing; apply starter micronutrients to compensate for reduced iron and zinc availability.",
+          "actions": []
+        }
       },
-      "Neutral": {
-        "score": 0.9,
-        "feasibility": "Ideal",
-        "reasoning": "Neutral pH delivers optimal availability of all nutrients needed for cotton's growth, boll filling and fibre development.",
-        "actions": []
+      "Seedling": {
+        "<6.5": {
+          "score": 0.55,
+          "feasibility": "Conditional",
+          "reasoning": "Aluminium toxicity on acidic soils restricts cotton tap-root development; lime application before sowing largely corrects this but takes time to act.",
+          "actions": [{ "action_category": "crop", "action_type": "fertilization", "adjustment": "increase quantity", "adjustment_type": "minimal" }]
+        },
+        "6.5-7.5": {
+          "score": 0.90,
+          "feasibility": "Ideal",
+          "reasoning": "Neutral pH supports rapid cotton tap-root elongation and early canopy establishment through balanced nutrient availability.",
+          "actions": []
+        },
+        ">7.5": {
+          "score": 0.75,
+          "feasibility": "Ideal",
+          "reasoning": "Cotton seedlings tolerate mild alkalinity; foliar micronutrient sprays at emergence prevent any iron or zinc deficiency from limiting early growth.",
+          "actions": []
+        }
       },
-      "Alkaline": {
-        "score": 0.75,
-        "feasibility": "Ideal",
-        "reasoning": "Cotton tolerates mild alkalinity well and performs at normal yield levels up to pH 8.0; targeted micronutrient supplementation easily manages any deficiencies above this level.",
-        "actions": []
+      "Vegetative": {
+        "<6.5": {
+          "score": 0.55,
+          "feasibility": "Conditional",
+          "reasoning": "Low pH during vegetative growth restricts phosphorus and calcium uptake, delaying square initiation and reducing the potential boll load.",
+          "actions": [{ "action_category": "crop", "action_type": "fertilization", "adjustment": "increase quantity", "adjustment_type": "minimal" }]
+        },
+        "6.5-7.5": {
+          "score": 0.90,
+          "feasibility": "Ideal",
+          "reasoning": "Optimal pH for vegetative development; all nutrients including calcium (critical for cell wall strength) and boron (square retention) are fully available.",
+          "actions": []
+        },
+        ">7.5": {
+          "score": 0.75,
+          "feasibility": "Ideal",
+          "reasoning": "Cotton performs well at mild alkalinity; regular foliar boron and zinc applications prevent the only common deficiencies at this pH range.",
+          "actions": []
+        }
+      },
+      "Flowering": {
+        "<6.5": {
+          "score": 0.50,
+          "feasibility": "Conditional",
+          "reasoning": "Calcium and boron deficiencies on acidic soils at boll-set stage increase boll shed; apply calcium and boron foliar sprays at first flower to protect retention.",
+          "actions": [{ "action_category": "crop", "action_type": "fertilization", "adjustment": "increase quantity", "adjustment_type": "minimal" }]
+        },
+        "6.5-7.5": {
+          "score": 0.90,
+          "feasibility": "Ideal",
+          "reasoning": "Neutral pH ensures maximum calcium and boron availability at boll set, supporting strong boll retention and fibre development.",
+          "actions": []
+        },
+        ">7.5": {
+          "score": 0.75,
+          "feasibility": "Ideal",
+          "reasoning": "Cotton's boll-set stage tolerates mild alkalinity; ensure boron and zinc are supplied foliarly to maintain full boll retention.",
+          "actions": []
+        }
+      },
+      "Harvesting": {
+        "<6.5": {
+          "score": 0.55,
+          "feasibility": "Conditional",
+          "reasoning": "Season-long nutrient limitations from acidic soils may reduce boll weight and fibre quality; plan corrective liming for the next season.",
+          "actions": [{ "action_category": "crop", "action_type": "fertilization", "adjustment": "increase quantity", "adjustment_type": "minimal" }]
+        },
+        "6.5-7.5": {
+          "score": 0.90,
+          "feasibility": "Ideal",
+          "reasoning": "Harvesting on neutral-pH soils reflects a well-managed crop with optimal fibre development and boll maturity.",
+          "actions": []
+        },
+        ">7.5": {
+          "score": 0.75,
+          "feasibility": "Ideal",
+          "reasoning": "Cotton harvested from mildly alkaline soils typically shows good fibre quality, provided micronutrient supplementation was applied during the season.",
+          "actions": []
+        }
       }
     }
   },
   "sunlight_adjustment_rules": {
-    "_note": "Rice: sensitive to extreme heat | Maize: thrives in strong sunlight | Cotton: prefers long sunny periods",
+    "_note": "Keys: crop -> growth_stage -> sunlight_band (<4h, 4-8h, >8h). Rice C3 saturates at 4-8h; Maize C4 benefits from >8h; Cotton needs >8h especially at flowering. Flowering stages most light-sensitive.",
     "Rice": {
-      "<4": {
-        "score": 0.4,
-        "feasibility": "Conditional",
-        "reasoning": "Fewer than 4 hours reduces photosynthesis in rice, causing poor tillering and reduced grain fill; nitrogen support partially offsets the energy shortfall.",
-        "actions": [
-          {
-            "action_category": "crop",
-            "action_type": "fertilization",
-            "adjustment": "increase quantity",
-            "adjustment_type": "minimal"
-          }
-        ]
+      "Sowing": {
+        "<4": {
+          "score": 0.40,
+          "feasibility": "Conditional",
+          "reasoning": "Low light at sowing slows soil warming and reduces germination rate; increase nitrogen to compensate for limited early photosynthetic capacity.",
+          "actions": [{ "action_category": "crop", "action_type": "fertilization", "adjustment": "increase quantity", "adjustment_type": "minimal" }]
+        },
+        "4-8": {
+          "score": 0.80,
+          "feasibility": "Ideal",
+          "reasoning": "Adequate sunlight at sowing warms soil, promotes uniform germination and meets initial seedling energy requirements.",
+          "actions": []
+        },
+        ">8": {
+          "score": 0.80,
+          "feasibility": "Ideal",
+          "reasoning": "High sunlight accelerates soil warming and supports strong early growth; maintain paddy water depth to buffer temperature fluctuations.",
+          "actions": []
+        }
       },
-      "4-8": {
-        "score": 0.8,
-        "feasibility": "Ideal",
-        "reasoning": "Four to eight hours meets rice's photosynthetic requirements at all growth stages, supporting tillering, grain development and yield.",
-        "actions": []
+      "Seedling": {
+        "<4": {
+          "score": 0.40,
+          "feasibility": "Conditional",
+          "reasoning": "Insufficient light at seedling stage slows tiller initiation and leaf area expansion; nitrogen supplementation partially compensates for reduced photosynthesis.",
+          "actions": [{ "action_category": "crop", "action_type": "fertilization", "adjustment": "increase quantity", "adjustment_type": "minimal" }]
+        },
+        "4-8": {
+          "score": 0.80,
+          "feasibility": "Ideal",
+          "reasoning": "Four to eight hours provides the light energy rice seedlings need for vigorous tillering and biomass accumulation.",
+          "actions": []
+        },
+        ">8": {
+          "score": 0.80,
+          "feasibility": "Ideal",
+          "reasoning": "High light drives active photosynthesis in rice seedlings; maintain irrigation to meet the associated increase in evapotranspiration demand.",
+          "actions": []
+        }
       },
-      ">8": {
-        "score": 0.8,
-        "feasibility": "Ideal",
-        "reasoning": "High sunlight boosts dry matter accumulation in rice with adequate water supply; increased irrigation offsets the higher evapotranspiration demand.",
-        "actions": []
+      "Vegetative": {
+        "<4": {
+          "score": 0.35,
+          "feasibility": "Conditional",
+          "reasoning": "Low light during peak vegetative growth limits dry matter accumulation and tiller density; increase nitrogen and potassium to sustain as much biomass as possible.",
+          "actions": [{ "action_category": "crop", "action_type": "fertilization", "adjustment": "increase quantity", "adjustment_type": "minimal" }]
+        },
+        "4-8": {
+          "score": 0.85,
+          "feasibility": "Ideal",
+          "reasoning": "Optimal light for rice's C3 photosynthetic system during vegetative growth; supports maximum tiller production and leaf area index.",
+          "actions": []
+        },
+        ">8": {
+          "score": 0.85,
+          "feasibility": "Ideal",
+          "reasoning": "Extended sunlight increases canopy photosynthesis and accelerates vegetative dry matter accumulation; increase irrigation to match higher evapotranspiration.",
+          "actions": [{ "action_category": "field", "action_type": "irrigation", "adjustment": "increase quantity", "adjustment_type": "minimal" }]
+        }
+      },
+      "Flowering": {
+        "<4": {
+          "score": 0.35,
+          "feasibility": "Conditional",
+          "reasoning": "Low light at anthesis reduces pollen production and spikelet fertility in rice; fertilise with potassium to improve floral development under light-limited conditions.",
+          "actions": [{ "action_category": "crop", "action_type": "fertilization", "adjustment": "increase quantity", "adjustment_type": "minimal" }]
+        },
+        "4-8": {
+          "score": 0.90,
+          "feasibility": "Ideal",
+          "reasoning": "Adequate light at flowering supports pollen viability and maximum grain set; rice C3 photosynthesis is saturated in this range.",
+          "actions": []
+        },
+        ">8": {
+          "score": 0.85,
+          "feasibility": "Ideal",
+          "reasoning": "High sunlight at heading enhances assimilate supply to the panicle; maintain flood irrigation to prevent heat-drought interaction from high evapotranspiration.",
+          "actions": [{ "action_category": "field", "action_type": "irrigation", "adjustment": "increase quantity", "adjustment_type": "minimal" }]
+        }
+      },
+      "Harvesting": {
+        "<4": {
+          "score": 0.45,
+          "feasibility": "Conditional",
+          "reasoning": "Low light slows grain dry-down and increases the risk of grain discolouration from extended field exposure; plan mechanical drying as a contingency.",
+          "actions": []
+        },
+        "4-8": {
+          "score": 0.80,
+          "feasibility": "Ideal",
+          "reasoning": "Adequate sunlight enables field grain dry-down to safe harvest moisture within a reasonable window.",
+          "actions": []
+        },
+        ">8": {
+          "score": 0.85,
+          "feasibility": "Ideal",
+          "reasoning": "High sunlight accelerates grain dry-down and facilitates fast, efficient mechanised harvest at target moisture content.",
+          "actions": []
+        }
       }
     },
     "Maize": {
-      "<4": {
-        "score": 0.4,
-        "feasibility": "Conditional",
-        "reasoning": "Fewer than 4 hours is insufficient for maize's C4 photosynthesis rate; reduced crop density and balanced fertilisation help maximise limited-light yield.",
-        "actions": [
-          {
-            "action_category": "crop",
-            "action_type": "fertilization",
-            "adjustment": "increase quantity",
-            "adjustment_type": "minimal"
-          }
-        ]
+      "Sowing": {
+        "<4": {
+          "score": 0.40,
+          "feasibility": "Conditional",
+          "reasoning": "Low light at sowing slows soil warming and reduces germination uniformity; apply starter fertiliser to compensate for limited early photosynthetic energy.",
+          "actions": [{ "action_category": "crop", "action_type": "fertilization", "adjustment": "increase quantity", "adjustment_type": "minimal" }]
+        },
+        "4-8": {
+          "score": 0.80,
+          "feasibility": "Ideal",
+          "reasoning": "Adequate sunlight at sowing warms soil to target temperature, supporting rapid and uniform maize germination.",
+          "actions": []
+        },
+        ">8": {
+          "score": 0.90,
+          "feasibility": "Ideal",
+          "reasoning": "Strong sunlight maximises soil warming, ensuring germination conditions are met quickly and seedling emergence is rapid.",
+          "actions": []
+        }
       },
-      "4-8": {
-        "score": 0.85,
-        "feasibility": "Ideal",
-        "reasoning": "Good light drives the high photosynthetic rate maize requires for rapid vegetative growth and full cob development.",
-        "actions": []
+      "Seedling": {
+        "<4": {
+          "score": 0.40,
+          "feasibility": "Conditional",
+          "reasoning": "Insufficient light limits maize's C4 photosynthesis at the seedling stage; reduce plant density and supplement nitrogen to maximise light capture per plant.",
+          "actions": [{ "action_category": "crop", "action_type": "fertilization", "adjustment": "increase quantity", "adjustment_type": "minimal" }]
+        },
+        "4-8": {
+          "score": 0.85,
+          "feasibility": "Ideal",
+          "reasoning": "Good light at seedling stage supports vigorous leaf expansion and early root development, establishing the yield framework.",
+          "actions": []
+        },
+        ">8": {
+          "score": 0.95,
+          "feasibility": "Ideal",
+          "reasoning": "Full sun drives maize C4 photosynthesis at near-maximum rate from early seedling growth, maximising early biomass accumulation.",
+          "actions": []
+        }
       },
-      ">8": {
-        "score": 0.95,
-        "feasibility": "Ideal",
-        "reasoning": "Full sun maximises maize biomass production and kernel filling, especially during grain fill, delivering peak yield potential.",
-        "actions": []
+      "Vegetative": {
+        "<4": {
+          "score": 0.35,
+          "feasibility": "Conditional",
+          "reasoning": "Low light during rapid vegetative growth seriously limits dry matter accumulation in maize; reduce plant density and maximise nitrogen to offset light limitation.",
+          "actions": [{ "action_category": "crop", "action_type": "fertilization", "adjustment": "increase quantity", "adjustment_type": "minimal" }]
+        },
+        "4-8": {
+          "score": 0.85,
+          "feasibility": "Ideal",
+          "reasoning": "Adequate light for vigorous vegetative development and leaf area index expansion to support the high biomass needed for maize yield.",
+          "actions": []
+        },
+        ">8": {
+          "score": 0.95,
+          "feasibility": "Ideal",
+          "reasoning": "Maximum light drives C4 productivity during the most rapid vegetative growth phase, maximising canopy leaf area and pre-anthesis dry matter.",
+          "actions": []
+        }
+      },
+      "Flowering": {
+        "<4": {
+          "score": 0.25,
+          "feasibility": "Not Feasible",
+          "reasoning": "Low light at tasselling and silking severely reduces assimilate supply to developing cobs, causing silk failure and near-total kernel abortion.",
+          "actions": [{"action_type":"monitoring","adjustment":"monitor cob development and silk viability daily; document kernel set percentage","adjustment_type":"significant"},{"action_type":"fertilization","adjustment":"increase quantity","adjustment_type":"minimal"}]
+        },
+        "4-8": {
+          "score": 0.85,
+          "feasibility": "Ideal",
+          "reasoning": "Adequate sunlight supports pollen production and assimilate delivery to developing kernels during the critical pollination and early grain fill period.",
+          "actions": []
+        },
+        ">8": {
+          "score": 0.95,
+          "feasibility": "Ideal",
+          "reasoning": "Maximum light at flowering drives peak assimilate supply to silks and developing kernels, maximising kernel set and final yield potential.",
+          "actions": []
+        }
+      },
+      "Harvesting": {
+        "<4": {
+          "score": 0.50,
+          "feasibility": "Conditional",
+          "reasoning": "Low light slows kernel dry-down; arrange mechanical drying to reach safe storage moisture if prolonged cloud cover is forecast.",
+          "actions": []
+        },
+        "4-8": {
+          "score": 0.80,
+          "feasibility": "Ideal",
+          "reasoning": "Adequate sunlight enables field dry-down to target moisture content; harvest at physiological maturity.",
+          "actions": []
+        },
+        ">8": {
+          "score": 0.90,
+          "feasibility": "Ideal",
+          "reasoning": "Strong sunlight accelerates kernel dry-down and eases harvest logistics with minimal drying cost.",
+          "actions": []
+        }
       }
     },
     "Cotton": {
-      "<4": {
-        "score": 0.3,
-        "feasibility": "Not Feasible",
-        "reasoning": "Cotton requires high light intensity for boll development; fewer than 4 hours causes excessive boll shedding and poor fibre quality regardless of other inputs.",
-        "actions": [
-          {
-            "action_category": "",
-            "action_type": "avoid",
-            "adjustment": "",
-            "adjustment_type": ""
-          }
-        ]
+      "Sowing": {
+        "<4": {
+          "score": 0.25,
+          "feasibility": "Not Feasible",
+          "reasoning": "Low light at sowing prevents adequate soil warming for cotton germination and indicates an unsuitable planting window; delay until sunlight conditions improve.",
+          "actions": [{"action_type":"sowing","adjustment":"delay","adjustment_type":"significant"},{"action_type":"monitoring","adjustment":"monitor daily sunlight hours; delay sowing until 5+ consecutive days with over 6 hours forecast","adjustment_type":"significant"}]
+        },
+        "4-8": {
+          "score": 0.70,
+          "feasibility": "Conditional",
+          "reasoning": "Moderate light provides adequate soil warming for germination but limits early seedling vigour; ensure soil temperature exceeds 18C before sowing.",
+          "actions": [{ "action_category": "crop", "action_type": "sowing", "adjustment": "delay", "adjustment_type": "minimal" }]
+        },
+        ">8": {
+          "score": 0.90,
+          "feasibility": "Ideal",
+          "reasoning": "High sunlight at sowing rapidly warms soil, promotes uniform germination and establishes vigorous early seedling growth.",
+          "actions": []
+        }
       },
-      "4-8": {
-        "score": 0.75,
-        "feasibility": "Ideal",
-        "reasoning": "Four to eight hours provides adequate light for cotton boll development and fibre maturation; appropriate spacing and variety selection deliver competitive yields.",
-        "actions": []
+      "Seedling": {
+        "<4": {
+          "score": 0.25,
+          "feasibility": "Not Feasible",
+          "reasoning": "Insufficient light at seedling stage causes severe etiolation in cotton; hypocotyl elongation without leaf expansion prevents stand establishment.",
+          "actions": [{"action_type":"monitoring","adjustment":"monitor etiolation and hypocotyl elongation daily; ensure no overhead shading from adjacent structures","adjustment_type":"significant"},{"action_type":"fertilization","adjustment":"increase quantity","adjustment_type":"minimal"}]
+        },
+        "4-8": {
+          "score": 0.75,
+          "feasibility": "Ideal",
+          "reasoning": "Adequate light for cotton seedling development; supports canopy closure and tap-root establishment under moderate light conditions.",
+          "actions": []
+        },
+        ">8": {
+          "score": 0.92,
+          "feasibility": "Ideal",
+          "reasoning": "Strong sunlight drives vigorous canopy development and rapid node addition, establishing the sympodial branching framework for high boll numbers.",
+          "actions": []
+        }
       },
-      ">8": {
-        "score": 0.9,
-        "feasibility": "Ideal",
-        "reasoning": "High sunlight maximises cotton photosynthesis and accelerates boll maturation for peak fibre yield and quality; maintain irrigation to match elevated evapotranspiration.",
-        "actions": []
-      }
-    }
-  },
-  "irrigation_frequency_adjustment_rules": {
-    "_note": "Rice: frequent/continuous | Maize: moderate controlled | Cotton: low-frequency drought-tolerant",
-    "Rice": {
-      "<2": {
-        "score": 0.2,
-        "feasibility": "Not Feasible",
-        "reasoning": "Fewer than 2 irrigations per week cannot maintain the standing water rice paddies require for weed suppression and productive paddy culture.",
-        "actions": [
-          {
-            "action_category": "",
-            "action_type": "avoid",
-            "adjustment": "",
-            "adjustment_type": ""
-          }
-        ]
+      "Vegetative": {
+        "<4": {
+          "score": 0.25,
+          "feasibility": "Not Feasible",
+          "reasoning": "Low light during vegetative growth prevents adequate square initiation in cotton; boll potential is severely compromised and cannot be recovered later.",
+          "actions": [{"action_type":"monitoring","adjustment":"monitor square initiation and canopy development daily; remove any avoidable shade sources","adjustment_type":"significant"},{"action_type":"fertilization","adjustment":"increase quantity","adjustment_type":"minimal"}]
+        },
+        "4-8": {
+          "score": 0.75,
+          "feasibility": "Ideal",
+          "reasoning": "Adequate light for vegetative growth and square initiation; adjust plant population for optimum light interception per plant.",
+          "actions": []
+        },
+        ">8": {
+          "score": 0.92,
+          "feasibility": "Ideal",
+          "reasoning": "Full sun during vegetative growth maximises node production rate and square initiation, building the maximum boll load for harvest.",
+          "actions": []
+        }
       },
-      "3-4": {
-        "score": 0.7,
-        "feasibility": "Ideal",
-        "reasoning": "Three to four irrigations per week supports productive rice using AWD techniques, maintaining adequate moisture while reducing water use by up to 30% versus continuous flooding.",
-        "actions": []
+      "Flowering": {
+        "<4": {
+          "score": 0.20,
+          "feasibility": "Not Feasible",
+          "reasoning": "Cotton boll development requires high light intensity; fewer than 4 hours causes excessive boll shedding and poor fibre development regardless of other management inputs.",
+          "actions": [{"action_type":"monitoring","adjustment":"monitor boll retention and shedding rate daily; apply foliar potassium to support boll load","adjustment_type":"significant"},{"action_type":"fertilization","adjustment":"increase quantity","adjustment_type":"minimal"}]
+        },
+        "4-8": {
+          "score": 0.80,
+          "feasibility": "Ideal",
+          "reasoning": "Adequate sunlight at flowering supports boll retention and fibre initiation; ensure irrigation matches evapotranspiration to avoid compounding moisture stress.",
+          "actions": []
+        },
+        ">8": {
+          "score": 0.95,
+          "feasibility": "Ideal",
+          "reasoning": "Maximum light at boll development drives peak assimilate supply to developing fibres, maximising boll weight and fibre length and strength.",
+          "actions": []
+        }
       },
-      ">5": {
-        "score": 0.9,
-        "feasibility": "Ideal",
-        "reasoning": "Frequent irrigation maintains the flooded or near-saturated conditions that rice requires, suppresses weeds and supports consistent grain filling.",
-        "actions": []
-      }
-    },
-    "Maize": {
-      "<2": {
-        "score": 0.4,
-        "feasibility": "Conditional",
-        "reasoning": "Infrequent irrigation risks moisture stress at tasselling and silking; applying larger volumes per event extends the effective moisture window between irrigations.",
-        "actions": [
-          {
-            "action_category": "field",
-            "action_type": "irrigation",
-            "adjustment": "increase quantity",
-            "adjustment_type": "significant"
-          }
-        ]
-      },
-      "3-4": {
-        "score": 0.9,
-        "feasibility": "Ideal",
-        "reasoning": "Moderate irrigation frequency provides consistent moisture for maize without waterlogging risk, matching weekly evapotranspiration demand.",
-        "actions": []
-      },
-      ">5": {
-        "score": 0.65,
-        "feasibility": "Conditional",
-        "reasoning": "Over-frequent irrigation promotes shallow roots, nutrient leaching and root rot; reducing volume and moving to soil-moisture-based scheduling improves root depth and soil health.",
-        "actions": [
-          {
-            "action_category": "field",
-            "action_type": "irrigation",
-            "adjustment": "decrease quantity",
-            "adjustment_type": "minimal"
-          }
-        ]
-      }
-    },
-    "Cotton": {
-      "<2": {
-        "score": 0.5,
-        "feasibility": "Conditional",
-        "reasoning": "Cotton needs minimum root-zone moisture for boll formation; fewer than 2 irrigations per week risks boll shedding and requires efficient drip delivery to extend moisture availability.",
-        "actions": [
-          {
-            "action_category": "field",
-            "action_type": "irrigation",
-            "adjustment": "increase days",
-            "adjustment_type": "minimal"
-          }
-        ]
-      },
-      "3-4": {
-        "score": 0.7,
-        "feasibility": "Ideal",
-        "reasoning": "Three to four irrigations per week supports consistent boll development in cotton with good drainage to prevent root-zone saturation.",
-        "actions": []
-      },
-      ">5": {
-        "score": 0.2,
-        "feasibility": "Not Feasible",
-        "reasoning": "Excessively high frequency saturates cotton's root zone, creating conditions for Pythium root rot and widespread boll shedding that make cultivation unviable.",
-        "actions": [
-          {
-            "action_category": "",
-            "action_type": "avoid",
-            "adjustment": "",
-            "adjustment_type": ""
-          }
-        ]
+      "Harvesting": {
+        "<4": {
+          "score": 0.25,
+          "feasibility": "Not Feasible",
+          "reasoning": "Low light prevents boll opening and lint drying; harvesting in cloudy, wet conditions causes severe fibre staining and ginning difficulties.",
+          "actions": [{"action_type":"harvesting","adjustment":"delay","adjustment_type":"minimal"},{"action_type":"monitoring","adjustment":"monitor boll opening and lint moisture daily; delay mechanical harvest until sunlight conditions improve","adjustment_type":"significant"}]
+        },
+        "4-8": {
+          "score": 0.75,
+          "feasibility": "Ideal",
+          "reasoning": "Adequate light allows boll opening and lint dry-down to proceed at a reasonable rate; schedule harvest when conditions stabilise.",
+          "actions": []
+        },
+        ">8": {
+          "score": 0.90,
+          "feasibility": "Ideal",
+          "reasoning": "Strong sunlight enables rapid, complete boll opening and lint drying, optimising fibre quality and mechanical picker efficiency.",
+          "actions": []
+        }
       }
     }
   },
@@ -1010,167 +2000,515 @@
     }
   },
   "rainfall_adjustment_rules": {
-    "Maize": {
-      "<50": {
-        "feasibility": "Not Feasible",
-        "reasoning": "Below 50mm cannot support maize germination or root development without heavy supplemental irrigation.",
-        "actions": [
-          {
-            "action_category": "",
-            "action_type": "avoid",
-            "adjustment": "",
-            "adjustment_type": ""
-          }
-        ]
+    "_note": "Keys: crop -> growth_stage -> rainfall_band. All crops invert preference at Harvesting (dry = ideal). Rice needs 200-300mm+ except at harvest; Maize optimal 100-200mm; Cotton optimal 100-200mm.",
+    "Rice": {
+      "Sowing": {
+        "<50": {
+          "score": 0.10,
+          "feasibility": "Not Feasible",
+          "reasoning": "Below 50mm cannot establish standing water for paddy sowing; no viable rainfed paddy production is possible without reliable irrigation to substitute.",
+          "actions": [{"action_type":"irrigation","adjustment":"increase days","adjustment_type":"significant"},{"action_type":"monitoring","adjustment":"maintain full paddy flooding via supplemental irrigation; monitor water depth twice daily","adjustment_type":"significant"}]
+        },
+        "50-100": {
+          "score": 0.45,
+          "feasibility": "Conditional",
+          "reasoning": "Well below paddy requirements at establishment; heavy supplemental irrigation is needed immediately after sowing to build standing water depth.",
+          "actions": [{ "action_category": "field", "action_type": "irrigation", "adjustment": "increase quantity", "adjustment_type": "significant" }]
+        },
+        "100-200": {
+          "score": 0.65,
+          "feasibility": "Conditional",
+          "reasoning": "Moderate rainfall reduces but does not meet paddy water requirements at sowing; supplemental irrigation must maintain adequate water depth from day 1.",
+          "actions": [{ "action_category": "field", "action_type": "irrigation", "adjustment": "increase quantity", "adjustment_type": "minimal" }]
+        },
+        "200-300": {
+          "score": 0.90,
+          "feasibility": "Ideal",
+          "reasoning": "Adequate rainfall at sowing quickly establishes standing water for paddy, reducing supplemental irrigation needs during establishment.",
+          "actions": []
+        },
+        ">300": {
+          "score": 0.95,
+          "feasibility": "Ideal",
+          "reasoning": "High rainfall establishes paddy water depth rapidly; manage drainage to prevent over-flooding and nutrient leaching from the seed-bed.",
+          "actions": []
+        }
       },
-      "50-100": {
-        "feasibility": "Conditional",
-        "reasoning": "Below minimum for rainfed maize; supplemental irrigation is critical at germination and tasselling to prevent moisture stress and yield failure.",
-        "actions": [
-          {
-            "action_category": "field",
-            "action_type": "irrigation",
-            "adjustment": "increase quantity",
-            "adjustment_type": "significant"
-          },
-          {
-            "action_category": "crop",
-            "action_type": "fertilization",
-            "adjustment": "increase quantity",
-            "adjustment_type": "minimal"
-          }
-        ]
+      "Seedling": {
+        "<50": {
+          "score": 0.10,
+          "feasibility": "Not Feasible",
+          "reasoning": "Insufficient rainfall to sustain paddy water depth during the critical seedling establishment phase; requires full supplemental irrigation replacement.",
+          "actions": [{"action_type":"irrigation","adjustment":"increase days","adjustment_type":"significant"},{"action_type":"monitoring","adjustment":"maintain continuous standing water via supplemental irrigation; monitor seedling health daily","adjustment_type":"significant"}]
+        },
+        "50-100": {
+          "score": 0.40,
+          "feasibility": "Conditional",
+          "reasoning": "Rainfall far below paddy demand at seedling stage; heavy irrigation is essential to maintain 3-5cm standing water for tiller initiation.",
+          "actions": [{ "action_category": "field", "action_type": "irrigation", "adjustment": "increase quantity", "adjustment_type": "significant" }]
+        },
+        "100-200": {
+          "score": 0.60,
+          "feasibility": "Conditional",
+          "reasoning": "Below paddy water requirements; supplemental irrigation must make up the deficit to maintain flooded conditions throughout seedling establishment.",
+          "actions": [{ "action_category": "field", "action_type": "irrigation", "adjustment": "increase quantity", "adjustment_type": "minimal" }]
+        },
+        "200-300": {
+          "score": 0.90,
+          "feasibility": "Ideal",
+          "reasoning": "Optimal rainfall sustains paddy water depth with minimal supplemental irrigation, supporting rapid tillering and stand establishment.",
+          "actions": []
+        },
+        ">300": {
+          "score": 0.95,
+          "feasibility": "Ideal",
+          "reasoning": "Abundant rainfall maintains deep paddy conditions; manage overflow drainage to keep depth below 15cm for optimal seedling growth.",
+          "actions": []
+        }
       },
-      "100-200": {
-        "feasibility": "Ideal",
-        "reasoning": "Optimal rainfall supports germination, vegetative growth and grain fill without waterlogging risk.",
-        "actions": []
+      "Vegetative": {
+        "<50": {
+          "score": 0.10,
+          "feasibility": "Not Feasible",
+          "reasoning": "Severely insufficient rainfall for paddy during peak vegetative demand; without full irrigation replacement the crop cannot achieve target tiller numbers.",
+          "actions": [{"action_type":"irrigation","adjustment":"increase days","adjustment_type":"significant"},{"action_type":"monitoring","adjustment":"maximise supplemental irrigation; monitor paddy water depth and tiller density twice daily","adjustment_type":"significant"}]
+        },
+        "50-100": {
+          "score": 0.45,
+          "feasibility": "Conditional",
+          "reasoning": "Below paddy requirements during peak vegetative growth; irrigate heavily and frequently to maintain standing water depth and prevent tiller loss.",
+          "actions": [{ "action_category": "field", "action_type": "irrigation", "adjustment": "increase quantity", "adjustment_type": "significant" }]
+        },
+        "100-200": {
+          "score": 0.65,
+          "feasibility": "Conditional",
+          "reasoning": "Moderate rainfall reduces but cannot meet paddy water demand during rapid vegetative growth; supplemental irrigation must maintain minimum flood depth.",
+          "actions": [{ "action_category": "field", "action_type": "irrigation", "adjustment": "increase quantity", "adjustment_type": "minimal" }]
+        },
+        "200-300": {
+          "score": 0.92,
+          "feasibility": "Ideal",
+          "reasoning": "Optimal rainfall supports continuous paddy flooding during peak tiller production and leaf area development with reduced irrigation cost.",
+          "actions": []
+        },
+        ">300": {
+          "score": 0.95,
+          "feasibility": "Ideal",
+          "reasoning": "High rainfall sustains deep paddy with no supplemental irrigation needed; manage drainage to prevent excessive flooding above 15cm.",
+          "actions": []
+        }
       },
-      "200-300": {
-        "feasibility": "Ideal",
-        "reasoning": "Upper optimal range; maize performs well with reduced supplemental irrigation and standard drainage management.",
-        "actions": []
+      "Flowering": {
+        "<50": {
+          "score": 0.10,
+          "feasibility": "Not Feasible",
+          "reasoning": "Any reduction in water supply at anthesis causes spikelet sterility; below 50mm rainfall requires full irrigation replacement to protect grain set.",
+          "actions": [{"action_type":"irrigation","adjustment":"increase days","adjustment_type":"significant"},{"action_type":"monitoring","adjustment":"maintain flood depth at anthesis via supplemental irrigation; inspect spikelet water status twice daily","adjustment_type":"significant"}]
+        },
+        "50-100": {
+          "score": 0.40,
+          "feasibility": "Conditional",
+          "reasoning": "Far below paddy requirement at the most water-sensitive stage; apply maximum supplemental irrigation immediately to prevent sterility-related yield collapse.",
+          "actions": [{ "action_category": "field", "action_type": "irrigation", "adjustment": "increase quantity", "adjustment_type": "significant" }]
+        },
+        "100-200": {
+          "score": 0.60,
+          "feasibility": "Conditional",
+          "reasoning": "Insufficient to maintain paddy depth at anthesis; supplement irrigation to keep standing water depth at 3-5cm through the full flowering period.",
+          "actions": [{ "action_category": "field", "action_type": "irrigation", "adjustment": "increase quantity", "adjustment_type": "minimal" }]
+        },
+        "200-300": {
+          "score": 0.90,
+          "feasibility": "Ideal",
+          "reasoning": "Optimal rainfall maintains paddy depth at anthesis, protecting pollen viability and maximising spikelet fertility and grain set.",
+          "actions": []
+        },
+        ">300": {
+          "score": 0.95,
+          "feasibility": "Ideal",
+          "reasoning": "Abundant rainfall sustains full paddy flood at the most critical growth stage; monitor water levels to stay below 15cm to avoid panicle submergence.",
+          "actions": []
+        }
       },
-      ">300": {
-        "feasibility": "Conditional",
-        "reasoning": "Excessive rainfall creates waterlogging and root rot risk; immediate drainage management is required to prevent yield loss.",
-        "actions": [
-          {
-            "action_category": "field",
-            "action_type": "irrigation",
-            "adjustment": "decrease quantity",
-            "adjustment_type": "significant"
-          }
-        ]
+      "Harvesting": {
+        "<50": {
+          "score": 0.85,
+          "feasibility": "Ideal",
+          "reasoning": "Dry conditions at harvest allow field drainage and soil consolidation for machine access; minimal rainfall enables rapid grain dry-down and clean harvest.",
+          "actions": []
+        },
+        "50-100": {
+          "score": 0.80,
+          "feasibility": "Ideal",
+          "reasoning": "Low rainfall at harvest supports field dry-down and trafficable conditions; harvest promptly at physiological maturity to avoid quality losses.",
+          "actions": []
+        },
+        "100-200": {
+          "score": 0.55,
+          "feasibility": "Conditional",
+          "reasoning": "Moderate rainfall slows field dry-down; drain paddies 10-14 days before harvest and schedule cutting during rain-free windows to protect grain quality.",
+          "actions": [{ "action_category": "field", "action_type": "irrigation", "adjustment": "decrease quantity", "adjustment_type": "significant" }]
+        },
+        "200-300": {
+          "score": 0.35,
+          "feasibility": "Conditional",
+          "reasoning": "High rainfall at harvest prevents field drainage and causes grain sprouting and brown discolouration; consider emergency harvest with field dryers as backup.",
+          "actions": [{ "action_category": "field", "action_type": "irrigation", "adjustment": "decrease quantity", "adjustment_type": "significant" }]
+        },
+        ">300": {
+          "score": 0.15,
+          "feasibility": "Not Feasible",
+          "reasoning": "Excessive rainfall at harvest saturates fields, prevents mechanical access and causes severe grain sprouting and fungal infection; crop is lost without emergency intervention.",
+          "actions": [{"action_type":"harvesting","adjustment":"delay","adjustment_type":"significant"},{"action_type":"monitoring","adjustment":"activate emergency drainage; monitor grain sprouting and fungal infection daily; accelerate harvest once fields drain","adjustment_type":"significant"}]
+        }
       }
     },
-    "Rice": {
-      "<50": {
-        "feasibility": "Not Feasible",
-        "reasoning": "Below 50mm is wholly insufficient for paddy without a reliable irrigation source capable of maintaining 5–10cm standing water.",
-        "actions": [
-          {
-            "action_category": "",
-            "action_type": "avoid",
-            "adjustment": "",
-            "adjustment_type": ""
-          }
-        ]
+    "Maize": {
+      "Sowing": {
+        "<50": {
+          "score": 0.15,
+          "feasibility": "Not Feasible",
+          "reasoning": "Rainfall below 50mm cannot support maize germination without heavy supplemental irrigation to maintain seed-zone moisture.",
+          "actions": [{"action_type":"irrigation","adjustment":"increase days","adjustment_type":"significant"},{"action_type":"monitoring","adjustment":"supplement all moisture from irrigation; check seed-zone moisture at 5cm depth daily","adjustment_type":"significant"}]
+        },
+        "50-100": {
+          "score": 0.50,
+          "feasibility": "Conditional",
+          "reasoning": "Below minimum for rainfed maize sowing; supplemental irrigation at germination is critical to maintain seed-zone moisture above wilting point.",
+          "actions": [
+            { "action_category": "field", "action_type": "irrigation", "adjustment": "increase quantity", "adjustment_type": "significant" },
+            { "action_category": "crop", "action_type": "fertilization", "adjustment": "increase quantity", "adjustment_type": "minimal" }
+          ]
+        },
+        "100-200": {
+          "score": 0.90,
+          "feasibility": "Ideal",
+          "reasoning": "Optimal rainfall at sowing ensures adequate seed-zone moisture for uniform germination without waterlogging or crusting risk.",
+          "actions": []
+        },
+        "200-300": {
+          "score": 0.75,
+          "feasibility": "Ideal",
+          "reasoning": "Upper optimal range at sowing; maize establishes well with reduced irrigation needs but ensure drainage to prevent seed-bed waterlogging.",
+          "actions": []
+        },
+        ">300": {
+          "score": 0.35,
+          "feasibility": "Conditional",
+          "reasoning": "Excessive rainfall at sowing causes seed-bed waterlogging and seed rot; improve drainage and delay sowing until soils are trafficable.",
+          "actions": [{ "action_category": "field", "action_type": "irrigation", "adjustment": "decrease quantity", "adjustment_type": "significant" }]
+        }
       },
-      "50-100": {
-        "feasibility": "Conditional",
-        "reasoning": "Well below paddy requirements; heavy supplemental irrigation is essential during transplanting and tillering to maintain standing water depth.",
-        "actions": [
-          {
-            "action_category": "field",
-            "action_type": "irrigation",
-            "adjustment": "increase quantity",
-            "adjustment_type": "significant"
-          }
-        ]
+      "Seedling": {
+        "<50": {
+          "score": 0.10,
+          "feasibility": "Not Feasible",
+          "reasoning": "Below 50mm is insufficient to support maize stand establishment; heavy supplemental irrigation is required from emergence to prevent permanent wilting.",
+          "actions": [{"action_type":"irrigation","adjustment":"increase days","adjustment_type":"significant"},{"action_type":"monitoring","adjustment":"monitor wilting and soil moisture daily; supplement all moisture deficit from irrigation","adjustment_type":"significant"}]
+        },
+        "50-100": {
+          "score": 0.50,
+          "feasibility": "Conditional",
+          "reasoning": "Rainfall below minimum; maintain supplemental irrigation to keep soil at field capacity during the critical stand establishment period.",
+          "actions": [
+            { "action_category": "field", "action_type": "irrigation", "adjustment": "increase quantity", "adjustment_type": "significant" },
+            { "action_category": "crop", "action_type": "fertilization", "adjustment": "increase quantity", "adjustment_type": "minimal" }
+          ]
+        },
+        "100-200": {
+          "score": 0.90,
+          "feasibility": "Ideal",
+          "reasoning": "Optimal rainfall for seedling establishment; keeps soil at field capacity without waterlogging risk, supporting rapid early growth.",
+          "actions": []
+        },
+        "200-300": {
+          "score": 0.75,
+          "feasibility": "Ideal",
+          "reasoning": "Adequate rainfall at seedling stage with good drainage management; reduces supplemental irrigation requirements without waterlogging risk.",
+          "actions": []
+        },
+        ">300": {
+          "score": 0.35,
+          "feasibility": "Conditional",
+          "reasoning": "Excessive rainfall causes seedling damping-off and root oxygen deficiency; improve furrow drainage and avoid irrigation.",
+          "actions": [{ "action_category": "field", "action_type": "irrigation", "adjustment": "decrease quantity", "adjustment_type": "significant" }]
+        }
       },
-      "100-200": {
-        "feasibility": "Conditional",
-        "reasoning": "Moderate rainfall reduces but does not eliminate irrigation demand; supplemental water is still needed to maintain adequate paddy depth throughout the season.",
-        "actions": [
-          {
-            "action_category": "field",
-            "action_type": "irrigation",
-            "adjustment": "increase quantity",
-            "adjustment_type": "minimal"
-          }
-        ]
+      "Vegetative": {
+        "<50": {
+          "score": 0.10,
+          "feasibility": "Not Feasible",
+          "reasoning": "Severely insufficient rainfall during rapid vegetative growth; without heavy supplemental irrigation, permanent moisture stress will limit leaf area and cob potential.",
+          "actions": [{"action_type":"irrigation","adjustment":"increase days","adjustment_type":"significant"},{"action_type":"monitoring","adjustment":"daily soil moisture and leaf roll assessment; maximise supplemental irrigation to prevent permanent wilting","adjustment_type":"significant"}]
+        },
+        "50-100": {
+          "score": 0.50,
+          "feasibility": "Conditional",
+          "reasoning": "Below rainfed minimum during the most nutrient-demanding period; supplement irrigation at all growth stages and increase fertiliser to maintain biomass accumulation.",
+          "actions": [
+            { "action_category": "field", "action_type": "irrigation", "adjustment": "increase quantity", "adjustment_type": "significant" },
+            { "action_category": "crop", "action_type": "fertilization", "adjustment": "increase quantity", "adjustment_type": "minimal" }
+          ]
+        },
+        "100-200": {
+          "score": 0.90,
+          "feasibility": "Ideal",
+          "reasoning": "Optimal rainfall for vegetative growth; maintains field capacity across the root zone to support maximum dry matter accumulation.",
+          "actions": []
+        },
+        "200-300": {
+          "score": 0.80,
+          "feasibility": "Ideal",
+          "reasoning": "Upper optimal range during vegetative growth; reduce or eliminate supplemental irrigation and ensure adequate field drainage.",
+          "actions": []
+        },
+        ">300": {
+          "score": 0.40,
+          "feasibility": "Conditional",
+          "reasoning": "Excessive rainfall causes root waterlogging and nitrogen loss through leaching; immediately cease irrigation and improve drainage to protect plant health.",
+          "actions": [{ "action_category": "field", "action_type": "irrigation", "adjustment": "decrease quantity", "adjustment_type": "significant" }]
+        }
       },
-      "200-300": {
-        "feasibility": "Ideal",
-        "reasoning": "Optimal rainfall sustains flooded paddy with minimal supplemental irrigation, supporting high tiller production and grain fill.",
-        "actions": []
+      "Flowering": {
+        "<50": {
+          "score": 0.10,
+          "feasibility": "Not Feasible",
+          "reasoning": "Moisture stress at tasselling and silking is the single most damaging event for maize yield; below 50mm requires maximum supplemental irrigation to protect pollination.",
+          "actions": [{"action_type":"irrigation","adjustment":"increase days","adjustment_type":"significant"},{"action_type":"monitoring","adjustment":"maximise irrigation at tasselling and silking; inspect silk emergence and pollen shed daily","adjustment_type":"significant"}]
+        },
+        "50-100": {
+          "score": 0.45,
+          "feasibility": "Conditional",
+          "reasoning": "Critical irrigation at silking is non-negotiable; apply maximum supplemental water at tasselling to prevent silk firing and kernel abortion.",
+          "actions": [
+            { "action_category": "field", "action_type": "irrigation", "adjustment": "increase quantity", "adjustment_type": "significant" },
+            { "action_category": "crop", "action_type": "fertilization", "adjustment": "increase quantity", "adjustment_type": "minimal" }
+          ]
+        },
+        "100-200": {
+          "score": 0.90,
+          "feasibility": "Ideal",
+          "reasoning": "Optimal rainfall sustains field capacity at the most water-sensitive stage, ensuring synchronous pollen shed and silk receptivity for maximum kernel set.",
+          "actions": []
+        },
+        "200-300": {
+          "score": 0.80,
+          "feasibility": "Ideal",
+          "reasoning": "Adequate moisture at flowering with good drainage management; reduce supplemental irrigation to avoid excessive wetness.",
+          "actions": []
+        },
+        ">300": {
+          "score": 0.35,
+          "feasibility": "Conditional",
+          "reasoning": "Excessive rainfall at tasselling can saturate soils and prevent field access for management; improve drainage urgently to avoid nitrogen loss and root damage.",
+          "actions": [{ "action_category": "field", "action_type": "irrigation", "adjustment": "decrease quantity", "adjustment_type": "significant" }]
+        }
       },
-      ">300": {
-        "feasibility": "Ideal",
-        "reasoning": "High rainfall benefits paddy rice; manage drainage to prevent over-flooding above 15cm and avoid nitrogen top-dressing during heavy rain to prevent leaching.",
-        "actions": []
+      "Harvesting": {
+        "<50": {
+          "score": 0.85,
+          "feasibility": "Ideal",
+          "reasoning": "Dry conditions at harvest accelerate kernel dry-down and provide trafficable fields for combine harvest with minimal losses.",
+          "actions": []
+        },
+        "50-100": {
+          "score": 0.85,
+          "feasibility": "Ideal",
+          "reasoning": "Low rainfall enables field dry-down and efficient combine access; harvest at physiological maturity for maximum grain quality.",
+          "actions": []
+        },
+        "100-200": {
+          "score": 0.60,
+          "feasibility": "Conditional",
+          "reasoning": "Moderate rainfall at harvest slows dry-down and risks ear mold; monitor closely and harvest at the earliest opportunity to protect grain quality.",
+          "actions": [{ "action_category": "field", "action_type": "irrigation", "adjustment": "decrease quantity", "adjustment_type": "significant" }]
+        },
+        "200-300": {
+          "score": 0.40,
+          "feasibility": "Conditional",
+          "reasoning": "High rainfall at harvest prevents dry-down, promotes Fusarium and Aspergillus ear rots and makes field access difficult; emergency harvest with drying is required.",
+          "actions": [{ "action_category": "field", "action_type": "irrigation", "adjustment": "decrease quantity", "adjustment_type": "significant" }]
+        },
+        ">300": {
+          "score": 0.15,
+          "feasibility": "Not Feasible",
+          "reasoning": "Excessive rainfall at harvest makes fields impassable, causes severe grain sprouting and mold infection, and renders the crop unsaleable without major post-harvest intervention.",
+          "actions": [{"action_type":"harvesting","adjustment":"delay","adjustment_type":"significant"},{"action_type":"monitoring","adjustment":"delay harvest until fields drain; monitor ear mold and grain sprouting daily; arrange artificial drying","adjustment_type":"significant"}]
+        }
       }
     },
     "Cotton": {
-      "<50": {
-        "feasibility": "Conditional",
-        "reasoning": "Below 50mm, boll shedding risk is high without reliable irrigation at every critical growth stage from sowing through boll fill.",
-        "actions": [
-          {
-            "action_category": "field",
-            "action_type": "irrigation",
-            "adjustment": "increase quantity",
-            "adjustment_type": "significant"
-          }
-        ]
+      "Sowing": {
+        "<50": {
+          "score": 0.45,
+          "feasibility": "Conditional",
+          "reasoning": "Below 50mm at sowing requires reliable irrigation at every critical stage from germination through boll fill to replace rainfall deficit.",
+          "actions": [{ "action_category": "field", "action_type": "irrigation", "adjustment": "increase quantity", "adjustment_type": "significant" }]
+        },
+        "50-100": {
+          "score": 0.55,
+          "feasibility": "Conditional",
+          "reasoning": "Below-optimal rainfall at sowing requires supplemental irrigation at germination and early seedling stages to prevent moisture stress.",
+          "actions": [
+            { "action_category": "field", "action_type": "irrigation", "adjustment": "increase quantity", "adjustment_type": "minimal" },
+            { "action_category": "crop", "action_type": "fertilization", "adjustment": "increase quantity", "adjustment_type": "minimal" }
+          ]
+        },
+        "100-200": {
+          "score": 0.90,
+          "feasibility": "Ideal",
+          "reasoning": "Optimal rainfall at sowing supports uniform cotton germination and early seedling establishment with minimal supplemental irrigation.",
+          "actions": []
+        },
+        "200-300": {
+          "score": 0.55,
+          "feasibility": "Conditional",
+          "reasoning": "Above-optimal rainfall at sowing increases damping-off disease risk; ensure well-drained seed-bed, reduce irrigation and monitor for fungal diseases.",
+          "actions": [{ "action_category": "field", "action_type": "irrigation", "adjustment": "decrease quantity", "adjustment_type": "significant" }]
+        },
+        ">300": {
+          "score": 0.20,
+          "feasibility": "Not Feasible",
+          "reasoning": "Excessive rainfall causes seed-bed waterlogging, seed rot and damping-off, preventing cotton stand establishment.",
+          "actions": [{"action_type":"sowing","adjustment":"delay","adjustment_type":"significant"},{"action_type":"irrigation","adjustment":"decrease days","adjustment_type":"significant"},{"action_type":"monitoring","adjustment":"activate drainage; delay sowing until waterlogging subsides and soil drains","adjustment_type":"significant"}]
+        }
       },
-      "50-100": {
-        "feasibility": "Conditional",
-        "reasoning": "Below-optimal rainfall requires supplemental irrigation at squaring and boll fill to prevent premature shedding and yield loss.",
-        "actions": [
-          {
-            "action_category": "field",
-            "action_type": "irrigation",
-            "adjustment": "increase quantity",
-            "adjustment_type": "minimal"
-          },
-          {
-            "action_category": "crop",
-            "action_type": "fertilization",
-            "adjustment": "increase quantity",
-            "adjustment_type": "minimal"
-          }
-        ]
+      "Seedling": {
+        "<50": {
+          "score": 0.45,
+          "feasibility": "Conditional",
+          "reasoning": "Insufficient rainfall at seedling stage requires targeted drip irrigation to maintain root-zone moisture and prevent seedling stress.",
+          "actions": [{ "action_category": "field", "action_type": "irrigation", "adjustment": "increase quantity", "adjustment_type": "significant" }]
+        },
+        "50-100": {
+          "score": 0.55,
+          "feasibility": "Conditional",
+          "reasoning": "Below optimal; supplement irrigation at canopy establishment and apply starter fertiliser to drive rapid tap-root development.",
+          "actions": [
+            { "action_category": "field", "action_type": "irrigation", "adjustment": "increase quantity", "adjustment_type": "minimal" },
+            { "action_category": "crop", "action_type": "fertilization", "adjustment": "increase quantity", "adjustment_type": "minimal" }
+          ]
+        },
+        "100-200": {
+          "score": 0.90,
+          "feasibility": "Ideal",
+          "reasoning": "Optimal rainfall maintains field-capacity soil moisture for rapid canopy closure and tap-root establishment without waterlogging.",
+          "actions": []
+        },
+        "200-300": {
+          "score": 0.55,
+          "feasibility": "Conditional",
+          "reasoning": "High rainfall at seedling stage promotes root disease; improve drainage and avoid supplemental irrigation entirely.",
+          "actions": [{ "action_category": "field", "action_type": "irrigation", "adjustment": "decrease quantity", "adjustment_type": "significant" }]
+        },
+        ">300": {
+          "score": 0.20,
+          "feasibility": "Not Feasible",
+          "reasoning": "Waterlogged soil at seedling stage causes fatal Pythium and Phytophthora root rot in cotton; stand loss is unavoidable under prolonged flooding.",
+          "actions": [{"action_type":"irrigation","adjustment":"decrease days","adjustment_type":"significant"},{"action_type":"spraying","adjustment":"apply Pythium and Phytophthora preventive root drench","adjustment_type":"significant"},{"action_type":"monitoring","adjustment":"activate drainage immediately; inspect stand loss and root rot symptoms daily","adjustment_type":"significant"}]
+        }
       },
-      "100-200": {
-        "feasibility": "Ideal",
-        "reasoning": "Optimal rainfall supports strong vegetative growth and full boll development with minimal supplemental irrigation.",
-        "actions": []
+      "Vegetative": {
+        "<50": {
+          "score": 0.45,
+          "feasibility": "Conditional",
+          "reasoning": "Moisture deficit during vegetative growth delays square initiation and reduces boll potential; apply drip irrigation at regular intervals.",
+          "actions": [{ "action_category": "field", "action_type": "irrigation", "adjustment": "increase quantity", "adjustment_type": "significant" }]
+        },
+        "50-100": {
+          "score": 0.55,
+          "feasibility": "Conditional",
+          "reasoning": "Below-optimal rainfall during vegetative growth; supplement irrigation to maintain field capacity and apply nitrogen to support biomass accumulation.",
+          "actions": [
+            { "action_category": "field", "action_type": "irrigation", "adjustment": "increase quantity", "adjustment_type": "minimal" },
+            { "action_category": "crop", "action_type": "fertilization", "adjustment": "increase quantity", "adjustment_type": "minimal" }
+          ]
+        },
+        "100-200": {
+          "score": 0.90,
+          "feasibility": "Ideal",
+          "reasoning": "Optimal rainfall for cotton vegetative growth, supporting square initiation and canopy development with low disease pressure.",
+          "actions": []
+        },
+        "200-300": {
+          "score": 0.55,
+          "feasibility": "Conditional",
+          "reasoning": "Above-optimal rainfall increases boll rot and Alternaria blight risk during vegetative stage; improve drainage and cease supplemental irrigation.",
+          "actions": [{ "action_category": "field", "action_type": "irrigation", "adjustment": "decrease quantity", "adjustment_type": "significant" }]
+        },
+        ">300": {
+          "score": 0.20,
+          "feasibility": "Not Feasible",
+          "reasoning": "Excessive rainfall during vegetative growth causes root disease and severe Alternaria blight, collapsing boll potential.",
+          "actions": [{"action_type":"irrigation","adjustment":"decrease days","adjustment_type":"significant"},{"action_type":"spraying","adjustment":"apply Alternaria and root rot preventive fungicide","adjustment_type":"significant"},{"action_type":"monitoring","adjustment":"maintain drainage; monitor defoliation and disease symptoms daily","adjustment_type":"significant"}]
+        }
       },
-      "200-300": {
-        "feasibility": "Conditional",
-        "reasoning": "Above-optimal rainfall increases boll rot and fungal disease risk; all supplemental irrigation should cease and field drainage should be improved.",
-        "actions": [
-          {
-            "action_category": "field",
-            "action_type": "irrigation",
-            "adjustment": "decrease quantity",
-            "adjustment_type": "significant"
-          }
-        ]
+      "Flowering": {
+        "<50": {
+          "score": 0.40,
+          "feasibility": "Conditional",
+          "reasoning": "Boll shedding risk is high under moisture deficit at squaring and flowering; precision irrigation every 7-10 days at boll-set stage is essential.",
+          "actions": [{ "action_category": "field", "action_type": "irrigation", "adjustment": "increase quantity", "adjustment_type": "significant" }]
+        },
+        "50-100": {
+          "score": 0.50,
+          "feasibility": "Conditional",
+          "reasoning": "Below-optimal moisture at boll-set stage; supplement irrigation at squaring and first flower to prevent premature boll drop.",
+          "actions": [
+            { "action_category": "field", "action_type": "irrigation", "adjustment": "increase quantity", "adjustment_type": "minimal" },
+            { "action_category": "crop", "action_type": "fertilization", "adjustment": "increase quantity", "adjustment_type": "minimal" }
+          ]
+        },
+        "100-200": {
+          "score": 0.90,
+          "feasibility": "Ideal",
+          "reasoning": "Optimal rainfall at boll development supports maximum boll retention and fibre initiation with low disease pressure.",
+          "actions": []
+        },
+        "200-300": {
+          "score": 0.45,
+          "feasibility": "Conditional",
+          "reasoning": "Above-optimal rainfall at boll-set stage significantly increases boll rot (Phytophthora, Colletotrichum); cease all irrigation and improve drainage immediately.",
+          "actions": [{ "action_category": "field", "action_type": "irrigation", "adjustment": "decrease quantity", "adjustment_type": "significant" }]
+        },
+        ">300": {
+          "score": 0.15,
+          "feasibility": "Not Feasible",
+          "reasoning": "Excessive rainfall at flowering causes severe boll rot and bacterial blight, resulting in catastrophic boll loss that cannot be mitigated.",
+          "actions": [{"action_type":"irrigation","adjustment":"decrease days","adjustment_type":"significant"},{"action_type":"spraying","adjustment":"apply emergency boll rot and bacterial blight fungicide","adjustment_type":"significant"},{"action_type":"monitoring","adjustment":"maintain drainage; count and document boll loss daily","adjustment_type":"significant"}]
+        }
       },
-      ">300": {
-        "feasibility": "Not Feasible",
-        "reasoning": "Excessive rainfall causes boll rot, fibre staining and root disease that significantly compromise yield and quality.",
-        "actions": [
-          {
-            "action_category": "",
-            "action_type": "avoid",
-            "adjustment": "",
-            "adjustment_type": ""
-          }
-        ]
+      "Harvesting": {
+        "<50": {
+          "score": 0.95,
+          "feasibility": "Ideal",
+          "reasoning": "Dry conditions at harvest are essential for cotton; minimal rainfall enables complete boll opening, clean dry lint and efficient mechanical picker or stripper operation.",
+          "actions": []
+        },
+        "50-100": {
+          "score": 0.85,
+          "feasibility": "Ideal",
+          "reasoning": "Low rainfall at harvest supports dry boll opening and trafficable field conditions for mechanical harvest; monitor lint moisture before ginning.",
+          "actions": []
+        },
+        "100-200": {
+          "score": 0.50,
+          "feasibility": "Conditional",
+          "reasoning": "Moderate rainfall during harvest delays boll opening and increases fibre staining risk; schedule harvest during dry spells and dry lint mechanically before ginning.",
+          "actions": [{ "action_category": "field", "action_type": "irrigation", "adjustment": "decrease quantity", "adjustment_type": "significant" }]
+        },
+        "200-300": {
+          "score": 0.25,
+          "feasibility": "Not Feasible",
+          "reasoning": "High rainfall at cotton harvest prevents boll opening, causes severe fibre staining and boll rot, and makes mechanical harvesting nearly impossible.",
+          "actions": [{"action_type":"harvesting","adjustment":"delay","adjustment_type":"minimal"},{"action_type":"monitoring","adjustment":"monitor boll opening and fibre moisture daily; delay mechanical harvest until bolls are fully open and dry","adjustment_type":"significant"}]
+        },
+        ">300": {
+          "score": 0.10,
+          "feasibility": "Not Feasible",
+          "reasoning": "Excessive rainfall at harvest destroys fibre quality through staining, mold and boll rot; crop loss is near-total without emergency defoliation and rapid mechanical harvest.",
+          "actions": [{"action_type":"harvesting","adjustment":"delay","adjustment_type":"significant"},{"action_type":"spraying","adjustment":"apply emergency defoliant to accelerate boll opening before further fibre damage occurs","adjustment_type":"significant"},{"action_type":"monitoring","adjustment":"activate drainage immediately; assess total fibre quality loss and expedite harvest once fields dry","adjustment_type":"significant"}]
+        }
       }
     }
   },
@@ -1194,30 +2532,12 @@
       "Rainy": 0.1
     }
   },
-  "irrigation_frequency_rules": {
-    "_note": "Recommended irrigation frequency (times/week) per crop x growth_stage x soil_type. Sandy drains fastest so needs most; Clay retains water so needs least.",
-    "Maize": {
-      "Sowing":     { "Sandy": 3, "Loamy": 2, "Clay": 1 },
-      "Seedling":   { "Sandy": 4, "Loamy": 3, "Clay": 2 },
-      "Vegetative": { "Sandy": 5, "Loamy": 4, "Clay": 3 },
-      "Flowering":  { "Sandy": 6, "Loamy": 5, "Clay": 4 },
-      "Harvesting": { "Sandy": 3, "Loamy": 2, "Clay": 1 }
-    },
-    "Rice": {
-      "Sowing":     { "Sandy": 5, "Loamy": 4, "Clay": 3 },
-      "Seedling":   { "Sandy": 7, "Loamy": 6, "Clay": 5 },
-      "Vegetative": { "Sandy": 7, "Loamy": 7, "Clay": 6 },
-      "Flowering":  { "Sandy": 7, "Loamy": 6, "Clay": 5 },
-      "Harvesting": { "Sandy": 4, "Loamy": 3, "Clay": 2 }
-    },
-    "Cotton": {
-      "Sowing":     { "Sandy": 3, "Loamy": 2, "Clay": 1 },
-      "Seedling":   { "Sandy": 4, "Loamy": 3, "Clay": 2 },
-      "Vegetative": { "Sandy": 4, "Loamy": 3, "Clay": 2 },
-      "Flowering":  { "Sandy": 5, "Loamy": 4, "Clay": 3 },
-      "Harvesting": { "Sandy": 2, "Loamy": 2, "Clay": 1 }
-    }
-  },
+"irrigation_frequency_rules": {
+  "_note": "Recommended irrigation frequency (times/week) per crop x growth_stage. Soil-type adjustments handled separately by the rule engine. Frequency peaks at Flowering and drops at Harvesting (fields dry down).",
+  "Maize":  { "Sowing": 2, "Seedling": 3, "Vegetative": 4, "Flowering": 5, "Harvesting": 1 },
+  "Rice":   { "Sowing": 5, "Seedling": 6, "Vegetative": 7, "Flowering": 7, "Harvesting": 2 },
+  "Cotton": { "Sowing": 2, "Seedling": 3, "Vegetative": 3, "Flowering": 4, "Harvesting": 1 }
+},
   "crop_type_calendar": {
     "Kharif": {
       "sow_start": 4,
