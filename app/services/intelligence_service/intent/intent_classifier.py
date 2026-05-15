@@ -100,7 +100,7 @@ _SIGNALS: list[tuple[FarmIntent, float, tuple[str, ...]]] = [
         "should i sow", "what to sow", "planning to plant", "thinking of planting",
         "new crop", "next crop", "start planting", "start growing",
         "suitable crop", "crop for this season", "crop for this weather",
-        "considering the weather", "if weather improves",
+        "considering the weather", "if weather improves", "crop", "rice", "maize", "cotton"
     )),
 ]
 
