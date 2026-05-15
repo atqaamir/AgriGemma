@@ -70,11 +70,17 @@ class SeasonalPlannerService:
                 "adjustments":  adjustments,
             })
 
+        last_updated = None
+        if plan.last_updated:
+            d = plan.last_updated
+            last_updated = f"{d.day} {d.strftime('%B')} {d.year}" if hasattr(d, 'strftime') else str(d)
+
         return {
             "plan_id":          plan.id,
             "growth_stage":     growth_stage,
             "currently_active": plan.currently_active,
             "total_crops":      len(crops_output),
+            "last_updated":     last_updated,
             "crops":            crops_output,
         }
 
