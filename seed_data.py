@@ -517,33 +517,34 @@ def run():
     db.session.commit()
 
     # ---- DAILY WEATHER (ClimateProfile) ----
-    # Seed 7 days starting today for 4 Pakistani regions.
-    # Values reflect realistic May conditions in Pakistan.
+    # 7 days from 18 May 2026 for 4 Pakistani regions.
     #
-    # Punjab:    hot & dry (pre-monsoon)   ~30–34°C, low rain, high sun
-    # Sindh:     very hot & dry            ~34–38°C, near-zero rain, high sun
-    # KP:        cooler, occasional rain   ~22–26°C, moderate humidity
-    # Islamabad: warm, intermittent shower ~26–30°C, moderate rain
+    # Scenario for weekly plan (user 1, week 18–24 May 2026):
+    #   Punjab (~15°C) → band "15-20" → triggers cold-stress adjustment for Maize sowing
+    #   Sindh  (~34°C) → band "30-40" → triggers heat-stress adjustment for Rice sowing
+    #   KP / Islamabad → neutral conditions, no significant adjustments expected
 
     REGIONS = {
         "Punjab, Pakistan": [
             # (avg_temp, humidity, rainfall_mm, sunlight_h, wind_kph, notes)
-            (31.2, 42, 0.0,  9.5, 14, "Clear hot day, pre-monsoon dryness."),
-            (32.0, 40, 0.0,  9.8, 16, "Slight warming, no rain expected."),
-            (31.5, 44, 2.0,  8.5, 18, "Patchy cloud, brief afternoon shower possible."),
-            (30.8, 48, 5.5,  7.5, 20, "Light rain event; soil moisture improves."),
-            (29.5, 52, 8.0,  6.5, 15, "Overcast morning, scattered showers."),
-            (30.2, 50, 3.0,  8.0, 12, "Clearing by afternoon, moderate conditions."),
-            (31.8, 45, 0.5,  9.2, 14, "Mostly sunny, warm and dry."),
+            # Cold spell — all days ~15°C, well below 18°C maize germination threshold
+            (15.2, 55, 0.0,  6.5, 14, "Cold spell; temperatures too low for maize germination."),
+            (15.0, 58, 1.5,  6.0, 12, "Continued cold; sowing conditions unfavourable."),
+            (15.5, 56, 0.0,  7.0, 13, "Slight cloud cover; temperature remains sub-optimal."),
+            (15.8, 54, 2.5,  6.5, 15, "Light shower; soil cold and wet."),
+            (15.5, 52, 0.5,  7.5, 14, "Marginal improvement but still below threshold."),
+            (15.2, 50, 0.0,  8.0, 12, "Dry but cold; delay maize sowing advised."),
+            (15.8, 53, 0.0,  7.8, 13, "Cold persists; monitor forecast for warming trend."),
         ],
         "Sindh, Pakistan": [
-            (35.8, 35, 0.0, 10.5, 20, "Intense heat, no rainfall forecast."),
-            (36.4, 33, 0.0, 10.8, 22, "Heatwave persisting; irrigation critical."),
-            (36.0, 34, 0.0, 10.5, 21, "Continuous dry heat; monitor crop stress."),
-            (35.2, 36, 0.0, 10.2, 19, "Slight humidity uptick but still very dry."),
-            (34.8, 38, 1.5,  9.8, 17, "Trace rain; negligible soil moisture effect."),
-            (35.5, 37, 0.0, 10.4, 20, "Hot and dry, irrigation schedule critical."),
-            (36.2, 35, 0.0, 10.6, 22, "Peak heat; increase irrigation frequency."),
+            # Heat scenario — all days ~34°C, in 30-40 band for Rice heat-stress at sowing
+            (34.2, 35, 0.0, 10.5, 20, "High heat; early morning sowing recommended for rice."),
+            (33.8, 33, 0.0, 10.8, 22, "Sustained heat; increase irrigation to buffer desiccation."),
+            (34.0, 34, 0.0, 10.5, 21, "Continuous heat stress; monitor soil moisture closely."),
+            (34.5, 36, 0.0, 10.2, 19, "Hot and dry; irrigation critical for rice establishment."),
+            (33.5, 38, 1.5,  9.8, 17, "Trace rain; negligible cooling effect."),
+            (34.2, 37, 0.0, 10.4, 20, "Heat persists; maintain irrigation schedule."),
+            (34.8, 35, 0.0, 10.6, 22, "Peak heat day; increase irrigation frequency."),
         ],
         "Khyber Pakhtunkhwa, Pakistan": [
             (24.0, 58, 4.5,  7.5, 12, "Mild day with intermittent cloud cover."),
@@ -570,7 +571,7 @@ def run():
         for offset, (temp, hum, rain, sun, wind, note) in enumerate(days):
             weather_rows.append(ClimateProfile(
                 region=region,
-                date=today + timedelta(days=offset),
+                date=date(2026, 5, 18) + timedelta(days=offset),
                 avg_temperature_c=temp,
                 humidity=hum,
                 rainfall_mm=rain,
