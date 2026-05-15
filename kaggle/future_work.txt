@@ -19,3 +19,6 @@
 - Change scenarios where the task needs to be performed earlier than initially planned.
 - Improve intent classification, specially for context grabbing when multi intent is present.
 - Improve intent classification if the intent is being carried forward from previous conversation context and is not present in the current farmer message.
+- Refresh  weather db whenever net is available and last weather api use has been over X hours. ( X = 6, 12 hours eg)
+- When sowing task is marked done by farmer from task page UI, crop is added in the db automatically.
+- Available crops, and plannted crops add ability via frontend.

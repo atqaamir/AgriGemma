@@ -24,7 +24,8 @@
       "Bash(Get-ChildItem -Path \"C:\\\\Users\\\\its\\\\Desktop\\\\Projects\\\\SmartFarming\" -Force)",
       "Bash(Select-Object Name, FullName)",
       "PowerShell(Get-ChildItem -Path \"C:\\\\Users\\\\its\\\\Desktop\\\\Projects\\\\SmartFarming\" -Recurse -Directory | Where-Object {$_.Name -match \"frontend|static|src|templates|public|pages\"} | Select-Object FullName)",
-      "Bash(findstr /r /s \"priority.*low\\\\|low.*priority\" app\\\\services\\\\intelligence_service\\\\*)"
+      "Bash(findstr /r /s \"priority.*low\\\\|low.*priority\" app\\\\services\\\\intelligence_service\\\\*)",
+      "Bash(Remove-Item \"c:\\\\Users\\\\its\\\\Desktop\\\\Projects\\\\SmartFarming\\\\app\\\\templates\\\\seasonal_plan2.html\")"
     ]
   }
 }

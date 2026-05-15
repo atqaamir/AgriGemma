@@ -171,6 +171,7 @@
     { label: 'Crops',         href: '/mycrops',            icon: 'eco'                },
     { label: 'Fields',        href: '/myfields',           icon: 'landscape'          },
     { label: 'Tasks',         href: '/mytasks',            icon: 'assignment_turned_in'},
+    { label: 'Season Plan',   href: '/1/seasonal-plan-page', icon: 'calendar_month'   },
     { label: 'Chat',          href: '/chatbot',            icon: 'chat'               },
     { label: 'Notifications', href: '/notifications/page', icon: 'notifications'      },
   ];
@@ -182,7 +183,8 @@
 
     list.innerHTML = NAV_ITEMS.map(item => {
       const itemPath = item.href.replace(/\/$/, '') || '/';
-      const isActive = current === itemPath;
+      const isActive = current === itemPath ||
+        (item.href.includes('seasonal-plan-page') && current.includes('seasonal-plan-page'));
       return `
         <a href="${item.href}" class="drawer-nav-item${isActive ? ' active' : ''}">
           <span class="material-symbols-outlined drawer-nav-icon"
