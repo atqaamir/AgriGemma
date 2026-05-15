@@ -38,8 +38,16 @@ class WeeklyPlanEntry(db.Model):
     field_id        = db.Column(db.Integer, nullable=True)    # Field.id
     growth_stage_id = db.Column(db.Integer, nullable=True)
 
-    # JSON-serialised list of adjusted weekly events:
-    # [{ "event_type", "date", "original_date"?, "climate_adjustments_made": [...] }]
+    # JSON-serialised pre-adjustment events (raw schedule, no climate changes):
+    # [{ "event_type", "date" }]
+    original_events = db.Column(db.Text, nullable=True)
+
+    # JSON-serialised post-adjustment events (dates shifted by climate rules):
+    # [{ "event_type", "date" }]
     week_events = db.Column(db.Text, nullable=True)
+
+    # JSON-serialised plan-level climate adjustments:
+    # [{ "factor", "reasoning", "adjustment" }]
+    climate_adjustments = db.Column(db.Text, nullable=True)
 
     plan = db.relationship("WeeklyPlan", back_populates="entries")
