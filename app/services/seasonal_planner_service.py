@@ -1,8 +1,11 @@
 import json
+import logging
 
 from app.rules.rule_engine.rule_engine import RuleEngine
 from app.repositories.seasonal_plan_repository import SeasonalPlanRepository, SeasonalPlanEntryRepository
 from app.services.rule_base_service import rule_base_service
+
+logger = logging.getLogger(__name__)
 
 
 class SeasonalPlannerService:
@@ -222,3 +225,70 @@ class SeasonalPlannerService:
             return None
         SeasonalPlanRepository.delete(plan)   # cascades to entries via relationship
         return plan
+
+    # ------------------------------------------------------------------ #
+    #  AI reasoning
+    # ------------------------------------------------------------------ #
+
+    @staticmethod
+    def generate_adjustment_reasoning(plan_data: dict) -> str:
+        """Call Ollama (fast_complete) to produce a one-paragraph plain-English
+        explanation of why the plan's adjustments are needed. Returns a fallback
+        string if the AI call fails."""
+        from app.services.ai_model_service.ai_model_service import fast_complete
+
+        infeasible = [c for c in plan_data.get("crops", []) if not c.get("feasible")]
+        feasible   = [c for c in plan_data.get("crops", []) if c.get("feasible")]
+
+        if not infeasible:
+            crop_names = ", ".join(c["crop"] for c in feasible)
+            return (
+                f"All recommended crops ({crop_names}) are fully compatible with your soil "
+                "and water conditions. No corrective adjustments are required."
+            )
+
+        lines = []
+        for crop in plan_data.get("crops", []):
+            if crop.get("adjustments"):
+                lines.append(f"{crop['crop']} ({crop['soil_type']} soil, {crop['water_source']} water): "
+                             + "; ".join(crop["adjustments"]))
+
+        adjustments_text = "\n".join(lines) if lines else "No specific adjustments recorded."
+
+        prompt = (
+            "You are an agricultural advisor. In 2–3 sentences explain to a farmer "
+            "why the following crop adjustments are necessary, focusing on soil and water compatibility risks.\n\n"
+            f"Growth stage: {plan_data.get('growth_stage', 'unknown')}\n"
+            f"Adjustments:\n{adjustments_text}\n\n"
+            "Write a clear, practical explanation. Do not use bullet points or headers."
+        )
+
+        try:
+            raw = fast_complete(prompt)
+            if isinstance(raw, dict):
+                text = raw.get("response") or raw.get("text") or raw.get("output") or ""
+            else:
+                text = str(raw)
+            text = text.strip()
+            return text if text else SeasonalPlannerService._adjustment_reasoning_fallback(plan_data)
+        except Exception as exc:
+            logger.warning("AI adjustment reasoning failed: %s", exc)
+            return SeasonalPlannerService._adjustment_reasoning_fallback(plan_data)
+
+    @staticmethod
+    def _adjustment_reasoning_fallback(plan_data: dict) -> str:
+        infeasible = [c["crop"] for c in plan_data.get("crops", []) if not c.get("feasible")]
+        feasible   = [c["crop"] for c in plan_data.get("crops", []) if c.get("feasible")]
+        parts = []
+        if infeasible:
+            parts.append(
+                f"{', '.join(infeasible)} cannot be grown as-is due to soil and water source incompatibilities."
+            )
+        if feasible:
+            parts.append(
+                f"{', '.join(feasible)} can proceed with the adjusted schedule shown in the timeline."
+            )
+        parts.append(
+            "Review each crop's required changes before finalising your seasonal plan."
+        )
+        return " ".join(parts)

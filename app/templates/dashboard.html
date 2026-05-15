@@ -243,9 +243,8 @@
         <div class="relative z-10 space-y-6">
           <h3 class="text-4xl font-bold tracking-tight text-primary max-w-xl mx-auto leading-tight">Ready to map out the season?</h3>
           <p class="text-lg text-on-surface-variant max-w-2xl mx-auto leading-relaxed">Start your seasonal planning with our predictive yield models and soil health projections.</p>
-          <div class="pt-4 flex flex-col sm:flex-row gap-4 justify-center">
-            <button class="bg-primary text-on-primary px-10 py-4 rounded-full font-medium hover:bg-primary-container transition-colors shadow-md active:scale-95">Create new Plan</button>
-            <button class="bg-surface-dim text-on-surface px-10 py-4 rounded-full font-medium hover:bg-surface-variant transition-colors active:scale-95">View Current Plan</button>
+          <div class="pt-4 flex justify-center" id="seasonal-plan-cta">
+            <!-- rendered by renderSeasonalPlanCTA() after dashboard data loads -->
           </div>
         </div>
       </div>
@@ -299,6 +298,7 @@
         renderCriticalTasks(dash);
         renderCropHealth(dash, crops);
         renderSoilConditions(dash);
+        renderSeasonalPlanCTA(dash);
       } catch (e) {
         console.error('Dashboard load failed:', e);
       }
@@ -434,6 +434,27 @@
       const heat = soil.avg_heat ?? 0;
       setText('soil-heat-label', getSoilHeatLabel(heat));
       setWidth('soil-heat-gauge', heat);
+    }
+
+    // ── Seasonal Plan CTA ──────────────────────────────────────────────────────
+    function renderSeasonalPlanCTA(data) {
+      const cta  = document.getElementById('seasonal-plan-cta');
+      if (!cta) return;
+      const plan = data.seasonal_plan || {};
+      if (plan.currently_active) {
+        cta.innerHTML = `
+          <a href="/${USER_ID}/seasonal-plan-page"
+             class="bg-primary text-on-primary px-10 py-4 rounded-full font-medium hover:bg-primary-container transition-colors shadow-md active:scale-95 inline-block">
+            View Current Plan
+          </a>`;
+      } else {
+        cta.innerHTML = `
+          <button
+            onclick="alert('Seasonal plan creation is not yet available.')"
+            class="bg-surface-dim text-on-surface px-10 py-4 rounded-full font-medium hover:bg-surface-variant transition-colors active:scale-95">
+            Create New Plan
+          </button>`;
+      }
     }
 
     // ── Helpers ────────────────────────────────────────────────────────────────
