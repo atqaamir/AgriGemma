@@ -37,6 +37,20 @@ _BASE = "https://generativelanguage.googleapis.com/v1beta"
 _DEFAULT_MODEL = "gemma-4-26b-a4b-it"   # MoE: 4B active params, cost-efficient for streaming
 _SYSTEM_SEP = "\x00SYS\x00"  # must match _prompt_chatbot_service.py
 
+def _strip_preamble(text: str) -> str:
+    """
+    If the model emitted inline thinking before the structured block, discard it.
+    Finds the first occurrence of RESPONSE: and returns from there.
+    Falls back to _extract_clean_response when RESPONSE: never appears.
+    """
+    idx = text.find("RESPONSE:")
+    if idx > 0:
+        return text[idx:]
+    if idx == -1:
+        return _extract_clean_response(text)
+    return text
+
+
 def _extract_clean_response(text: str) -> str:
     """
     Gemma 4 can leak chain-of-thought as plain text even when told not to.
@@ -221,7 +235,20 @@ class GoogleAIProvider(AIModelProvider):
 
     # ── Private helpers ────────────────────────────────────────────────────
 
-    def _payload(self, prompt: str, *, max_tokens: int = 1024) -> bytes:
+    # Few-shot example injected as a completed user→model turn so the model
+    # sees the exact output format without any ambiguous instructions.
+    _FEW_SHOT_USER = (
+        "FARM DATA:\nFarmer: Ali\nWeather: 38°C, no rain for 5 days\n"
+        "Crops: Wheat (North Field, moisture 22%)\n\n"
+        "FARMER ASKS: should I water today?"
+    )
+    _FEW_SHOT_MODEL = (
+        "RESPONSE: With 38°C heat and moisture down to 22%, the wheat in North Field needs water today — don't wait.\n"
+        "URGENCY: high\n"
+        "ACTIONS: Irrigate North Field today | Check moisture again tomorrow"
+    )
+
+    def _payload(self, prompt: str, *, max_tokens: int = 2048) -> bytes:
         if _SYSTEM_SEP in prompt:
             system_text, user_text = prompt.split(_SYSTEM_SEP, 1)
             system_text = system_text.strip()
@@ -231,7 +258,11 @@ class GoogleAIProvider(AIModelProvider):
             user_text = prompt
 
         payload: dict = {
-            "contents": [{"role": "user", "parts": [{"text": user_text}]}],
+            "contents": [
+                {"role": "user",  "parts": [{"text": self._FEW_SHOT_USER}]},
+                {"role": "model", "parts": [{"text": self._FEW_SHOT_MODEL}]},
+                {"role": "user",  "parts": [{"text": user_text}]},
+            ],
             "generationConfig": {
                 "temperature": 0.7,
                 "topP": 0.9,
@@ -257,26 +288,7 @@ class GoogleAIProvider(AIModelProvider):
         if not text.strip():
             text = "".join(p.get("text", "") for p in parts)
         text = text.strip()
-        
-        # Detect and clean thinking markers, meta-commentary, or prompt echoes
-        _thinking_markers = ("* Draft", "* Self-Correction", "* Persona", "* Constraint",
-                              "* Final Polish", "* Check list", "* Input Data", "* Content requirements",
-                              "* Sentence", "* Check:", "* Check ", "* Actually",
-                              "Actually, the user", "The user is asking", "The farmer is asking")
-        _bad_starts = ("I will ", "I would ", "Here is ", "Here's ", "Based on ", "Sure,",
-                       "Okay,", "Let me ", "I'll ")
-        _prompt_echo_patterns = (
-            r"^\? \(", "? (Yes)", "? (No)", "- Use ", "- Answer", "*Wait,",
-        )
-
-        should_clean = any(marker in text for marker in _thinking_markers)
-        should_clean = should_clean or any(text.startswith(s) for s in _bad_starts)
-        should_clean = should_clean or any(pattern in text for pattern in _prompt_echo_patterns)
-        
-        if should_clean:
-            text = _extract_clean_response(text)
-        
-        return text
+        return _strip_preamble(text)
 
     def _stream_api(self, prompt: str, *, model: str | None = None) -> Iterator[str]:
         m = model or self._model
@@ -290,11 +302,6 @@ class GoogleAIProvider(AIModelProvider):
         )
         thought_buf = []
         response_buf = []
-        
-        # Patterns that indicate prompt echoing or thinking
-        _prompt_echo_indicators = ("? (Yes)", "? (No)", "- Use ", "*Wait,", "- Answer",
-                                   "* Sentence", "* Check:", "* Actually",
-                                   "Actually, the user", "The user is asking", "The farmer is asking")
 
         with urllib.request.urlopen(req, timeout=120) as resp:
             for raw_line in resp:
@@ -317,25 +324,10 @@ class GoogleAIProvider(AIModelProvider):
                 except (KeyError, IndexError, json.JSONDecodeError):
                     continue
 
-        # Combine and check what we got
         full_text = "".join(response_buf) if response_buf else "".join(thought_buf)
-        
-        # If response looks like it's echoing the prompt, clean it first
-        if any(indicator in full_text for indicator in _prompt_echo_indicators):
-            cleaned = _extract_clean_response(full_text)
-            if cleaned:
-                yield cleaned
-            return
-        
-        # Otherwise, stream the buffered response normally
-        if response_buf:
-            for token in response_buf:
-                yield token
-        elif thought_buf:
-            # Model only produced thinking tokens
-            clean = _extract_clean_response("".join(thought_buf))
-            if clean:
-                yield clean
+        cleaned = _strip_preamble(full_text)
+        if cleaned:
+            yield cleaned
 
     @staticmethod
     def _placeholder(prompt: str) -> str:

@@ -229,17 +229,22 @@ class DashboardService:
         if not plan:
             return {}
         return {
-            "id": plan.id,
-            "crop_id": plan.crop_id,
-            "soil_type_id": plan.soil_type_id,
-            "water_source_id": plan.water_source_id,
+            "id":              plan.id,
             "growth_stage_id": plan.growth_stage_id,
-            "sowing": plan.sowing,
-            "harvesting": plan.harvesting,
-            "irrigation_start_date": plan.irrigation_start_date,
-            "irrigation_frequency": plan.irrigation_frequency,
-            "fertilization_date": plan.fertilization_date,
-            "adjustments_to_make": plan.adjustments_to_make,
             "currently_active": plan.currently_active,
+            "entries": [
+                {
+                    "crop_id":              e.crop_id,
+                    "soil_type_id":         e.soil_type_id,
+                    "water_source_id":      e.water_source_id,
+                    "sowing":               e.sowing,
+                    "harvesting":           e.harvesting,
+                    "irrigation_start_date": e.irrigation_start_date,
+                    "irrigation_frequency": e.irrigation_frequency,
+                    "fertilization_date":   e.fertilization_date,
+                    "adjustments_to_make":  e.adjustments_to_make,
+                }
+                for e in (plan.entries or [])
+            ],
         }
   

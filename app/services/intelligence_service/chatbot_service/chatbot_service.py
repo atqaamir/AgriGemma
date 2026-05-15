@@ -57,39 +57,16 @@ logger = logging.getLogger(__name__)
 # ── LLM output parser ──────────────────────────────────────────────────────────
 
 def _parse_llm_response(raw: str) -> dict:
-    """
-    Parse the structured key-value output produced by the LLM.
+    m = re.search(r'RESPONSE\s*:\s*(.+?)(?=\n\s*(?:URGENCY|ACTIONS)\s*:|\Z)', raw.strip(), re.DOTALL | re.IGNORECASE)
+    response = m.group(1).strip() if m else raw.strip()
 
-    Expected format:
-        RESPONSE: <plain-text reply>
-        URGENCY:  low | medium | high
-        ACTIONS:  action one | action two | NONE
-
-    Returns a dict with guaranteed keys:
-        response  str   — the message shown to the farmer
-        urgency   str   — "low", "medium", or "high"
-        actions   list  — list of action strings (may be empty)
-
-    Falls back gracefully when the model does not follow the format.
-    """
-    fields: dict = {}
-    for m in re.finditer(
-        r'^([A-Z_]+)\s*:\s*(.+?)(?=\n[A-Z_]+\s*:|\Z)',
-        raw.strip(),
-        re.MULTILINE | re.DOTALL,
-    ):
-        fields[m.group(1).strip().lower()] = m.group(2).strip()
-
-    response = fields.get("response") or raw.strip()
-
-    raw_urgency = fields.get("urgency", "").lower()
+    u = re.search(r'URGENCY\s*:\s*(\w+)', raw, re.IGNORECASE)
+    raw_urgency = u.group(1).lower() if u else ""
     urgency = raw_urgency if raw_urgency in ("low", "medium", "high") else "medium"
 
-    raw_actions = fields.get("actions", "")
-    if raw_actions and raw_actions.upper() != "NONE":
-        actions = [a.strip() for a in raw_actions.split("|") if a.strip()]
-    else:
-        actions = []
+    a = re.search(r'ACTIONS\s*:\s*(.+?)(?=\n\s*[A-Z]{2,}\s*:|\Z)', raw, re.DOTALL | re.IGNORECASE)
+    raw_actions = a.group(1).strip() if a else ""
+    actions = [x.strip() for x in raw_actions.split("|") if x.strip() and x.strip().upper() != "NONE"] if raw_actions else []
 
     return {"response": response, "urgency": urgency, "actions": actions}
 
