@@ -6,6 +6,7 @@ class PhActionRulebook(db.Model):
 
     id          = db.Column(db.Integer, primary_key=True)
     crop_id     = db.Column(db.Integer, nullable=False)
+    growth_stage_id = db.Column(db.Integer, nullable=False)
     ph_category = db.Column(db.String(20), nullable=False)
 
     feasibility = db.Column(db.String(20), nullable=False)

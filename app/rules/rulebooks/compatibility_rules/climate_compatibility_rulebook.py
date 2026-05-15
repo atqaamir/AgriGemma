@@ -6,6 +6,7 @@ class ClimateCompatibilityRulebook(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     crop_id = db.Column(db.Integer, nullable=False)
+    growth_stage_id = db.Column(db.Integer, nullable=False)
 
     temp_15_20             = db.Column(db.Float)
     temp_15_20_feasibility = db.Column(db.String(20))
@@ -27,6 +28,17 @@ class ClimateCompatibilityRulebook(db.Model):
     sunlight_4_8_feasibility     = db.Column(db.String(20))
     sunlight_above_8             = db.Column(db.Float)
     sunlight_above_8_feasibility = db.Column(db.String(20))
+
+    rainfall_below_50              = db.Column(db.Float)
+    rainfall_below_50_feasibility  = db.Column(db.String(20))
+    rainfall_50_100                = db.Column(db.Float)
+    rainfall_50_100_feasibility    = db.Column(db.String(20))
+    rainfall_100_200               = db.Column(db.Float)
+    rainfall_100_200_feasibility   = db.Column(db.String(20))
+    rainfall_200_300               = db.Column(db.Float)
+    rainfall_200_300_feasibility   = db.Column(db.String(20))
+    rainfall_above_300             = db.Column(db.Float)
+    rainfall_above_300_feasibility = db.Column(db.String(20))
 
     def get_score(rulebook, crop_id, factor, range_label):
         pass

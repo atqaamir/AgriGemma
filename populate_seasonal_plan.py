@@ -37,10 +37,15 @@ Plan layout  (user_id=1 has exactly 1 active plan and 2 inactive plans)
                       Maize  / Sandy / Groundwater                  B + D
 """
 
+import json
+from pathlib import Path
+
 from app.models.seasonal_plan import SeasonalPlan, SeasonalPlanEntry
 from app.extensions import db
 from app.services.seasonal_planner_service import SeasonalPlannerService
 from app.repositories.seasonal_plan_repository import SeasonalPlanRepository
+
+OUTPUT = Path(__file__).parent / "seasonal_plan_output.json"
 
 
 # ── Plan definitions ───────────────────────────────────────────────────────────
@@ -116,3 +121,9 @@ class SeasonalPlanSeeder:
 
 def run():
     SeasonalPlanSeeder().seed_all()
+    print("Seasonal plans seeded.")
+
+    results = {"user_1_active_seasonal_plan": SeasonalPlannerService.show_active_plan(1)}
+    with open(OUTPUT, "w") as f:
+        json.dump(results, f, indent=2)
+    print(f"Seasonal plan output written to {OUTPUT}")

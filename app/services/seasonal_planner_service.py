@@ -1,4 +1,5 @@
 import json
+from datetime import datetime
 
 from app.rules.rule_engine.rule_engine import RuleEngine
 from app.repositories.seasonal_plan_repository import SeasonalPlanRepository, SeasonalPlanEntryRepository
@@ -200,16 +201,90 @@ class SeasonalPlannerService:
         return [SeasonalPlannerService._format_plan(p) for p in plans]
 
     # ------------------------------------------------------------------ #
-    #  Update  (only currently_active may be changed at plan level)
+    #  Update
     # ------------------------------------------------------------------ #
 
     @staticmethod
     def update_plan(plan_id: int, data: dict):
+        """Update plan-level fields.
+
+        Allowed keys
+        ------------
+        currently_active : bool
+        growth_stage_id  : int
+        """
         plan = SeasonalPlanRepository.get_by_id(plan_id)
         if not plan:
             return None
-        allowed = {k: v for k, v in data.items() if k == "currently_active"}
+        allowed_keys = {"currently_active", "growth_stage_id"}
+        allowed = {k: v for k, v in data.items() if k in allowed_keys}
         return SeasonalPlanRepository.update(plan, allowed)
+
+    @staticmethod
+    def update_entry(entry_id: int, data: dict):
+        """Update a SeasonalPlanEntry.
+
+        Allowed keys
+        ------------
+        sowing               : "MM/DD/YYYY"
+            When sowing changes, the delta (new − old) is automatically
+            cascaded to irrigation_start_date, fertilization_date, and
+            harvesting — unless those fields are also explicitly supplied
+            in ``data``, in which case the explicit value wins.
+        irrigation_start_date: "MM/DD/YYYY"  — direct override
+        irrigation_frequency : int           — times per week
+        fertilization_date   : "MM/DD/YYYY"  — direct override
+        harvesting           : "MM/DD/YYYY"  — direct override
+        field_id             : int
+
+        Returns
+        -------
+        Updated SeasonalPlanEntry ORM object, or None if not found.
+        """
+        entry = SeasonalPlanEntryRepository.get_by_id(entry_id)
+        if not entry:
+            return None
+
+        DIRECT_FIELDS  = {
+            "irrigation_start_date", "irrigation_frequency",
+            "fertilization_date", "harvesting", "field_id",
+        }
+        CASCADE_FIELDS = ("irrigation_start_date", "fertilization_date", "harvesting")
+
+        def _parse(s):
+            if not s:
+                return None
+            return datetime.strptime(s, "%m/%d/%Y").date()
+
+        def _fmt(d):
+            return d.strftime("%m/%d/%Y")
+
+        updates = {}
+
+        # ── Sowing change → cascade delta to dependent dates ──────────────
+        if "sowing" in data:
+            new_sowing = _parse(data["sowing"])
+            old_sowing = _parse(entry.sowing)
+
+            if new_sowing and old_sowing and new_sowing != old_sowing:
+                delta = new_sowing - old_sowing
+                for field in CASCADE_FIELDS:
+                    if field not in data:          # explicit override takes priority
+                        old_val = _parse(getattr(entry, field))
+                        if old_val:
+                            updates[field] = _fmt(old_val + delta)
+
+            updates["sowing"] = data["sowing"]
+
+        # ── Remaining direct fields ────────────────────────────────────────
+        for key in DIRECT_FIELDS:
+            if key in data:
+                updates[key] = data[key]
+
+        if not updates:
+            return entry
+
+        return SeasonalPlanEntryRepository.update(entry, updates)
 
     # ------------------------------------------------------------------ #
     #  Delete

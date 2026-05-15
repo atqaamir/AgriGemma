@@ -19,6 +19,9 @@ class Field(db.Model):
     water_source_id = db.Column(db.Integer, db.ForeignKey("water_source.id"))
     soil_type_id = db.Column(db.Integer, db.ForeignKey("soil_type.id"))
 
+    location = db.Column(db.String(100), nullable=True)   # e.g. "Punjab, Pakistan"
+    ph_level  = db.Column(db.Float,      nullable=True)   # soil pH — constant reading
+
     currently_active = db.Column(db.Boolean, default=True, nullable=False)
     user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=True)
 
