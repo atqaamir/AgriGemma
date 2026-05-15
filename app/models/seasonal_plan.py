@@ -3,6 +3,8 @@
 SeasonalPlan      - top-level plan for a user (shared: growth stage, active flag).
 SeasonalPlanEntry - one entry per crop within a plan (all per-crop schedule fields).
 """
+from datetime import datetime, timezone
+
 from app.extensions import db
 
 
@@ -13,6 +15,7 @@ class SeasonalPlan(db.Model):
     user_id          = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
     growth_stage_id  = db.Column(db.Integer, nullable=True)
     currently_active = db.Column(db.Boolean, default=True, nullable=False)
+    last_updated     = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc), nullable=True)
 
     entries = db.relationship(
         "SeasonalPlanEntry",

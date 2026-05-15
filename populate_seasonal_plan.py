@@ -38,6 +38,7 @@ Plan layout  (user_id=1 has exactly 1 active plan and 2 inactive plans)
 """
 
 import json
+from datetime import datetime, timezone, timedelta
 from pathlib import Path
 
 from app.models.seasonal_plan import SeasonalPlan, SeasonalPlanEntry
@@ -108,10 +109,15 @@ class SeasonalPlanSeeder:
 
     def seed_all(self):
         self._clear_tables()
-        for user_id, growth_stage, active, crops in PLANS:
+        now = datetime.now(timezone.utc)
+        for i, (user_id, growth_stage, active, crops) in enumerate(PLANS):
             plan = SeasonalPlannerService.generate_plan(user_id, growth_stage, crops)
+            # Active plans are "recent"; inactive plans were created progressively further back
+            age = timedelta(days=0) if active else timedelta(days=(i + 1) * 7)
+            plan.last_updated = now - age
             if not active:
-                SeasonalPlanRepository.update(plan, {"currently_active": False})
+                plan.currently_active = False
+            db.session.commit()
 
     def _clear_tables(self):
         SeasonalPlanEntry.query.delete()

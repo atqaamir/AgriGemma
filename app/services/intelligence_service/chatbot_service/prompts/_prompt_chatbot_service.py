@@ -33,9 +33,8 @@ def build_chatbot_prompt(
     user_parts.append(
         f"FARMER ASKS: {user_message}\n\n"
         "Reply using ONLY this format:\n"
-        "RESPONSE: <your answer>\n"
-        "URGENCY: <low|medium|high>\n"
-        "ACTIONS: <action1 | action2 | NONE>"
+        "{RESPONSE: '<your answer>', URGENCY: '<low|medium|high>', ACTIONS: '<action1 | action2 | NONE>'}\n"
+        "One line. No text outside the curly braces."
     )
 
     user_content = "\n\n".join(user_parts)

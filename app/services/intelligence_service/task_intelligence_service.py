@@ -7,6 +7,7 @@ from app.services.ai_model_service.ai_model_service import fast_complete as _fas
 from app.services.intelligence_service.chatbot_service.prompts._prompt_task_intelligence import (
     TaskIntelligencePromptBuilder,
     build_task_reasoning_prompt,
+    build_task_update_reasoning_prompt,
     build_critical_tasks_overview_prompt,
     build_dashboard_oneliner_prompt,
 )
@@ -91,6 +92,42 @@ class TaskIntelligenceService:
                 "generated_at": datetime.now(timezone.utc).isoformat(),
                 "is_fallback": True,
             }
+
+    @staticmethod
+    def generate_task_update_explanation(task, old_priority: str, context: dict, change_reason: str = "") -> str:
+        """
+        Explain to the farmer why a task's priority changed.
+
+        task         — ORM Task object
+        old_priority — priority string before the update (e.g. "medium")
+        context      — {farmer_name, weather, rules}
+        change_reason — optional free-text reason for the change
+        """
+        try:
+            prompt = build_task_update_reasoning_prompt(
+                {
+                    "title":         task.title,
+                    "description":   task.description,
+                    "priority":      task.priority,
+                    "old_priority":  old_priority,
+                    "due_date":      str(task.due_date) if task.due_date else None,
+                    "field_name":    task.field.name if task.field else None,
+                    "crop_name":     task.crop.name if task.crop else None,
+                    "is_overdue":    bool(task.due_date and task.due_date < __import__("datetime").date.today()),
+                    "change_reason": change_reason,
+                },
+                context,
+            )
+            return TaskIntelligenceService._clean_text(_fast_complete(prompt))
+        except Exception as exc:
+            logger.warning("AI task update explanation failed for task %s: %s", getattr(task, "id", None), exc)
+            old = old_priority.capitalize() if old_priority else "Previous"
+            new = (task.priority or "updated").capitalize()
+            return (
+                f"This task was escalated from {old} to {new} priority"
+                + (f" on {task.field.name}" if task.field else "")
+                + ". Please review current field conditions and act accordingly."
+            )
 
     @staticmethod
     def generate_task_explanation(task, context: dict) -> str:

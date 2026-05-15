@@ -202,7 +202,7 @@ def build_chatbot_context(user_id: int, intent_result: IntentResult) -> dict:
 
     if spec.needs_tasks:
         ctx["tasks"] = _safe(
-            "tasks", _fetch_tasks, today, spec.task_types, spec.max_tasks
+            "tasks", _fetch_tasks, today, spec.task_types
         ) or {}
 
     if spec.needs_alerts:
@@ -331,7 +331,7 @@ def _fetch_crops() -> list:
     ]
 
 
-def _fetch_tasks(today: date, type_filter: frozenset[str], limit: int) -> dict:
+def _fetch_tasks(today: date, type_filter: frozenset[str]) -> dict:
     from app.repositories.task_repository import TaskRepository
     pending = list(TaskRepository.get_pending())
 
@@ -368,7 +368,7 @@ def _fetch_tasks(today: date, type_filter: frozenset[str], limit: int) -> dict:
                 "is_overdue":  bool(t.due_date and t.due_date < today),
                 "description": t.description,
             }
-            for t in pending[:limit]
+            for t in pending
         ],
     }
 

@@ -21,6 +21,7 @@ from __future__ import annotations
 
 from app.services.intelligence_service.context.token_budget import (
     BUDGET_TASK_EXPLAIN,
+    BUDGET_TASK_UPDATE,
     BUDGET_ALERT_EXPLAIN,
     BUDGET_ALERTS_BATCH,
     BUDGET_OVERVIEW_PROMPT,
@@ -92,6 +93,54 @@ def build_task_reasoning_prompt(task: dict, context: dict) -> str:
         f"that triggered it, and end with one concrete action for today."
     )
     return truncate(prompt, BUDGET_TASK_EXPLAIN)
+
+
+def build_task_update_reasoning_prompt(task: dict, context: dict) -> str:
+    """
+    Explain in 2-3 sentences why a task's priority or status was changed.
+    Caller: any service that updates a task and wants to inform the farmer why.
+    Target: ≤ 950 chars total.
+
+    task    — {title, description, priority, old_priority, due_date,
+               field_name, crop_name, is_overdue, change_reason}
+    context — {farmer_name, weather, rules}
+    """
+    farmer  = context.get("farmer_name") or "Farmer"
+    current = (context.get("weather") or {}).get("current") or {}
+    rules   = context.get("rules") or ""
+
+    title        = task.get("title") or "?"
+    new_priority = (task.get("priority") or "?").upper()
+    old_priority = (task.get("old_priority") or "").upper()
+    field        = task.get("field_name") or "your field"
+    crop         = task.get("crop_name") or ""
+    desc         = task.get("description") or "No reason recorded."
+    due          = task.get("due_date") or ""
+    overdue      = task.get("is_overdue", False)
+    change_reason = task.get("change_reason") or ""
+
+    priority_line = (
+        f"{old_priority} → {new_priority}" if old_priority else new_priority
+    )
+    location_part  = f", crop {crop}" if crop else ""
+    due_part       = f", due {due}" if due else ""
+    overdue_flag   = " [OVERDUE]" if overdue else ""
+    weather_line   = _weather_line(current) if current else "no weather data"
+    rules_part     = f"\n{rules_block(rules, BUDGET_RULES_IN_TASK)}" if rules else ""
+    change_part    = f"\nReason for change: {truncate(change_reason, 100)}" if change_reason else ""
+
+    prompt = (
+        f"Farm advisor for {farmer}.\n"
+        f"Task: {title} [priority: {priority_line}]{overdue_flag}{due_part}\n"
+        f"Field: {field}{location_part}\n"
+        f"Recorded reason: {truncate(desc, 120)}{change_part}\n"
+        f"Weather: {weather_line}{rules_part}\n\n"
+        f"Write 2-3 sentences to {farmer} explaining what changed and why the priority "
+        f"shifted to {new_priority}. Name the field, cite the exact reading "
+        f"(moisture %, temperature, or rule threshold) that drove the change, "
+        f"and end with one concrete action for today."
+    )
+    return truncate(prompt, BUDGET_TASK_UPDATE)
 
 
 # ── Prompt 2: Notification / Alert Reasoning ───────────────────────────────────
