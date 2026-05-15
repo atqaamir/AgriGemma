@@ -17,3 +17,5 @@
 - Add Irrigation Need (0/1) check according to growth stage and environment levels
 - Make Health Status Dictionary
 - Change scenarios where the task needs to be performed earlier than initially planned.
+- Improve intent classification, specially for context grabbing when multi intent is present.
+- Improve intent classification if the intent is being carried forward from previous conversation context and is not present in the current farmer message.

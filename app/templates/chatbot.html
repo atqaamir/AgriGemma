@@ -400,7 +400,7 @@
 
       hideWelcome();
       addMsg('user', msg, null, true);
-      addThinking('Analyzing your question…');
+      addThinking();
       scrollBottom();
 
       let streamingMsgEl = null;
@@ -439,14 +439,14 @@
             try { data = JSON.parse(dataStr); } catch { continue; }
 
             if (eventType === 'status') {
-              updateThinking(data.message);
+              updateThinking(data);
               scrollBottom();
             } else if (eventType === 'token') {
               if (!streamingMsgEl) {
                 removeThinking();
                 streamingMsgEl = createStreamingMsg();
               }
-              streamingText += data.text;
+              streamingText = data.text;
               const textEl = document.getElementById('streamingText');
               if (textEl) textEl.textContent = streamingText;
               scrollBottom();
@@ -458,7 +458,7 @@
                 textEl.innerHTML = fmtBot(data.bot_message || streamingText);
               }
               if (streamingMsgEl) {
-                const timeEl = streamingMsgEl.querySelector('span');
+                const timeEl = streamingMsgEl.querySelector('.msg-time');
                 if (timeEl) timeEl.textContent = fmtTime(data.timestamp);
               } else {
                 removeThinking();
@@ -546,7 +546,7 @@
       c.appendChild(el);
     }
 
-    function addThinking(statusText) {
+    function addThinking() {
       const c = document.getElementById('msgContainer');
       const el = document.createElement('div');
       el.id = 'typing';
@@ -557,17 +557,33 @@
             style="font-size:14px; font-variation-settings:'FILL' 1;">smart_toy</span>
         </div>
         <div class="bg-surface-container dark:bg-[#2a2a24] rounded-2xl rounded-bl-sm border border-outline-variant/20 px-4 py-3 shadow-sm">
-          <div class="flex gap-1.5 items-center h-4 mb-1.5">
+          <div class="flex gap-1.5 items-center h-4 mb-2">
             <div class="dot"></div><div class="dot"></div><div class="dot"></div>
           </div>
-          <p id="thinkingStatus" class="text-[11px] text-on-surface-variant/60 dark:text-[#9e9e8e]/70 leading-tight">${esc(statusText)}</p>
+          <div id="stagesLog" class="flex flex-col gap-0.5"></div>
         </div>`;
       c.appendChild(el);
     }
 
-    function updateThinking(text) {
-      const el = document.getElementById('thinkingStatus');
-      if (el) el.textContent = text;
+    const _DONE_STAGES = new Set(['intent_done', 'context_ready']);
+
+    function updateThinking(data) {
+      const log = document.getElementById('stagesLog');
+      if (!log) return;
+      const stages = data.stages_log || [{ stage: data.stage, label: data.message }];
+      log.innerHTML = stages.map(s => {
+        const label = s.label || s.message || '';
+        if (_DONE_STAGES.has(s.stage)) {
+          return `<div class="flex items-center gap-1.5">
+            <span style="color:#7cb87c;font-size:9px;line-height:1">✓</span>
+            <span class="text-[10px] text-on-surface-variant/40 dark:text-[#9e9e8e]/35">${esc(label)}</span>
+          </div>`;
+        }
+        return `<div class="flex items-center gap-1.5">
+          <span class="text-[10px] text-on-surface-variant/50 dark:text-[#9e9e8e]/50" style="line-height:1">›</span>
+          <span class="text-[10px] text-on-surface-variant/75 dark:text-[#9e9e8e]/75 font-medium">${esc(label)}</span>
+        </div>`;
+      }).join('');
     }
 
     function removeThinking() { document.getElementById('typing')?.remove(); }
@@ -585,7 +601,7 @@
           <div class="bg-surface-container dark:bg-[#2a2a24] text-on-surface dark:text-[#e5e2da] rounded-2xl rounded-bl-sm border border-outline-variant/20 px-4 py-2.5 shadow-sm">
             <div class="bot-text text-sm" id="streamingText"></div>
           </div>
-          <span class="text-[10px] text-on-surface-variant/50 dark:text-[#9e9e8e]/50 px-1"></span>
+          <span class="msg-time text-[10px] text-on-surface-variant/50 dark:text-[#9e9e8e]/50 px-1"></span>
         </div>`;
       c.appendChild(el);
       return el;

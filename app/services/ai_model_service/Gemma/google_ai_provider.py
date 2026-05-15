@@ -235,18 +235,29 @@ class GoogleAIProvider(AIModelProvider):
 
     # ── Private helpers ────────────────────────────────────────────────────
 
-    # Few-shot example injected as a completed user→model turn so the model
-    # sees the exact output format without any ambiguous instructions.
-    _FEW_SHOT_USER = (
-        "FARM DATA:\nFarmer: Ali\nWeather: 38°C, no rain for 5 days\n"
-        "Crops: Wheat (North Field, moisture 22%)\n\n"
-        "FARMER ASKS: should I water today?"
-    )
-    _FEW_SHOT_MODEL = (
-        "RESPONSE: With 38°C heat and moisture down to 22%, the wheat in North Field needs water today — don't wait.\n"
-        "URGENCY: high\n"
-        "ACTIONS: Irrigate North Field today | Check moisture again tomorrow"
-    )
+    _FEW_SHOT = [
+        (
+            "FARM DATA:\nFarmer: Ali\nWeather: 38°C, no rain for 5 days\n"
+            "Crops: Wheat (North Field, moisture 22%)\n\n"
+            "FARMER ASKS: should I water today?",
+            "{RESPONSE: 'With 38°C heat and moisture down to 22%, the wheat in North Field needs water today — don't wait.', "
+            "URGENCY: 'high', ACTIONS: 'Irrigate North Field today | Check moisture again tomorrow'}",
+        ),
+        (
+            "FARM DATA:\nFarmer: Sara\nWeather: 24°C, rain expected tomorrow\n"
+            "TASKS: 8 pending — [LOW] Fix fence (South Field, due 2026-05-20) | [LOW] Clean storage shed (due 2026-05-22) | [MEDIUM] Fertilize cotton (due 2026-05-18)\n\n"
+            "FARMER ASKS: show me my low priority tasks",
+            "{RESPONSE: 'You have 2 low priority tasks: Fix fence at South Field (due May 20) and Clean storage shed (due May 22).', "
+            "URGENCY: 'low', ACTIONS: 'Fix fence South Field | Clean storage shed'}",
+        ),
+        (
+            "FARM DATA:\nFarmer: Raza\nWeather: 29°C, humidity 80%, rain in 2 days\n"
+            "Crops: Rice (East Field, stage: flowering)\n\n"
+            "FARMER ASKS: is the weather good for my rice?",
+            "{RESPONSE: 'The 80% humidity is fine for flowering rice, but hold off on any fertilizer or spraying — rain is coming in 2 days and will wash it off.', "
+            "URGENCY: 'medium', ACTIONS: 'Delay fertilizer application | Monitor crop after rain'}",
+        ),
+    ]
 
     def _payload(self, prompt: str, *, max_tokens: int = 2048) -> bytes:
         if _SYSTEM_SEP in prompt:
@@ -257,12 +268,14 @@ class GoogleAIProvider(AIModelProvider):
             system_text = None
             user_text = prompt
 
+        contents = []
+        for user_ex, model_ex in self._FEW_SHOT:
+            contents.append({"role": "user",  "parts": [{"text": user_ex}]})
+            contents.append({"role": "model", "parts": [{"text": model_ex}]})
+        contents.append({"role": "user", "parts": [{"text": user_text}]})
+
         payload: dict = {
-            "contents": [
-                {"role": "user",  "parts": [{"text": self._FEW_SHOT_USER}]},
-                {"role": "model", "parts": [{"text": self._FEW_SHOT_MODEL}]},
-                {"role": "user",  "parts": [{"text": user_text}]},
-            ],
+            "contents": contents,
             "generationConfig": {
                 "temperature": 0.7,
                 "topP": 0.9,
@@ -301,7 +314,7 @@ class GoogleAIProvider(AIModelProvider):
             headers={"Content-Type": "application/json"}, method="POST",
         )
         thought_buf = []
-        response_buf = []
+        has_response = False
 
         with urllib.request.urlopen(req, timeout=120) as resp:
             for raw_line in resp:
@@ -320,14 +333,16 @@ class GoogleAIProvider(AIModelProvider):
                     if part.get("thought"):
                         thought_buf.append(token)
                     else:
-                        response_buf.append(token)
+                        has_response = True
+                        yield token  # emit each token immediately as it arrives
                 except (KeyError, IndexError, json.JSONDecodeError):
                     continue
 
-        full_text = "".join(response_buf) if response_buf else "".join(thought_buf)
-        cleaned = _strip_preamble(full_text)
-        if cleaned:
-            yield cleaned
+        # Only fall back to thought content if the model emitted no response tokens
+        if not has_response and thought_buf:
+            cleaned = _strip_preamble("".join(thought_buf))
+            if cleaned:
+                yield cleaned
 
     @staticmethod
     def _placeholder(prompt: str) -> str:

@@ -86,7 +86,7 @@ _SIGNALS: list[tuple[FarmIntent, float, tuple[str, ...]]] = [
         "critical task", "what's due", "what is due",
         "tasks due", "tasks are due", "which task", "any task",
         "show task", "list task", "how many task", "task today",
-        "due today", "due this week", "need to do",
+        "due today", "due this week", "need to do", "tasks", "task", "priority", "critical"
     )),
     (FarmIntent.ALERT, 1.1, (
         "alert", "notification", "warning i got", "why did i get",

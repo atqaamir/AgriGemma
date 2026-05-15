@@ -57,16 +57,41 @@ logger = logging.getLogger(__name__)
 # ── LLM output parser ──────────────────────────────────────────────────────────
 
 def _parse_llm_response(raw: str) -> dict:
-    m = re.search(r'RESPONSE\s*:\s*(.+?)(?=\n\s*(?:URGENCY|ACTIONS)\s*:|\Z)', raw.strip(), re.DOTALL | re.IGNORECASE)
-    response = m.group(1).strip() if m else raw.strip()
+    text = re.sub(r'(?i)^\s*output\s*:\s*', '', raw.strip()).strip()
 
-    u = re.search(r'URGENCY\s*:\s*(\w+)', raw, re.IGNORECASE)
-    raw_urgency = u.group(1).lower() if u else ""
+    def _get(key: str) -> str:
+        # Strategy 1: quoted value  KEY: 'value'  or  KEY: "value"
+        # ((?:[^\\]|\\.)*?) matches either a non-backslash char OR a backslash
+        # followed by any char — so escaped quotes like \' are consumed as a unit
+        # and never mistaken for the closing quote.
+        m = re.search(rf'{key}\s*:\s*(["\'])((?:[^\\]|\\.)*?)\1', text, re.IGNORECASE | re.DOTALL)
+        if m:
+            value = m.group(2).strip()
+            return re.sub(r'\\(.)', r'\1', value)  # unescape \' → '  and \" → "
+        # Strategy 2: unquoted value — stop at the next KEY: boundary or closing brace
+        m = re.search(
+            rf'{key}\s*:\s*(.*?)(?=,\s*[A-Z_]{{2,}}\s*:|[}}]|\Z)',
+            text, re.IGNORECASE | re.DOTALL,
+        )
+        if m:
+            return m.group(1).strip().strip("\"'")
+        return ""
+
+    # ── RESPONSE ──────────────────────────────────────────────────────────────
+    response_raw = _get("RESPONSE")
+    response = response_raw if response_raw else raw.strip()
+
+    # ── URGENCY ───────────────────────────────────────────────────────────────
+    raw_urgency = _get("URGENCY").lower()
     urgency = raw_urgency if raw_urgency in ("low", "medium", "high") else "medium"
 
-    a = re.search(r'ACTIONS\s*:\s*(.+?)(?=\n\s*[A-Z]{2,}\s*:|\Z)', raw, re.DOTALL | re.IGNORECASE)
-    raw_actions = a.group(1).strip() if a else ""
-    actions = [x.strip() for x in raw_actions.split("|") if x.strip() and x.strip().upper() != "NONE"] if raw_actions else []
+    # ── ACTIONS ───────────────────────────────────────────────────────────────
+    raw_actions = _get("ACTIONS")
+    actions = (
+        [x.strip().strip("\"'") for x in raw_actions.split("|")
+         if x.strip().strip("\"'").upper() not in ("", "NONE")]
+        if raw_actions else []
+    )
 
     return {"response": response, "urgency": urgency, "actions": actions}
 
@@ -131,7 +156,28 @@ def _format_farmer_context(
 
     # Tasks
     if tasks_ctx and tasks_ctx.get("pending_list"):
-        parts.append(task_block(tasks_ctx, limit=6))
+        pending = tasks_ctx["pending_list"]
+
+        # If the user explicitly mentions a priority level, float those tasks to
+        # the front so they survive the limit cut (default sort puts low last).
+        _PRIORITY_HINTS = {
+            "low":      ("low priority", "low-priority", "low tasks", "low ones", "low prio"),
+            "medium":   ("medium priority", "medium-priority", "moderate priority"),
+            "high":     ("high priority", "high-priority"),
+            "critical": ("critical priority", "critical tasks", "critical ones", "critical"),
+        }
+        msg_lower = user_message.lower()
+        mentioned = next(
+            (p for p, kws in _PRIORITY_HINTS.items() if any(k in msg_lower for k in kws)),
+            None,
+        )
+        if mentioned:
+            focused = [t for t in pending if (t.get("priority") or "").lower() == mentioned]
+            others  = [t for t in pending if (t.get("priority") or "").lower() != mentioned]
+            tasks_ctx = {**tasks_ctx, "pending_list": focused + others}
+
+        task_limit = len(tasks_ctx["pending_list"]) if intent_result.primary == FarmIntent.TASK else 6
+        parts.append(task_block(tasks_ctx, limit=task_limit))
 
     # Alerts
     if alerts:
@@ -148,7 +194,57 @@ def _format_farmer_context(
             parts.append(blk)
 
     result = "\n\n".join(p for p in parts if p)
-    return truncate(result, BUDGET_CHATBOT_CONTEXT)
+    budget = 4_000 if intent_result.primary in (FarmIntent.TASK, FarmIntent.GENERAL) else BUDGET_CHATBOT_CONTEXT
+    return truncate(result, budget)
+
+
+# ── Streaming response extractor ───────────────────────────────────────────────
+
+class _ResponseStreamer:
+    """
+    Extracts the RESPONSE field from structured LLM output as tokens stream in.
+    Yields partial chunks so the UI can show text progressively instead of
+    waiting for the full generation to complete.
+
+    Expected format: {RESPONSE: '...answer...', URGENCY: '...', ACTIONS: '...'}
+    """
+    _SAFETY = 14  # hold back this many chars to avoid splitting the end-marker
+
+    def __init__(self):
+        self._buf = ""
+        self._found = False
+        self._done = False
+        self._quote = ""
+        self._content_start = 0
+        self._emitted = 0
+
+    def feed(self, token: str) -> str:
+        """Feed a raw LLM token; returns newly extractable response text (may be empty)."""
+        if self._done:
+            self._buf += token
+            return ""
+        self._buf += token
+        if not self._found:
+            m = re.search(r'RESPONSE\s*:\s*(["\'])', self._buf, re.IGNORECASE)
+            if not m:
+                return ""
+            self._found = True
+            self._quote = m.group(1)
+            self._content_start = m.end()
+        content = self._buf[self._content_start:]
+        # Use ', URGENCY' as end-marker to avoid false positives on commas in the answer
+        m_end = re.search(
+            rf'{re.escape(self._quote)}\s*,\s*URGENCY', content, re.IGNORECASE
+        )
+        if m_end:
+            chunk = content[self._emitted:m_end.start()]
+            self._emitted = m_end.start()
+            self._done = True
+            return chunk
+        safe_len = max(0, len(content) - self._SAFETY)
+        chunk = content[self._emitted:safe_len]
+        self._emitted = safe_len
+        return chunk
 
 
 # ── Main service ───────────────────────────────────────────────────────────────
@@ -298,13 +394,34 @@ class ChatbotService:
         """
         Generator yielding SSE events for each pipeline stage.
         Format: "event: <type>\\ndata: <json>\\n\\n"
+
+        Every status event carries stages_log (all completed stages so far) so
+        the UI can render a persistent timeline rather than just the latest message.
+
+        Token events use cumulative text: each event contains all response text
+        received so far, so the UI can replace its display and see it grow.
         """
         def sse(event: str, data: dict) -> str:
             return f"event: {event}\ndata: {json.dumps(data)}\n\n"
 
-        t_start = time.time()
-        context  = {}
-        user_msg = None
+        t_start    = time.time()
+        context    = {}
+        user_msg   = None
+        stages_log: list = []
+        elapsed1 = elapsed2 = elapsed3 = 0
+
+        def ms() -> int:
+            return round((time.time() - t_start) * 1000)
+
+        def stage_sse(stage: str, message: str, extra: dict | None = None) -> str:
+            """Emit a status event; appends this stage to stages_log so all prior
+            stages remain visible in every subsequent event the UI receives."""
+            entry: dict = {"stage": stage, "label": message, "elapsed_ms": ms()}
+            stages_log.append(entry)
+            data: dict = {"stage": stage, "message": message, "stages_log": list(stages_log)}
+            if extra:
+                data.update(extra)
+            return sse("status", data)
 
         try:
             conversation = ChatRepository.get_conversation(conversation_id)
@@ -319,33 +436,35 @@ class ChatbotService:
             history  = _build_history(messages[:-1])
 
             # ── Stage 1: intent ───────────────────────────────────────────────
-            yield sse("status", {"stage": "analyzing", "message": "Analysing your question..."})
+            yield stage_sse("analyzing", "Analysing your question...")
             t1 = time.time()
             intent_result = classify(user_message)
             elapsed1 = round((time.time() - t1) * 1000)
             logger.info("[CHATBOT-STREAM] ① Intent (%dms): primary=%s secondary=%s",
                         elapsed1, intent_result.primary.value,
                         [i.value for i in intent_result.secondary])
-            yield sse("status", {
-                "stage":    "intents_detected",
-                "message":  f"Understood: {intent_result.primary.value}",
-                "intents":  [intent_result.primary.value] + [i.value for i in intent_result.secondary],
-                "method":   intent_result.method,
-                "time_ms":  elapsed1,
-            })
+            yield stage_sse(
+                "intent_done",
+                f"Intent: {intent_result.primary.value} — {elapsed1}ms",
+                {
+                    "intents":  [intent_result.primary.value] + [i.value for i in intent_result.secondary],
+                    "method":   intent_result.method,
+                    "time_ms":  elapsed1,
+                },
+            )
 
             # ── Stage 2: context ──────────────────────────────────────────────
-            yield sse("status", {"stage": "reading_rules", "message": "Reading farm data..."})
+            yield stage_sse("fetching_context", "Reading farm data...")
             t2 = time.time()
             context     = build_chatbot_context(user_id, intent_result)
             context_str = _format_farmer_context(context, user_message, intent_result)
             elapsed2    = round((time.time() - t2) * 1000)
             logger.info("[CHATBOT-STREAM] ② Context (%dms) %d chars", elapsed2, len(context_str))
-            yield sse("status", {
-                "stage":    "context_ready",
-                "message":  f"Farm context ready ({len(context_str)} chars)",
-                "time_ms":  elapsed2,
-            })
+            yield stage_sse(
+                "context_ready",
+                f"Farm context ready — {elapsed2}ms, {len(context_str)} chars",
+                {"chars": len(context_str), "time_ms": elapsed2},
+            )
 
             full_prompt = build_chatbot_prompt(
                 farmer_context=context_str,
@@ -354,44 +473,58 @@ class ChatbotService:
             )
 
             # ── Stage 3: AI streaming ─────────────────────────────────────────
-            yield sse("status", {"stage": "generating", "message": "Thinking..."})
+            yield stage_sse("generating", f"Generating response... (pipeline ready in {ms()}ms)")
             t3 = time.time()
             bot_response = ""
             is_fallback  = False
             parsed       = {}
             try:
-                raw_tokens = []
+                streamer    = _ResponseStreamer()
+                raw_tokens  = []
+                accumulated = ""
                 for token in ai_model_service.stream_complete(full_prompt):
                     raw_tokens.append(token)
-                raw_llm      = "".join(raw_tokens)
+                    chunk = streamer.feed(token)
+                    if chunk:
+                        accumulated += chunk
+                        # Cumulative text: UI replaces its display each event,
+                        # giving a progressive "typing" effect with no frontend changes.
+                        yield sse("token", {"text": accumulated})
+                raw_llm = "".join(raw_tokens)
                 logger.info("[CHATBOT-STREAM] ③ LLM raw output:\n%s", raw_llm)
                 parsed       = _parse_llm_response(raw_llm)
                 bot_response = parsed["response"]
+                elapsed3     = round((time.time() - t3) * 1000)
+                logger.info("[CHATBOT-STREAM] ③ AI (%dms) %d chars", elapsed3, len(bot_response))
+                # Always send the authoritative parsed response as the final token
+                # (covers the safety-buffer tail that _ResponseStreamer held back)
                 yield sse("token", {"text": bot_response})
-                logger.info("[CHATBOT-STREAM] ③ AI streamed (%dms) %d chars",
-                            round((time.time() - t3) * 1000), len(bot_response))
             except Exception as exc:
-                logger.warning("[CHATBOT-STREAM] ③ AI failed (%dms): %s",
-                               round((time.time() - t3) * 1000), exc)
+                elapsed3 = round((time.time() - t3) * 1000)
+                logger.warning("[CHATBOT-STREAM] ③ AI failed (%dms): %s", elapsed3, exc)
                 if not bot_response:
                     bot_response = ChatbotService._build_fallback_response(user_message, context)
                     is_fallback  = True
                     yield sse("token", {"text": bot_response})
 
-            total_ms = round((time.time() - t_start) * 1000)
-            logger.info("[CHATBOT-STREAM] ✓ Total: %dms", total_ms)
+            total_ms = ms()
+            logger.info(
+                "[CHATBOT-STREAM] ✓ Total: %dms  (intent=%dms  context=%dms  ai=%dms)",
+                total_ms, elapsed1, elapsed2, elapsed3,
+            )
 
             bot_msg = ChatRepository.create_message(
                 conversation_id=conversation_id,
                 sender="bot",
                 message=bot_response,
                 metadata={
-                    "is_fallback": is_fallback,
-                    "model":       "fallback" if is_fallback else ai_model_service.get_provider().name,
+                    "is_fallback":  is_fallback,
+                    "model":        "fallback" if is_fallback else ai_model_service.get_provider().name,
                     "generated_at": datetime.now(timezone.utc).isoformat(),
-                    "total_ms":    total_ms,
-                    "urgency":     parsed.get("urgency", "medium"),
-                    "actions":     parsed.get("actions", []),
+                    "total_ms":     total_ms,
+                    "stage_ms":     {"intent": elapsed1, "context": elapsed2, "ai": elapsed3},
+                    "urgency":      parsed.get("urgency", "medium"),
+                    "actions":      parsed.get("actions", []),
                 },
             )
 
@@ -409,10 +542,11 @@ class ChatbotService:
                 "timestamp":       bot_msg.created_at.isoformat(),
                 "metadata":        bot_msg.metadata_,
                 "total_ms":        total_ms,
+                "stages_log":      stages_log,
             })
 
         except Exception as exc:
-            total_ms = round((time.time() - t_start) * 1000)
+            total_ms = ms()
             logger.error("[CHATBOT-STREAM] Unhandled error after %dms: %s", total_ms, exc, exc_info=True)
             yield sse("error", {"message": "Something went wrong. Please try again."})
 
