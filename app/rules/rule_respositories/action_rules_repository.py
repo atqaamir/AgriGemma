@@ -5,7 +5,6 @@ from app.rules.rulebooks.action_rules.humidity_action_rulebook import HumidityAc
 from app.rules.rulebooks.action_rules.soil_moisture_action_rulebook import SoilMoistureActionRulebook
 from app.rules.rulebooks.action_rules.ph_action_rulebook import PhActionRulebook
 from app.rules.rulebooks.action_rules.sunlight_action_rulebook import SunlightActionRulebook
-from app.rules.rulebooks.action_rules.irrigation_frequency_action_rulebook import IrrigationFrequencyActionRulebook
 from app.rules.rulebooks.action_rules.water_source_action_rulebook import WaterSourceActionRulebook
 from app.rules.rulebooks.action_rules.rainfall_action_rulebook import RainfallActionRulebook
 
@@ -38,7 +37,7 @@ class ActionRulesRepository:
     def get_season_action_by_crop_and_season(crop_id: int, season_id: int) -> SeasonActionRulebook:
         return SeasonActionRulebook.query.filter_by(crop_id=crop_id, season_id=season_id).first()
 
-    # Temperature Action (keys: crop_id, temp_range)
+    # Temperature Action (keys: crop_id, growth_stage_id, temp_range)
     @staticmethod
     def get_all_temperature_actions() -> list:
         return TemperatureActionRulebook.query.all()
@@ -48,10 +47,10 @@ class ActionRulesRepository:
         return TemperatureActionRulebook.query.filter_by(crop_id=crop_id).all()
 
     @staticmethod
-    def get_temperature_action_by_crop_and_range(crop_id: int, temp_range: str) -> TemperatureActionRulebook:
-        return TemperatureActionRulebook.query.filter_by(crop_id=crop_id, temp_range=temp_range).first()
+    def get_temperature_action_by_crop_and_range(crop_id: int, growth_stage_id: int, temp_range: str) -> TemperatureActionRulebook:
+        return TemperatureActionRulebook.query.filter_by(crop_id=crop_id, growth_stage_id=growth_stage_id, temp_range=temp_range).first()
 
-    # Humidity Action (keys: crop_id, humidity_range)
+    # Humidity Action (keys: crop_id, growth_stage_id, humidity_range)
     @staticmethod
     def get_all_humidity_actions() -> list:
         return HumidityActionRulebook.query.all()
@@ -61,10 +60,10 @@ class ActionRulesRepository:
         return HumidityActionRulebook.query.filter_by(crop_id=crop_id).all()
 
     @staticmethod
-    def get_humidity_action_by_crop_and_range(crop_id: int, humidity_range: str) -> HumidityActionRulebook:
-        return HumidityActionRulebook.query.filter_by(crop_id=crop_id, humidity_range=humidity_range).first()
+    def get_humidity_action_by_crop_and_range(crop_id: int, growth_stage_id: int, humidity_range: str) -> HumidityActionRulebook:
+        return HumidityActionRulebook.query.filter_by(crop_id=crop_id, growth_stage_id=growth_stage_id, humidity_range=humidity_range).first()
 
-    # Soil Moisture Action (keys: crop_id, moisture_range)
+    # Soil Moisture Action (keys: crop_id, growth_stage_id, moisture_range)
     @staticmethod
     def get_all_soil_moisture_actions() -> list:
         return SoilMoistureActionRulebook.query.all()
@@ -74,10 +73,10 @@ class ActionRulesRepository:
         return SoilMoistureActionRulebook.query.filter_by(crop_id=crop_id).all()
 
     @staticmethod
-    def get_soil_moisture_action_by_crop_and_range(crop_id: int, moisture_range: str) -> SoilMoistureActionRulebook:
-        return SoilMoistureActionRulebook.query.filter_by(crop_id=crop_id, moisture_range=moisture_range).first()
+    def get_soil_moisture_action_by_crop_and_range(crop_id: int, growth_stage_id: int, moisture_range: str) -> SoilMoistureActionRulebook:
+        return SoilMoistureActionRulebook.query.filter_by(crop_id=crop_id, growth_stage_id=growth_stage_id, moisture_range=moisture_range).first()
 
-    # pH Action (keys: crop_id, ph_category)
+    # pH Action (keys: crop_id, growth_stage_id, ph_category)
     @staticmethod
     def get_all_ph_actions() -> list:
         return PhActionRulebook.query.all()
@@ -87,10 +86,10 @@ class ActionRulesRepository:
         return PhActionRulebook.query.filter_by(crop_id=crop_id).all()
 
     @staticmethod
-    def get_ph_action_by_crop_and_category(crop_id: int, ph_category: str) -> PhActionRulebook:
-        return PhActionRulebook.query.filter_by(crop_id=crop_id, ph_category=ph_category).first()
+    def get_ph_action_by_crop_and_category(crop_id: int, growth_stage_id: int, ph_category: str) -> PhActionRulebook:
+        return PhActionRulebook.query.filter_by(crop_id=crop_id, growth_stage_id=growth_stage_id, ph_category=ph_category).first()
 
-    # Sunlight Action (keys: crop_id, sunlight_range)
+    # Sunlight Action (keys: crop_id, growth_stage_id, sunlight_range)
     @staticmethod
     def get_all_sunlight_actions() -> list:
         return SunlightActionRulebook.query.all()
@@ -100,21 +99,8 @@ class ActionRulesRepository:
         return SunlightActionRulebook.query.filter_by(crop_id=crop_id).all()
 
     @staticmethod
-    def get_sunlight_action_by_crop_and_range(crop_id: int, sunlight_range: str) -> SunlightActionRulebook:
-        return SunlightActionRulebook.query.filter_by(crop_id=crop_id, sunlight_range=sunlight_range).first()
-
-    # Irrigation Frequency Action (keys: crop_id, irr_freq_range)
-    @staticmethod
-    def get_all_irrigation_frequency_actions() -> list:
-        return IrrigationFrequencyActionRulebook.query.all()
-
-    @staticmethod
-    def get_irrigation_frequency_action_by_crop(crop_id: int) -> list:
-        return IrrigationFrequencyActionRulebook.query.filter_by(crop_id=crop_id).all()
-
-    @staticmethod
-    def get_irrigation_frequency_action_by_crop_and_range(crop_id: int, irr_freq_range: str) -> IrrigationFrequencyActionRulebook:
-        return IrrigationFrequencyActionRulebook.query.filter_by(crop_id=crop_id, irr_freq_range=irr_freq_range).first()
+    def get_sunlight_action_by_crop_and_range(crop_id: int, growth_stage_id: int, sunlight_range: str) -> SunlightActionRulebook:
+        return SunlightActionRulebook.query.filter_by(crop_id=crop_id, growth_stage_id=growth_stage_id, sunlight_range=sunlight_range).first()
 
     # Water Source Action (keys: crop_id, water_source_id)
     @staticmethod
@@ -129,7 +115,7 @@ class ActionRulesRepository:
     def get_water_source_action_by_crop_and_source(crop_id: int, water_source_id: int) -> WaterSourceActionRulebook:
         return WaterSourceActionRulebook.query.filter_by(crop_id=crop_id, water_source_id=water_source_id).first()
 
-    # Rainfall Action (keys: crop_id, rainfall_range)
+    # Rainfall Action (keys: crop_id, growth_stage_id, rainfall_range)
     @staticmethod
     def get_all_rainfall_actions() -> list:
         return RainfallActionRulebook.query.all()
@@ -139,5 +125,5 @@ class ActionRulesRepository:
         return RainfallActionRulebook.query.filter_by(crop_id=crop_id).all()
 
     @staticmethod
-    def get_rainfall_action_by_crop_and_range(crop_id: int, rainfall_range: str) -> RainfallActionRulebook:
-        return RainfallActionRulebook.query.filter_by(crop_id=crop_id, rainfall_range=rainfall_range).first()
+    def get_rainfall_action_by_crop_and_range(crop_id: int, growth_stage_id: int, rainfall_range: str) -> RainfallActionRulebook:
+        return RainfallActionRulebook.query.filter_by(crop_id=crop_id, growth_stage_id=growth_stage_id, rainfall_range=rainfall_range).first()

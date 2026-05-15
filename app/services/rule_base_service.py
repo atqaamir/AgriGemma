@@ -163,16 +163,24 @@ class RuleBaseService:
         return CompatibilityRulesRepository.get_all_climate_compatibility()
 
     @staticmethod
-    def get_climate_compatibility_by_crop(crop_id: int):
+    def get_climate_compatibility_by_crop(crop_id: int) -> list:
         return CompatibilityRulesRepository.get_climate_compatibility_by_crop(crop_id)
+
+    @staticmethod
+    def get_climate_compatibility_by_crop_and_stage(crop_id: int, growth_stage_id: int):
+        return CompatibilityRulesRepository.get_climate_compatibility_by_crop_and_stage(crop_id, growth_stage_id)
 
     @staticmethod
     def get_all_soil_climate_compatibility() -> list:
         return CompatibilityRulesRepository.get_all_soil_climate_compatibility()
 
     @staticmethod
-    def get_soil_climate_compatibility_by_crop(crop_id: int):
+    def get_soil_climate_compatibility_by_crop(crop_id: int) -> list:
         return CompatibilityRulesRepository.get_soil_climate_compatibility_by_crop(crop_id)
+
+    @staticmethod
+    def get_soil_climate_compatibility_by_crop_and_stage(crop_id: int, growth_stage_id: int):
+        return CompatibilityRulesRepository.get_soil_climate_compatibility_by_crop_and_stage(crop_id, growth_stage_id)
 
     @staticmethod
     def get_all_crop_soil_compatibility() -> list:
@@ -209,14 +217,6 @@ class RuleBaseService:
     @staticmethod
     def get_water_source_compatibility_by_crop_and_source(crop_id: int, water_source_id: int):
         return CompatibilityRulesRepository.get_water_source_compatibility_by_crop_and_source(crop_id, water_source_id)
-
-    @staticmethod
-    def get_all_irrigation_frequency_compatibility() -> list:
-        return CompatibilityRulesRepository.get_all_irrigation_frequency_compatibility()
-
-    @staticmethod
-    def get_irrigation_frequency_compatibility_by_crop(crop_id: int):
-        return CompatibilityRulesRepository.get_irrigation_frequency_compatibility_by_crop(crop_id)
 
     @staticmethod
     def get_all_crop_type_season_compatibility() -> list:
@@ -267,8 +267,8 @@ class RuleBaseService:
         return ActionRulesRepository.get_temperature_action_by_crop(crop_id)
 
     @staticmethod
-    def get_temperature_action_by_crop_and_range(crop_id: int, temp_range: str):
-        return ActionRulesRepository.get_temperature_action_by_crop_and_range(crop_id, temp_range)
+    def get_temperature_action_by_crop_and_range(crop_id: int, growth_stage_id: int, temp_range: str):
+        return ActionRulesRepository.get_temperature_action_by_crop_and_range(crop_id, growth_stage_id, temp_range)
 
     @staticmethod
     def get_all_humidity_actions() -> list:
@@ -279,8 +279,8 @@ class RuleBaseService:
         return ActionRulesRepository.get_humidity_action_by_crop(crop_id)
 
     @staticmethod
-    def get_humidity_action_by_crop_and_range(crop_id: int, humidity_range: str):
-        return ActionRulesRepository.get_humidity_action_by_crop_and_range(crop_id, humidity_range)
+    def get_humidity_action_by_crop_and_range(crop_id: int, growth_stage_id: int, humidity_range: str):
+        return ActionRulesRepository.get_humidity_action_by_crop_and_range(crop_id, growth_stage_id, humidity_range)
 
     @staticmethod
     def get_all_soil_moisture_actions() -> list:
@@ -291,8 +291,8 @@ class RuleBaseService:
         return ActionRulesRepository.get_soil_moisture_action_by_crop(crop_id)
 
     @staticmethod
-    def get_soil_moisture_action_by_crop_and_range(crop_id: int, moisture_range: str):
-        return ActionRulesRepository.get_soil_moisture_action_by_crop_and_range(crop_id, moisture_range)
+    def get_soil_moisture_action_by_crop_and_range(crop_id: int, growth_stage_id: int, moisture_range: str):
+        return ActionRulesRepository.get_soil_moisture_action_by_crop_and_range(crop_id, growth_stage_id, moisture_range)
 
     @staticmethod
     def get_all_ph_actions() -> list:
@@ -303,8 +303,8 @@ class RuleBaseService:
         return ActionRulesRepository.get_ph_action_by_crop(crop_id)
 
     @staticmethod
-    def get_ph_action_by_crop_and_category(crop_id: int, ph_category: str):
-        return ActionRulesRepository.get_ph_action_by_crop_and_category(crop_id, ph_category)
+    def get_ph_action_by_crop_and_category(crop_id: int, growth_stage_id: int, ph_category: str):
+        return ActionRulesRepository.get_ph_action_by_crop_and_category(crop_id, growth_stage_id, ph_category)
 
     @staticmethod
     def get_all_sunlight_actions() -> list:
@@ -315,20 +315,8 @@ class RuleBaseService:
         return ActionRulesRepository.get_sunlight_action_by_crop(crop_id)
 
     @staticmethod
-    def get_sunlight_action_by_crop_and_range(crop_id: int, sunlight_range: str):
-        return ActionRulesRepository.get_sunlight_action_by_crop_and_range(crop_id, sunlight_range)
-
-    @staticmethod
-    def get_all_irrigation_frequency_actions() -> list:
-        return ActionRulesRepository.get_all_irrigation_frequency_actions()
-
-    @staticmethod
-    def get_irrigation_frequency_action_by_crop(crop_id: int) -> list:
-        return ActionRulesRepository.get_irrigation_frequency_action_by_crop(crop_id)
-
-    @staticmethod
-    def get_irrigation_frequency_action_by_crop_and_range(crop_id: int, irr_freq_range: str):
-        return ActionRulesRepository.get_irrigation_frequency_action_by_crop_and_range(crop_id, irr_freq_range)
+    def get_sunlight_action_by_crop_and_range(crop_id: int, growth_stage_id: int, sunlight_range: str):
+        return ActionRulesRepository.get_sunlight_action_by_crop_and_range(crop_id, growth_stage_id, sunlight_range)
 
     @staticmethod
     def get_all_water_source_actions() -> list:
@@ -351,8 +339,8 @@ class RuleBaseService:
         return ActionRulesRepository.get_rainfall_action_by_crop(crop_id)
 
     @staticmethod
-    def get_rainfall_action_by_crop_and_range(crop_id: int, rainfall_range: str):
-        return ActionRulesRepository.get_rainfall_action_by_crop_and_range(crop_id, rainfall_range)
+    def get_rainfall_action_by_crop_and_range(crop_id: int, growth_stage_id: int, rainfall_range: str):
+        return ActionRulesRepository.get_rainfall_action_by_crop_and_range(crop_id, growth_stage_id, rainfall_range)
 
     # ------------------------------------------------------------------ #
     #  Threshold Rules
@@ -383,12 +371,8 @@ class RuleBaseService:
         return ThresholdRulesRepository.get_irrigation_frequency_by_crop_and_stage(crop_id, growth_stage_id)
 
     @staticmethod
-    def get_irrigation_frequency_by_crop_stage_soil(crop_id: int, growth_stage_id: int, soil_type_id: int):
-        return ThresholdRulesRepository.get_irrigation_frequency_by_crop_stage_soil(crop_id, growth_stage_id, soil_type_id)
-
-    @staticmethod
-    def get_irrigation_frequency_with_fallback(crop_id: int, growth_stage_id: int, soil_type_id: int):
-        return ThresholdRulesRepository.get_irrigation_frequency_with_fallback(crop_id, growth_stage_id, soil_type_id)
+    def get_irrigation_frequency_with_fallback(crop_id: int, growth_stage_id: int):
+        return ThresholdRulesRepository.get_irrigation_frequency_with_fallback(crop_id, growth_stage_id)
 
     @staticmethod
     def get_all_irrigation_calendar() -> list:
@@ -437,6 +421,16 @@ class RuleBaseService:
     @staticmethod
     def get_fertilizer_rules(crop_id: int) -> dict:
         pass
+
+    # ------------------------------------------------------------------ #
+    #  Weather Lookups
+    # ------------------------------------------------------------------ #
+
+    @staticmethod
+    def get_weather_by_region_and_date(region: str, query_date):
+        """Return the ClimateProfile row for a given region and date, or None."""
+        from app.models.weather import ClimateProfile
+        return ClimateProfile.query.filter_by(region=region, date=query_date).first()
 
     # ------------------------------------------------------------------ #
     #  Planning Helpers
