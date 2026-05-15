@@ -2,6 +2,8 @@ import json
 from datetime import date
 from pathlib import Path
 
+from app.extensions import db
+from app.models.weekly_plan import WeeklyPlan, WeeklyPlanEntry
 from app.services.seasonal_planner_service import SeasonalPlannerService
 from app.services.weekly_planner_service import WeeklyPlannerService
 
@@ -23,9 +25,12 @@ WEEK_START = date(2026, 5, 18)                        # ← fill in
 #   - Set a key to None (or omit it) to leave that field unchanged.
 ENTRY_UPDATES = [
     # ── Entry 0 : Maize / Loamy / Groundwater ────────────────────────
+    # field_id=1  →  North Field Alpha, Punjab (~15°C cold spell)
+    #                temperature band "15-20" → cold-stress sowing adjustment
     {
         "sowing":               "05/20/2026",   # ← "MM/DD/YYYY"
         "irrigation_frequency": None,           # ← int, e.g. 3
+        "field_id":             1,              # North Field Alpha — Punjab, Pakistan
         # "irrigation_start_date": "",          # ← override cascade if needed
         # "fertilization_date":    "",          # ← override cascade if needed
         # "harvesting":            "",          # ← override cascade if needed
@@ -36,9 +41,12 @@ ENTRY_UPDATES = [
         "irrigation_frequency": None,           # ← int
     },
     # ── Entry 2 : Rice / Clay / River ────────────────────────────────
+    # field_id=2  →  East Creek Basin, Sindh (~34°C heat scenario)
+    #                temperature band "30-40" → heat-stress sowing adjustment
     {
         "sowing":               "05/18/2026",   # ← "MM/DD/YYYY"
         "irrigation_frequency": None,           # ← int
+        "field_id":             2,              # East Creek Basin — Sindh, Pakistan
     },
 ]
 
@@ -46,6 +54,11 @@ ENTRY_UPDATES = [
 
 
 def run(user_id: int = 1):
+    WeeklyPlanEntry.query.delete()
+    WeeklyPlan.query.delete()
+    db.session.commit()
+    print("Weekly plan tables cleared.")
+
     active_plan = SeasonalPlannerService.get_active_plan(user_id)
 
     if active_plan is None:
