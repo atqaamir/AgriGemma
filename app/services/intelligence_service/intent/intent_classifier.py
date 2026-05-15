@@ -20,12 +20,10 @@ from enum import Enum
 
 class FarmIntent(str, Enum):
     IRRIGATION    = "irrigation"
-    DISEASE       = "disease"
     WEATHER       = "weather"
     HARVEST       = "harvest"
     FERTILIZATION = "fertilization"
     SOIL          = "soil"
-    PEST          = "pest"
     TASK          = "task"
     ALERT         = "alert"
     PLANTING      = "planting"
@@ -61,12 +59,6 @@ _SIGNALS: list[tuple[FarmIntent, float, tuple[str, ...]]] = [
         "water stress", "water need", "watering schedule",
         "soil moisture", "field dry", "field wet", "too dry",
     )),
-    (FarmIntent.DISEASE, 1.3, (
-        "disease", "fungus", "blight", "leaf rot", "root rot",
-        "rust", "mildew", "powdery", "infected", "infect",
-        "sick crop", "plant dying", "wilting", "yellowing",
-        "brown spot", "dark spot", "leaf spot",
-    )),
     (FarmIntent.WEATHER, 1.0, (
         "weather", "forecast", "rain tomorrow", "will it rain",
         "temperature today", "humidity", "heatwave", "heat wave",
@@ -88,15 +80,13 @@ _SIGNALS: list[tuple[FarmIntent, float, tuple[str, ...]]] = [
         "soil quality", "clay soil", "sandy soil", "loam soil",
         "topsoil", "soil health", "soil texture",
     )),
-    (FarmIntent.PEST, 1.3, (
-        "pest", "insect", "aphid", "larvae", "caterpillar",
-        "locust", "bug infestation", "worm", "moth", "beetle",
-        "mite", "infestation", "spray for",
-    )),
     (FarmIntent.TASK, 0.9, (
         "my task", "pending task", "overdue task", "urgent task",
         "what should i do today", "work schedule", "task list",
         "critical task", "what's due", "what is due",
+        "tasks due", "tasks are due", "which task", "any task",
+        "show task", "list task", "how many task", "task today",
+        "due today", "due this week", "need to do",
     )),
     (FarmIntent.ALERT, 1.1, (
         "alert", "notification", "warning i got", "why did i get",
@@ -117,8 +107,7 @@ _SIGNALS: list[tuple[FarmIntent, float, tuple[str, ...]]] = [
 # More specific intents that "absorb" a WEATHER primary if both score.
 # Rationale: "will rain affect my irrigation?" is IRRIGATION, not WEATHER.
 _SPECIFICITY_ORDER = (
-    FarmIntent.DISEASE,
-    FarmIntent.PEST,
+  
     FarmIntent.IRRIGATION,
     FarmIntent.HARVEST,
     FarmIntent.FERTILIZATION,
