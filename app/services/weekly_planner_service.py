@@ -31,15 +31,19 @@ class WeeklyPlannerService:
             crop_obj   = rule_base_service.get_crop_by_id(entry.crop_id)
             stage_obj  = rule_base_service.get_stage_by_id(entry.growth_stage_id) if entry.growth_stage_id else None
 
-            events = json.loads(entry.week_events) if entry.week_events else []
+            original_events = json.loads(entry.original_events)    if entry.original_events    else []
+            events          = json.loads(entry.week_events)         if entry.week_events         else []
+            adjustments     = json.loads(entry.climate_adjustments) if entry.climate_adjustments else []
 
             entries_output.append({
-                "crop_id":        entry.crop_id,
-                "crop_name":      crop_obj.name if crop_obj else None,
-                "field_id":       entry.field_id,
-                "growth_stage_id":  entry.growth_stage_id,
-                "growth_stage":     stage_obj.name if stage_obj else None,
-                "week_events":      events,
+                "crop_id":                  entry.crop_id,
+                "crop_name":                crop_obj.name if crop_obj else None,
+                "field_id":                 entry.field_id,
+                "growth_stage_id":          entry.growth_stage_id,
+                "growth_stage":             stage_obj.name if stage_obj else None,
+                "climate_adjustments_made": adjustments,
+                "original_events":          original_events,
+                "week_events":              events,
             })
 
         return {
@@ -90,8 +94,8 @@ class WeeklyPlannerService:
         # Step 1 — raw schedule
         raw_plan = RuleEngine.generate_weekly_plan(user_id, week_start_date)
 
-        # Step 2 — apply climate adjustments
-        adjusted_plan = RuleEngine.adjust_weekly_plan(raw_plan)
+        # Step 2 — apply climate adjustments (also filters events to current week)
+        adjusted_plan = RuleEngine.adjust_weekly_plan(raw_plan, week_start_date)
 
         # Persist top-level plan
         plan = WeeklyPlanRepository.create({
@@ -102,14 +106,19 @@ class WeeklyPlannerService:
             "seasonal_plan_id": seasonal_plan_id,
         })
 
+        # Index raw events by crop_id for original_events lookup
+        raw_by_crop = {r["crop_id"]: r["week_events"] for r in raw_plan}
+
         # Persist one entry per crop result
         for item in adjusted_plan:
             WeeklyPlanEntryRepository.create({
-                "weekly_plan_id": plan.id,
-                "crop_id":        item["crop_id"],
-                "field_id":       item.get("field_id"),
-                "growth_stage_id": item.get("growth_stage_id"),
-                "week_events":    json.dumps(item["week_events"]),
+                "weekly_plan_id":      plan.id,
+                "crop_id":             item["crop_id"],
+                "field_id":            item.get("field_id"),
+                "growth_stage_id":     item.get("growth_stage_id"),
+                "original_events":     json.dumps(raw_by_crop.get(item["crop_id"], [])),
+                "week_events":         json.dumps(item["week_events"]),
+                "climate_adjustments": json.dumps(item.get("climate_adjustments_made", [])),
             })
 
         return plan
