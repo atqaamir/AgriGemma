@@ -21,9 +21,13 @@ Key improvements over previous version:
 
 import json
 import logging
+import queue as _queue
 import re
+import threading
 import time
 from datetime import datetime, timezone
+
+from flask import current_app
 
 from app.services.ai_model_service import ai_model_service
 from app.services.intelligence_service.chatbot_service.prompts._prompt_chatbot_service import (
@@ -51,6 +55,7 @@ from app.services.intelligence_service.prompts.components import (
     climate_block,
 )
 from app.repositories.chat_repository import ChatRepository
+from app.services import web_search_service
 
 logger = logging.getLogger(__name__)
 
@@ -60,14 +65,15 @@ def _parse_llm_response(raw: str) -> dict:
     text = re.sub(r'(?i)^\s*output\s*:\s*', '', raw.strip()).strip()
 
     def _get(key: str) -> str:
-        # Strategy 1: quoted value  KEY: 'value'  or  KEY: "value"
-        # ((?:[^\\]|\\.)*?) matches either a non-backslash char OR a backslash
-        # followed by any char — so escaped quotes like \' are consumed as a unit
-        # and never mistaken for the closing quote.
-        m = re.search(rf'{key}\s*:\s*(["\'])((?:[^\\]|\\.)*?)\1', text, re.IGNORECASE | re.DOTALL)
+        # Strategy 1: quoted value where the closing quote is followed by , KEY: or }
+        # The lookahead (?=\s*,\s*[A-Z_]{2,}\s*:|\s*[}]) prevents apostrophes in
+        # contractions like "let's" from being mistaken for the closing quote.
+        m = re.search(
+            rf"{key}\s*:\s*([\"'])(.*?)\1(?=\s*,\s*[A-Z_]{{2,}}\s*:|\s*[}}])",
+            text, re.IGNORECASE | re.DOTALL,
+        )
         if m:
-            value = m.group(2).strip()
-            return re.sub(r'\\(.)', r'\1', value)  # unescape \' → '  and \" → "
+            return re.sub(r'\\(.)', r'\1', m.group(2).strip())
         # Strategy 2: unquoted value — stop at the next KEY: boundary or closing brace
         m = re.search(
             rf'{key}\s*:\s*(.*?)(?=,\s*[A-Z_]{{2,}}\s*:|[}}]|\Z)',
@@ -301,12 +307,19 @@ class ChatbotService:
         logger.info("[CHATBOT] ② Context (%dms) — %d chars, intent=%s",
                     (time.time() - t2) * 1000, len(context_str), intent_result.primary.value)
 
+        # Stage 2b — web search (GENERAL intent only)
+        web_results = []
+        if intent_result.primary == FarmIntent.GENERAL:
+            web_results = web_search_service.search(user_message)
+
         # Stage 3 — AI
         full_prompt = build_chatbot_prompt(
             farmer_context=context_str,
             history=history,
             user_message=user_message,
             language=language,
+            intent=intent_result.primary.value,
+            web_results=web_results,
         )
 
         t3 = time.time()
@@ -394,13 +407,52 @@ class ChatbotService:
     def send_message_stream(user_id: int, conversation_id: int, user_message: str, language: str = 'en'):
         """
         Generator yielding SSE events for each pipeline stage.
-        Format: "event: <type>\\ndata: <json>\\n\\n"
 
-        Every status event carries stages_log (all completed stages so far) so
-        the UI can render a persistent timeline rather than just the latest message.
+        The pipeline runs in a non-daemon background thread so that navigating
+        away mid-response does not abort the AI call — the bot message is always
+        saved to the database even if the client disconnects.  The SSE generator
+        simply reads from a queue; when the client drops (GeneratorExit) we stop
+        reading while the thread finishes independently.
+        """
+        event_q: _queue.Queue = _queue.Queue()
+        # Capture the app while we're still inside the request context;
+        # the background thread has no app context of its own.
+        app = current_app._get_current_object()
 
-        Token events use cumulative text: each event contains all response text
-        received so far, so the UI can replace its display and see it grow.
+        def _worker():
+            with app.app_context():
+                try:
+                    for chunk in ChatbotService._stream_pipeline(user_id, conversation_id, user_message):
+                        event_q.put(chunk)
+                except Exception as exc:
+                    logger.error("[CHATBOT-STREAM] Worker error: %s", exc, exc_info=True)
+                    event_q.put(
+                        f'event: error\ndata: {json.dumps({"message": "Something went wrong."})}\n\n'
+                    )
+                finally:
+                    event_q.put(None)  # sentinel — signals end of stream
+
+        # daemon=False: thread outlives the request so the bot message is always saved
+        threading.Thread(target=_worker, daemon=False).start()
+
+        try:
+            while True:
+                try:
+                    chunk = event_q.get(timeout=0.5)
+                except _queue.Empty:
+                    continue
+                if chunk is None:
+                    break
+                yield chunk
+        except GeneratorExit:
+            # Client navigated away — background thread still completes and saves to DB
+            pass
+
+    @staticmethod
+    def _stream_pipeline(user_id: int, conversation_id: int, user_message: str):
+        """
+        Full streaming pipeline — runs inside a background thread.
+        Yields SSE-formatted strings; always saves the bot message to DB before returning.
         """
         def sse(event: str, data: dict) -> str:
             return f"event: {event}\ndata: {json.dumps(data)}\n\n"
@@ -415,8 +467,6 @@ class ChatbotService:
             return round((time.time() - t_start) * 1000)
 
         def stage_sse(stage: str, message: str, extra: dict | None = None) -> str:
-            """Emit a status event; appends this stage to stages_log so all prior
-            stages remain visible in every subsequent event the UI receives."""
             entry: dict = {"stage": stage, "label": message, "elapsed_ms": ms()}
             stages_log.append(entry)
             data: dict = {"stage": stage, "message": message, "stages_log": list(stages_log)}
@@ -467,11 +517,27 @@ class ChatbotService:
                 {"chars": len(context_str), "time_ms": elapsed2},
             )
 
+            # ── Stage 2b: web search (GENERAL intent only) ────────────────────
+            web_results = []
+            if intent_result.primary == FarmIntent.GENERAL:
+                yield stage_sse("searching_web", "Searching the web...")
+                tw = time.time()
+                web_results = web_search_service.search(user_message)
+                elapsed_web = round((time.time() - tw) * 1000)
+                logger.info("[CHATBOT-STREAM] ② Web search (%dms) %d results", elapsed_web, len(web_results))
+                yield stage_sse(
+                    "web_ready",
+                    f"Found {len(web_results)} web results — {elapsed_web}ms",
+                    {"result_count": len(web_results), "time_ms": elapsed_web},
+                )
+
             full_prompt = build_chatbot_prompt(
                 farmer_context=context_str,
                 history=history,
                 user_message=user_message,
                 language=language,
+                intent=intent_result.primary.value,
+                web_results=web_results,
             )
 
             # ── Stage 3: AI streaming ─────────────────────────────────────────
@@ -489,8 +555,6 @@ class ChatbotService:
                     chunk = streamer.feed(token)
                     if chunk:
                         accumulated += chunk
-                        # Cumulative text: UI replaces its display each event,
-                        # giving a progressive "typing" effect with no frontend changes.
                         yield sse("token", {"text": accumulated})
                 raw_llm = "".join(raw_tokens)
                 logger.info("[CHATBOT-STREAM] ③ LLM raw output:\n%s", raw_llm)
@@ -498,8 +562,6 @@ class ChatbotService:
                 bot_response = parsed["response"]
                 elapsed3     = round((time.time() - t3) * 1000)
                 logger.info("[CHATBOT-STREAM] ③ AI (%dms) %d chars", elapsed3, len(bot_response))
-                # Always send the authoritative parsed response as the final token
-                # (covers the safety-buffer tail that _ResponseStreamer held back)
                 yield sse("token", {"text": bot_response})
             except Exception as exc:
                 elapsed3 = round((time.time() - t3) * 1000)

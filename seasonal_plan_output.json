@@ -12,11 +12,19 @@
         "water_source": "Groundwater",
         "feasible": true,
         "schedule": {
+<<<<<<< HEAD
           "sowing_date": "04/24/2027",
           "harvesting_date": "09/05/2027",
           "irrigation_start_date": "05/01/2027",
           "irrigation_frequency": "2 times per week",
           "fertilization_date": "05/09/2027"
+=======
+          "sowing_date": "04/29/2027",
+          "harvesting_date": "09/30/2027",
+          "irrigation_start_date": "05/06/2027",
+          "irrigation_frequency": "2 times per week",
+          "fertilization_date": "05/14/2027"
+>>>>>>> main
         },
         "adjustments": []
       },
@@ -26,11 +34,19 @@
         "water_source": "Groundwater",
         "feasible": true,
         "schedule": {
+<<<<<<< HEAD
           "sowing_date": "04/27/2027",
           "harvesting_date": "09/16/2027",
           "irrigation_start_date": "05/07/2027",
           "irrigation_frequency": "2 times per week",
           "fertilization_date": "05/22/2027"
+=======
+          "sowing_date": "04/14/2027",
+          "harvesting_date": "09/11/2027",
+          "irrigation_start_date": "04/24/2027",
+          "irrigation_frequency": "2 times per week",
+          "fertilization_date": "05/09/2027"
+>>>>>>> main
         },
         "adjustments": []
       },
@@ -40,11 +56,19 @@
         "water_source": "River",
         "feasible": true,
         "schedule": {
+<<<<<<< HEAD
           "sowing_date": "07/26/2026",
           "harvesting_date": "09/26/2026",
           "irrigation_start_date": "07/29/2026",
           "irrigation_frequency": "5 times per week",
           "fertilization_date": "08/15/2026"
+=======
+          "sowing_date": "07/25/2026",
+          "harvesting_date": "09/09/2026",
+          "irrigation_start_date": "07/28/2026",
+          "irrigation_frequency": "5 times per week",
+          "fertilization_date": "08/14/2026"
+>>>>>>> main
         },
         "adjustments": []
       }

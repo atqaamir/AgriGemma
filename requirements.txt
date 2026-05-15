@@ -21,7 +21,10 @@ google-genai==0.5.0
 gunicorn==22.0.0
 
 # Data validation
-marshmallow 
+marshmallow
+
+# Web search (used by chatbot for general intent queries)
+ddgs>=0.1.0
 
 numpy
 pandas

@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html class="light" lang="en">
+<html lang="en">
 <head>
   <meta charset="utf-8"/>
   <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
@@ -85,9 +85,10 @@
     .hide-scrollbar::-webkit-scrollbar { display: none; }
     .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
   </style>
+  <script>(function(){if(localStorage.getItem('theme')==='dark')document.documentElement.classList.add('dark')})();</script>
 </head>
 
-<body class="bg-background text-on-surface min-h-screen pb-32">
+<body class="bg-surface dark:bg-[#1c1c17] text-on-surface dark:text-[#e5e2da] min-h-screen pb-32">
 
 <!-- Embed plan data for JS -->
 <script id="plan-data" type="application/json">{{ plan | tojson }}</script>

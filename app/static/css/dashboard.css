@@ -1,8 +1,62 @@
+@keyframes spin { to { transform: rotate(360deg); } }
+
 body {
   font-family: 'Work Sans', sans-serif;
   background-color: #fcf9f0;
   min-height: max(884px, 100dvh);
 }
+
+.dark body {
+  background-color: #1c1c17;
+  color: #e5e2da;
+}
+
+/* ── Dark mode: semantic surface overrides ──────────────────────────────── */
+.dark .bg-surface,
+.dark .bg-background,
+.dark .bg-surface-bright     { background-color: #1c1c17; }
+.dark .bg-surface-dim        { background-color: #131310; }
+
+.dark .bg-surface-container-lowest { background-color: #181815; }
+.dark .bg-surface-container-low    { background-color: #222219; }
+.dark .bg-surface-container        { background-color: #2a2a24; }
+.dark .bg-surface-container-high   { background-color: #2e2e26; }
+.dark .bg-surface-container-highest{ background-color: #343430; }
+.dark .bg-surface-variant          { background-color: #3a3a30; }
+
+.dark .bg-primary-fixed            { background-color: #3a4a2e; }
+.dark .bg-secondary-fixed,
+.dark .bg-secondary-container      { background-color: #3a4a2e; }
+
+/* ── Dark mode: text overrides ───────────────────────────────────────────── */
+.dark .text-on-surface,
+.dark .text-on-background    { color: #e5e2da; }
+.dark .text-on-surface-variant { color: #9e9e8e; }
+.dark .text-on-primary-fixed,
+.dark .text-on-secondary-fixed { color: #d5e9c1; }
+.dark .text-primary          { color: #a0b591; }
+.dark .text-secondary        { color: #8fa080; }
+.dark .text-outline          { color: #8f9285; }
+
+/* ── Dark mode: border overrides ─────────────────────────────────────────── */
+.dark .border-outline-variant    { border-color: #3a3a30; }
+.dark .border-outline            { border-color: #6e7268; }
+.dark .border-surface-container,
+.dark .border-surface-container-high { border-color: #2e2e26; }
+
+/* opacity-modifier border classes used throughout the app */
+.dark .border-outline-variant\/10 { border-color: rgb(58 58 48 / 0.1); }
+.dark .border-outline-variant\/20 { border-color: rgb(58 58 48 / 0.2); }
+.dark .border-outline-variant\/30 { border-color: rgb(58 58 48 / 0.3); }
+.dark .border-outline-variant\/40 { border-color: rgb(58 58 48 / 0.4); }
+
+/* ── Dark mode: ring / divide ────────────────────────────────────────────── */
+.dark .divide-outline-variant > :not([hidden]) ~ :not([hidden]) {
+  border-color: #3a3a30;
+}
+
+/* ── Dark mode: placeholder text ─────────────────────────────────────────── */
+.dark ::placeholder { color: #6e7268; }
 
 h1, h2, h3 {
   font-family: 'Manrope', sans-serif;
