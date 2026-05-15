@@ -268,7 +268,7 @@ class ChatbotService:
         return conversation.id
 
     @staticmethod
-    def send_message(user_id: int, conversation_id: int, user_message: str) -> dict:
+    def send_message(user_id: int, conversation_id: int, user_message: str, language: str = 'en') -> dict:
         conversation = ChatRepository.get_conversation(conversation_id)
         if not conversation or conversation.user_id != user_id:
             raise ValueError("Invalid conversation")
@@ -306,6 +306,7 @@ class ChatbotService:
             farmer_context=context_str,
             history=history,
             user_message=user_message,
+            language=language,
         )
 
         t3 = time.time()
@@ -390,7 +391,7 @@ class ChatbotService:
         return ChatRepository.delete_conversation(conversation_id)
 
     @staticmethod
-    def send_message_stream(user_id: int, conversation_id: int, user_message: str):
+    def send_message_stream(user_id: int, conversation_id: int, user_message: str, language: str = 'en'):
         """
         Generator yielding SSE events for each pipeline stage.
         Format: "event: <type>\\ndata: <json>\\n\\n"
@@ -470,6 +471,7 @@ class ChatbotService:
                 farmer_context=context_str,
                 history=history,
                 user_message=user_message,
+                language=language,
             )
 
             # ── Stage 3: AI streaming ─────────────────────────────────────────

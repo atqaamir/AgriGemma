@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(Get-ChildItem -Path \"D:\\\\Work\\\\Climate Adaption Planner\\\\SmartFarming\" -Force)",
+      "Bash(Select-Object -Property Name, FullName)",
+      "Bash(Format-Table -AutoSize)",
+      "Bash(grep -E \"^d|\\\\.py$|\\\\.html$|\\\\.js$|\\\\.jsx$\")",
+      "Bash(Get-ChildItem \"D:\\\\Work\\\\Climate Adaption Planner\\\\SmartFarming\\\\app\\\\static\\\\js\" -ErrorAction SilentlyContinue)"
+    ]
+  }
+}

@@ -44,12 +44,19 @@
   </script>
 
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;700;800&family=Work+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Nastaliq+Urdu:wght@400;700&display=swap" rel="stylesheet"/>
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
 
+  <!-- Apply theme and RTL direction before first paint -->
   <script>
     (function () {
-      const t = localStorage.getItem('theme') || 'light';
-      if (t === 'dark') document.documentElement.classList.add('dark');
+      const theme = localStorage.getItem('theme') || 'light';
+      if (theme === 'dark') document.documentElement.classList.add('dark');
+      const lang = localStorage.getItem('lang') || 'en';
+      if (lang === 'ur') {
+        document.documentElement.setAttribute('dir', 'rtl');
+        document.documentElement.setAttribute('lang', 'ur');
+      }
     })();
   </script>
 
@@ -102,6 +109,27 @@
     .chip:active { transform: scale(.95); }
     .dark .chip { background:#2a2a24; color:#9e9e8e; border-color:#44484040; }
     .dark .chip:hover { background:#3a4a2e; color:#d5e9c1; border-color:#d5e9c140; }
+
+    /* ── Urdu: apply Nastaliq font only to chat content, not global layout ── */
+    :root[lang="ur"] .bot-text,
+    :root[lang="ur"] #msgInput,
+    :root[lang="ur"] .chip span {
+      font-family: 'Noto Nastaliq Urdu', serif;
+      line-height: 1.9;
+    }
+    :root[lang="ur"] #msgInput { text-align: right; }
+    :root[lang="ur"] .bot-text  { text-align: right; }
+
+    /* RTL: sidebar slides from right */
+    [dir="rtl"] #sidebar {
+      left: auto !important;
+      right: 0;
+      transform: translateX(100%);
+    }
+    [dir="rtl"] #sidebar.open,
+    [dir="rtl"] #sidebar.lg\:translate-x-0 {
+      transform: translateX(0) !important;
+    }
   </style>
 </head>
 
@@ -130,14 +158,14 @@
                  bg-primary text-on-primary rounded-xl text-sm font-semibold
                  hover:bg-primary/90 active:scale-[.98] transition-all shadow-sm">
           <span class="material-symbols-outlined" style="font-size:17px;">edit_square</span>
-          New conversation
+          <span data-i18n="chat.new_conversation">New conversation</span>
         </button>
       </div>
 
       <div id="convList" class="flex-1 overflow-y-auto no-scrollbar p-2 space-y-1">
         <div class="flex items-center justify-center gap-2 py-10 text-on-surface-variant/60 dark:text-[#9e9e8e]/60 text-sm">
           <span class="material-symbols-outlined animate-spin" style="font-size:18px;">progress_activity</span>
-          Loading…
+          <span data-i18n="chat.loading">Loading…</span>
         </div>
       </div>
     </aside>
@@ -156,29 +184,36 @@
               style="font-size:34px; font-variation-settings:'FILL' 1;">smart_toy</span>
           </div>
           <div>
-            <p class="text-xl font-bold">How can I help today?</p>
-            <p class="text-sm text-on-surface-variant dark:text-[#9e9e8e] mt-1">
+            <p class="text-xl font-bold" data-i18n="chat.welcome.title">How can I help today?</p>
+            <p class="text-sm text-on-surface-variant dark:text-[#9e9e8e] mt-1"
+               data-i18n="chat.welcome.subtitle">
               Ask anything about your farm, or pick a topic below
             </p>
           </div>
           <div class="flex flex-wrap gap-2 justify-center max-w-md">
-            <button class="chip" onclick="quickPrompt('My crops look unhealthy — what could be wrong?')">
-              <span class="material-symbols-outlined" style="font-size:14px;">eco</span>Crop health
+            <button class="chip" onclick="quickPrompt(t('prompt.crop_health'))">
+              <span class="material-symbols-outlined" style="font-size:14px;">eco</span>
+              <span data-i18n="chip.crop_health">Crop health</span>
             </button>
-            <button class="chip" onclick="quickPrompt('When should I irrigate my fields this week?')">
-              <span class="material-symbols-outlined" style="font-size:14px;">water_drop</span>Irrigation timing
+            <button class="chip" onclick="quickPrompt(t('prompt.irrigation'))">
+              <span class="material-symbols-outlined" style="font-size:14px;">water_drop</span>
+              <span data-i18n="chip.irrigation">Irrigation timing</span>
             </button>
-            <button class="chip" onclick="quickPrompt('What are the best practices for pest and disease management?')">
-              <span class="material-symbols-outlined" style="font-size:14px;">bug_report</span>Pest management
+            <button class="chip" onclick="quickPrompt(t('prompt.pest'))">
+              <span class="material-symbols-outlined" style="font-size:14px;">bug_report</span>
+              <span data-i18n="chip.pest">Pest management</span>
             </button>
-            <button class="chip" onclick="quickPrompt('What should I plant this season given current conditions?')">
-              <span class="material-symbols-outlined" style="font-size:14px;">agriculture</span>Planting advice
+            <button class="chip" onclick="quickPrompt(t('prompt.planting'))">
+              <span class="material-symbols-outlined" style="font-size:14px;">agriculture</span>
+              <span data-i18n="chip.planting">Planting advice</span>
             </button>
-            <button class="chip" onclick="quickPrompt('How can I improve my soil fertility and health?')">
-              <span class="material-symbols-outlined" style="font-size:14px;">compost</span>Soil fertility
+            <button class="chip" onclick="quickPrompt(t('prompt.soil'))">
+              <span class="material-symbols-outlined" style="font-size:14px;">compost</span>
+              <span data-i18n="chip.soil">Soil fertility</span>
             </button>
-            <button class="chip" onclick="quickPrompt('What tasks should I prioritise on my farm this week?')">
-              <span class="material-symbols-outlined" style="font-size:14px;">task_alt</span>Task planning
+            <button class="chip" onclick="quickPrompt(t('prompt.tasks'))">
+              <span class="material-symbols-outlined" style="font-size:14px;">task_alt</span>
+              <span data-i18n="chip.tasks">Task planning</span>
             </button>
           </div>
         </div>
@@ -191,6 +226,7 @@
           class="flex items-end gap-2 bg-surface-container dark:bg-[#2a2a24] rounded-2xl px-3 py-2
                  border border-outline-variant/30 focus-within:border-primary/50 transition-colors">
           <textarea id="msgInput" rows="1"
+            data-i18n="chat.input.placeholder"
             placeholder="Ask about your farm… (Enter to send)"
             disabled
             class="flex-1 bg-transparent text-sm text-on-surface dark:text-[#e5e2da]
@@ -206,7 +242,8 @@
               style="font-size:18px; font-variation-settings:'FILL' 1;">send</span>
           </button>
         </div>
-        <p class="text-[11px] text-on-surface-variant/50 dark:text-[#9e9e8e]/50 text-center mt-2">
+        <p class="text-[11px] text-on-surface-variant/50 dark:text-[#9e9e8e]/50 text-center mt-2"
+           data-i18n="chat.powered_by">
           Powered by Gemma 4 · Runs locally on-device
         </p>
       </div>
@@ -227,23 +264,23 @@
   <nav class="fixed bottom-0 left-0 w-full z-50 bg-[#fcf9f0]/80 dark:bg-stone-950/80 backdrop-blur-md rounded-t-[24px] shadow-[0_-8px_24px_rgba(28,28,23,0.06)] flex justify-around items-center px-4 pb-6 pt-3">
     <a class="flex flex-col items-center justify-center text-stone-500 dark:text-stone-400 px-3 py-1.5 transition-transform hover:scale-105 duration-150" href="/">
       <span class="material-symbols-outlined" data-icon="dashboard">dashboard</span>
-      <span class="font-['Work_Sans'] text-[11px] font-medium tracking-wide">Dashboard</span>
+      <span class="font-['Work_Sans'] text-[11px] font-medium tracking-wide" data-i18n="nav.dashboard">Dashboard</span>
     </a>
     <a class="flex flex-col items-center justify-center text-stone-500 dark:text-stone-400 px-3 py-1.5 transition-transform hover:scale-105 duration-150" href="/myfields">
       <span class="material-symbols-outlined" data-icon="landscape" style="font-variation-settings: 'FILL' 1;">landscape</span>
-      <span class="font-['Work_Sans'] text-[11px] font-medium tracking-wide">Fields</span>
+      <span class="font-['Work_Sans'] text-[11px] font-medium tracking-wide" data-i18n="nav.fields">Fields</span>
     </a>
     <a class="flex flex-col items-center justify-center text-stone-500 dark:text-stone-400 px-3 py-1.5 transition-transform hover:scale-105 duration-150" href="/mycrops">
       <span class="material-symbols-outlined" data-icon="eco" style="font-variation-settings: 'FILL' 1;">eco</span>
-      <span class="font-['Work_Sans'] text-[11px] font-medium tracking-wide">Crops</span>
+      <span class="font-['Work_Sans'] text-[11px] font-medium tracking-wide" data-i18n="nav.crops">Crops</span>
     </a>
     <a class="flex flex-col items-center justify-center text-stone-500 dark:text-stone-400 px-3 py-1.5 transition-transform hover:scale-105 duration-150" href="/mytasks">
       <span class="material-symbols-outlined" data-icon="assignment_turned_in">assignment_turned_in</span>
-      <span class="font-['Work_Sans'] text-[11px] font-medium tracking-wide">Tasks</span>
+      <span class="font-['Work_Sans'] text-[11px] font-medium tracking-wide" data-i18n="nav.tasks">Tasks</span>
     </a>
     <a class="flex flex-col items-center justify-center bg-secondary-fixed dark:bg-primary-container text-on-background dark:text-surface-bright rounded-2xl px-3 py-1.5 transition-transform hover:scale-105 duration-150" href="/chatbot">
       <span class="material-symbols-outlined" data-icon="chat">chat</span>
-      <span class="font-['Work_Sans'] text-[11px] font-medium tracking-wide">Chat</span>
+      <span class="font-['Work_Sans'] text-[11px] font-medium tracking-wide" data-i18n="nav.chat">Chat</span>
     </a>
   </nav>
 
@@ -279,17 +316,18 @@
         renderConvList();
       } catch {
         document.getElementById('convList').innerHTML =
-          '<p class="text-xs text-center text-on-surface-variant/50 py-6">Could not load conversations</p>';
+          `<p class="text-xs text-center text-on-surface-variant/50 py-6">${t('error.load_convs')}</p>`;
       }
     }
 
     function renderConvList() {
       const el = document.getElementById('convList');
       if (!cachedConvs.length) {
+        const lines = t('chat.no_conversations').split('\n');
         el.innerHTML = `
           <div class="flex flex-col items-center gap-2 py-10 text-on-surface-variant/50 dark:text-[#9e9e8e]/50">
             <span class="material-symbols-outlined" style="font-size:32px;">chat_bubble</span>
-            <p class="text-xs text-center">No conversations yet.<br>Start one above!</p>
+            <p class="text-xs text-center">${lines[0]}<br>${lines[1] || ''}</p>
           </div>`;
         return;
       }
@@ -305,7 +343,7 @@
                          ? 'bg-primary-fixed dark:bg-[#3a4a2e] text-primary dark:text-[#d5e9c1] font-semibold'
                          : 'hover:bg-surface-container dark:hover:bg-[#2a2a24]'}">
                 <p class="truncate pr-7 font-medium">${esc(c.title)}</p>
-                <p class="text-[11px] opacity-50 mt-0.5">${c.message_count} message${c.message_count !== 1 ? 's' : ''}</p>
+                <p class="text-[11px] opacity-50 mt-0.5">${msgCount(c.message_count)}</p>
               </button>
               <button onclick="deleteConv(event, ${c.id})"
                 title="Delete"
@@ -322,15 +360,24 @@
       const now = new Date(), today = now.toDateString();
       const yest = new Date(now - 864e5).toDateString();
       const weekAgo = new Date(now - 7 * 864e5);
-      const g = { Today: [], Yesterday: [], 'This week': [], Older: [] };
+      const groups = [
+        { label: t('group.today'),     items: [] },
+        { label: t('group.yesterday'), items: [] },
+        { label: t('group.this_week'), items: [] },
+        { label: t('group.older'),     items: [] },
+      ];
       convs.forEach(c => {
         const d = new Date(c.updated_at);
-        if (d.toDateString() === today) g.Today.push(c);
-        else if (d.toDateString() === yest) g.Yesterday.push(c);
-        else if (d >= weekAgo) g['This week'].push(c);
-        else g.Older.push(c);
+        if (d.toDateString() === today)       groups[0].items.push(c);
+        else if (d.toDateString() === yest)   groups[1].items.push(c);
+        else if (d >= weekAgo)                groups[2].items.push(c);
+        else                                  groups[3].items.push(c);
       });
-      return Object.entries(g).filter(([, v]) => v.length).map(([label, items]) => ({ label, items }));
+      return groups.filter(g => g.items.length);
+    }
+
+    function msgCount(n) {
+      return `${n} ${n !== 1 ? t('msg.messages') : t('msg.message')}`;
     }
 
     // ── Actions ────────────────────────────────────────────────────────────
@@ -344,7 +391,7 @@
         activeId = d.conversation_id;
         await loadConvs();
         openChat([]);
-      } catch { toast('Failed to start a conversation', 'error'); }
+      } catch { toast(t('error.start_conv'), 'error'); }
     }
 
     async function selectConv(id) {
@@ -356,19 +403,19 @@
         if (!r.ok) throw 0;
         const d = await r.json();
         openChat(d.messages || []);
-      } catch { toast('Failed to load conversation', 'error'); }
+      } catch { toast(t('error.load_conv'), 'error'); }
     }
 
     async function deleteConv(e, id) {
       e.stopPropagation();
-      if (!confirm('Delete this conversation?')) return;
+      if (!confirm(t('confirm.delete_conv'))) return;
       try {
         const r = await fetch(`${API}/conversations/${id}`, { method: 'DELETE' });
         if (!r.ok) throw 0;
         if (activeId === id) { activeId = null; resetWelcome(); }
         await loadConvs();
-        toast('Conversation deleted', 'info');
-      } catch { toast('Could not delete conversation', 'error'); }
+        toast(t('msg.conv_deleted'), 'info');
+      } catch { toast(t('error.delete_conv'), 'error'); }
     }
 
     async function quickPrompt(text) {
@@ -380,7 +427,7 @@
           activeId = d.conversation_id;
           await loadConvs();
           openChat([]);
-        } catch { toast('Failed to start a conversation', 'error'); return; }
+        } catch { toast(t('error.start_conv'), 'error'); return; }
       }
       document.getElementById('msgInput').value = text;
       autoResize(document.getElementById('msgInput'));
@@ -410,7 +457,11 @@
         const r = await fetch(`${API}/send/stream`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ conversation_id: activeId, message: msg })
+          body: JSON.stringify({
+            conversation_id: activeId,
+            message: msg,
+            language: getCurrentLang()   // 'en' or 'ur'
+          })
         });
         if (!r.ok) throw new Error(`HTTP ${r.status}`);
 
@@ -470,7 +521,7 @@
               removeThinking();
               addMsg('bot', data.message || "Something went wrong.", null, true);
               scrollBottom();
-              toast(data.message || 'An error occurred', 'error');
+              toast(data.message || t('error.message_failed'), 'error');
             }
           }
         }
@@ -480,7 +531,7 @@
           addMsg('bot', "Sorry, I couldn't reach the AI right now. Please try again.", null, true);
         }
         scrollBottom();
-        toast('Message failed — check your connection', 'error');
+        toast(t('error.message_failed'), 'error');
         console.error('[chatbot]', err);
       } finally {
         sending = false;
@@ -495,7 +546,7 @@
       hideWelcome();
       clearMessages();
       if (!messages.length) {
-        addSystem('New conversation — ask me anything about your farm!');
+        addSystem(t('chat.new_start'));
       } else {
         messages.forEach(m => addMsg(m.sender, m.message, m.timestamp, false));
       }
@@ -704,7 +755,7 @@
       disableInput();
       loadConvs();
 
-      // Keydown spin keyframe injection (for send loading state)
+      // Spin keyframe for send-loading state
       const style = document.createElement('style');
       style.textContent = '@keyframes spin { to { transform: rotate(360deg); } }';
       document.head.appendChild(style);
