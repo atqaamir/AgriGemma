@@ -79,11 +79,12 @@
       },
     }
   </script>
+  <script>(function(){if(localStorage.getItem('theme')==='dark')document.documentElement.classList.add('dark')})();</script>
 </head>
 
   {% include "_header.html" %}
 
-<body class="bg-surface text-on-surface min-h-screen pb-32">
+<body class="bg-surface dark:bg-[#1c1c17] text-on-surface dark:text-[#e5e2da] min-h-screen pb-32">
   <!-- Top Navigation -->
 
   <main class="px-4 pt-4 space-y-8">

@@ -142,15 +142,16 @@
 
     <!-- Backdrop (mobile sidebar) -->
     <div id="backdrop" onclick="closeSidebar()"
-      class="fixed inset-0 bg-black/25 z-30 hidden lg:hidden"></div>
+      class="fixed bottom-0 left-0 right-0 bg-black/25 z-30 hidden lg:hidden"
+      style="top: 73px;"></div>
 
     <!-- ── Sidebar ──────────────────────────────────────────────────────── -->
     <aside id="sidebar"
-      class="fixed lg:relative inset-y-0 left-0 z-40 w-72 lg:w-60
+      class="fixed lg:relative bottom-0 lg:top-0 left-0 z-40 w-72 lg:w-60
              bg-surface-container-low dark:bg-[#222219]
              border-r border-outline-variant/20
-             flex flex-col -translate-x-full lg:translate-x-0
-             pt-[57px] lg:pt-0">
+             flex flex-col -translate-x-full lg:translate-x-0"
+      style="top: 73px;">
 
       <div class="p-3 border-b border-outline-variant/20 flex-shrink-0">
         <button onclick="startNewConversation()"
@@ -172,6 +173,21 @@
 
     <!-- ── Chat column ──────────────────────────────────────────────────── -->
     <div class="flex-1 min-w-0 flex flex-col">
+
+      <!-- Mobile chat toolbar -->
+      <div class="lg:hidden flex-shrink-0 flex items-center gap-2 px-3 py-2 border-b border-outline-variant/20 bg-surface dark:bg-[#1c1c17]">
+        <button onclick="toggleSidebar()"
+          class="flex items-center justify-center w-9 h-9 rounded-xl hover:bg-surface-container dark:hover:bg-[#2a2a24] transition-colors"
+          aria-label="Conversations">
+          <span class="material-symbols-outlined text-on-surface-variant dark:text-[#9e9e8e]" style="font-size:22px;">menu_open</span>
+        </button>
+        <span class="flex-1 text-sm font-semibold font-['Manrope'] text-on-surface dark:text-[#e5e2da] truncate" id="activeChatTitle">Conversations</span>
+        <button onclick="startNewConversation()"
+          class="flex items-center justify-center w-9 h-9 rounded-xl bg-primary text-on-primary hover:bg-primary/90 active:scale-95 transition-all"
+          aria-label="New conversation">
+          <span class="material-symbols-outlined" style="font-size:18px;">edit_square</span>
+        </button>
+      </div>
 
       <!-- Messages -->
       <div id="msgContainer"
@@ -289,6 +305,13 @@
     let activeId = null;
     let sending = false;
     let cachedConvs = [];
+    let _pollTimer = null;
+
+    function setActiveId(id) {
+      activeId = id;
+      if (id) localStorage.setItem('chatActiveId', String(id));
+      else localStorage.removeItem('chatActiveId');
+    }
 
     // ── Sidebar ────────────────────────────────────────────────────────────
 
@@ -384,11 +407,14 @@
 
     async function startNewConversation() {
       closeSidebar();
+      stopPolling();
+      const titleEl = document.getElementById('activeChatTitle');
+      if (titleEl) titleEl.textContent = 'New conversation';
       try {
         const r = await fetch(`${API}/conversations`, { method: 'POST', headers: { 'Content-Type': 'application/json' } });
         if (!r.ok) throw 0;
         const d = await r.json();
-        activeId = d.conversation_id;
+        setActiveId(d.conversation_id);
         await loadConvs();
         openChat([]);
       } catch { toast(t('error.start_conv'), 'error'); }
@@ -396,14 +422,58 @@
 
     async function selectConv(id) {
       closeSidebar();
-      activeId = id;
+      stopPolling();
+      setActiveId(id);
       renderConvList();
+      const conv = cachedConvs.find(c => c.id === id);
+      const titleEl = document.getElementById('activeChatTitle');
+      if (titleEl && conv) titleEl.textContent = conv.title || 'Chat';
       try {
         const r = await fetch(`${API}/conversations/${id}`);
         if (!r.ok) throw 0;
         const d = await r.json();
+<<<<<<< HEAD
         openChat(d.messages || []);
       } catch { toast(t('error.load_conv'), 'error'); }
+=======
+        const msgs = d.messages || [];
+        openChat(msgs);
+        // If the last message is from the user the bot response is still being
+        // generated in the background — show a thinking indicator and poll.
+        if (msgs.length && msgs[msgs.length - 1].sender === 'user') {
+          addThinking();
+          scrollBottom();
+          pollForResponse(id);
+        }
+      } catch { toast('Failed to load conversation', 'error'); }
+>>>>>>> main
+    }
+
+    function stopPolling() {
+      clearTimeout(_pollTimer);
+      _pollTimer = null;
+    }
+
+    function pollForResponse(convId) {
+      _pollTimer = setTimeout(async () => {
+        if (activeId !== convId) return;   // user switched conversation
+        try {
+          const r = await fetch(`${API}/conversations/${convId}`);
+          if (!r.ok) return;
+          const d = await r.json();
+          const msgs = d.messages || [];
+          if (msgs.length && msgs[msgs.length - 1].sender === 'bot') {
+            // Response arrived — re-render the conversation
+            removeThinking();
+            clearMessages();
+            msgs.forEach(m => addMsg(m.sender, m.message, m.timestamp, false));
+            scrollBottom(false);
+            loadConvs();
+            return;
+          }
+        } catch { /* network blip — keep polling */ }
+        if (activeId === convId) pollForResponse(convId);   // still waiting
+      }, 3000);
     }
 
     async function deleteConv(e, id) {
@@ -412,7 +482,7 @@
       try {
         const r = await fetch(`${API}/conversations/${id}`, { method: 'DELETE' });
         if (!r.ok) throw 0;
-        if (activeId === id) { activeId = null; resetWelcome(); }
+        if (activeId === id) { setActiveId(null); resetWelcome(); }
         await loadConvs();
         toast(t('msg.conv_deleted'), 'info');
       } catch { toast(t('error.delete_conv'), 'error'); }
@@ -424,7 +494,7 @@
           const r = await fetch(`${API}/conversations`, { method: 'POST', headers: { 'Content-Type': 'application/json' } });
           if (!r.ok) throw 0;
           const d = await r.json();
-          activeId = d.conversation_id;
+          setActiveId(d.conversation_id);
           await loadConvs();
           openChat([]);
         } catch { toast(t('error.start_conv'), 'error'); return; }
@@ -438,8 +508,20 @@
       if (sending) return;
       const input = document.getElementById('msgInput');
       const msg = input.value.trim();
-      if (!msg || !activeId) return;
+      if (!msg) return;
 
+      // Auto-create a conversation if none is active (first message from welcome screen)
+      if (!activeId) {
+        try {
+          const r = await fetch(`${API}/conversations`, { method: 'POST', headers: { 'Content-Type': 'application/json' } });
+          if (!r.ok) throw 0;
+          const d = await r.json();
+          setActiveId(d.conversation_id);
+          await loadConvs();
+        } catch { toast('Failed to start a conversation', 'error'); return; }
+      }
+
+      stopPolling();
       sending = true;
       input.value = '';
       autoResize(input);
@@ -557,7 +639,7 @@
     function resetWelcome() {
       clearMessages();
       document.getElementById('welcome').style.display = '';
-      disableInput();
+      enableInput();
     }
 
     function hideWelcome() {
@@ -616,7 +698,7 @@
       c.appendChild(el);
     }
 
-    const _DONE_STAGES = new Set(['intent_done', 'context_ready']);
+    const _DONE_STAGES = new Set(['intent_done', 'context_ready', 'web_ready']);
 
     function updateThinking(data) {
       const log = document.getElementById('stagesLog');
@@ -684,7 +766,7 @@
 
     function refreshSendBtn() {
       const val = document.getElementById('msgInput').value.trim();
-      document.getElementById('sendBtn').disabled = !val || sending || !activeId;
+      document.getElementById('sendBtn').disabled = !val || sending;
     }
 
     function enableInput() {
@@ -751,9 +833,25 @@
 
     // ── Init ───────────────────────────────────────────────────────────────
 
-    document.addEventListener('DOMContentLoaded', () => {
-      disableInput();
-      loadConvs();
+    function applyHeaderOffset() {
+      const h = document.querySelector('header')?.offsetHeight || 73;
+      document.getElementById('sidebar').style.top  = h + 'px';
+      document.getElementById('backdrop').style.top = h + 'px';
+    }
+
+    document.addEventListener('DOMContentLoaded', async () => {
+      applyHeaderOffset();
+      window.addEventListener('resize', applyHeaderOffset);
+      enableInput();
+      await loadConvs();
+
+      // Restore last active conversation so the chat is usable after tab switch / navigation
+      const savedId = parseInt(localStorage.getItem('chatActiveId'), 10);
+      if (savedId && cachedConvs.some(c => c.id === savedId)) {
+        await selectConv(savedId);
+      } else if (cachedConvs.length) {
+        await selectConv(cachedConvs[0].id);
+      }
 
       // Spin keyframe for send-loading state
       const style = document.createElement('style');

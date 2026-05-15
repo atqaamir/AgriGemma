@@ -84,15 +84,14 @@
 
   /* ── Dropdown ─────────────────────────────────────────────────────────── */
   .notification-dropdown {
-    position: absolute;
-    top: calc(100% + 10px);
-    right: -8px;
+    position: fixed;
     background: #fcf9f0;
     border: 1px solid #c5c8bd;
     border-radius: 16px;
     box-shadow: 0 8px 24px rgba(28, 28, 23, 0.12);
-    z-index: 1000;
-    width: 380px;
+    z-index: 9999;
+    width: 340px;
+    max-width: calc(100vw - 16px);
     max-height: 480px;
     display: none;
     overflow: hidden;
@@ -371,16 +370,9 @@
     inset: 0;
     background-color: rgba(28, 28, 23, 0.5);
     z-index: 2000;
-    align-items: flex-end;
+    align-items: center;
     justify-content: center;
     padding: 16px;
-  }
-
-  @media (min-width: 640px) {
-    .notif-modal-overlay {
-      align-items: center;
-      padding: 0;
-    }
   }
 
   .notif-modal-overlay.open {
@@ -409,8 +401,8 @@
   }
 
   @keyframes notifSlideUp {
-    from { opacity: 0; transform: translateY(16px); }
-    to   { opacity: 1; transform: translateY(0); }
+    from { opacity: 0; transform: scale(0.96); }
+    to   { opacity: 1; transform: scale(1); }
   }
 
   .notif-modal-header {
@@ -524,9 +516,9 @@
   /* ── Critical Alert Popup ─────────────────────────────────────────────── */
   .notif-alert-popup {
     position: fixed;
-    top: 72px;
+    top: 50%;
     left: 50%;
-    transform: translateX(-50%);
+    transform: translate(-50%, -50%);
     background: #fcf9f0;
     border-radius: 14px;
     padding: 14px 18px;
@@ -544,8 +536,8 @@
   }
 
   @keyframes notifAlertIn {
-    from { opacity: 0; transform: translateX(-50%) translateY(-10px); }
-    to   { opacity: 1; transform: translateX(-50%) translateY(0); }
+    from { opacity: 0; transform: translate(-50%, -50%) scale(0.95); }
+    to   { opacity: 1; transform: translate(-50%, -50%) scale(1); }
   }
 
   .notif-alert-header {
@@ -770,6 +762,25 @@
     });
   }
 
+  // ── Position dropdown relative to bell button ─────────────────────────────
+  function positionDropdown() {
+    const dd  = $id('notificationDropdown');
+    const btn = $id('notificationBellBtn');
+    if (!dd || !btn) return;
+
+    const rect      = btn.getBoundingClientRect();
+    const ddWidth   = 340;
+    const gap       = 8;
+    const top       = rect.bottom + gap;
+    const viewRight = window.innerWidth - 8;
+    const left      = Math.min(rect.right - ddWidth, viewRight - ddWidth);
+    const maxHeight = window.innerHeight - top - 12;
+
+    dd.style.top       = top + 'px';
+    dd.style.left      = Math.max(8, left) + 'px';
+    dd.style.maxHeight = Math.min(480, maxHeight) + 'px';
+  }
+
   // ── Toggle dropdown ───────────────────────────────────────────────────────
   function toggleDropdown() {
     const dd = $id('notificationDropdown');
@@ -778,6 +789,7 @@
     if (isOpen) {
       dd.classList.remove('open');
     } else {
+      positionDropdown();
       dd.classList.add('open');
       loadNotifications(); // refresh on open
     }
