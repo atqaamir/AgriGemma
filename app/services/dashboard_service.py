@@ -32,7 +32,8 @@ class DashboardService:
         tasks = TaskService.get_tasks_by_user(user_id)
         pending_tasks = [t for t in tasks if not t.completed]
 
-        stored = DashboardService._fetch_stored_summary(user_id)
+        stored = DashboardService._fetch_stored_summary(user_id) \
+                 or DashboardService._build_default_summary(pending_tasks, active_fields, crops)
 
         return {
             "user": DashboardService._build_user_section(user),
@@ -68,6 +69,36 @@ class DashboardService:
             "is_fallback":  row.is_fallback,
             "generated_at": row.generated_at.isoformat(),
         }
+
+    @staticmethod
+    def _build_default_summary(pending_tasks, active_fields, crops) -> dict:
+        today    = date.today()
+        overdue  = sum(1 for t in pending_tasks if t.due_date and t.due_date < today)
+        critical = sum(1 for t in pending_tasks if t.priority == "critical")
+        high     = sum(1 for t in pending_tasks if t.priority == "high")
+        nf       = len(active_fields)
+        nc       = len(crops)
+
+        _w = ["zero","one","two","three","four","five","six","seven","eight","nine","ten"]
+        def w(n): return _w[n] if n < len(_w) else str(n)
+        def tasks(n): return f"{w(n)} task" if n == 1 else f"{w(n)} tasks"
+        def fields(n): return f"{w(n)} field" if n == 1 else f"{w(n)} fields"
+        def crops(n): return f"{w(n)} crop" if n == 1 else f"{w(n)} crops"
+
+        if overdue and critical:
+            summary = f"A few things need your attention today — {tasks(critical)} are critical and {w(overdue)} are past due."
+        elif critical:
+            summary = f"You've got {tasks(critical)} that can't wait. Good time to get those sorted first."
+        elif overdue:
+            summary = f"{w(overdue).capitalize()} {'task' if overdue == 1 else 'tasks'} slipped past their deadline. Worth getting those off the list today."
+        elif high:
+            summary = f"Nothing urgent, but {tasks(high)} are coming up. A good day to stay ahead."
+        elif pending_tasks:
+            summary = f"Farm's looking steady. {tasks(len(pending_tasks))} in the queue — nothing alarming right now."
+        else:
+            summary = f"All quiet on the farm today. {fields(nf)}, {crops(nc)}, and nothing urgent on your plate."
+
+        return {"summary": summary, "is_fallback": True, "generated_at": None}
 
     @staticmethod
     def generate_and_store_summary(user_id: int) -> dict:
@@ -178,13 +209,15 @@ class DashboardService:
     def _get_critical_tasks(pending_tasks) -> list:
         high_priority = [t for t in pending_tasks if t.priority in ("critical", "high")]
         today = date.today()
+        priority_order = {"critical": 0, "high": 1}
 
         def sort_key(task):
+            p = priority_order.get(task.priority or "high", 1)
             if task.due_date is None:
-                return (2, date.max)
+                return (p, 2, date.max)
             if task.due_date < today:
-                return (0, task.due_date)
-            return (1, task.due_date)
+                return (p, 0, task.due_date)
+            return (p, 1, task.due_date)
 
         return [
             DashboardService._serialize_task(t)

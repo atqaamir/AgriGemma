@@ -112,6 +112,11 @@
               <span id="refresh-summary-icon" class="material-symbols-outlined text-xl">auto_awesome</span>
             </button>
           </div>
+          <button onclick="openAnalysisModal()"
+            class="mt-3 inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/15 hover:bg-white/25 border border-white/20 text-sm font-semibold text-on-primary-container transition-all backdrop-blur-sm">
+            <span class="material-symbols-outlined text-base">analytics</span>
+            Farmer Report
+          </button>
         </div>
         <div class="bg-white/10 backdrop-blur-xl rounded-3xl p-4 border border-white/10 flex items-center justify-between">
           <div class="flex items-center gap-4">
@@ -132,8 +137,8 @@
     <div class="grid grid-cols-1 md:grid-cols-12 gap-6">
 
       <!-- Farm Overview -->
-      <div class="md:col-span-4 bg-surface-container-low rounded-3xl p-6 flex flex-col h-full">
-        <h2 class="font-headline text-xl font-medium mb-6" data-i18n="dashboard.farm_overview">Farm Overview</h2>
+      <div class="md:col-span-4 bg-surface-container-low rounded-3xl p-6 flex flex-col h-[520px]">
+        <h2 class="font-headline text-xl font-medium mb-6">Farm Overview</h2>
         <div class="flex flex-col space-y-8">
 
           <!-- Donut: Optimal Range -->
@@ -189,24 +194,35 @@
       </div>
 
       <!-- Critical Tasks -->
-      <div class="md:col-span-8 bg-surface-container rounded-3xl p-6">
-        <div class="flex justify-between items-center mb-6">
-          <h2 class="font-headline text-xl font-medium" data-i18n="dashboard.critical_tasks">Critical Tasks</h2>
+      <div class="md:col-span-8 bg-surface-container rounded-3xl p-6 flex flex-col h-[520px]">
+        <div class="flex justify-between items-center mb-4 flex-shrink-0">
+          <h2 class="font-headline text-xl font-medium">Urgent Tasks</h2>
           <span id="critical-tasks-badge" class="text-xs font-medium bg-primary text-white px-2 py-0.5 rounded-full whitespace-nowrap">-- Urgent</span>
         </div>
-        <div id="critical-tasks-list" class="space-y-4">
+        <div id="critical-tasks-list" class="flex-1 overflow-y-auto space-y-3 min-h-0 pr-1">
           <!-- Populated by JS -->
         </div>
       </div>
 
-      <!-- Crop Health Status -->
+      <!-- Crop Growth Status -->
       <div class="md:col-span-7 bg-surface-container-low rounded-3xl p-6">
-        <h2 class="font-headline text-xl font-medium mb-6" data-i18n="dashboard.crop_health_status">Crop Health Status</h2>
-        <div class="flex items-end gap-1 mb-6">
-          <div id="crop-health-healthy" class="flex-1 bg-primary h-12 rounded-l-xl flex items-center justify-center text-on-primary text-sm font-bold">-- Healthy</div>
-          <div id="crop-health-attention" class="flex-1 bg-error h-12 rounded-r-xl flex items-center justify-center text-on-error text-sm font-bold">-- Attention</div>
+        <h2 class="font-headline text-xl font-medium mb-5">Crop Growth Status</h2>
+        <!-- Stage summary pills -->
+        <div class="flex gap-3 mb-5">
+          <div class="flex-1 bg-yellow-50 rounded-2xl px-4 py-3 text-center">
+            <p id="growth-stage-early" class="text-xl font-bold text-yellow-600">--</p>
+            <p class="text-[10px] uppercase tracking-widest text-yellow-600/70 mt-0.5">Early</p>
+          </div>
+          <div class="flex-1 bg-orange-50 rounded-2xl px-4 py-3 text-center">
+            <p id="growth-stage-mid" class="text-xl font-bold text-orange-500">--</p>
+            <p class="text-[10px] uppercase tracking-widest text-orange-500/70 mt-0.5">Mid Growth</p>
+          </div>
+          <div class="flex-1 bg-primary/10 rounded-2xl px-4 py-3 text-center">
+            <p id="growth-stage-done" class="text-xl font-bold text-primary">--</p>
+            <p class="text-[10px] uppercase tracking-widest text-primary/70 mt-0.5">Nearly Ready</p>
+          </div>
         </div>
-        <div id="crop-cards-list" class="grid grid-cols-2 gap-4">
+        <div id="crop-cards-list" class="flex gap-3 overflow-x-auto pb-2 no-scrollbar">
           <!-- Populated by JS -->
         </div>
       </div>
@@ -268,6 +284,30 @@
 
   </main>
 
+  <!-- Analysis Modal -->
+  <div id="analysisModal" class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center pt-4 px-4 pb-24 hidden" onclick="closeAnalysisModal()">
+    <div class="bg-surface rounded-2xl w-full max-w-lg max-h-[calc(100vh-120px)] overflow-y-auto shadow-2xl" onclick="event.stopPropagation()">
+      <div class="sticky top-0 flex items-center justify-between p-6 border-b border-surface-variant bg-surface">
+        <div class="flex items-center gap-3">
+          <span class="material-symbols-outlined text-primary" style="font-variation-settings:'FILL' 1;">insights</span>
+          <h2 class="text-xl font-bold text-primary">Farm Intelligence</h2>
+        </div>
+        <div class="flex items-center gap-1">
+          <button id="regen-intel-btn" onclick="regenerateIntelligence()" title="Regenerate AI analysis"
+            class="p-2 hover:bg-surface-container rounded-full transition-colors text-on-surface-variant hover:text-primary">
+            <span id="regen-intel-icon" class="material-symbols-outlined text-lg">auto_awesome</span>
+          </button>
+          <button onclick="closeAnalysisModal()" class="p-2 hover:bg-surface-container rounded-full transition-colors">
+            <span class="material-symbols-outlined">close</span>
+          </button>
+        </div>
+      </div>
+      <div id="analysis-modal-body" class="p-6 space-y-5 pb-8">
+        <p class="text-sm text-on-surface-variant text-center py-8">Loading analysis...</p>
+      </div>
+    </div>
+  </div>
+
   <!-- Bottom Navigation -->
   <nav class="fixed bottom-0 left-0 w-full z-50 bg-[#fcf9f0]/80 dark:bg-stone-950/80 backdrop-blur-md rounded-t-[24px] shadow-[0_-8px_24px_rgba(28,28,23,0.06)] flex justify-around items-center px-4 pb-6 pt-3">
     <a class="flex flex-col items-center justify-center bg-secondary-fixed dark:bg-primary-container text-on-background dark:text-surface-bright rounded-2xl px-3 py-1.5 transition-transform hover:scale-105 duration-150" href="/">
@@ -296,6 +336,7 @@
     const USER_ID = 1;
     const DONUT_CIRCUMFERENCE = 502.4;
 
+
     // ── Global data cache (used for re-render on language switch) ──────────────
     var _dashData  = null;
     var _cropsData = [];
@@ -310,9 +351,16 @@
           fetch('/mycrops/crops/active'),
         ]);
         if (!dashRes.ok) throw new Error(`Dashboard API ${dashRes.status}`);
-        _dashData  = await dashRes.json();
-        _cropsData = cropsRes.ok ? ((await cropsRes.json()).crop_cards || []) : [];
-        renderAll();
+        const dash  = await dashRes.json();
+        const crops = cropsRes.ok ? ((await cropsRes.json()).crop_cards || []) : [];
+        _dashData = dash;
+
+        renderHero(dash);
+        renderFarmOverview(dash, crops);
+        renderCriticalTasks(dash);
+        renderCropHealth(dash, crops);
+        renderSoilConditions(dash);
+        renderSeasonalPlanCTA(dash);
       } catch (e) {
         console.error('Dashboard load failed:', e);
       }
@@ -381,6 +429,338 @@
       }
     }
 
+    // ── Analysis Modal ─────────────────────────────────────────────────────────
+    async function openAnalysisModal() {
+      document.getElementById('analysisModal').classList.remove('hidden');
+      const body = document.getElementById('analysis-modal-body');
+      body.innerHTML = `<p class="text-sm text-on-surface-variant text-center py-8">Loading analysis...</p>`;
+      try {
+        const res = await fetch('/mytasks/intelligence/stored?user_id=1');
+        if (!res.ok) throw new Error(res.status);
+        const intel = await res.json();
+        if (!intel) throw new Error('empty');
+        renderAnalysisModal(intel, body);
+      } catch (_) {
+        body.innerHTML = `
+          <div class="text-center py-10 space-y-3">
+            <span class="material-symbols-outlined text-on-surface-variant text-4xl">auto_awesome</span>
+            <p class="text-sm text-on-surface-variant">No analysis yet.</p>
+            <p class="text-xs text-outline">Go to the Tasks page and press ✨ to generate one, or tap the sparkle above.</p>
+          </div>`;
+      }
+    }
+
+    function closeAnalysisModal() {
+      document.getElementById('analysisModal').classList.add('hidden');
+    }
+
+    async function regenerateIntelligence() {
+      const body = document.getElementById('analysis-modal-body');
+      const icon = document.getElementById('regen-intel-icon');
+      icon.textContent = 'progress_activity';
+      icon.style.animation = 'spin 1s linear infinite';
+      body.innerHTML = `<p class="text-sm text-on-surface-variant text-center py-8">Generating AI analysis…</p>`;
+      try {
+        const res = await fetch('/mytasks/intelligence/generate?user_id=1', { method: 'POST' });
+        if (!res.ok) throw new Error(res.status);
+        const intel = await res.json();
+        renderAnalysisModal(intel, body);
+      } catch (e) {
+        body.innerHTML = `<p class="text-sm text-error text-center py-8">Generation failed. Please try again.</p>`;
+      } finally {
+        icon.style.animation = '';
+        icon.textContent = 'auto_awesome';
+      }
+    }
+
+    function renderAnalysisModal(intel, body) {
+      window._currentIntel = intel;
+      const alerts = (_dashData?.alerts || []).slice(0, 3);
+
+      const priorityConfig = {
+        critical: { bg: 'bg-error/10',                  text: 'text-error',              icon: 'crisis_alert',  label: 'Critical Attention Needed' },
+        high:     { bg: 'bg-amber-600/10',              text: 'text-amber-700',          icon: 'warning',       label: 'High Priority'             },
+        medium:   { bg: 'bg-primary/10',                text: 'text-primary',            icon: 'info',          label: 'Needs Attention'            },
+        low:      { bg: 'bg-surface-container-highest', text: 'text-on-surface-variant', icon: 'check_circle',  label: 'Farm Doing Well'            },
+      };
+      const pc = priorityConfig[intel.priority_level] || priorityConfig.medium;
+      const sections = [];
+
+      // ── Status header ────────────────────────────────────────────────────────
+      const genTime = intel.generated_at ? new Date(intel.generated_at).toLocaleString() : null;
+      sections.push(`
+        <div class="${pc.bg} rounded-2xl p-4 flex items-center justify-between">
+          <div class="flex items-center gap-3">
+            <span class="material-symbols-outlined ${pc.text} text-3xl" style="font-variation-settings:'FILL' 1;">${pc.icon}</span>
+            <div>
+              <p class="text-[10px] uppercase tracking-widest text-on-surface-variant">Intelligence Report</p>
+              <h3 class="text-xl font-bold ${pc.text}">${pc.label}</h3>
+            </div>
+          </div>
+          <div class="text-right space-y-0.5">
+            ${genTime ? `<p class="text-[10px] text-on-surface-variant">${genTime}</p>` : ''}
+            ${intel.is_fallback
+              ? `<span class="text-[10px] text-outline italic">rule-based analysis</span>`
+              : `<span class="text-[10px] text-primary font-semibold">✦ AI generated</span>`}
+          </div>
+        </div>`);
+
+      // ── Agronomist Summary ───────────────────────────────────────────────────
+      if (intel.summary) {
+        sections.push(`
+          <div class="space-y-2">
+            <p class="text-[10px] uppercase tracking-widest text-on-surface-variant font-bold flex items-center gap-1.5">
+              <span class="material-symbols-outlined text-sm" style="font-variation-settings:'FILL' 1;">auto_awesome</span>
+              Agronomist Summary
+            </p>
+            <div class="bg-primary/10 border-l-4 border-primary rounded-r-xl px-4 py-3">
+              <p class="text-sm text-on-surface leading-relaxed italic">${escapeHtml(intel.summary)}</p>
+            </div>
+          </div>`);
+      }
+
+      // ── Action Plan (urgent + recommendations combined) ──────────────────────
+      const urgentItems = intel.urgent_actions || [];
+      const recItems    = intel.recommendations || [];
+      const allActions  = [
+        ...urgentItems.map(a => ({ text: a, urgent: true  })),
+        ...recItems.map(r    => ({ text: r, urgent: false })),
+      ];
+      if (allActions.length) {
+        const urgentCount = urgentItems.length;
+        const totalCount  = allActions.length;
+        sections.push(`
+          <div class="space-y-3">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-2">
+                <span class="material-symbols-outlined text-primary" style="font-size:18px; font-variation-settings:'FILL' 1;">checklist</span>
+                <h3 class="text-xs font-bold uppercase tracking-widest text-on-surface-variant">Action Plan</h3>
+              </div>
+              <div class="flex items-center gap-2">
+                ${urgentCount ? `<span class="text-[10px] font-bold text-error bg-error/10 px-2 py-0.5 rounded-full">${urgentCount} urgent</span>` : ''}
+                <span class="text-[10px] text-outline">${totalCount} total</span>
+              </div>
+            </div>
+            <div class="space-y-2">
+              ${allActions.map((item, i) => `
+                <div class="flex gap-3 ${item.urgent
+                    ? 'bg-error/5 border border-error/20'
+                    : 'bg-surface-container'} rounded-xl p-3 items-start">
+                  <div class="flex-shrink-0 mt-0.5">
+                    ${item.urgent
+                      ? `<span class="material-symbols-outlined text-error text-base" style="font-variation-settings:'FILL' 1;">error</span>`
+                      : `<div class="w-5 h-5 rounded-full bg-primary flex items-center justify-center">
+                           <span class="text-on-primary font-bold" style="font-size:10px">${i + 1}</span>
+                         </div>`}
+                  </div>
+                  <div class="flex-1 min-w-0">
+                    ${item.urgent ? `<p class="text-[10px] font-bold text-error uppercase tracking-wide mb-1">Act immediately</p>` : ''}
+                    <p class="text-sm text-on-surface leading-relaxed">${escapeHtml(item.text)}</p>
+                  </div>
+                </div>`).join('')}
+            </div>
+          </div>`);
+      }
+
+      // ── Risk Register ────────────────────────────────────────────────────────
+      if (intel.risks?.length) {
+        const riskBorder = { high: 'border-l-2 border-error', medium: 'border-l-2 border-amber-500', low: 'border-l-2 border-primary' };
+        const riskBadge  = { high: 'text-error bg-error/10', medium: 'text-amber-700 bg-amber-600/10', low: 'text-primary bg-primary/10' };
+        sections.push(`
+          <div class="space-y-3">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-2">
+                <span class="material-symbols-outlined text-amber-600" style="font-size:18px; font-variation-settings:'FILL' 1;">warning</span>
+                <h3 class="text-xs font-bold uppercase tracking-widest text-on-surface-variant">Risk Register</h3>
+              </div>
+              <span class="text-[10px] text-outline">${intel.risks.length} identified</span>
+            </div>
+            <div class="space-y-2">
+              ${intel.risks.map(r => {
+                const sev = r.severity || 'medium';
+                return `
+                  <div class="bg-surface-container rounded-xl p-3 space-y-2 ${riskBorder[sev] || riskBorder.medium}">
+                    <div class="flex items-start justify-between gap-2">
+                      <p class="text-sm font-semibold text-on-surface leading-snug">${escapeHtml(r.risk || '')}</p>
+                      <span class="text-[10px] font-bold px-2 py-0.5 rounded-full whitespace-nowrap flex-shrink-0 ${riskBadge[sev] || riskBadge.medium}">
+                        ${capitalize(sev)} risk
+                      </span>
+                    </div>
+                    ${r.mitigation ? `
+                      <div class="flex gap-2 items-start pt-1.5 border-t border-surface-variant">
+                        <span class="material-symbols-outlined text-primary text-sm mt-0.5 flex-shrink-0">arrow_forward</span>
+                        <p class="text-xs text-on-surface-variant">${escapeHtml(r.mitigation)}</p>
+                      </div>` : ''}
+                  </div>`;
+              }).join('')}
+            </div>
+          </div>`);
+      }
+
+      // ── Field & Crop Intelligence ────────────────────────────────────────────
+      if (intel.insights?.length) {
+        const catIcon  = { weather: 'cloud', irrigation: 'water_drop', disease: 'bug_report', harvest: 'agriculture', labor: 'person', resource: 'inventory_2', anomaly: 'warning' };
+        const catLabel = { weather: 'Weather', irrigation: 'Irrigation', disease: 'Disease / Pest', harvest: 'Harvest', labor: 'Labor', resource: 'Resource', anomaly: 'Anomaly' };
+        sections.push(`
+          <div class="space-y-3">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-2">
+                <span class="material-symbols-outlined text-on-surface-variant" style="font-size:18px; font-variation-settings:'FILL' 1;">insights</span>
+                <h3 class="text-xs font-bold uppercase tracking-widest text-on-surface-variant">Field & Crop Intelligence</h3>
+              </div>
+              <span class="text-[10px] text-outline">${intel.insights.length} observation${intel.insights.length !== 1 ? 's' : ''}</span>
+            </div>
+            <div class="divide-y divide-surface-variant rounded-xl overflow-hidden border border-surface-variant">
+              ${intel.insights.map(item => `
+                <div class="flex gap-3 bg-surface-container-low p-3 items-start">
+                  <div class="flex-shrink-0 mt-0.5 w-7 text-center">
+                    <span class="material-symbols-outlined text-on-surface-variant text-base" style="font-variation-settings:'FILL' 1;">${catIcon[item.category] || 'insights'}</span>
+                    <p class="text-[8px] text-outline uppercase tracking-tight leading-none mt-0.5">${(catLabel[item.category] || item.category || '').split(' ')[0]}</p>
+                  </div>
+                  <p class="text-sm text-on-surface leading-relaxed">${escapeHtml(item.insight || '')}</p>
+                </div>`).join('')}
+            </div>
+          </div>`);
+      }
+
+      // ── Unread Farm Alerts ───────────────────────────────────────────────────
+      if (alerts.length) {
+        const aIcon = { weather: 'cloud', disease: 'bug_report', irrigation: 'water_drop', pest: 'pest_control', harvest: 'agriculture', task: 'assignment' };
+        sections.push(`
+          <div class="space-y-3">
+            <div class="flex items-center gap-2">
+              <span class="material-symbols-outlined text-amber-600" style="font-size:18px; font-variation-settings:'FILL' 1;">notifications_active</span>
+              <h3 class="text-xs font-bold uppercase tracking-widest text-on-surface-variant">Unread Farm Alerts</h3>
+            </div>
+            <div class="space-y-2">
+              ${alerts.map(a => `
+                <div class="flex gap-3 bg-surface-container rounded-xl p-3 items-start">
+                  <span class="material-symbols-outlined text-amber-600 text-base mt-0.5 flex-shrink-0" style="font-variation-settings:'FILL' 1;">${aIcon[a.notification_type] || 'notifications'}</span>
+                  <div class="flex-1 min-w-0">
+                    <p class="text-sm font-semibold text-on-surface">${escapeHtml(a.title || '')}</p>
+                    <p class="text-xs text-on-surface-variant leading-relaxed mt-0.5">${escapeHtml(a.detail || a.message || '')}</p>
+                    ${a.created_at ? `<p class="text-[10px] text-outline mt-1">${new Date(a.created_at).toLocaleString()}</p>` : ''}
+                  </div>
+                </div>`).join('')}
+            </div>
+          </div>`);
+      }
+
+      // ── Download button ──────────────────────────────────────────────────────
+      sections.push(`
+        <button onclick="downloadIntelligenceReport()"
+          class="w-full flex items-center justify-center gap-2 py-3 rounded-xl border border-surface-variant hover:bg-surface-container transition-colors text-sm font-medium text-on-surface-variant hover:text-on-surface">
+          <span class="material-symbols-outlined text-base">download</span>
+          Download as PDF
+        </button>`);
+
+      body.innerHTML = sections.join('') || `<p class="text-sm text-on-surface-variant text-center py-8">No analysis available.</p>`;
+    }
+
+    function downloadIntelligenceReport() {
+      const intel = window._currentIntel;
+      if (!intel) return;
+
+      const farmName   = _dashData?.user?.name ? _dashData.user.name + "'s Farm" : 'Smart Farm';
+      const reportDate = intel.generated_at
+        ? new Date(intel.generated_at).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })
+        : new Date().toLocaleDateString();
+      const reportTime = intel.generated_at
+        ? new Date(intel.generated_at).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
+        : '';
+      const priorityLabel = { critical: 'CRITICAL', high: 'HIGH PRIORITY', medium: 'NEEDS ATTENTION', low: 'ALL CLEAR' }[intel.priority_level] || 'FARM REPORT';
+      const priorityColor = { critical: '#ba1a1a', high: '#d97706', medium: '#47573b', low: '#536344' }[intel.priority_level] || '#47573b';
+      const esc = s => String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+
+      let body = '';
+
+      if (intel.summary) {
+        body += `<div class="section"><h2>Agronomist Summary</h2><p class="summary-text">${esc(intel.summary)}</p></div>`;
+      }
+
+      const urgent = intel.urgent_actions || [];
+      const recs   = intel.recommendations || [];
+      if (urgent.length || recs.length) {
+        const items = [
+          ...urgent.map(a => `<li class="urgent"><span class="badge-urgent">URGENT</span> ${esc(a)}</li>`),
+          ...recs.map((r, i) => `<li><span class="step">${urgent.length + i + 1}</span> ${esc(r)}</li>`),
+        ].join('');
+        body += `<div class="section"><h2>Action Plan <span class="count">${urgent.length + recs.length} items</span></h2><ul class="action-list">${items}</ul></div>`;
+      }
+
+      if (intel.risks?.length) {
+        const rows = intel.risks.map(r => `
+          <div class="risk risk-${r.severity || 'medium'}">
+            <div class="risk-head"><span class="risk-title">${esc(r.risk || '')}</span><span class="risk-sev">${(r.severity || 'medium').toUpperCase()} RISK</span></div>
+            ${r.mitigation ? `<p class="risk-fix">→ ${esc(r.mitigation)}</p>` : ''}
+          </div>`).join('');
+        body += `<div class="section"><h2>Risk Register <span class="count">${intel.risks.length} identified</span></h2>${rows}</div>`;
+      }
+
+      if (intel.insights?.length) {
+        const catLabel = { weather: 'Weather', irrigation: 'Irrigation', disease: 'Disease/Pest', harvest: 'Harvest', labor: 'Labor', resource: 'Resource', anomaly: 'Anomaly' };
+        const rows = intel.insights.map(item => `
+          <div class="insight">
+            <span class="insight-cat">${esc(catLabel[item.category] || item.category || 'General').toUpperCase()}</span>
+            <p>${esc(item.insight || '')}</p>
+          </div>`).join('');
+        body += `<div class="section"><h2>Field & Crop Intelligence <span class="count">${intel.insights.length} observations</span></h2>${rows}</div>`;
+      }
+
+      const html = `<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8">
+<title>Farm Intelligence Report — ${esc(farmName)}</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{font-family:Georgia,'Times New Roman',serif;font-size:11.5pt;color:#1c1c17;background:#fff;padding:44px 48px}
+  .report-header{border-bottom:3px solid ${priorityColor};padding-bottom:18px;margin-bottom:28px}
+  .farm-name{font-size:22pt;font-weight:bold;color:${priorityColor};letter-spacing:-0.5px}
+  .report-sub{font-size:9pt;text-transform:uppercase;letter-spacing:2px;color:#75786f;margin-top:3px}
+  .meta{display:flex;justify-content:space-between;margin-top:10px;font-size:9pt;color:#75786f}
+  .priority{font-weight:bold;color:${priorityColor}}
+  .section{margin-bottom:26px}
+  h2{font-size:9pt;font-family:Arial,sans-serif;text-transform:uppercase;letter-spacing:1.5px;color:#75786f;border-bottom:1px solid #e5e2da;padding-bottom:5px;margin-bottom:12px}
+  .count{font-size:8.5pt;font-weight:normal;color:#75786f}
+  .summary-text{font-size:11.5pt;line-height:1.75;font-style:italic;padding:14px 18px;background:#f7f3ea;border-left:4px solid ${priorityColor}}
+  .action-list{list-style:none}
+  .action-list li{display:flex;align-items:flex-start;gap:10px;padding:9px 12px;margin-bottom:7px;border-radius:5px;background:#f7f3ea;line-height:1.55;font-size:11pt}
+  .action-list li.urgent{background:#fff1f0;border-left:3px solid #ba1a1a}
+  .badge-urgent{font-size:7.5pt;font-weight:bold;padding:2px 7px;border-radius:10px;background:#ffdad6;color:#ba1a1a;white-space:nowrap;flex-shrink:0}
+  .step{display:inline-flex;width:20px;height:20px;border-radius:50%;background:${priorityColor};color:#fff;align-items:center;justify-content:center;font-size:8.5pt;font-weight:bold;flex-shrink:0;margin-top:1px}
+  .risk{padding:10px 13px;margin-bottom:7px;border-radius:5px;background:#f7f3ea;border-left:3px solid #d97706}
+  .risk.risk-high{border-left-color:#ba1a1a;background:#fff8f7}
+  .risk.risk-low{border-left-color:#47573b}
+  .risk-head{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;margin-bottom:5px}
+  .risk-title{font-weight:bold;font-size:11pt;line-height:1.4}
+  .risk-sev{font-size:7.5pt;font-weight:bold;color:#75786f;white-space:nowrap;flex-shrink:0}
+  .risk-fix{font-size:10.5pt;color:#444840;line-height:1.5}
+  .insight{display:grid;grid-template-columns:90px 1fr;gap:10px;padding:9px 0;border-bottom:1px solid #e5e2da;font-size:11pt;line-height:1.55}
+  .insight:last-child{border-bottom:none}
+  .insight-cat{font-size:7.5pt;font-weight:bold;letter-spacing:1px;color:#75786f;padding-top:2px}
+  .report-footer{margin-top:36px;border-top:1px solid #e5e2da;padding-top:12px;font-size:8.5pt;color:#75786f;display:flex;justify-content:space-between}
+  @media print{body{padding:18px 22px}@page{margin:12mm 18mm}}
+</style></head><body>
+<div class="report-header">
+  <div class="farm-name">${esc(farmName)}</div>
+  <div class="report-sub">Farm Intelligence Report</div>
+  <div class="meta">
+    <span>${esc(reportDate)}${reportTime ? ' · ' + esc(reportTime) : ''}</span>
+    <span class="priority">● ${esc(priorityLabel)}</span>
+  </div>
+</div>
+${body}
+<div class="report-footer">
+  <span>Generated by Smart Farm AI${intel.is_fallback ? ' (rule-based fallback)' : ''}</span>
+  <span>${esc(reportDate)}</span>
+</div>
+</body></html>`;
+
+      const w = window.open('', '_blank', 'width=860,height=700');
+      if (!w) { alert('Please allow pop-ups to download the report.'); return; }
+      w.document.write(html);
+      w.document.close();
+      setTimeout(() => { w.focus(); w.print(); }, 400);
+    }
+
     // ── Farm Overview ──────────────────────────────────────────────────────────
     function renderFarmOverview(data, crops) {
       const overview  = data.overview        || {};
@@ -417,7 +797,7 @@
             ${t('dashboard.all_clear')}
           </div>
           <button onclick="window.location='/mytasks'" class="text-primary font-medium text-sm flex items-center gap-1">
-            ${t('dashboard.view_all')} <span class="material-symbols-outlined text-sm">arrow_forward</span>
+            View All Pending Tasks <span class="material-symbols-outlined text-sm">arrow_forward</span>
           </button>`;
         return;
       }
@@ -446,35 +826,64 @@
         </button>`;
     }
 
-    // ── Crop Health Status ─────────────────────────────────────────────────────
+    // ── Crop Growth Status ─────────────────────────────────────────────────────
+    const CROP_IMAGES = {
+      Maize:    '/static/images/Maize.jpg',
+      Rice:     '/static/images/Rice.jpg',
+      Cotton:   '/static/images/Cotton.jpg',
+      Wheat:    '/static/images/Wheat.jpg',
+      Soybeans: '/static/images/Soybeans.jpg',
+      Sunflower:'/static/images/Sunflower.jpg',
+    };
+
+    function growthStageInfo(pct) {
+      if (pct < 34) return { bar: 'bg-yellow-400',  text: 'text-yellow-600',  label: 'Early Growth' };
+      if (pct < 67) return { bar: 'bg-orange-400',  text: 'text-orange-500',  label: 'Mid Growth'   };
+      return             { bar: 'bg-primary',        text: 'text-primary',     label: 'Nearly Ready' };
+    }
+
     function renderCropHealth(data, crops) {
-      const cc        = data.crop_condition || {};
-      const healthy   = cc.healthy || 0;
-      const attention = (cc.warning || 0) + (cc.at_risk || 0);
-
-      setText('crop-health-healthy',   `${healthy} ${t('dashboard.healthy')}`);
-      setText('crop-health-attention', `${attention} ${t('dashboard.attention')}`);
-
       const container = document.getElementById('crop-cards-list');
 
       if (!crops.length) {
-        container.innerHTML = `
-          <div class="col-span-2 text-center text-on-surface-variant text-sm py-4">${t('dashboard.no_active_crops')}</div>`;
+        container.innerHTML = `<div class="col-span-2 text-center text-on-surface-variant text-sm py-4">No active crops.</div>`;
+        setText('growth-stage-early', '0');
+        setText('growth-stage-mid',   '0');
+        setText('growth-stage-done',  '0');
         return;
       }
 
+      let early = 0, mid = 0, done = 0;
+      crops.forEach(c => {
+        const p = c.growth_progress ?? 0;
+        if (p < 34) early++;
+        else if (p < 67) mid++;
+        else done++;
+      });
+      setText('growth-stage-early', early);
+      setText('growth-stage-mid',   mid);
+      setText('growth-stage-done',  done);
+
       container.innerHTML = crops.map(crop => {
-        const pct       = calculateGrowthProgress(crop.planting_date, crop.growth_stage);
-        const isHealthy = (crop.health_status || 'healthy').toLowerCase() === 'healthy';
-        const label     = crop.name + (crop.field?.name ? ` (${crop.field.name})` : '');
+        const pct   = crop.growth_progress ?? 0;
+        const stage = growthStageInfo(pct);
+        const label = crop.field?.name ? `${escapeHtml(crop.field.name)}` : 'No field';
+        const img   = CROP_IMAGES[crop.name] || '/static/images/field_default.jpg';
         return `
-          <div class="bg-white/50 p-4 rounded-2xl flex flex-col items-center gap-3">
-           <div class="bg-whit/50 w-full  flex  justify-between ">
-            <span class="material-symbols-outlined ${isHealthy ? 'text-primary' : 'text-error'}"
-              style="font-variation-settings: 'FILL' 1;">${isHealthy ? 'eco' : 'warning'}</span>
-              <span class=" ${isHealthy ? 'text-primary' : 'text-error'} font-bold">${pct}%</span>
+          <div class="bg-white/50 rounded-2xl flex items-center gap-3 p-3 flex-none w-52">
+            <img src="${img}" alt="${escapeHtml(crop.name)}"
+              class="w-12 h-12 rounded-xl object-cover flex-shrink-0">
+            <div class="flex-1 min-w-0">
+              <div class="flex items-center justify-between gap-1">
+                <span class="text-sm font-semibold text-on-surface truncate">${escapeHtml(crop.name)}</span>
+                <span class="text-xs font-bold shrink-0 ${stage.text}">${pct}%</span>
               </div>
-            <span class="text-sm font-medium">${escapeHtml(label)}</span>
+              <p class="text-[10px] text-on-surface-variant truncate">${label}</p>
+              <div class="mt-1.5 h-1.5 bg-surface-variant rounded-full overflow-hidden">
+                <div class="${stage.bar} h-full rounded-full" style="width:${pct}%"></div>
+              </div>
+              <p class="text-[10px] ${stage.text} mt-1">${stage.label}</p>
+            </div>
           </div>`;
       }).join('');
     }
@@ -594,12 +1003,9 @@
       return t('dashboard.heat_warm');
     }
 
-    function calculateGrowthProgress(plantingDate, stage) {
-      if (!plantingDate) return 0;
-      const daysElapsed = 30; // matches crops.html logic
-      if (daysElapsed <= 0) return 0;
-      return Math.min(Math.round((daysElapsed / 120) * 100), 100);
-    }
+    document.getElementById('analysisModal').addEventListener('click', function(e) {
+      if (e.target === this) closeAnalysisModal();
+    });
   </script>
 
 </body>

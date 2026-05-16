@@ -1,4 +1,4 @@
-from datetime import timedelta
+from datetime import timedelta, date
 from app.repositories.crop_repository import CropRepository
 from app.services.domain_service.task_service import TaskService
 from app.rules.vocabulary.crop_names import CropNames
@@ -60,6 +60,18 @@ class CropService:
     @staticmethod
     def get_active_crops() -> list:
         return CropRepository.get_all().filter_by(currently_active=True).all()
+
+    @staticmethod
+    def calculate_growth_progress(crop) -> int:
+        """Returns 0-100 percentage of how far through its growth cycle a crop is."""
+        if not crop.planting_date or not crop.expected_harvest_date:
+            return 0
+        today = date.today()
+        total_days = (crop.expected_harvest_date - crop.planting_date).days
+        elapsed = (today - crop.planting_date).days
+        if total_days <= 0 or elapsed <= 0:
+            return 0
+        return min(round((elapsed / total_days) * 100), 100)
 
     @staticmethod
     def needs_irrigation(crop) -> bool:

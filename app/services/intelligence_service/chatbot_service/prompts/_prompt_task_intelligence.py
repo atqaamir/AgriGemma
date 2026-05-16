@@ -211,10 +211,14 @@ build_alert_explanation_prompt = build_alerts_batch_explanation_prompt
 
 def build_critical_tasks_overview_prompt(tasks: list, context: dict) -> str:
     """
-    1-2 sentence plain-text summary of why critical tasks exist today.
-    Caller: Tasks page header banner.
-    Output: plain text string.
-    Target: ≤ 750 chars total.
+    Structured critical-task overview for the tasks page banner.
+    Output format (markdown):
+      ## [Heading]
+      [One-sentence overview]
+      **[Task]** ([Field]) — [PRIORITY]
+      [Why it's critical today — cite a specific number.]
+      → [2-3 word fix]
+    Target: ≤ 1600 chars total prompt.
 
     tasks   — list of task dicts (title, description, priority, due_date, field_name, is_overdue)
     context — {farmer_name, weather, rules}
@@ -225,28 +229,36 @@ def build_critical_tasks_overview_prompt(tasks: list, context: dict) -> str:
 
     critical = [t for t in (tasks or []) if t.get("priority") in ("critical", "high")]
     overdue  = sum(1 for t in critical if t.get("is_overdue"))
+    count    = len(critical)
 
     task_lines = "\n".join(
-        "  [{p}]{ov} {title}{field}".format(
+        "  [{p}]{ov} {title}{field}{due}{desc}".format(
             p=t.get("priority", "?").upper(),
-            ov="⚠" if t.get("is_overdue") else "",
+            ov=" [OVERDUE]" if t.get("is_overdue") else "",
             title=t.get("title", "?"),
             field=f" — {t['field_name']}" if t.get("field_name") else "",
+            due=f" (due {t['due_date']})" if t.get("due_date") else "",
+            desc=f": {truncate(t['description'], 80)}" if t.get("description") else "",
         )
         for t in critical[:5]
     ) or "  None"
 
     weather_line = _weather_line(current) if current else "no weather data"
-    overdue_note = f"\n{overdue} task(s) OVERDUE." if overdue else ""
+    overdue_note = f" {overdue} overdue." if overdue else ""
     rules_part   = f"\n{rules_block(rules, 200)}" if rules else ""
 
     prompt = (
         f"Farm advisor for {farmer}.\n"
-        f"Critical/high-priority tasks today:\n{task_lines}{overdue_note}\n"
+        f"Today: {count} critical/high-priority tasks.{overdue_note}\n"
         f"Weather: {weather_line}{rules_part}\n\n"
-        f"Write exactly 1-2 sentences explaining the KEY reason these tasks are urgent today. "
-        f"Reference a specific number (moisture %, temperature reading, or rule threshold). "
-        f"No bullets. Plain text addressed to {farmer}."
+        f"Tasks:\n{task_lines}\n\n"
+        f"Write a farm alert for {farmer} using EXACTLY this format — no extra text:\n\n"
+        f"## [8-word-max heading that captures the main risk today]\n\n"
+        f"[One sentence addressed to {farmer}: what is urgent today and the single most important reason why — cite one specific number.]\n\n"
+        f"For EACH task listed above:\n"
+        f"**[Task title]**[( Field name)] — [CRITICAL or HIGH][, OVERDUE if applicable]\n"
+        f"[1-2 sentences: what this task is and the exact reason it cannot wait — cite a number (moisture %, °C, days overdue, or rule threshold).]\n"
+        f"→ [2-3 word action]\n"
     )
     return truncate(prompt, BUDGET_OVERVIEW_PROMPT)
 

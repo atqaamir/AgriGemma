@@ -65,6 +65,26 @@ def fast_complete(prompt: str) -> str:
     return provider.complete(prompt)
 
 
+def fast_complete_json(prompt: str) -> str:
+    """Like fast_complete() but requests JSON-mode output from the provider.
+    Use when the response must be a JSON object. Falls back to plain complete()
+    if the provider doesn't expose complete_json()."""
+    provider = _fast_provider if _fast_provider is not None else get_provider()
+    has_json_mode = hasattr(provider, "complete_json")
+    logger.info(
+        "[dispatch] fast_complete_json → provider=%s | json_mode=%s",
+        provider.name, has_json_mode,
+    )
+    if has_json_mode:
+        return provider.complete_json(prompt)
+    logger.warning(
+        "[dispatch] provider '%s' has no complete_json() — falling back to complete(). "
+        "JSON output not guaranteed.",
+        provider.name,
+    )
+    return provider.complete(prompt)
+
+
 def fast_stream_complete(prompt: str):
     """Stream from the fast provider. Falls back to main provider."""
     provider = _fast_provider if _fast_provider is not None else get_provider()
