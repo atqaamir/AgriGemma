@@ -14,6 +14,7 @@ chatbot_bp = Blueprint("chatbot", __name__)
 class SendMessageSchema(Schema):
     conversation_id = fields.Int(required=True)
     message = fields.Str(required=True, validate=lambda x: 1 <= len(x) <= 2000)
+    language = fields.Str(load_default='en', validate=lambda x: x in ('en', 'ur'))
 
 
 class MessageResponseSchema(Schema):
@@ -113,7 +114,8 @@ def send_message():
     message = valid_data["message"]
 
     try:
-        result = ChatbotService.send_message(USER_ID, conversation_id, message)
+        result = ChatbotService.send_message(USER_ID, conversation_id, message,
+                                             valid_data.get("language", "en"))
         return jsonify(result), 200
     except ValueError as e:
         return jsonify({"error": str(e)}), 403
@@ -145,7 +147,8 @@ def send_message_stream():
     def generate():
         try:
             yield from ChatbotService.send_message_stream(
-                USER_ID, valid_data["conversation_id"], valid_data["message"]
+                USER_ID, valid_data["conversation_id"], valid_data["message"],
+                valid_data.get("language", "en"),
             )
         except Exception as exc:
             logger.error("SSE route crashed: %s", exc, exc_info=True)
