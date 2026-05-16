@@ -485,7 +485,8 @@
     padding: 14px 20px;
     border-top: 1px solid #e8e5dc;
     display: flex;
-    justify-content: flex-end;
+    justify-content: space-between;
+    align-items: center;
   }
 
   .dark .notif-modal-footer {
@@ -513,8 +514,41 @@
     transform: scale(0.96);
   }
 
-  /* ── Critical Alert Popup ─────────────────────────────────────────────── */
-  .notif-alert-popup {
+  .notif-modal-download-btn {
+    padding: 9px 18px;
+    background: none;
+    color: #47573b;
+    border: 1.5px solid #47573b;
+    border-radius: 10px;
+    font-family: 'Manrope', sans-serif;
+    font-weight: 700;
+    font-size: 14px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: background-color 0.15s, transform 0.1s;
+  }
+
+  .notif-modal-download-btn:hover {
+    background-color: #d6e8c5;
+  }
+
+  .notif-modal-download-btn:active {
+    transform: scale(0.96);
+  }
+
+  .dark .notif-modal-download-btn {
+    color: #d5e9c1;
+    border-color: #d5e9c1;
+  }
+
+  .dark .notif-modal-download-btn:hover {
+    background-color: #3a4a2e;
+  }
+
+  /* ── Change Popup ─────────────────────────────────────────────────────── */
+  .notif-change-popup {
     position: fixed;
     top: 50%;
     left: 50%;
@@ -526,21 +560,21 @@
     z-index: 3000;
     width: calc(100% - 32px);
     max-width: 420px;
-    border-left: 4px solid #ba1a1a;
-    animation: notifAlertIn 0.3s cubic-bezier(0.22, 0.68, 0, 1.2) both;
+    border-left: 4px solid #7C3AED;
+    animation: notifChangeIn 0.3s cubic-bezier(0.22, 0.68, 0, 1.2) both;
   }
 
-  .dark .notif-alert-popup {
+  .dark .notif-change-popup {
     background: #222219;
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
   }
 
-  @keyframes notifAlertIn {
+  @keyframes notifChangeIn {
     from { opacity: 0; transform: translate(-50%, -50%) scale(0.95); }
     to   { opacity: 1; transform: translate(-50%, -50%) scale(1); }
   }
 
-  .notif-alert-header {
+  .notif-change-header {
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
@@ -548,17 +582,21 @@
     gap: 8px;
   }
 
-  .notif-alert-title {
+  .notif-change-title {
     font-family: 'Manrope', sans-serif;
     font-weight: 700;
     font-size: 13px;
-    color: #ba1a1a;
+    color: #7C3AED;
     display: flex;
     align-items: center;
     gap: 6px;
   }
 
-  .notif-alert-close-btn {
+  .dark .notif-change-title {
+    color: #c4b5fd;
+  }
+
+  .notif-change-close-btn {
     background: none;
     border: none;
     cursor: pointer;
@@ -570,29 +608,25 @@
     transition: color 0.15s;
   }
 
-  .notif-alert-close-btn:hover {
-    color: #1c1c17;
-  }
+  .notif-change-close-btn:hover { color: #1c1c17; }
+  .dark .notif-change-close-btn:hover { color: #e5e2da; }
 
-  .dark .notif-alert-close-btn:hover {
-    color: #e5e2da;
-  }
-
-  .notif-alert-message {
+  .notif-change-message {
     font-size: 13px;
     color: #444840;
     line-height: 1.5;
   }
 
-  .dark .notif-alert-message {
-    color: #9e9e8e;
-  }
+  .dark .notif-change-message { color: #9e9e8e; }
 
   /* ── Type colours ─────────────────────────────────────────────────────── */
   .notif-type-critical    { color: #ba1a1a; }
   .notif-type-warning     { color: #b45309; }
   .notif-type-info        { color: #1d4ed8; }
   .notif-type-recommendation { color: #166534; }
+  .notif-type-change      { color: #7C3AED; }
+
+  .dark .notif-type-change { color: #c4b5fd; }
 
   .dark .notif-type-critical    { color: #ff8a80; }
   .dark .notif-type-warning     { color: #fbbf24; }
@@ -625,6 +659,9 @@
   </div>
 </div>
 
+<!-- ── Change Popup Container ────────────────────────────────────────────────── -->
+<div id="changeAlertsContainer"></div>
+
 <!-- ── Detail Modal ─────────────────────────────────────────────────────────── -->
 <div class="notif-modal-overlay" id="notifModalOverlay">
   <div class="notif-modal">
@@ -639,13 +676,14 @@
     </div>
     <div class="notif-modal-body" id="notifModalBody"></div>
     <div class="notif-modal-footer">
+      <button class="notif-modal-download-btn" id="notifModalDownloadBtn" style="display:none;">
+        <span class="material-symbols-outlined" style="font-size:18px;">download</span>
+        Download Report
+      </button>
       <button class="notif-modal-done-btn" id="notifModalDoneBtn">Done</button>
     </div>
   </div>
 </div>
-
-<!-- ── Critical Alert Container ─────────────────────────────────────────────── -->
-<div id="alertsContainer"></div>
 
 <script>
 (function () {
@@ -653,29 +691,25 @@
   window.__notifSystemLoaded = true;
 
   const USER_ID = 1;
-  const POLL_MS = 12000;
 
   const TYPE_META = {
     info:           { icon: 'ℹ️',  cssClass: 'notif-type-info',           clickable: false },
     warning:        { icon: '⚠️',  cssClass: 'notif-type-warning',        clickable: true  },
     critical:       { icon: '🚨',  cssClass: 'notif-type-critical',       clickable: true  },
     recommendation: { icon: '💡',  cssClass: 'notif-type-recommendation', clickable: true  },
+    change:         { icon: '🔄',  cssClass: 'notif-type-change',         clickable: true  },
   };
 
-  let notifications = [];
-  let alertQueue    = [];
-  let alertActive   = false;
-  const shownAlertKey = `notif_alerts_shown_${USER_ID}`;
-  let shownAlertIds = new Set();
+  let notifications    = [];
+  let changeQueue      = [];
+  let changeActive     = false;
+  const shownChangeKey = `notif_change_shown_${USER_ID}`;
+  let shownChangeIds   = new Set();
 
   try {
-    const saved = localStorage.getItem(shownAlertKey);
-    if (saved) shownAlertIds = new Set(JSON.parse(saved));
+    const saved = localStorage.getItem(shownChangeKey);
+    if (saved) shownChangeIds = new Set(JSON.parse(saved));
   } catch (_) {}
-
-  function saveShownAlerts() {
-    try { localStorage.setItem(shownAlertKey, JSON.stringify([...shownAlertIds])); } catch (_) {}
-  }
 
   // ── DOM refs ──────────────────────────────────────────────────────────────
   function $id(id) { return document.getElementById(id); }
@@ -698,7 +732,7 @@
       }));
       updateBadge();
       renderDropdown();
-      processAlerts();
+      processChangePopups();
     } catch (_) {}
   }
 
@@ -801,69 +835,97 @@
   }
 
   // ── Modal ─────────────────────────────────────────────────────────────────
+  let _activeModalNotif = null;
+
   function openModal(n) {
-    const meta = TYPE_META[n.notification_type] || TYPE_META.info;
+    const meta        = TYPE_META[n.notification_type] || TYPE_META.info;
+    const downloadBtn = $id('notifModalDownloadBtn');
+    _activeModalNotif = n;
+
     $id('notifModalIcon').textContent  = meta.icon;
     $id('notifModalTitle').textContent = n.title;
     $id('notifModalBody').textContent  = n.detail || n.message;
     $id('notifModalOverlay').classList.add('open');
+
+    // Show download button only for change-type notifications
+    if (downloadBtn) {
+      downloadBtn.style.display = n.notification_type === 'change' ? 'flex' : 'none';
+    }
+
     closeDropdown();
   }
 
   function closeModal() {
     const overlay = $id('notifModalOverlay');
     if (overlay) overlay.classList.remove('open');
+    _activeModalNotif = null;
   }
 
-  // ── Alert popups (critical only) ──────────────────────────────────────────
-  function processAlerts() {
-    const criticals = notifications.filter(n => n.notification_type === 'critical' && !n.is_read);
-    const currentIds = new Set(criticals.map(n => n.id));
+  function downloadReport() {
+    if (!_activeModalNotif) return;
+    const content  = _activeModalNotif.detail || _activeModalNotif.message || '';
+    const title    = _activeModalNotif.title || 'farm-change-report';
+    const date     = new Date().toISOString().slice(0, 10);
+    const filename = `${title.toLowerCase().replace(/[^a-z0-9]+/g, '-')}-${date}.txt`;
 
-    // Prune stale shown IDs
-    for (const id of shownAlertIds) {
-      if (!currentIds.has(id)) shownAlertIds.delete(id);
+    const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement('a');
+    a.href     = url;
+    a.download = filename;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  // ── Change popups ─────────────────────────────────────────────────────────
+  function processChangePopups() {
+    const changes = notifications.filter(n => n.notification_type === 'change' && !n.is_read);
+    const currentIds = new Set(changes.map(n => n.id));
+
+    for (const id of shownChangeIds) {
+      if (!currentIds.has(id)) shownChangeIds.delete(id);
     }
-    saveShownAlerts();
+    try { localStorage.setItem(shownChangeKey, JSON.stringify([...shownChangeIds])); } catch (_) {}
 
-    criticals.forEach(n => {
-      if (!shownAlertIds.has(n.id)) {
-        alertQueue.push(n);
-        shownAlertIds.add(n.id);
-        saveShownAlerts();
+    changes.forEach(n => {
+      if (!shownChangeIds.has(n.id)) {
+        changeQueue.push(n);
+        shownChangeIds.add(n.id);
+        try { localStorage.setItem(shownChangeKey, JSON.stringify([...shownChangeIds])); } catch (_) {}
       }
     });
 
-    showNextAlert();
+    showNextChangePopup();
   }
 
-  function showNextAlert() {
-    if (alertActive || !alertQueue.length) return;
-    alertActive = true;
+  function showNextChangePopup() {
+    if (changeActive || !changeQueue.length) return;
+    changeActive = true;
 
-    const n         = alertQueue.shift();
-    const container = $id('alertsContainer');
-    if (!container) { alertActive = false; return; }
+    const n         = changeQueue.shift();
+    const container = $id('changeAlertsContainer');
+    if (!container) { changeActive = false; return; }
 
-    const meta = TYPE_META[n.notification_type] || TYPE_META.critical;
-    const el   = document.createElement('div');
-    el.className = 'notif-alert-popup';
-    el.id        = `alert-${n.id}`;
+    const el = document.createElement('div');
+    el.className = 'notif-change-popup';
     el.innerHTML = `
-      <div class="notif-alert-header">
-        <div class="notif-alert-title">${meta.icon} ${esc(n.title)}</div>
-        <button class="notif-alert-close-btn" aria-label="Dismiss">&times;</button>
+      <div class="notif-change-header">
+        <div class="notif-change-title">🔄 ${esc(n.title)}</div>
+        <button class="notif-change-close-btn" aria-label="Dismiss">&times;</button>
       </div>
-      <div class="notif-alert-message">${esc(n.message)}</div>`;
+      <div class="notif-change-message">${esc(n.message)}</div>`;
     container.appendChild(el);
 
     const dismiss = () => {
       el.remove();
-      alertActive = false;
-      setTimeout(showNextAlert, 120);
+      changeActive = false;
+      setTimeout(showNextChangePopup, 120);
     };
 
-    el.querySelector('.notif-alert-close-btn').addEventListener('click', dismiss);
+    el.querySelector('.notif-change-close-btn').addEventListener('click', () => {
+      markAsRead(n.id);
+      dismiss();
+    });
     setTimeout(dismiss, 10000);
   }
 
@@ -884,9 +946,9 @@
 
   async function markAllRead() {
     notifications.forEach(n => n.is_read = true);
-    alertQueue = [];
-    shownAlertIds.clear();
-    saveShownAlerts();
+    changeQueue = [];
+    shownChangeIds.clear();
+    try { localStorage.setItem(shownChangeKey, JSON.stringify([])); } catch (_) {}
     updateBadge();
     // Update all items' styling without full re-render
     document.querySelectorAll('.notif-item.unread').forEach(el => {
@@ -915,17 +977,19 @@
 
   // ── Wire up after DOM ready ───────────────────────────────────────────────
   function init() {
-    const bellBtn       = $id('notificationBellBtn');
-    const markAllBtn    = $id('markAllReadBtn');
-    const modalOverlay  = $id('notifModalOverlay');
-    const modalCloseBtn = $id('notifModalCloseBtn');
-    const modalDoneBtn  = $id('notifModalDoneBtn');
+    const bellBtn          = $id('notificationBellBtn');
+    const markAllBtn       = $id('markAllReadBtn');
+    const modalOverlay     = $id('notifModalOverlay');
+    const modalCloseBtn    = $id('notifModalCloseBtn');
+    const modalDoneBtn     = $id('notifModalDoneBtn');
+    const modalDownloadBtn = $id('notifModalDownloadBtn');
 
-    if (bellBtn)       bellBtn.addEventListener('click', e => { e.stopPropagation(); toggleDropdown(); });
-    if (markAllBtn)    markAllBtn.addEventListener('click', e => { e.stopPropagation(); markAllRead(); });
-    if (modalCloseBtn) modalCloseBtn.addEventListener('click', closeModal);
-    if (modalDoneBtn)  modalDoneBtn.addEventListener('click', closeModal);
-    if (modalOverlay)  modalOverlay.addEventListener('click', e => { if (e.target === modalOverlay) closeModal(); });
+    if (bellBtn)          bellBtn.addEventListener('click', e => { e.stopPropagation(); toggleDropdown(); });
+    if (markAllBtn)       markAllBtn.addEventListener('click', e => { e.stopPropagation(); markAllRead(); });
+    if (modalCloseBtn)    modalCloseBtn.addEventListener('click', closeModal);
+    if (modalDoneBtn)     modalDoneBtn.addEventListener('click', closeModal);
+    if (modalDownloadBtn) modalDownloadBtn.addEventListener('click', downloadReport);
+    if (modalOverlay)     modalOverlay.addEventListener('click', e => { if (e.target === modalOverlay) closeModal(); });
 
     document.addEventListener('click', e => {
       const container = $id('notification-container');
@@ -933,7 +997,6 @@
     });
 
     loadNotifications();
-    setInterval(loadNotifications, POLL_MS);
   }
 
   if (document.readyState === 'loading') {

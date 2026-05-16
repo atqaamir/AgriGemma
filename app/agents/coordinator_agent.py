@@ -86,6 +86,8 @@ class CoordinatorAgent:
 
         if change == enums_.ChangeStatus.NO_CHANGE:
             result = execution_responses.ExecutionResponse.success("Risk assessment completed — no change")
+            result["change_status"] = change.value
+            return result
         elif change == enums_.ChangeStatus.NO_IMPACT:
             self.call_intelligence(user_id, tag="critical_task_overview")
             self.send_notification(user_id, tag="weather_only")
@@ -102,6 +104,7 @@ class CoordinatorAgent:
             self.dashboard_refresh(user_id)
             result = execution_responses.ExecutionResponse.success("Daily update completed") if risk_status == enums_.Status.SUCCESS else execution_responses.ExecutionResponse.failure("Daily update failed")
 
+        self.send_notification(user_id, tag="change_summary")
         result["change_status"] = change.value
         return result
 
