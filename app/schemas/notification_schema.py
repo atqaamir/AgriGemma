@@ -26,6 +26,12 @@ NOTIFICATION_METADATA = {
         "bg_color": "#E8F5E9",
         "label": "Recommendation",
     },
+    "change": {
+        "symbol": "🔄",
+        "color": "#7C3AED",
+        "bg_color": "#EDE9FE",
+        "label": "Change",
+    },
 }
 
 
