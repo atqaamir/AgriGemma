@@ -5,7 +5,7 @@ from pathlib import Path
 from app.extensions import db
 from app.models.weekly_plan import WeeklyPlan, WeeklyPlanEntry
 from app.services.seasonal_planner_service import SeasonalPlannerService
-from app.services.weekly_planner_service import WeeklyPlannerService
+from app.services.weekly_planning_service.weekly_planner_service import WeeklyPlannerService
 
 OUTPUT = Path(__file__).parent / "weekly_plan_output.json"
 
