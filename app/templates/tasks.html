@@ -77,7 +77,12 @@
       },
     }
   </script>
-  <script>(function(){if(localStorage.getItem('theme')==='dark')document.documentElement.classList.add('dark')})();</script>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Nastaliq+Urdu:wght@400;700&display=swap" rel="stylesheet"/>
+  <script>(function(){
+    if(localStorage.getItem('theme')==='dark') document.documentElement.classList.add('dark');
+    var lang=localStorage.getItem('lang')||'en';
+    if(lang==='ur'){document.documentElement.setAttribute('dir','rtl');document.documentElement.setAttribute('lang','ur');}
+  })();</script>
 </head>
 
 <body class="bg-surface dark:bg-[#1c1c17] text-on-surface dark:text-[#e5e2da] min-h-screen pb-32">
@@ -192,7 +197,7 @@
       <!-- Section header -->
       <div class="flex justify-between items-center px-2">
         <div>
-          <h3 id="tasks-section-title" class="text-xl font-bold text-on-surface tracking-tight">Pending Tasks</h3>
+          <h3 id="tasks-section-title" class="text-xl font-bold text-on-surface tracking-tight" data-i18n="tasks.pending_tasks">Pending Tasks</h3>
           <p id="tasks-section-subtitle" class="text-on-surface-variant text-sm font-medium mt-0.5">Loading...</p>
         </div>
         <div class="flex items-center gap-2">
@@ -227,7 +232,7 @@
       <div class="flex justify-center">
         <button id="tasks-view-toggle-btn" onclick="viewAllTasks()"
           class="flex items-center gap-2 px-6 py-2.5 rounded-full border border-outline-variant text-primary font-bold text-xs hover:bg-surface-variant transition-colors active:scale-95">
-          View All Tasks
+          <span data-i18n="tasks.view_all">View All Tasks</span>
           <span class="material-symbols-outlined text-sm">arrow_forward</span>
         </button>
       </div>
@@ -617,23 +622,23 @@
   <nav id="bottomNav" class="fixed bottom-0 left-0 w-full z-50 bg-[#fcf9f0]/80 dark:bg-stone-950/80 backdrop-blur-md rounded-t-[24px] shadow-[0_-8px_24px_rgba(28,28,23,0.06)] flex justify-around items-center px-4 pb-6 pt-3">
     <a class="flex flex-col items-center justify-center text-stone-500 dark:text-stone-400 px-3 py-1.5 transition-transform hover:scale-105 duration-150" href="/">
       <span class="material-symbols-outlined">dashboard</span>
-      <span class="text-[11px] font-medium tracking-wide">Dashboard</span>
+      <span class="text-[11px] font-medium tracking-wide" data-i18n="nav.dashboard">Dashboard</span>
     </a>
     <a class="flex flex-col items-center justify-center text-stone-500 dark:text-stone-400 px-3 py-1.5 transition-transform hover:scale-105 duration-150" href="/myfields">
       <span class="material-symbols-outlined">landscape</span>
-      <span class="text-[11px] font-medium tracking-wide">Fields</span>
+      <span class="text-[11px] font-medium tracking-wide" data-i18n="nav.fields">Fields</span>
     </a>
     <a class="flex flex-col items-center justify-center text-stone-500 dark:text-stone-400 px-3 py-1.5 transition-transform hover:scale-105 duration-150" href="/mycrops">
       <span class="material-symbols-outlined">eco</span>
-      <span class="text-[11px] font-medium tracking-wide">Crops</span>
+      <span class="text-[11px] font-medium tracking-wide" data-i18n="nav.crops">Crops</span>
     </a>
     <a class="flex flex-col items-center justify-center bg-secondary-fixed dark:bg-primary-container text-on-background dark:text-surface-bright rounded-2xl px-3 py-1.5 transition-transform hover:scale-105 duration-150" href="/mytasks">
       <span class="material-symbols-outlined" style="font-variation-settings:'FILL' 1;">assignment_turned_in</span>
-      <span class="text-[11px] font-medium tracking-wide">Tasks</span>
+      <span class="text-[11px] font-medium tracking-wide" data-i18n="nav.tasks">Tasks</span>
     </a>
     <a class="flex flex-col items-center justify-center text-stone-500 dark:text-stone-400 px-3 py-1.5 transition-transform hover:scale-105 duration-150" href="/chatbot">
       <span class="material-symbols-outlined">chat</span>
-      <span class="text-[11px] font-medium tracking-wide">Chat</span>
+      <span class="text-[11px] font-medium tracking-wide" data-i18n="nav.chat">Chat</span>
     </a>
   </nav>
 
@@ -860,7 +865,7 @@
         const pending = cachedPendingTasks;
         const dueToday = pending.filter(t => isDueToday(t.due_date)).length;
         el.textContent = pending.length === 0
-          ? 'All tasks done — great work!'
+          ? t('tasks.all_done')
           : `${pending.length} pending${dueToday > 0 ? ` • ${dueToday} due today` : ''}`;
       }
     }
@@ -940,18 +945,18 @@
             </div>
             <!-- Priority badge -->
             <div class="absolute top-2 right-2 ${getPriorityBgClass(task.priority)} rounded-full px-2 py-0.5">
-              <span class="text-[9px] font-bold ${getPriorityTextClass(task.priority)} uppercase tracking-wide">${task.priority || 'low'}</span>
+              <span class="text-[9px] font-bold ${getPriorityTextClass(task.priority)} uppercase tracking-wide">${translatePriority(task.priority)}</span>
             </div>
             <!-- Delete button -->
             <button onclick="deleteTask(${task.id}, event)"
               class="absolute top-2 left-2 bg-white/90 backdrop-blur rounded-full p-1.5 shadow-sm hover:bg-red-50 transition-colors"
-              title="Delete task">
+              title="${t('common.delete_task')}">
               <span class="material-symbols-outlined text-error" style="font-size:16px;">delete</span>
             </button>
             <!-- Edit button -->
             <button onclick="openEditTaskModal(${task.id}, event)"
               class="absolute top-2 left-10 bg-white/90 backdrop-blur rounded-full p-1.5 shadow-sm hover:bg-primary/10 transition-colors"
-              title="Edit task">
+              title="${t('common.edit_task')}">
               <span class="material-symbols-outlined text-primary" style="font-size:16px;">edit</span>
             </button>
           </div>
@@ -959,25 +964,25 @@
           <!-- Content -->
           <div class="p-4 flex flex-col gap-2 flex-1">
             <div>
-              <h4 class="font-bold text-on-surface text-sm line-clamp-2 leading-tight">${escapeHtml(task.title || 'Untitled')}</h4>
+              <h4 class="font-bold text-on-surface text-sm line-clamp-2 leading-tight">${escapeHtml(getDynTranslation(task.title) || 'Untitled')}</h4>
               <p class="text-[10px] text-on-surface-variant font-medium truncate mt-0.5">${escapeHtml(getTaskSubtitle(task))}</p>
               ${task.due_date ? `<p class="text-[10px] text-outline mt-0.5">${formatDate(task.due_date)}</p>` : ''}
             </div>
 
             <div class="flex items-center justify-between mt-auto pt-1">
               <span class="text-[10px] font-bold uppercase ${task.completed ? 'text-primary' : 'text-amber-600'}">
-                ${task.completed ? 'Done' : 'Pending'}
+                ${task.completed ? t('common.done') : t('common.pending')}
               </span>
               ${!task.completed ? `
                 <button onclick="markTaskDone(${task.id}, event)"
                   class="h-8 w-8 rounded-full border-2 border-primary flex items-center justify-center hover:bg-primary hover:text-on-primary transition-colors text-primary active:scale-90"
-                  title="Mark done">
+                  title="${t('common.mark_done')}">
                   <span class="material-symbols-outlined" style="font-size:16px;">check</span>
                 </button>
               ` : `
                 <button onclick="markTaskPending(${task.id}, event)"
                   class="h-8 w-8 rounded-full flex items-center justify-center hover:opacity-70 transition-opacity active:scale-90"
-                  title="Mark pending">
+                  title="${t('common.mark_pending')}">
                   <span class="material-symbols-outlined text-primary" style="font-size:20px; font-variation-settings:'FILL' 1;">check_circle</span>
                 </button>
               `}
@@ -1030,7 +1035,7 @@
         }
         return;
       }
-      c.innerHTML = tasks.map(t => buildTaskCard(t, false)).join('') + SCROLL_SPACER;
+      c.innerHTML = tasks.map(tk => buildTaskCard(tk, false)).join('') + SCROLL_SPACER;
     }
 
     function renderAllTasksScroll(tasks) {
@@ -1044,14 +1049,14 @@
           </div>`;
         return;
       }
-      c.innerHTML = tasks.map(t => buildTaskCard(t, false)).join('') + SCROLL_SPACER;
+      c.innerHTML = tasks.map(tk => buildTaskCard(tk, false)).join('') + SCROLL_SPACER;
     }
 
     // ── View switching ─────────────────────────────────────────────────────────
     async function viewAllTasks() {
       if (!cachedAllTasks) {
         document.getElementById('tasks-all-container').innerHTML =
-          `<div class="col-span-full text-center text-on-surface-variant py-10">Loading all tasks...</div>`;
+          `<div class="col-span-full text-center text-on-surface-variant py-10">${t('tasks.loading_all')}</div>`;
         document.getElementById('tasks-pending-container').classList.add('hidden');
         document.getElementById('tasks-all-wrap').classList.remove('hidden');
         try {
@@ -1069,11 +1074,11 @@
       allTasksPage = 1;
       document.getElementById('tasks-pending-container').classList.add('hidden');
       document.getElementById('tasks-all-wrap').classList.remove('hidden');
-      document.getElementById('tasks-section-title').textContent = 'All Tasks';
+      document.getElementById('tasks-section-title').textContent = t('tasks.all_tasks');
       document.getElementById('filter-status-wrap').classList.remove('hidden');
 
       const btn = document.getElementById('tasks-view-toggle-btn');
-      btn.innerHTML = `<span class="material-symbols-outlined text-sm">arrow_back</span> Pending Tasks`;
+      btn.innerHTML = `<span class="material-symbols-outlined text-sm">arrow_back</span> ${t('tasks.back_pending')}`;
       btn.onclick = viewPendingTasks;
 
       renderFilteredAllTasks();
@@ -1083,11 +1088,11 @@
       isViewingAll = false;
       document.getElementById('tasks-all-wrap').classList.add('hidden');
       document.getElementById('tasks-pending-container').classList.remove('hidden');
-      document.getElementById('tasks-section-title').textContent = 'Pending Tasks';
+      document.getElementById('tasks-section-title').textContent = t('tasks.pending_tasks');
       document.getElementById('filter-status-wrap').classList.add('hidden');
 
       const btn = document.getElementById('tasks-view-toggle-btn');
-      btn.innerHTML = `View All Tasks <span class="material-symbols-outlined text-sm">arrow_forward</span>`;
+      btn.innerHTML = `${t('tasks.view_all')} <span class="material-symbols-outlined text-sm">arrow_forward</span>`;
       btn.onclick = viewAllTasks;
 
       renderFilteredPendingTasks();
@@ -1168,20 +1173,20 @@
     }
 
     function populateTaskDetailModal(task) {
-      document.getElementById('taskDetailTitle').textContent = task.title || 'Untitled Task';
+      document.getElementById('taskDetailTitle').textContent = getDynTranslation(task.title) || 'Untitled Task';
       document.getElementById('taskDetailType').textContent = formatTaskType(task.task_type);
 
       const p = document.getElementById('taskDetailPriority');
       const pColors = { critical: 'bg-error/10 text-error', high: 'bg-red-100 text-red-700', medium: 'bg-amber-100 text-amber-700', low: 'bg-primary/10 text-primary' };
-      p.textContent = capitalize(task.priority || 'low');
+      p.textContent = translatePriority(task.priority);
       p.className = `text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wide ${pColors[task.priority] || pColors.low}`;
 
       const s = document.getElementById('taskDetailStatus');
-      s.textContent = task.completed ? 'Completed' : 'Pending';
+      s.textContent = task.completed ? t('common.completed') : t('common.pending');
       s.className = `text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wide ${task.completed ? 'bg-primary/10 text-primary' : 'bg-amber-100 text-amber-700'}`;
 
-      document.getElementById('taskDetailField').textContent    = task.field_name    || '—';
-      document.getElementById('taskDetailCrop').textContent     = task.crop_name     || '—';
+      document.getElementById('taskDetailField').textContent    = getDynTranslation(task.field_name)   || '—';
+      document.getElementById('taskDetailCrop').textContent     = translateCropName(task.crop_name)    || '—';
       document.getElementById('taskDetailDue').textContent      = task.due_date ? String(task.due_date) : '—';
       document.getElementById('taskDetailCategory').textContent = task.task_category ? capitalize(task.task_category) : '—';
 
@@ -1686,7 +1691,18 @@
       return { critical: 'text-error', high: 'text-red-700', medium: 'text-amber-700', low: 'text-primary' }[p] || 'text-primary';
     }
 
-    function formatTaskType(t) { return t ? capitalize(String(t).replace(/_/g, ' ')) : 'Task'; }
+    function formatTaskType(type) {
+      if (!type) return t('task_type.default');
+      const key = 'task_type.' + String(type).toLowerCase();
+      const translated = (typeof t === 'function') ? t(key) : null;
+      return (translated && translated !== key) ? translated : capitalize(String(type).replace(/_/g, ' '));
+    }
+
+    function translatePriority(p) {
+      const key = 'dashboard.priority_' + String(p || '').toLowerCase();
+      const translated = (typeof t === 'function') ? t(key) : null;
+      return (translated && translated !== key) ? translated : capitalize(p || 'low');
+    }
 
     function formatDate(d) {
       if (!d) return '';
@@ -2294,6 +2310,20 @@ ${body}
     document.getElementById('whyModal').addEventListener('click', function(e) {
       if (e.target === this) closeWhyModal();
     });
+
+    // Called by i18n.js on language switch
+    window.prefetchAndRender = async function(lang) {
+      if (lang === 'ur') {
+        const allTasks = [...(cachedPendingTasks || []), ...(cachedAllTasks || [])];
+        const strings = [
+          ...allTasks.map(tk => tk.title),
+          ...allTasks.map(tk => tk.field_name),
+        ].filter(Boolean);
+        if (strings.length) await translateDynamic(strings);
+      }
+      if (isViewingAll && cachedAllTasks) renderFilteredAllTasks();
+      else renderPendingCards(cachedPendingTasks || []);
+    };
   </script>
 </body>
 </html>

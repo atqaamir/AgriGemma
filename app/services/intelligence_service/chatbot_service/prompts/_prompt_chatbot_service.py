@@ -19,6 +19,14 @@ CHATBOT_SYSTEM = (
     "5. When RULEBOOK DATA is present, cite the exact number instead of giving generic advice."
 )
 
+# Appended to CHATBOT_SYSTEM when the UI language is Urdu
+_URDU_ADDENDUM = (
+    "\n6. The farmer is using the Urdu interface. YOU MUST reply ENTIRELY in Urdu (اردو). "
+    "Use plain, simple Urdu suitable for a Pakistani farmer. Field names, crop names, and "
+    "numerical values may remain as given in the farm data, but every explanation, suggestion, "
+    "and sentence MUST be written in Urdu script. Do not mix in English sentences."
+)
+
 
 _GENERAL_NOTE = (
     "This is a general question. The farm data above is background context only — "
@@ -46,9 +54,11 @@ def build_chatbot_prompt(
     farmer_context: str,
     history: str,
     user_message: str,
+    language: str = 'en',
     intent: str = "general",
     web_results: list | None = None,
 ) -> str:
+    system = CHATBOT_SYSTEM + (_URDU_ADDENDUM if language == 'ur' else "")
     user_parts = [f"FARM DATA:\n{farmer_context}"]
 
     if web_results:
@@ -68,4 +78,4 @@ def build_chatbot_prompt(
     )
 
     user_content = "\n\n".join(user_parts)
-    return f"{CHATBOT_SYSTEM}{_SYSTEM_SEP}{user_content}"
+    return f"{system}{_SYSTEM_SEP}{user_content}"

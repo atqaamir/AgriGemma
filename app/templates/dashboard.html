@@ -6,6 +6,7 @@
   <title>Dashboard</title>
   <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;700;800&family=Work_Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Nastaliq+Urdu:wght@400;700&display=swap" rel="stylesheet"/>
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
   <link rel="stylesheet" href="/static/css/dashboard.css"/>
   <script id="tailwind-config">
@@ -77,7 +78,14 @@
       },
     }
   </script>
-  <script>(function(){if(localStorage.getItem('theme')==='dark')document.documentElement.classList.add('dark')})();</script>
+  <script>(function(){
+    if(localStorage.getItem('theme')==='dark') document.documentElement.classList.add('dark');
+    var lang = localStorage.getItem('lang') || 'en';
+    if(lang === 'ur'){
+      document.documentElement.setAttribute('dir','rtl');
+      document.documentElement.setAttribute('lang','ur');
+    }
+  })();</script>
 </head>
 
 <body class="bg-surface dark:bg-[#1c1c17] text-on-surface dark:text-[#e5e2da] pb-32">
@@ -149,7 +157,7 @@
               </svg>
               <div class="absolute inset-0 flex flex-col items-center justify-center">
                 <span id="donut-label" class="text-4xl font-headline font-bold">--%</span>
-                <span class="text-xs uppercase tracking-tighter text-outline">Optimal Range</span>
+                <span class="text-xs uppercase tracking-tighter text-outline" data-i18n="dashboard.optimal_range">Optimal Range</span>
               </div>
             </div>
           </div>
@@ -161,7 +169,7 @@
             </div>
             <div class="flex-1 flex flex-col">
               <div class="flex justify-between items-start">
-                <p class="text-sm text-on-surface-variant">Active Area</p>
+                <p class="text-sm text-on-surface-variant" data-i18n="dashboard.active_area">Active Area</p>
                 <span id="active-area-badge" class="text-xs bg-primary text-white px-2 py-0.5 rounded-full whitespace-nowrap">-- active</span>
               </div>
               <p id="active-area-value" class="text-2xl font-bold">-- Acres</p>
@@ -175,7 +183,7 @@
             </div>
             <div class="flex-1 flex flex-col">
               <div class="flex justify-between items-start">
-                <p class="text-sm text-on-surface-variant">Crops Growing</p>
+                <p class="text-sm text-on-surface-variant" data-i18n="dashboard.crops_growing">Crops Growing</p>
                 <span id="crops-badge" class="text-xs bg-primary text-white px-2 py-0.5 rounded-full whitespace-nowrap">-- active</span>
               </div>
               <p id="crops-list" class="text-lg font-semibold">--</p>
@@ -221,7 +229,7 @@
 
       <!-- Soil Conditions -->
       <div class="md:col-span-5 bg-surface-container-highest rounded-3xl p-6">
-        <h2 class="font-headline text-xl font-medium mb-6">Soil Conditions</h2>
+        <h2 class="font-headline text-xl font-medium mb-6" data-i18n="dashboard.soil_conditions">Soil Conditions</h2>
         <div class="space-y-6">
 
           <!-- Soil Moisture -->
@@ -229,7 +237,7 @@
             <div class="flex justify-between mb-2">
               <div class="flex items-center gap-2">
                 <span class="material-symbols-outlined text-primary" data-icon="humidity_mid">humidity_mid</span>
-                <span class="text-sm font-medium">Soil Moisture</span>
+                <span class="text-sm font-medium" data-i18n="dashboard.soil_moisture">Soil Moisture</span>
               </div>
               <span id="soil-moisture-label" class="text-sm text-primary font-bold">--</span>
             </div>
@@ -243,7 +251,7 @@
             <div class="flex justify-between mb-2">
               <div class="flex items-center gap-2">
                 <span class="material-symbols-outlined text-primary" data-icon="compost">compost</span>
-                <span class="text-sm font-medium">Soil Heat Guagee</span>
+                <span class="text-sm font-medium" data-i18n="dashboard.soil_heat">Soil Heat Gauge</span>
               </div>
               <span id="soil-heat-label" class="text-sm text-primary font-bold">--</span>
             </div>
@@ -265,8 +273,8 @@
             src="https://lh3.googleusercontent.com/aida-public/AB6AXuD3ipJjkKWAxYcf7KI01tRYf59EuPgdtIz-DxALVUegxXC273r9uxiTvhIReP-0st3g0aPluQcZM0-N75rawCoGPmffr3SSLfh9dgbkfv34OrZ_T0EuTyTP3vL_saQTv0YGELcivtRdFH7c9qpiLUi_0oQLqCuFpkESa1FxngzpoWdYr1qbXQ0VmIya1WXc5VbNIp0dCOVvJYgcDgmFm0riOaSUWayml6u-1TAv_PTCTivktvTSwtDBZFLUZ8myGNfeNu86cbnp2A"/>
         </div>
         <div class="relative z-10 space-y-6">
-          <h3 class="text-4xl font-bold tracking-tight text-primary max-w-xl mx-auto leading-tight">Ready to map out the season?</h3>
-          <p class="text-lg text-on-surface-variant max-w-2xl mx-auto leading-relaxed">Start your seasonal planning with our predictive yield models and soil health projections.</p>
+          <h3 class="text-4xl font-bold tracking-tight text-primary max-w-xl mx-auto leading-tight" data-i18n="dashboard.ready_to_map">Ready to map out the season?</h3>
+          <p class="text-lg text-on-surface-variant max-w-2xl mx-auto leading-relaxed" data-i18n="dashboard.seasonal_desc">Start your seasonal planning with our predictive yield models and soil health projections.</p>
           <div class="pt-4 flex justify-center" id="seasonal-plan-cta">
             <!-- rendered by renderSeasonalPlanCTA() after dashboard data loads -->
           </div>
@@ -304,30 +312,34 @@
   <nav class="fixed bottom-0 left-0 w-full z-50 bg-[#fcf9f0]/80 dark:bg-stone-950/80 backdrop-blur-md rounded-t-[24px] shadow-[0_-8px_24px_rgba(28,28,23,0.06)] flex justify-around items-center px-4 pb-6 pt-3">
     <a class="flex flex-col items-center justify-center bg-secondary-fixed dark:bg-primary-container text-on-background dark:text-surface-bright rounded-2xl px-3 py-1.5 transition-transform hover:scale-105 duration-150" href="/">
       <span class="material-symbols-outlined" data-icon="dashboard">dashboard</span>
-      <span class="font-['Work_Sans'] text-[11px] font-medium tracking-wide">Dashboard</span>
+      <span class="font-['Work_Sans'] text-[11px] font-medium tracking-wide" data-i18n="nav.dashboard">Dashboard</span>
     </a>
     <a class="flex flex-col items-center justify-center text-stone-500 dark:text-stone-400 px-3 py-1.5 transition-transform hover:scale-105 duration-150" href="/myfields">
       <span class="material-symbols-outlined" data-icon="landscape" style="font-variation-settings: 'FILL' 1;">landscape</span>
-      <span class="font-['Work_Sans'] text-[11px] font-medium tracking-wide">Fields</span>
+      <span class="font-['Work_Sans'] text-[11px] font-medium tracking-wide" data-i18n="nav.fields">Fields</span>
     </a>
     <a class="flex flex-col items-center justify-center text-stone-500 dark:text-stone-400 px-3 py-1.5 transition-transform hover:scale-105 duration-150" href="/mycrops">
       <span class="material-symbols-outlined" data-icon="eco" style="font-variation-settings: 'FILL' 1;">eco</span>
-      <span class="font-['Work_Sans'] text-[11px] font-medium tracking-wide">Crops</span>
+      <span class="font-['Work_Sans'] text-[11px] font-medium tracking-wide" data-i18n="nav.crops">Crops</span>
     </a>
     <a class="flex flex-col items-center justify-center text-stone-500 dark:text-stone-400 px-3 py-1.5 transition-transform hover:scale-105 duration-150" href="/mytasks">
       <span class="material-symbols-outlined" data-icon="assignment_turned_in">assignment_turned_in</span>
-      <span class="font-['Work_Sans'] text-[11px] font-medium tracking-wide">Tasks</span>
+      <span class="font-['Work_Sans'] text-[11px] font-medium tracking-wide" data-i18n="nav.tasks">Tasks</span>
     </a>
     <a class="flex flex-col items-center justify-center text-stone-500 dark:text-stone-400 px-3 py-1.5 transition-transform hover:scale-105 duration-150" href="/chatbot">
       <span class="material-symbols-outlined" data-icon="chat">chat</span>
-      <span class="font-['Work_Sans'] text-[11px] font-medium tracking-wide">Chat</span>
+      <span class="font-['Work_Sans'] text-[11px] font-medium tracking-wide" data-i18n="nav.chat">Chat</span>
     </a>
   </nav>
 
   <script>
     const USER_ID = 1;
     const DONUT_CIRCUMFERENCE = 502.4;
-    let _dashData = null;
+
+
+    // ── Global data cache (used for re-render on language switch) ──────────────
+    var _dashData  = null;
+    var _cropsData = [];
 
     // ── Boot ───────────────────────────────────────────────────────────────────
     document.addEventListener('DOMContentLoaded', loadDashboard);
@@ -354,9 +366,34 @@
       }
     }
 
+    function renderAll() {
+      if (!_dashData) return;
+      renderHero(_dashData);
+      renderFarmOverview(_dashData, _cropsData);
+      renderCriticalTasks(_dashData);
+      renderCropHealth(_dashData, _cropsData);
+      renderSoilConditions(_dashData);
+      renderSeasonalPlanCTA(_dashData);
+    }
+
+    // Expose for i18n.js — prefetches dynamic translations then re-renders
+    window.renderDashboard = renderAll;
+    window.prefetchAndRender = async function(lang) {
+      if (lang === 'ur' && _dashData) {
+        const tasks = _dashData.critical_tasks || [];
+        const strings = [
+          ...tasks.map(tk => tk.title),
+          ...tasks.map(tk => tk.field_name),
+        ].filter(Boolean);
+        if (strings.length) await translateDynamic(strings);
+      }
+      renderAll();
+    };
+
     // ── Hero ───────────────────────────────────────────────────────────────────
     function renderHero(data) {
-      setText('welcome-name', `Welcome back, ${data.user?.name || 'Farmer'}!`);
+      const name = data.user?.name || 'Farmer';
+      setText('welcome-name', `${t('dashboard.welcome_prefix')} ${name}!`);
       setText('hero-subtitle', data.dashboard_summary?.summary || '');
 
       const current = data.weather?.current || {};
@@ -736,28 +773,28 @@ ${body}
       setText('donut-label', `${Math.round(score)}%`);
 
       // Active Area
-      setText('active-area-value', `${overview.total_acreage ?? 0} Acres`);
-      setText('active-area-badge', `${overview.active_fields ?? 0} active`);
+      setText('active-area-value', `${overview.total_acreage ?? 0} ${t('dashboard.acres')}`);
+      setText('active-area-badge', `${overview.active_fields ?? 0} ${t('dashboard.active')}`);
 
       // Crops Growing
       const cropNames = crops.length
         ? [...new Set(crops.map(c => c.name).filter(Boolean))].join(', ')
         : '—';
       setText('crops-list',  cropNames);
-      setText('crops-badge', `${overview.total_crops ?? 0} active`);
+      setText('crops-badge', `${overview.total_crops ?? 0} ${t('dashboard.active')}`);
     }
 
     // ── Critical Tasks ─────────────────────────────────────────────────────────
     function renderCriticalTasks(data) {
       const tasks = data.critical_tasks || [];
-      setText('critical-tasks-badge', `${tasks.length} Urgent`);
+      setText('critical-tasks-badge', `${tasks.length} ${t('dashboard.urgent')}`);
 
       const container = document.getElementById('critical-tasks-list');
 
       if (!tasks.length) {
         container.innerHTML = `
           <div class="bg-surface-container-lowest rounded-2xl p-5 text-center text-on-surface-variant text-sm">
-            All clear — no urgent tasks.
+            ${t('dashboard.all_clear')}
           </div>
           <button onclick="window.location='/mytasks'" class="text-primary font-medium text-sm flex items-center gap-1">
             View All Pending Tasks <span class="material-symbols-outlined text-sm">arrow_forward</span>
@@ -775,9 +812,9 @@ ${body}
               </span>
             </div>
             <div>
-              <h3 class="font-medium text-lg">${escapeHtml(task.title)}</h3>
+              <h3 class="font-medium text-lg">${escapeHtml(getDynTranslation(task.title))}</h3>
               <p class="text-sm text-on-surface-variant">
-                ${capitalize(task.priority)} Priority${task.overdue ? ' • Overdue' : ''}${task.field_name ? ' • ' + escapeHtml(task.field_name) : ''}
+                ${translatePriority(task.priority)}${task.overdue ? ' • ' + t('dashboard.overdue') : ''}${task.field_name ? ' • ' + escapeHtml(getDynTranslation(task.field_name)) : ''}
               </p>
             </div>
           </div>
@@ -785,7 +822,7 @@ ${body}
         </div>
       `).join('') + `
         <button onclick="window.location='/mytasks'" class="text-primary font-medium text-sm flex items-center gap-1">
-          View All <span class="material-symbols-outlined text-sm">arrow_forward</span>
+          ${t('dashboard.view_all')} <span class="material-symbols-outlined text-sm">arrow_forward</span>
         </button>`;
     }
 
@@ -873,14 +910,14 @@ ${body}
         cta.innerHTML = `
           <a href="/${USER_ID}/seasonal-plan-page"
              class="bg-primary text-on-primary px-10 py-4 rounded-full font-medium hover:bg-primary-container transition-colors shadow-md active:scale-95 inline-block">
-            View Current Plan
+            ${t('dashboard.view_current_plan')}
           </a>`;
       } else {
         cta.innerHTML = `
           <button
             onclick="alert('Seasonal plan creation is not yet available.')"
             class="bg-surface-dim text-on-surface px-10 py-4 rounded-full font-medium hover:bg-surface-variant transition-colors active:scale-95">
-            Create New Plan
+            ${t('dashboard.create_new_plan')}
           </button>`;
       }
     }
@@ -916,6 +953,12 @@ ${body}
         .replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
     }
 
+    function translatePriority(p) {
+      const key = 'dashboard.priority_' + String(p || '').toLowerCase();
+      const translated = (typeof t === 'function') ? t(key) : null;
+      return (translated && translated !== key) ? translated : capitalize(p);
+    }
+
     function getWeatherIcon(condition) {
       const map = {
         sunny: 'sunny', clear: 'sunny',
@@ -949,15 +992,15 @@ ${body}
     }
 
     function getSoilMoistureLabel(pct) {
-      if (pct < 30) return 'Low';
-      if (pct > 70) return 'High';
-      return 'Optimal';
+      if (pct < 30) return t('dashboard.moisture_low');
+      if (pct > 70) return t('dashboard.moisture_high');
+      return t('dashboard.moisture_optimal');
     }
 
     function getSoilHeatLabel(pct) {
-      if (pct < 30) return 'Cool';
-      if (pct > 60) return 'Hot';
-      return 'Warm';
+      if (pct < 30) return t('dashboard.heat_cool');
+      if (pct > 60) return t('dashboard.heat_hot');
+      return t('dashboard.heat_warm');
     }
 
     document.getElementById('analysisModal').addEventListener('click', function(e) {
