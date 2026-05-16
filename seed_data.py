@@ -9,9 +9,10 @@ from app.models.crop import Crop
 from app.models.field import Field
 from app.models.task import Task
 from app.models.alert import Alert
-from app.models.weather import ClimateProfile
-from app.models.weather_forecast import CurrentWeatherProfile
+from app.models.weather import Weather
+from app.models.weather_forecast import WeatherForecast
 from app.models.seasonal_plan import SeasonalPlan, SeasonalPlanEntry
+from app.models.weekly_plan import WeeklyPlan, WeeklyPlanEntry
 
 
 def run():
@@ -23,11 +24,13 @@ def run():
     Notification.query.delete()
     Crop.query.delete()
     Field.query.delete()
+    WeeklyPlanEntry.query.delete()
+    WeeklyPlan.query.delete()
     SeasonalPlanEntry.query.delete()
     SeasonalPlan.query.delete()
     User.query.delete()
-    ClimateProfile.query.delete()
-    CurrentWeatherProfile.query.delete()
+    Weather.query.delete()
+    WeatherForecast.query.delete()
     db.session.commit()
 
     # ---- USERS ----
@@ -57,7 +60,7 @@ def run():
             health_status="healthy",
             field_score=92.0,
             health_percentage=90.0,
-            moisture_level=65.0,
+            moisture_level=55.0,  # 55% → band "30-60"; keeps soil_moisture ">60" rule silent
             heat_level=28.0,
             stress_risk=10.0,
             disease_risk="low",
@@ -304,146 +307,88 @@ def run():
     db.session.commit()
 
     # ---- TASKS ----
+    # 7 tasks across 3 users, aligned with weekly plan events and forecast conditions.
+    # user[0] Punjab → NO_IMPACT with current forecast (negligible + NO_IMPACT days)
+    # user[1] Sindh  → IMPACT_TASKS (rainfall drops <50mm band on May 18)
+    # user[8] Islamabad → IMPACT_TASKS (temp shifts to 30-40 band + rainfall <50mm on May 18)
     sample_tasks = [
-        # ── CROP tasks ──────────────────────────────────────────────────────
+        # ── User[0] - Ahmad Khan (Punjab) ───────────────────────────────────
+        # Crop task: Rice sowing — aligns with weekly plan sowing event 2026-05-18
         Task(
-            title="Irrigate Rice",
-            priority="medium", completed=False,
-            created_at=datetime.utcnow(), due_date=date.today(),
-            task_type="irrigation", task_category="crop",
-            description="Provide controlled irrigation to support vegetative rice growth.",
-            notes="Soil moisture currently stable.",
+            title="Sow Rice — North Field Alpha",
+            priority="high", completed=False,
+            created_at=datetime.utcnow(), due_date=date(2026, 5, 18),
+            task_type="planting", task_category="crop",
+            description="Sow rice at North Field Alpha per weekly plan. Baseline conditions (25°C, 50-100mm) are within acceptable range.",
+            notes="Weekly plan event: sowing 2026-05-18.",
             crop_id=sample_crops[0].id, field_id=sample_fields[0].id, user_id=user[0].id,
         ),
+        # Crop task: Rice irrigation — aligns with weekly plan irrigation event 2026-05-21
         Task(
-            title="Spray Fungicide on Cotton",
-            priority="high", completed=False,
-            created_at=datetime.utcnow(), due_date=date.today(),
-            task_type="spraying", task_category="crop",
-            description="Apply preventive fungicide to cotton during flowering to reduce disease risk.",
-            notes="High humidity reported recently.",
-            crop_id=sample_crops[1].id, field_id=sample_fields[1].id, user_id=user[0].id,
-        ),
-        Task(
-            title="Harvest Maize",
-            priority="high", completed=False,
-            created_at=datetime.utcnow(), due_date=date.today() + timedelta(days=5),
-            task_type="harvesting", task_category="crop",
-            description="Begin maize harvest — crop has reached maturity.",
-            notes="Ensure harvester is serviced beforehand.",
-            crop_id=sample_crops[2].id, field_id=sample_fields[2].id, user_id=user[0].id,
-        ),
-        Task(
-            title="Prune Cotton Plants",
+            title="Irrigate Rice — North Field Alpha",
             priority="medium", completed=False,
-            created_at=datetime.utcnow(), due_date=date.today() + timedelta(days=3),
-            task_type="pruning", task_category="crop",
-            description="Remove excess lateral shoots to improve airflow and boll development.",
-            notes="Focus on dense canopy areas.",
-            crop_id=sample_crops[5].id, field_id=sample_fields[5].id, user_id=user[0].id,
+            created_at=datetime.utcnow(), due_date=date(2026, 5, 21),
+            task_type="irrigation", task_category="crop",
+            description="First irrigation for rice — 3 days post-sowing per rulebook (irrigation_calendar: days_after_sowing=3).",
+            notes="Weekly plan event: irrigation 2026-05-21.",
+            crop_id=sample_crops[0].id, field_id=sample_fields[0].id, user_id=user[0].id,
         ),
+        # Field task: Fertilize Maize — aligns with weekly plan rainfall adjustment on 2026-05-20
+        # Rule fired: Maize Sowing + "50-100" rainfall → fertilization.increase quantity.minimal
         Task(
-            title="Assist Rice Pollination",
+            title="Fertilize Maize — Punjab Wheat Belt",
             priority="medium", completed=False,
-            created_at=datetime.utcnow(), due_date=date.today() + timedelta(days=2),
-            task_type="pollination", task_category="crop",
-            description="Support pollination during heading stage by gentle agitation of rows.",
-            notes="Schedule during morning hours for best results.",
-            crop_id=sample_crops[4].id, field_id=sample_fields[4].id, user_id=user[0].id,
-        ),
-        Task(
-            title="Defoliate Cotton Pre-Harvest",
-            priority="high", completed=False,
-            created_at=datetime.utcnow(), due_date=date.today() + timedelta(days=7),
-            task_type="defoliation", task_category="crop",
-            description="Apply defoliant to cotton to accelerate leaf drop before mechanical harvest.",
-            notes="Check boll opening percentage before applying.",
-            crop_id=sample_crops[1].id, field_id=sample_fields[1].id, user_id=user[0].id,
-        ),
-
-        # ── FIELD tasks ─────────────────────────────────────────────────────
-        Task(
-            title="Fertilize Lower Indus Soil",
-            priority="medium", completed=False,
-            created_at=datetime.utcnow(), due_date=date.today(),
+            created_at=datetime.utcnow(), due_date=date(2026, 5, 20),
             task_type="fertilizing", task_category="field",
-            description="Apply balanced NPK fertilizer to restore soil nutrients.",
-            notes="Canal water supply is adequate.",
-            crop_id=None, field_id=sample_fields[5].id, user_id=user[0].id,
+            description="Increase fertilization for maize sowing — 50-100mm rainfall band is below rainfed threshold; supplemental nutrients critical at germination.",
+            notes="Weekly plan adjustment: Maize Sowing + rainfall 50-100mm → fertilization increase (minimal).",
+            crop_id=None, field_id=sample_fields[4].id, user_id=user[0].id,
         ),
+        # Crop task: Spray fungicide on Cotton — flowering stage, humidity risk
         Task(
-            title="Soil pH Testing",
+            title="Spray Fungicide — East Creek Basin Cotton",
             priority="high", completed=False,
-            created_at=datetime.utcnow(), due_date=date.today(),
-            task_type="soil_testing", task_category="field",
-            description="Conduct soil pH and nutrient testing across the flowering rice field.",
-            notes="Previous nutrient imbalance suspected.",
-            crop_id=None, field_id=sample_fields[7].id, user_id=user[0].id,
-        ),
-        Task(
-            title="Clear Drainage Channels",
-            priority="high", completed=False,
-            created_at=datetime.utcnow(), due_date=date.today(),
-            task_type="drainage", task_category="field",
-            description="Inspect and clear drainage channels to avoid water logging.",
-            notes="Uneven slope requires attention.",
-            crop_id=None, field_id=sample_fields[2].id, user_id=user[0].id,
-        ),
-        Task(
-            title="Plow East Delta Field",
-            priority="medium", completed=False,
-            created_at=datetime.utcnow(), due_date=date.today() + timedelta(days=4),
-            task_type="plowing", task_category="field",
-            description="Deep plow field to break compaction layer before next planting season.",
-            notes="Use subsoil plow attachment.",
-            crop_id=None, field_id=sample_fields[3].id, user_id=user[0].id,
-        ),
-        Task(
-            title="Weed Control — Upper Punjab",
-            priority="medium", completed=False,
-            created_at=datetime.utcnow(), due_date=date.today() + timedelta(days=2),
-            task_type="weeding", task_category="field",
-            description="Manual and chemical weeding around crop rows to reduce competition.",
-            notes="Avoid herbicide drift near canal.",
-            crop_id=None, field_id=sample_fields[6].id, user_id=user[0].id,
-        ),
-        Task(
-            title="Prepare Sindh Plains for Planting",
-            priority="low", completed=False,
-            created_at=datetime.utcnow(), due_date=date.today() + timedelta(days=10),
-            task_type="land_preparation", task_category="field",
-            description="Level and prepare field bed for upcoming rice planting season.",
-            notes="Laser leveling recommended.",
-            crop_id=None, field_id=sample_fields[8].id, user_id=user[0].id,
+            created_at=datetime.utcnow(), due_date=date(2026, 5, 18),
+            task_type="spraying", task_category="crop",
+            description="Apply preventive fungicide to flowering cotton. Humidity band 40-70% with moisture risk warrants treatment.",
+            notes="Cotton at flowering stage — inspect boll development during application.",
+            crop_id=sample_crops[1].id, field_id=sample_fields[1].id, user_id=user[0].id,
         ),
 
-        # ── GENERAL tasks ────────────────────────────────────────────────────
+        # ── User[1] - Ali Raza (Sindh) ──────────────────────────────────────
+        # Sindh forecast May 18: rainfall drops 60mm→0mm (50-100 band → <50 band) → IMPACT_TASKS
+        # Rule fires: irrigation.increase days.significant → this task priority → critical, delayed
         Task(
-            title="Routine Field Maintenance",
-            priority="low", completed=False,
-            created_at=datetime.utcnow(), due_date=date.today(),
-            task_type="maintenance", task_category="general",
-            description="General upkeep of farm infrastructure — fences, pathways, water points.",
-            notes="Coordinate with field workers.",
-            crop_id=None, field_id=None, user_id=user[0].id,
-        ),
-        Task(
-            title="Farm Inspection Round",
+            title="Irrigate Cotton — Sindh",
             priority="medium", completed=False,
-            created_at=datetime.utcnow(), due_date=date.today(),
-            task_type="inspection", task_category="general",
-            description="Full farm walkthrough to identify any unreported issues across all fields.",
-            notes="Document findings in field log.",
-            crop_id=None, field_id=None, user_id=user[0].id,
+            created_at=datetime.utcnow(), due_date=date(2026, 5, 18),
+            task_type="irrigation", task_category="general",
+            description="Regular cotton irrigation. Forecast: zero rainfall (band shift 50-100→<50mm) with extreme heat (41°C) — full supplemental irrigation required.",
+            notes="IMPACT_TASKS expected: irrigation.increase days.significant → priority critical, task delayed.",
+            crop_id=None, field_id=None, user_id=user[1].id,
         ),
+        # Spraying task — will be de-prioritized by -1 level when irrigation escalates
         Task(
-            title="Equipment Check — Irrigation Pumps",
+            title="Spray Pesticide — Sindh",
+            priority="medium", completed=False,
+            created_at=datetime.utcnow(), due_date=date(2026, 5, 18),
+            task_type="spraying", task_category="general",
+            description="Preventive pesticide application. Hot dry conditions increase pest pressure.",
+            notes="Unaffected by irrigation action directly — priority will drop -1 level (medium→low).",
+            crop_id=None, field_id=None, user_id=user[1].id,
+        ),
+
+        # ── User[8] - Faisal Mehmood (Islamabad) ────────────────────────────
+        # Islamabad forecast May 18: temp 26°C→37°C (20-30→30-40 band) + rainfall 58→0mm (50-100→<50 band) → IMPACT_TASKS
+        # Rule fires: irrigation.increase days.significant → critical + delayed
+        Task(
+            title="Irrigate Maize — Islamabad",
             priority="low", completed=False,
-            created_at=datetime.utcnow(), due_date=date.today(),
-            task_type="equipment_check", task_category="general",
-            description="Inspect and service all irrigation pumps and sprayer units.",
-            notes="Routine preventive maintenance before peak season.",
-            crop_id=None, field_id=None, user_id=user[0].id,
+            created_at=datetime.utcnow(), due_date=date(2026, 5, 18),
+            task_type="irrigation", task_category="general",
+            description="Scheduled maize irrigation. Heatwave forecast (37°C, band 20-30→30-40) with zero rainfall — critical irrigation frequency increase required.",
+            notes="IMPACT_TASKS expected: irrigation.increase days.significant → priority critical, task delayed.",
+            crop_id=None, field_id=None, user_id=user[8].id,
         ),
     ]
 
@@ -516,60 +461,68 @@ def run():
     db.session.add_all(sample_notifications)
     db.session.commit()
 
-    # ---- DAILY WEATHER (ClimateProfile) ----
-    # 7 days from 18 May 2026 for 4 Pakistani regions.
+    # ---- WEATHER (historical baseline) ----
+    # Weather is keyed by user location (one region per user).
+    # user[0] Ahmad Khan → "Punjab, Pakistan" — primary test user for weekly plan & risk assessment.
     #
-    # Scenario for weekly plan (user 1, week 18–24 May 2026):
-    #   Punjab (~15°C) → band "15-20" → triggers cold-stress adjustment for Maize sowing
-    #   Sindh  (~34°C) → band "30-40" → triggers heat-stress adjustment for Rice sowing
-    #   KP / Islamabad → neutral conditions, no significant adjustments expected
+    # Designed rule outcomes for user[0] (week 18–24 May 2026, Punjab):
+    #   ~17°C → band "15-20":
+    #     Maize Sowing  → sowing.delay.minimal  (4 days, nothing else)
+    #     Rice  Sowing  → sowing.delay.significant (7 days) + monitoring
+    #     Cotton Sowing → sowing.delay.significant (7 days) + monitoring
+    #
+    # All rainfall set to 50-100mm band so "increase days" never fires (handler only
+    # acts on "increase days" / "decrease days"; "increase quantity" is silently skipped).
+    # Field moisture for North Field Alpha set to 55% so soil_moisture ">60" does not fire.
 
-    REGIONS = {
+    NORMAL_REGIONS = {
         "Punjab, Pakistan": [
             # (avg_temp, humidity, rainfall_mm, sunlight_h, wind_kph, notes)
-            # Cold spell — all days ~15°C, well below 18°C maize germination threshold
-            (15.2, 55, 0.0,  6.5, 14, "Cold spell; temperatures too low for maize germination."),
-            (15.0, 58, 1.5,  6.0, 12, "Continued cold; sowing conditions unfavourable."),
-            (15.5, 56, 0.0,  7.0, 13, "Slight cloud cover; temperature remains sub-optimal."),
-            (15.8, 54, 2.5,  6.5, 15, "Light shower; soil cold and wet."),
-            (15.5, 52, 0.5,  7.5, 14, "Marginal improvement but still below threshold."),
-            (15.2, 50, 0.0,  8.0, 12, "Dry but cold; delay maize sowing advised."),
-            (15.8, 53, 0.0,  7.8, 13, "Cold persists; monitor forecast for warming trend."),
+            # ~25°C → band "20-30" → no rules fire; initial plan is undisturbed
+            (25.0, 55, 60.0, 7.5, 12, "Pleasant spring day; optimal conditions for all crops."),
+            (25.5, 54, 62.0, 7.8, 11, "Warm and clear; good field conditions."),
+            (24.8, 57, 58.0, 7.2, 13, "Mild breeze; soil moisture adequate."),
+            (25.2, 55, 61.0, 7.5, 12, "Stable conditions; no weather stress expected."),
+            (25.0, 56, 59.0, 7.8, 10, "Comfortable temperature; normal week."),
+            (25.5, 53, 63.0, 8.0, 11, "Sunny with light cloud; ideal conditions."),
+            (25.0, 55, 60.0, 7.5, 12, "End of stable week; conditions unchanged."),
         ],
         "Sindh, Pakistan": [
-            # Heat scenario — all days ~34°C, in 30-40 band for Rice heat-stress at sowing
-            (34.2, 35, 0.0, 10.5, 20, "High heat; early morning sowing recommended for rice."),
-            (33.8, 33, 0.0, 10.8, 22, "Sustained heat; increase irrigation to buffer desiccation."),
-            (34.0, 34, 0.0, 10.5, 21, "Continuous heat stress; monitor soil moisture closely."),
-            (34.5, 36, 0.0, 10.2, 19, "Hot and dry; irrigation critical for rice establishment."),
-            (33.5, 38, 1.5,  9.8, 17, "Trace rain; negligible cooling effect."),
-            (34.2, 37, 0.0, 10.4, 20, "Heat persists; maintain irrigation schedule."),
-            (34.8, 35, 0.0, 10.6, 22, "Peak heat day; increase irrigation frequency."),
+            # ~32°C → band "30-40" → Rice Sowing: sowing.delay.minimal + irrigation.increase quantity (ignored)
+            (32.0, 52, 60.0, 10.0, 16, "Warm day above 30°C; delay rice sowing by 4 days."),
+            (31.5, 54, 55.0,  9.8, 15, "Sustained warmth; irrigation well managed."),
+            (32.5, 50, 62.0, 10.5, 17, "Hot; monitor soil temperature before sowing."),
+            (31.8, 53, 58.0, 10.2, 16, "Warm and humid; rice pre-sowing conditions."),
+            (32.2, 52, 60.0,  9.5, 14, "Above 30°C threshold; sowing delayed as precaution."),
+            (31.5, 55, 57.0,  9.8, 15, "Moderate warmth with adequate rainfall."),
+            (32.0, 51, 61.0, 10.0, 16, "Typical warm Sindh May; conditions stabilising."),
         ],
         "Khyber Pakhtunkhwa, Pakistan": [
-            (24.0, 58, 4.5,  7.5, 12, "Mild day with intermittent cloud cover."),
-            (23.5, 60, 6.0,  7.0, 10, "Cooler with moderate rain; good soil moisture."),
-            (22.8, 62, 8.5,  6.5, 11, "Overcast with moderate showers."),
-            (24.5, 55, 2.0,  8.0, 13, "Clearing after overnight rain."),
-            (25.2, 52, 0.5,  8.5, 14, "Mostly sunny, mild breeze."),
-            (23.0, 65, 12.0, 5.5, 9,  "Heavy shower; check field drainage."),
-            (22.5, 68, 10.0, 5.0, 8,  "Wet and cool; delay spraying operations."),
+            # "20-30" temp + "50-100" rainfall → no rules fire
+            (21.0, 60, 55.0, 7.5, 10, "Mild highland conditions; no adjustments needed."),
+            (21.5, 58, 60.0, 8.0,  9, "Clear morning; adequate rainfall."),
+            (20.5, 63, 58.0, 7.0, 11, "Moderate moisture; within safe bands."),
+            (22.0, 57, 55.0, 8.5, 10, "Sunny intervals; normal for the season."),
+            (22.5, 55, 62.0, 9.0, 12, "Comfortable; optimal conditions."),
+            (21.0, 62, 57.0, 7.2,  9, "Light showers; soil moist but not waterlogged."),
+            (21.0, 64, 60.0, 7.0,  8, "Overcast morning; afternoon clearing."),
         ],
         "Islamabad Capital Territory, Pakistan": [
-            (28.5, 50, 3.0,  8.0, 15, "Warm with afternoon clouds."),
-            (29.2, 48, 1.5,  8.5, 16, "Mostly clear, comfortable conditions."),
-            (27.8, 55, 7.0,  7.0, 14, "Intermittent showers; soil moisture adequate."),
-            (28.0, 54, 5.5,  7.5, 13, "Patchy rain; monitor drainage."),
-            (29.5, 46, 0.5,  9.0, 17, "Clearing skies, warm afternoon."),
-            (30.0, 44, 0.0,  9.5, 18, "Clear and warm, good sunlight hours."),
-            (28.8, 52, 4.0,  7.8, 14, "Mild shower possible in evening."),
+            # "20-30" temp + "50-100" rainfall → no rules fire
+            (26.0, 56, 58.0, 8.5, 13, "Pleasant spring day; good field conditions."),
+            (26.5, 54, 55.0, 9.0, 14, "Mostly clear; moderate temperature."),
+            (25.5, 60, 62.0, 7.5, 12, "Light showers; soil moisture replenished."),
+            (26.0, 58, 57.0, 8.0, 13, "Patchy cloud; comfortable for field work."),
+            (27.0, 52, 60.0, 9.0, 15, "Warm and sunny; no stress conditions."),
+            (27.5, 50, 55.0, 9.5, 14, "Clear skies; ideal conditions."),
+            (26.2, 57, 58.0, 8.2, 13, "Light evening shower possible."),
         ],
     }
 
     weather_rows = []
-    for region, days in REGIONS.items():
+    for region, days in NORMAL_REGIONS.items():
         for offset, (temp, hum, rain, sun, wind, note) in enumerate(days):
-            weather_rows.append(ClimateProfile(
+            weather_rows.append(Weather(
                 region=region,
                 date=date(2026, 5, 18) + timedelta(days=offset),
                 avg_temperature_c=temp,
@@ -584,67 +537,74 @@ def run():
     db.session.add_all(weather_rows)
     db.session.commit()
 
-    # ---- LEGACY WEATHER PROFILE (CurrentWeatherProfile) ----
-    # Kept for backward compat; not used by the weekly planner.
-    sample_weather_profile = [
-        CurrentWeatherProfile(
-            region="Punjab, Pakistan", season="Rabi",
-            avg_temperature_c=26.0, avg_rainfall_mm=2.5, avg_humidity=55.0,
-            notes="Stable temperatures, suitable for wheat flowering and ripening.",
-            created_at=datetime.utcnow() + timedelta(days=0),
-            _start_index=0, _with_increments=7,
-        ),
-        CurrentWeatherProfile(
-            region="Punjab, Pakistan", season="Rabi",
-            avg_temperature_c=27.2, avg_rainfall_mm=3.0, avg_humidity=57.0,
-            notes="Slight warming trend observed, no major rainfall expected.",
-            created_at=datetime.utcnow() + timedelta(days=1),
-            _start_index=1, _with_increments=7,
-        ),
-        CurrentWeatherProfile(
-            region="Sindh, Pakistan", season="Kharif",
-            avg_temperature_c=32.5, avg_rainfall_mm=0.8, avg_humidity=62.0,
-            notes="Hot and dry conditions; irrigation planning critical for cotton fields.",
-            created_at=datetime.utcnow() + timedelta(days=2),
-            _start_index=2, _with_increments=7,
-        ),
-        CurrentWeatherProfile(
-            region="Sindh, Pakistan", season="Kharif",
-            avg_temperature_c=33.1, avg_rainfall_mm=1.2, avg_humidity=65.0,
-            notes="Humidity increasing slightly; monitor fungal risk.",
-            created_at=datetime.utcnow() + timedelta(days=3),
-            _start_index=3, _with_increments=7,
-        ),
-        CurrentWeatherProfile(
-            region="Khyber Pakhtunkhwa, Pakistan", season="Rabi",
-            avg_temperature_c=22.0, avg_rainfall_mm=4.5, avg_humidity=60.0,
-            notes="Cooler nights expected; seedling crops may face mild cold stress.",
-            created_at=datetime.utcnow() + timedelta(days=4),
-            _start_index=4, _with_increments=7,
-        ),
-        CurrentWeatherProfile(
-            region="Islamabad Capital Territory, Pakistan", season="Rabi",
-            avg_temperature_c=24.8, avg_rainfall_mm=5.2, avg_humidity=58.0,
-            notes="Intermittent showers forecasted; suitable for soil moisture replenishment.",
-            created_at=datetime.utcnow() + timedelta(days=5),
-            _start_index=5, _with_increments=7,
-        ),
-        CurrentWeatherProfile(
-            region="Punjab, Pakistan", season="Kharif",
-            avg_temperature_c=28.5, avg_rainfall_mm=6.5, avg_humidity=61.0,
-            notes="Transition toward Kharif season; early rainfall signals detected.",
-            created_at=datetime.utcnow() + timedelta(days=6),
-            _start_index=6, _with_increments=7,
-        ),
-    ]
+    # ---- WEATHER FORECAST (harsh/extreme conditions — for risk & change detection) ----
+    # Compared against the weather baseline above to assess climate risk and trigger alerts.
+    # Punjab: severe cold stress. Sindh: extreme heat. KP: flood risk. Islamabad: heatwave.
 
-    db.session.add_all(sample_weather_profile)
+    HARSH_FORECAST_REGIONS = {
+        "Punjab, Pakistan": [
+            # sunlight→7.5 (≤0.5 from all baselines 7.2–8.0), rainfall→60.0 (≤3.0 from all baselines 58.0–63.0)
+            (25.8, 53, 61.5, 7.2, 12, "Negligible — today fine."),
+    (25.8, 53, 61.5, 7.2, 12, "Negligible change."),
+    (31.5, 53, 60.0, 7.2, 10, "IMPACT_PLAN: 20-30 → 30-40 on future day."),
+	(31.5, 53, 60.0, 7.2, 10, "IMPACT_PLAN: 20-30 → 30-40 on future day."),
+    (25.8, 53, 61.5, 7.2, 12, "Negligible change."),
+    (25.8, 53, 61.5, 7.2, 12, "Negligible change."),
+    (25.8, 53, 61.5, 7.2, 12, "Negligible change."),
+        ],
+        "Sindh, Pakistan": [
+            # Extreme heat — well above 38°C, severe desiccation and crop failure risk
+            (41.5, 28, 0.0, 12.0, 28, "Extreme heat event; crop desiccation risk is critical."),
+            (42.0, 25, 0.0, 12.5, 30, "Heatwave peak; suspend all field operations midday."),
+            (40.8, 27, 0.0, 12.0, 27, "Drought conditions worsening; double irrigation frequency."),
+            (42.5, 24, 0.0, 12.5, 31, "Record high; rice flowering severely threatened."),
+            (41.0, 26, 0.0, 12.0, 29, "No rainfall forecast; soil moisture depleting rapidly."),
+            (43.0, 23, 0.0, 12.5, 32, "Highest temperature of season; immediate shade required."),
+            (41.8, 25, 0.0, 12.0, 28, "Sustained extreme heat; crop loss risk without intervention."),
+        ],
+        "Khyber Pakhtunkhwa, Pakistan": [
+            # Flash flood risk — extreme rainfall and low sunlight
+            (16.0, 90, 38.0, 2.0,  8, "Flash flood warning issued; evacuate low-lying fields."),
+            (15.5, 92, 42.0, 1.5,  7, "Heaviest rainfall of the year; field access impossible."),
+            (16.5, 88, 35.0, 2.5,  9, "Rivers at high levels; waterlogging extensive."),
+            (15.8, 91, 40.0, 2.0,  8, "Landslide risk in slope fields; suspend all operations."),
+            (17.0, 87, 28.0, 3.0, 10, "Rain easing slightly but soil saturated."),
+            (16.2, 93, 45.0, 1.0,  6, "Record 24-hour rainfall; crop damage expected."),
+            (15.5, 90, 36.0, 2.0,  7, "Persistent flooding; assess damage before resuming work."),
+        ],
+        "Islamabad Capital Territory, Pakistan": [
+            # Heatwave — temperatures 36-40°C with dry conditions
+            (37.0, 32, 0.0, 11.5, 22, "Heatwave advisory; avoid outdoor work 11am–4pm."),
+            (38.5, 28, 0.0, 12.0, 24, "Dangerously hot; irrigate twice daily to prevent crop loss."),
+            (36.8, 30, 0.0, 11.5, 23, "Third consecutive heatwave day; heat stress accumulating."),
+            (39.0, 27, 0.0, 12.0, 25, "Peak heatwave; soil surface temperature exceeds 50°C."),
+            (37.5, 29, 0.0, 11.5, 22, "No relief forecast; maintain emergency irrigation."),
+            (40.0, 25, 0.0, 12.0, 26, "Hottest day on record for May; critical intervention needed."),
+            (38.0, 28, 0.0, 12.0, 24, "Heatwave persists; crop stress and wilting observed."),
+        ],
+    }
+
+    weather_forecast_rows = []
+    for region, days in HARSH_FORECAST_REGIONS.items():
+        for offset, (temp, hum, rain, sun, wind, note) in enumerate(days):
+            weather_forecast_rows.append(WeatherForecast(
+                region=region,
+                date=date(2026, 5, 18) + timedelta(days=offset),
+                avg_temperature_c=temp,
+                humidity=hum,
+                rainfall_mm=rain,
+                sunlight_hours=sun,
+                wind_speed_kph=wind,
+                notes=note,
+                created_at=datetime.utcnow(),
+            ))
+
+    db.session.add_all(weather_forecast_rows)
     db.session.commit()
-
 
     print("Sample data seeded successfully.")
     print(f"Users:        {User.query.count()}")
     print(f"Crops:        {Crop.query.count()}")
     print(f"Fields:       {Field.query.count()}")
     print(f"Tasks:        {Task.query.count()}")
-    print(f"Weather rows: {ClimateProfile.query.count()}")
+    print(f"Weather rows: {Weather.query.count()}")
