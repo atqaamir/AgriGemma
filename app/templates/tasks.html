@@ -94,29 +94,105 @@
 
     <div class="space-y-4">
 
-      <!-- Climate Insights Hero Section -->
+      <!-- AI-Driven Tasks Hero -->
       <section class="relative overflow-hidden rounded-xl bg-primary-container text-on-primary-container p-8 min-h-[320px] flex flex-col justify-end group">
         <div class="absolute inset-0 z-0">
-          <img alt="Dry field forecast" class="w-full h-full object-cover opacity-40 mix-blend-overlay group-hover:scale-105 transition-transform duration-700" data-alt="expansive golden wheat field under a vast, cloudless hazy sky during an afternoon dry spell with warm orange tones" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAPwNodAhEPdvtyZ3zTMsZGgAaoVQRlKTsfKqrMYcPJCrbPN9sXbbRu_pjbZ_UTS4LIYu9eCJaNCsbL2RihKK07CANITE4wQeKOA9ZXOKPXjpAX_Gm8BsDwzRRLn7Mji1vnfQ7xPejL8TRQCetgVHP6-R6G5_2G_2ZeZ-GnDOtDmO_NWp7DEjL4b_R8j3OAf7z4uNvEj9bVA38G-0nd8NnIWXQJkPUAd7MHUlc0CFJlwJ1SMZPwLxxbbVWdmEK6JrHfws4X-Xov4A"/>
+          <img alt="Farm field" class="w-full h-full object-cover opacity-40 mix-blend-overlay group-hover:scale-105 transition-transform duration-700"
+            src="https://lh3.googleusercontent.com/aida-public/AB6AXuAPwNodAhEPdvtyZ3zTMsZGgAaoVQRlKTsfKqrMYcPJCrbPN9sXbbRu_pjbZ_UTS4LIYu9eCJaNCsbL2RihKK07CANITE4wQeKOA9ZXOKPXjpAX_Gm8BsDwzRRLn7Mji1vnfQ7xPejL8TRQCetgVHP6-R6G5_2G_2ZeZ-GnDOtDmO_NWp7DEjL4b_R8j3OAf7z4uNvEj9bVA38G-0nd8NnIWXQJkPUAd7MHUlc0CFJlwJ1SMZPwLxxbbVWdmEK6JrHfws4X-Xov4A"/>
           <div class="absolute inset-0 bg-gradient-to-t from-primary/90 via-primary/40 to-transparent"></div>
         </div>
         <div class="relative z-10 space-y-4">
-          <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-secondary-fixed text-on-secondary-fixed text-[11px] font-bold uppercase tracking-widest">
-            <span class="material-symbols-outlined text-sm" style="font-variation-settings: 'FILL' 1;">warning</span> Critical Alert
+
+          <!-- Badge — shown only for critical/high -->
+          <div id="ai-alert-badge" style="display:none">
+            <span class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-secondary-fixed text-on-secondary-fixed text-[11px] font-bold uppercase tracking-widest">
+              <span class="material-symbols-outlined text-sm" style="font-variation-settings:'FILL' 1;">warning</span>
+              <span id="ai-badge-text">Critical Alert</span>
+            </span>
           </div>
-          <h2 class="text-4xl font-extrabold leading-tight tracking-tight">Extended Dry Spell Forecast</h2>
-          <p class="text-lg opacity-90 max-w-xl font-body">Data indicates 14 days of zero precipitation and 35°C peaks. Immediate irrigation adjustments required for the North and East quadrants.</p>
-          <div class="flex gap-4 pt-4">
-            <button class="bg-secondary-fixed text-on-secondary-fixed px-8 py-3 rounded-full font-bold text-sm flex items-center gap-2 hover:opacity-90 active:scale-95 transition-all">
-              <span class="material-symbols-outlined">water_drop</span>
-              ADJUST IRRIGATION
+
+          <!-- Loading skeleton -->
+          <div id="ai-hero-skeleton" class="space-y-3 animate-pulse">
+            <div class="h-10 bg-white/20 rounded-xl w-3/4"></div>
+            <div class="h-5 bg-white/15 rounded-lg w-full max-w-md"></div>
+            <div class="h-5 bg-white/10 rounded-lg w-2/3 max-w-sm"></div>
+          </div>
+
+          <!-- Real content — revealed by JS -->
+          <div id="ai-hero-content" style="display:none" class="space-y-1">
+            <h2 id="ai-hero-title" class="text-4xl font-extrabold leading-tight tracking-tight"></h2>
+            <p id="ai-hero-summary" class="text-base opacity-90 max-w-xl font-body leading-relaxed"></p>
+          </div>
+
+          <!-- Buttons row — always in DOM; individual buttons shown/hidden via style -->
+          <div class="flex items-center gap-3 pt-2 flex-wrap">
+            <!-- Solution button: opens "what to do" popup -->
+            <button id="ai-action-btn" onclick="openSolutionModal()" style="display:none"
+              class="bg-secondary-fixed text-on-secondary-fixed px-6 py-3 rounded-full font-bold text-sm flex items-center gap-2 hover:opacity-90 active:scale-95 transition-all">
+              <span class="material-symbols-outlined" id="ai-action-icon">task_alt</span>
+              <span id="ai-action-label">TAKE ACTION</span>
             </button>
-            <button class="bg-surface/20 backdrop-blur-md text-white border border-white/20 px-8 py-3 rounded-full font-bold text-sm hover:bg-surface/30 transition-all">
-              VIEW DATA
+            <!-- Explanation button: opens "why critical" popup -->
+            <button id="ai-explain-btn" onclick="openWhyModal()" style="display:none"
+              class="bg-surface/20 backdrop-blur-md text-white border border-white/20 px-6 py-3 rounded-full font-bold text-sm hover:bg-surface/30 transition-all">
+              VIEW EXPLANATION
+            </button>
+            <!-- Star: always visible, triggers fresh Ollama generation -->
+            <button onclick="generateFreshIntelligence()" title="Generate fresh AI analysis"
+              class="ml-auto text-white/60 hover:text-white transition-colors">
+              <span id="ai-regen-icon" class="material-symbols-outlined text-xl">auto_awesome</span>
             </button>
           </div>
+
         </div>
       </section>
+
+      <!-- ── Solution Modal: WHAT TO DO ───────────────────────────────────── -->
+      <div id="solutionModal" class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center pt-4 px-4 pb-24 hidden" onclick="closeSolutionModal()">
+        <div class="bg-surface rounded-2xl w-full max-w-lg max-h-[calc(100vh-120px)] overflow-y-auto shadow-2xl" onclick="event.stopPropagation()">
+          <div class="sticky top-0 flex items-center justify-between p-6 border-b border-surface-variant bg-surface">
+            <div class="flex items-center gap-3">
+              <span id="solution-modal-icon" class="material-symbols-outlined text-primary" style="font-variation-settings:'FILL' 1;">task_alt</span>
+              <h2 class="text-xl font-bold text-primary">What To Do</h2>
+            </div>
+            <div class="flex items-center gap-1">
+              <button onclick="downloadTasksReport('actions')" title="Download as PDF"
+                class="p-2 hover:bg-surface-container rounded-full transition-colors text-on-surface-variant hover:text-primary">
+                <span class="material-symbols-outlined text-lg">download</span>
+              </button>
+              <button onclick="closeSolutionModal()" class="p-2 hover:bg-surface-container rounded-full transition-colors">
+                <span class="material-symbols-outlined">close</span>
+              </button>
+            </div>
+          </div>
+          <div id="solution-modal-body" class="p-6 space-y-4 pb-8"></div>
+        </div>
+      </div>
+
+      <!-- ── Why Modal: WHY IT'S CRITICAL ────────────────────────────────── -->
+      <div id="whyModal" class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center pt-4 px-4 pb-24 hidden" onclick="closeWhyModal()">
+        <div class="bg-surface rounded-2xl w-full max-w-xl max-h-[calc(100vh-120px)] overflow-y-auto shadow-2xl" onclick="event.stopPropagation()">
+          <div class="sticky top-0 flex items-center justify-between p-6 border-b border-surface-variant bg-surface z-10">
+            <div class="flex items-center gap-3">
+              <span id="why-modal-icon" class="material-symbols-outlined text-amber-600" style="font-variation-settings:'FILL' 1;">psychology</span>
+              <div>
+                <h2 id="why-modal-title" class="text-xl font-bold text-primary leading-tight">Why It's Critical</h2>
+                <p id="why-modal-subtitle" class="text-[11px] text-on-surface-variant mt-0.5 hidden">Powered by AriGemma AI</p>
+              </div>
+            </div>
+            <div class="flex items-center gap-1">
+              <button onclick="downloadTasksReport('why')" title="Download as PDF"
+                class="p-2 hover:bg-surface-container rounded-full transition-colors text-on-surface-variant hover:text-primary">
+                <span class="material-symbols-outlined text-lg">download</span>
+              </button>
+              <button onclick="closeWhyModal()" class="p-2 hover:bg-surface-container rounded-full transition-colors flex-shrink-0">
+                <span class="material-symbols-outlined">close</span>
+              </button>
+            </div>
+          </div>
+          <div id="why-modal-body" class="p-6 space-y-5 pb-10"></div>
+        </div>
+      </div>
 
       <!-- Section header -->
       <div class="flex justify-between items-center px-2">
@@ -604,12 +680,15 @@
     }
 
     // ── Boot ──────────────────────────────────────────────────────────────────
+    let intelligenceData = null;
+
     document.addEventListener('DOMContentLoaded', () => {
       loadPendingTasks();
       loadUnreadCount();
       loadCriticalQueue();
       loadTaskLookup();
       loadCropsAndFields();
+      loadIntelligence();
     });
 
     // ── Task Lookup (category → types) ────────────────────────────────────────
@@ -918,7 +997,42 @@
     function renderPendingCards(tasks) {
       const c = document.getElementById('tasks-pending-container');
       if (!tasks.length) {
-        c.innerHTML = `<div class="flex-none w-full text-center text-on-surface-variant py-10">${t('tasks.no_match')}</div>`;
+        const isFiltered = filterState.priority || filterState.task_type || searchState;
+        const noTasksAtAll = cachedPendingTasks.length === 0 && !isFiltered;
+        if (noTasksAtAll) {
+          c.innerHTML = `
+            <div class="flex-none w-full flex flex-col items-center justify-center py-16 px-8 gap-6">
+              <div class="relative">
+                <div class="w-24 h-24 rounded-full bg-secondary-fixed/40 dark:bg-secondary-fixed/20 flex items-center justify-center">
+                  <span class="material-symbols-outlined text-primary dark:text-primary-fixed-dim" style="font-size:48px; font-variation-settings:'FILL' 1;">eco</span>
+                </div>
+                <div class="absolute -bottom-1 -right-1 w-8 h-8 rounded-full bg-surface-container-low dark:bg-[#2a2a24] border-2 border-surface dark:border-[#1c1c17] flex items-center justify-center">
+                  <span class="material-symbols-outlined text-on-surface-variant" style="font-size:16px;">check</span>
+                </div>
+              </div>
+              <div class="text-center space-y-1 max-w-xs">
+                <p class="font-headline font-bold text-lg text-on-surface dark:text-[#e5e2da]">Your farm is all clear</p>
+                <p class="text-sm text-on-surface-variant leading-relaxed">No pending tasks right now. Add tasks manually or generate a seasonal plan to get started.</p>
+              </div>
+              <div class="flex flex-col sm:flex-row gap-3">
+                <a href="/1/seasonal-plan-page" class="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-primary text-on-primary text-sm font-semibold hover:opacity-90 transition-opacity">
+                  <span class="material-symbols-outlined text-base">calendar_month</span>
+                  Generate a plan
+                </a>
+                <button onclick="openCreateTaskModal()" class="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-surface-container-high dark:bg-[#2e2e28] text-on-surface dark:text-[#e5e2da] text-sm font-semibold hover:opacity-80 transition-opacity">
+                  <span class="material-symbols-outlined text-base">add</span>
+                  Add a task
+                </button>
+              </div>
+            </div>`;
+        } else {
+          c.innerHTML = `
+            <div class="flex-none w-full flex flex-col items-center justify-center py-12 px-8 gap-3">
+              <span class="material-symbols-outlined text-on-surface-variant" style="font-size:36px;">filter_list_off</span>
+              <p class="text-sm text-on-surface-variant">No tasks match your filters.</p>
+              <button onclick="resetFilters()" class="text-xs text-primary underline underline-offset-2">Clear filters</button>
+            </div>`;
+        }
         return;
       }
       c.innerHTML = tasks.map(tk => buildTaskCard(tk, false)).join('') + SCROLL_SPACER;
@@ -927,7 +1041,12 @@
     function renderAllTasksScroll(tasks) {
       const c = document.getElementById('tasks-all-container');
       if (!tasks.length) {
-        c.innerHTML = `<div class="flex-none w-full text-center text-on-surface-variant py-10">${t('tasks.no_match')}</div>`;
+        c.innerHTML = `
+          <div class="flex-none w-full flex flex-col items-center justify-center py-12 px-8 gap-3">
+            <span class="material-symbols-outlined text-on-surface-variant" style="font-size:36px;">filter_list_off</span>
+            <p class="text-sm text-on-surface-variant">No tasks match your filters.</p>
+            <button onclick="resetFilters()" class="text-xs text-primary underline underline-offset-2">Clear filters</button>
+          </div>`;
         return;
       }
       c.innerHTML = tasks.map(tk => buildTaskCard(tk, false)).join('') + SCROLL_SPACER;
@@ -1613,6 +1732,559 @@
       return String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#039;');
     }
 
+    // ── AI Intelligence Hero ───────────────────────────────────────────────────
+    async function loadIntelligence() {
+      try {
+        const res = await fetch(`${TASKS_API}/intelligence/stored?user_id=1`);
+        if (!res.ok) throw new Error(res.status);
+        const data = await res.json();
+        if (!data) { renderIntelHeroFallback(); return; }
+        intelligenceData = data;
+        renderIntelHero(intelligenceData);
+      } catch (e) {
+        console.error('Intelligence load failed:', e);
+        renderIntelHeroFallback();
+      }
+    }
+
+    async function generateFreshIntelligence() {
+      const icon = document.getElementById('ai-regen-icon');
+      icon.textContent = 'progress_activity';
+      icon.style.animation = 'spin 1s linear infinite';
+      try {
+        const res = await fetch(`${TASKS_API}/intelligence/generate?user_id=1`, { method: 'POST' });
+        if (!res.ok) throw new Error(res.status);
+        intelligenceData = await res.json();
+        renderIntelHero(intelligenceData);
+      } catch (e) {
+        console.error('Intelligence generation failed:', e);
+      } finally {
+        icon.style.animation = '';
+        icon.textContent = 'auto_awesome';
+      }
+    }
+
+    function renderIntelHero(intel) {
+      const level  = intel.priority_level || 'low';
+      const isCrit = level === 'critical';
+      const isHigh = level === 'high';
+
+      // Badge
+      if (isCrit || isHigh) {
+        document.getElementById('ai-badge-text').textContent = isCrit ? 'Critical Alert' : 'High Priority';
+        document.getElementById('ai-alert-badge').style.display = 'block';
+      }
+
+      // Title + summary
+      document.getElementById('ai-hero-title').textContent = deriveHeroTitle(intel);
+      const summary = intel.summary || (intel.urgent_actions?.[0] ?? 'No active alerts right now.');
+      document.getElementById('ai-hero-summary').textContent = summary;
+
+      // Swap skeleton → content
+      document.getElementById('ai-hero-skeleton').style.display = 'none';
+      document.getElementById('ai-hero-content').style.display  = 'block';
+
+      // Buttons — TAKE ACTION only for critical; VIEW EXPLANATION for critical and high
+      const hasContent = intel.recommendations?.length || intel.risks?.length || intel.urgent_actions?.length;
+      if (hasContent) {
+        const action = deriveAction(intel);
+        document.getElementById('ai-action-icon').textContent  = action.icon;
+        document.getElementById('ai-action-label').textContent = action.label;
+        document.getElementById('ai-action-btn').style.display  = isCrit ? 'flex' : 'none';
+        document.getElementById('ai-explain-btn').style.display = (isCrit || isHigh) ? 'block' : 'none';
+      }
+    }
+
+    function renderIntelHeroFallback() {
+      document.getElementById('ai-hero-skeleton').style.display = 'none';
+      document.getElementById('ai-hero-title').textContent      = 'Your Farming starts here.';
+      document.getElementById('ai-hero-summary').textContent    = 'AriGemma analyzes your crops, soil, and schedule to keep your farm running at its best — surfacing the right tasks at the right time, so nothing slips through the cracks.';
+      document.getElementById('ai-hero-content').style.display  = 'block';
+    }
+
+    function deriveHeroTitle(intel) {
+      const level = intel.priority_level || 'low';
+      if (level === 'critical') return "Your farm needs attention right now.";
+      if (level === 'high')     return "A few things need your attention today.";
+      if (level === 'medium')   return "Here's what's on your plate today.";
+      return "Things are looking good on your farm.";
+    }
+
+    function deriveAction(intel) {
+      const text = [
+        ...(intel.urgent_actions   || []),
+        ...(intel.recommendations  || []),
+      ].join(' ').toLowerCase();
+
+      if (text.includes('irrigat'))               return { icon: 'water_drop',     label: 'ADJUST IRRIGATION' };
+      if (text.includes('pest') || text.includes('spray')) return { icon: 'pest_control', label: 'CONTROL PESTS' };
+      if (text.includes('fertiliz'))              return { icon: 'eco',            label: 'APPLY FERTILISER' };
+      if (text.includes('harvest'))               return { icon: 'agriculture',    label: 'PLAN HARVEST' };
+      if (text.includes('moisture'))              return { icon: 'humidity_mid',   label: 'CHECK MOISTURE' };
+      if (text.includes('overdue'))               return { icon: 'warning',        label: 'RESOLVE OVERDUE' };
+      if (text.includes('disease') || text.includes('health')) return { icon: 'medical_information', label: 'INSPECT CROPS' };
+      return { icon: 'task_alt', label: 'REVIEW TASKS' };
+    }
+
+    // ── Solution Modal: WHAT TO DO ────────────────────────────────────────────
+    function openSolutionModal() {
+      if (!intelligenceData) return;
+      const body  = document.getElementById('solution-modal-body');
+      const intel = intelligenceData;
+      window._currentTasksIntel = intel;
+
+      const urgentItems = intel.urgent_actions  || [];
+      const recItems    = intel.recommendations || [];
+      const allActions  = [
+        ...urgentItems.map(a => ({ text: a, urgent: true  })),
+        ...recItems.map(r    => ({ text: r, urgent: false })),
+      ];
+
+      if (!allActions.length) {
+        body.innerHTML = `<p class="text-sm text-on-surface-variant text-center py-8">No actions available right now.</p>`;
+      } else {
+        const urgentCount = urgentItems.length;
+        const totalCount  = allActions.length;
+        body.innerHTML = `
+          <div class="space-y-3">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-2">
+                <span class="material-symbols-outlined text-primary" style="font-size:18px; font-variation-settings:'FILL' 1;">checklist</span>
+                <h3 class="text-xs font-bold uppercase tracking-widest text-on-surface-variant">Action Plan</h3>
+              </div>
+              <div class="flex items-center gap-2">
+                ${urgentCount ? `<span class="text-[10px] font-bold text-error bg-error/10 px-2 py-0.5 rounded-full">${urgentCount} urgent</span>` : ''}
+                <span class="text-[10px] text-outline">${totalCount} total</span>
+              </div>
+            </div>
+            <div class="space-y-2">
+              ${allActions.map((item, i) => `
+                <div class="flex gap-3 ${item.urgent
+                    ? 'bg-error/5 border border-error/20'
+                    : 'bg-surface-container'} rounded-xl p-3 items-start">
+                  <div class="flex-shrink-0 mt-0.5">
+                    ${item.urgent
+                      ? `<span class="material-symbols-outlined text-error text-base" style="font-variation-settings:'FILL' 1;">error</span>`
+                      : `<div class="w-5 h-5 rounded-full bg-primary flex items-center justify-center">
+                           <span class="text-on-primary font-bold" style="font-size:10px">${i + 1}</span>
+                         </div>`}
+                  </div>
+                  <div class="flex-1 min-w-0">
+                    ${item.urgent ? `<p class="text-[10px] font-bold text-error uppercase tracking-wide mb-1">Act immediately</p>` : ''}
+                    <p class="text-sm text-on-surface leading-relaxed">${escapeHtml(item.text)}</p>
+                  </div>
+                </div>`).join('')}
+            </div>
+          </div>`;
+      }
+
+      document.getElementById('solutionModal').classList.remove('hidden');
+      document.getElementById('bottomNav').classList.add('hidden');
+    }
+
+    function closeSolutionModal() {
+      document.getElementById('solutionModal').classList.add('hidden');
+      document.getElementById('bottomNav').classList.remove('hidden');
+    }
+
+    // ── Why Modal: WHY IT'S CRITICAL ──────────────────────────────────────────
+    function openWhyModal() {
+      if (!intelligenceData) return;
+      const body  = document.getElementById('why-modal-body');
+      body.innerHTML = '';
+      const intel = intelligenceData;
+      const level = intel.priority_level || 'low';
+      window._currentTasksIntel = intel;
+
+      // Update modal header
+      const HEADER = {
+        critical: { title: "Why It's Critical",     icon: 'crisis_alert',    iconClass: 'text-error'   },
+        high:     { title: "Why It Needs Attention", icon: 'warning',         iconClass: 'text-amber-600' },
+        medium:   { title: "What's On Your Plate",   icon: 'pending_actions', iconClass: 'text-primary'  },
+        low:      { title: "Farm Overview",           icon: 'check_circle',    iconClass: 'text-primary'  },
+      }[level] || { title: "Why It's Critical", icon: 'psychology', iconClass: 'text-amber-600' };
+
+      const titleEl    = document.getElementById('why-modal-title');
+      const iconEl     = document.getElementById('why-modal-icon');
+      const subtitleEl = document.getElementById('why-modal-subtitle');
+      if (titleEl)    titleEl.textContent = HEADER.title;
+      if (iconEl)     { iconEl.textContent = HEADER.icon; iconEl.className = `material-symbols-outlined ${HEADER.iconClass}`; iconEl.style.fontVariationSettings = "'FILL' 1"; }
+      if (subtitleEl) subtitleEl.classList.toggle('hidden', !!intel.is_fallback);
+
+      // 1 — AI summary as pull-quote (skip boilerplate fallback text)
+      if (intel.summary && !intel.summary.startsWith('AI overview unavailable')) {
+        const el = document.createElement('div');
+        el.className = 'space-y-2';
+        el.innerHTML = `
+          <p class="text-[10px] uppercase tracking-widest text-on-surface-variant font-bold flex items-center gap-1.5">
+            <span class="material-symbols-outlined text-sm" style="font-variation-settings:'FILL' 1;">auto_awesome</span>
+            Agronomist Summary
+          </p>
+          <div class="bg-primary/10 border-l-4 border-primary rounded-r-xl px-4 py-3">
+            <p class="text-sm text-on-surface leading-relaxed italic">${escapeHtml(intel.summary)}</p>
+          </div>`;
+        body.appendChild(el);
+      }
+
+      // 2 — Priority banner
+      body.appendChild(buildWhyBanner(level));
+
+      // 3 — Quick stats from cached pending tasks (unique to tasks page)
+      const statsEl = buildWhyStats();
+      if (statsEl) body.appendChild(statsEl);
+
+      // 4 — What triggered this alert
+      if (intel.urgent_actions?.length) {
+        body.appendChild(intelSection('crisis_alert', 'text-error', 'What Triggered This Alert',
+          intel.urgent_actions.map(a => intelTriggerRow(a))));
+      }
+
+      // 5 — Risk Register with colored left borders + mitigation divider
+      if (intel.risks?.length) {
+        body.appendChild(buildRiskRegister(intel.risks));
+      }
+
+      // 6 — Field & Crop Intelligence
+      if (intel.insights?.length) {
+        body.appendChild(buildInsightsSection(intel.insights));
+      }
+
+      // 7 — Footer
+      body.appendChild(buildWhyFooter(intel));
+
+      if (body.childElementCount === 0) {
+        body.innerHTML = `<p class="text-sm text-on-surface-variant text-center py-8">No detailed analysis available right now.</p>`;
+      }
+
+      document.getElementById('whyModal').classList.remove('hidden');
+      document.getElementById('bottomNav').classList.add('hidden');
+    }
+
+    function closeWhyModal() {
+      document.getElementById('whyModal').classList.add('hidden');
+      document.getElementById('bottomNav').classList.remove('hidden');
+    }
+
+    function buildWhyBanner(level) {
+      const CFG = {
+        critical: {
+          wrap:     'bg-error/8 border border-error/25',
+          icon:     'crisis_alert',
+          ic:       'text-error',
+          badge:    'bg-error text-white',
+          label:    'CRITICAL',
+          headline: 'Immediate action required today',
+          body:     'One or more tasks has reached critical status. Delaying action risks crop damage, yield loss, or irreversible field degradation. Every hour counts.',
+        },
+        high: {
+          wrap:     'bg-amber-50 border border-amber-200 dark:bg-amber-950/20 dark:border-amber-800/30',
+          icon:     'warning',
+          ic:       'text-amber-600',
+          badge:    'bg-amber-500 text-white',
+          label:    'HIGH PRIORITY',
+          headline: 'Act today to stay on track',
+          body:     'High-priority tasks are open. Missing these time windows can push your crop cycle off schedule and leave fields vulnerable to stress, pests, or nutrient deficiency.',
+        },
+        medium: {
+          wrap:     'bg-primary/5 border border-primary/20',
+          icon:     'pending_actions',
+          ic:       'text-primary',
+          badge:    'bg-primary/15 text-primary',
+          label:    'MEDIUM PRIORITY',
+          headline: 'Stay ahead of the schedule',
+          body:     'No urgent emergencies right now, but pending tasks are building up. Keeping on top of them prevents small issues from becoming critical ones.',
+        },
+        low: {
+          wrap:     'bg-secondary-fixed/30 border border-secondary-fixed/60',
+          icon:     'check_circle',
+          ic:       'text-primary',
+          badge:    'bg-primary/15 text-primary',
+          label:    'ALL CLEAR',
+          headline: 'Your farm is in good shape',
+          body:     'No urgent or critical tasks detected. Use this window to plan ahead, review your seasonal schedule, or do proactive field inspections.',
+        },
+      }[level] || {
+        wrap:'bg-surface-container border border-outline-variant', icon:'info', ic:'text-on-surface-variant',
+        badge:'bg-surface-container-high text-on-surface-variant', label:'INFO', headline:'Farm Status', body:'',
+      };
+
+      const el = document.createElement('div');
+      el.className = `rounded-xl p-4 ${CFG.wrap}`;
+      el.innerHTML = `
+        <div class="flex items-start gap-3">
+          <span class="material-symbols-outlined ${CFG.ic} flex-shrink-0" style="font-size:28px; font-variation-settings:'FILL' 1; margin-top:2px;">${CFG.icon}</span>
+          <div class="flex-1 min-w-0">
+            <div class="flex items-center gap-2 mb-1 flex-wrap">
+              <span class="text-[10px] font-black px-2.5 py-0.5 rounded-full ${CFG.badge} tracking-widest">${CFG.label}</span>
+            </div>
+            <p class="text-sm font-bold text-on-surface mb-1">${escapeHtml(CFG.headline)}</p>
+            <p class="text-xs text-on-surface-variant leading-relaxed">${escapeHtml(CFG.body)}</p>
+          </div>
+        </div>`;
+      return el;
+    }
+
+    function buildWhyStats() {
+      const today    = new Date().toISOString().split('T')[0];
+      const pending  = cachedPendingTasks.length;
+      const overdue  = cachedPendingTasks.filter(t => !t.completed && t.due_date && String(t.due_date).split('T')[0] < today).length;
+      const critical = cachedPendingTasks.filter(t => t.priority === 'critical').length;
+      const dueToday = cachedPendingTasks.filter(t => t.due_date && String(t.due_date).split('T')[0] === today).length;
+
+      const el = document.createElement('div');
+      el.className = 'space-y-2';
+      el.innerHTML = `
+        <h3 class="text-xs font-bold uppercase tracking-widest text-on-surface-variant">Right Now On Your Farm</h3>
+        <div class="grid grid-cols-2 gap-2 sm:grid-cols-4">
+          ${whyStat('assignment', 'text-primary', pending, 'Pending Tasks', pending === 0 ? 'opacity-40' : '')}
+          ${whyStat('today', 'text-amber-600', dueToday, 'Due Today', dueToday === 0 ? 'opacity-40' : '')}
+          ${whyStat('schedule', overdue > 0 ? 'text-error' : 'text-on-surface-variant', overdue, 'Overdue', overdue === 0 ? 'opacity-40' : '')}
+          ${whyStat('crisis_alert', critical > 0 ? 'text-error' : 'text-on-surface-variant', critical, 'Critical', critical === 0 ? 'opacity-40' : '')}
+        </div>`;
+      return el;
+    }
+
+    function whyStat(icon, iconColor, value, label, extraClass) {
+      return `
+        <div class="flex flex-col items-center justify-center bg-surface-container rounded-xl py-3 px-2 gap-1 text-center ${extraClass}">
+          <span class="material-symbols-outlined ${iconColor}" style="font-size:18px; font-variation-settings:'FILL' 1;">${icon}</span>
+          <span class="text-2xl font-extrabold text-on-surface leading-none">${value}</span>
+          <span class="text-[9px] font-bold uppercase tracking-widest text-on-surface-variant leading-tight">${label}</span>
+        </div>`;
+    }
+
+    function buildInsightsSection(insights) {
+      const CAT_ICON = {
+        weather:    { icon: 'cloud',        color: 'text-blue-500'           },
+        irrigation: { icon: 'water_drop',   color: 'text-blue-600'           },
+        disease:    { icon: 'bug_report',   color: 'text-red-500'            },
+        harvest:    { icon: 'agriculture',  color: 'text-primary'            },
+        labor:      { icon: 'person',       color: 'text-on-surface-variant' },
+        resource:   { icon: 'inventory_2',  color: 'text-amber-600'          },
+        anomaly:    { icon: 'error',        color: 'text-error'              },
+      };
+
+      const rows = insights.map(i => {
+        const cat = (i.category || 'anomaly').toLowerCase();
+        const cfg = CAT_ICON[cat] || { icon: 'lightbulb', color: 'text-primary' };
+        return `
+          <div class="flex gap-3 bg-surface-container rounded-xl p-3 items-start">
+            <span class="material-symbols-outlined ${cfg.color} flex-shrink-0" style="font-size:18px; font-variation-settings:'FILL' 1; margin-top:1px;">${cfg.icon}</span>
+            <div class="flex-1 min-w-0">
+              <p class="text-sm text-on-surface leading-relaxed">${escapeHtml(i.insight || '')}</p>
+              <span class="text-[9px] font-bold uppercase tracking-widest text-on-surface-variant mt-0.5 block">${escapeHtml(cat)}</span>
+            </div>
+          </div>`;
+      }).join('');
+
+      const el = document.createElement('div');
+      el.className = 'space-y-3';
+      el.innerHTML = `
+        <div class="flex items-center gap-2">
+          <span class="material-symbols-outlined text-primary" style="font-size:18px; font-variation-settings:'FILL' 1;">insights</span>
+          <h3 class="text-sm font-bold uppercase tracking-widest text-on-surface-variant">Farm Insights</h3>
+        </div>
+        <div class="space-y-2">${rows}</div>`;
+      return el;
+    }
+
+    function intelTriggerRow(text) {
+      return `
+        <div class="flex gap-3 bg-error/5 border border-error/15 rounded-xl p-3 items-start">
+          <span class="material-symbols-outlined text-error flex-shrink-0" style="font-size:16px; font-variation-settings:'FILL' 1; margin-top:1px;">report</span>
+          <p class="text-sm text-on-surface leading-relaxed">${escapeHtml(text)}</p>
+        </div>`;
+    }
+
+    function buildWhyFooter(intel) {
+      let timeText = '';
+      if (intel.generated_at) {
+        try {
+          const diff = Date.now() - new Date(intel.generated_at).getTime();
+          const m = Math.floor(diff / 60000);
+          if (m < 1)       timeText = 'Analysis generated just now';
+          else if (m < 60) timeText = `Analysis generated ${m}m ago`;
+          else             timeText = `Analysis generated ${Math.floor(m / 60)}h ago`;
+        } catch (_) {}
+      }
+
+      const badge = intel.is_fallback
+        ? `<span class="inline-flex items-center gap-1 text-[10px] text-on-surface-variant bg-surface-container px-2 py-0.5 rounded-full">
+             <span class="material-symbols-outlined" style="font-size:10px;">build</span> Rule-based
+           </span>`
+        : `<span class="inline-flex items-center gap-1 text-[10px] text-primary bg-primary/10 px-2 py-0.5 rounded-full">
+             <span class="material-symbols-outlined" style="font-size:10px;">auto_awesome</span> AI-powered
+           </span>`;
+
+      const el = document.createElement('div');
+      el.className = 'flex items-center justify-between gap-3 border-t border-surface-variant pt-4';
+      el.innerHTML = `
+        <p class="text-[10px] text-on-surface-variant">${escapeHtml(timeText)}</p>
+        ${badge}`;
+      return el;
+    }
+
+    function intelSection(icon, iconClass, title, rows) {
+      const el = document.createElement('div');
+      el.className = 'space-y-3';
+      el.innerHTML = `
+        <div class="flex items-center gap-2">
+          <span class="material-symbols-outlined ${iconClass}" style="font-size:18px; font-variation-settings:'FILL' 1;">${icon}</span>
+          <h3 class="text-sm font-bold uppercase tracking-widest text-on-surface-variant">${escapeHtml(title)}</h3>
+        </div>
+        <div class="space-y-2">${rows.join('')}</div>`;
+      return el;
+    }
+
+    function intelRow(colorKey, text) {
+      const dot = { error: 'bg-error', primary: 'bg-primary', 'on-surface-variant': 'bg-outline' }[colorKey] || 'bg-outline';
+      return `
+        <div class="flex gap-3 bg-surface-container rounded-xl p-3 items-start">
+          <div class="mt-1.5 w-2 h-2 rounded-full flex-shrink-0 ${dot}"></div>
+          <p class="text-sm text-on-surface leading-relaxed">${escapeHtml(text)}</p>
+        </div>`;
+    }
+
+    function buildRiskRegister(risks) {
+      const riskBorder = { high: 'border-l-2 border-error', medium: 'border-l-2 border-amber-500', low: 'border-l-2 border-primary' };
+      const riskBadge  = { high: 'text-error bg-error/10',  medium: 'text-amber-700 bg-amber-600/10', low: 'text-primary bg-primary/10' };
+      const rows = risks.map(r => {
+        const sev = (r.severity || 'medium').toLowerCase();
+        return `
+          <div class="bg-surface-container rounded-xl p-3 space-y-2 ${riskBorder[sev] || riskBorder.medium}">
+            <div class="flex items-start justify-between gap-2">
+              <p class="text-sm font-semibold text-on-surface leading-snug">${escapeHtml(r.risk || '')}</p>
+              <span class="text-[10px] font-bold px-2 py-0.5 rounded-full whitespace-nowrap flex-shrink-0 ${riskBadge[sev] || riskBadge.medium}">
+                ${capitalize(sev)} risk
+              </span>
+            </div>
+            ${r.mitigation ? `
+              <div class="flex gap-2 items-start pt-1.5 border-t border-surface-variant">
+                <span class="material-symbols-outlined text-primary text-sm mt-0.5 flex-shrink-0">arrow_forward</span>
+                <p class="text-xs text-on-surface-variant">${escapeHtml(r.mitigation)}</p>
+              </div>` : ''}
+          </div>`;
+      }).join('');
+      const el = document.createElement('div');
+      el.className = 'space-y-3';
+      el.innerHTML = `
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-2">
+            <span class="material-symbols-outlined text-amber-600" style="font-size:18px; font-variation-settings:'FILL' 1;">warning</span>
+            <h3 class="text-xs font-bold uppercase tracking-widest text-on-surface-variant">Risk Register</h3>
+          </div>
+          <span class="text-[10px] text-outline">${risks.length} identified</span>
+        </div>
+        <div class="space-y-2">${rows}</div>`;
+      return el;
+    }
+
+    // ── Tasks PDF Report ──────────────────────────────────────────────────────
+    function downloadTasksReport(type) {
+      const intel = window._currentTasksIntel;
+      if (!intel) return;
+
+      const reportDate = intel.generated_at
+        ? new Date(intel.generated_at).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })
+        : new Date().toLocaleDateString();
+      const reportTime = intel.generated_at
+        ? new Date(intel.generated_at).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
+        : '';
+      const priorityLabel = { critical: 'CRITICAL', high: 'HIGH PRIORITY', medium: 'NEEDS ATTENTION', low: 'ALL CLEAR' }[intel.priority_level] || 'REPORT';
+      const priorityColor = { critical: '#ba1a1a', high: '#d97706', medium: '#47573b', low: '#536344' }[intel.priority_level] || '#47573b';
+      const reportTitle   = type === 'actions' ? 'Task Action Plan' : 'Farm Intelligence Report';
+      const esc = s => String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+
+      let body = '';
+
+      if (type === 'why' && intel.summary && !intel.summary.startsWith('AI overview unavailable')) {
+        body += `<div class="section"><h2>Agronomist Summary</h2><p class="summary-text">${esc(intel.summary)}</p></div>`;
+      }
+
+      const urgent = intel.urgent_actions  || [];
+      const recs   = intel.recommendations || [];
+      if (urgent.length || recs.length) {
+        const items = [
+          ...urgent.map(a    => `<li class="urgent"><span class="badge-urgent">URGENT</span> ${esc(a)}</li>`),
+          ...recs.map((r, i) => `<li><span class="step">${urgent.length + i + 1}</span> ${esc(r)}</li>`),
+        ].join('');
+        body += `<div class="section"><h2>Action Plan <span class="count">${urgent.length + recs.length} items</span></h2><ul class="action-list">${items}</ul></div>`;
+      }
+
+      if (type === 'why') {
+        if (intel.risks?.length) {
+          const rows = intel.risks.map(r => `
+            <div class="risk risk-${r.severity || 'medium'}">
+              <div class="risk-head"><span class="risk-title">${esc(r.risk || '')}</span><span class="risk-sev">${(r.severity || 'medium').toUpperCase()} RISK</span></div>
+              ${r.mitigation ? `<p class="risk-fix">→ ${esc(r.mitigation)}</p>` : ''}
+            </div>`).join('');
+          body += `<div class="section"><h2>Risk Register <span class="count">${intel.risks.length} identified</span></h2>${rows}</div>`;
+        }
+        if (intel.insights?.length) {
+          const catLabel = { weather:'Weather', irrigation:'Irrigation', disease:'Disease/Pest', harvest:'Harvest', labor:'Labor', resource:'Resource', anomaly:'Anomaly' };
+          const rows = intel.insights.map(item => `
+            <div class="insight">
+              <span class="insight-cat">${esc(catLabel[item.category] || item.category || 'General').toUpperCase()}</span>
+              <p>${esc(item.insight || '')}</p>
+            </div>`).join('');
+          body += `<div class="section"><h2>Field & Crop Intelligence <span class="count">${intel.insights.length} observations</span></h2>${rows}</div>`;
+        }
+      }
+
+      const html = `<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8">
+<title>${esc(reportTitle)}</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{font-family:Georgia,'Times New Roman',serif;font-size:11.5pt;color:#1c1c17;background:#fff;padding:44px 48px}
+  .report-header{border-bottom:3px solid ${priorityColor};padding-bottom:18px;margin-bottom:28px}
+  .report-title-main{font-size:22pt;font-weight:bold;color:${priorityColor};letter-spacing:-0.5px}
+  .report-sub{font-size:9pt;text-transform:uppercase;letter-spacing:2px;color:#75786f;margin-top:3px}
+  .meta{display:flex;justify-content:space-between;margin-top:10px;font-size:9pt;color:#75786f}
+  .priority{font-weight:bold;color:${priorityColor}}
+  .section{margin-bottom:26px}
+  h2{font-size:9pt;font-family:Arial,sans-serif;text-transform:uppercase;letter-spacing:1.5px;color:#75786f;border-bottom:1px solid #e5e2da;padding-bottom:5px;margin-bottom:12px}
+  .count{font-size:8.5pt;font-weight:normal}
+  .summary-text{font-size:11.5pt;line-height:1.75;font-style:italic;padding:14px 18px;background:#f7f3ea;border-left:4px solid ${priorityColor}}
+  .action-list{list-style:none}
+  .action-list li{display:flex;align-items:flex-start;gap:10px;padding:9px 12px;margin-bottom:7px;border-radius:5px;background:#f7f3ea;line-height:1.55;font-size:11pt}
+  .action-list li.urgent{background:#fff1f0;border-left:3px solid #ba1a1a}
+  .badge-urgent{font-size:7.5pt;font-weight:bold;padding:2px 7px;border-radius:10px;background:#ffdad6;color:#ba1a1a;white-space:nowrap;flex-shrink:0}
+  .step{display:inline-flex;width:20px;height:20px;border-radius:50%;background:${priorityColor};color:#fff;align-items:center;justify-content:center;font-size:8.5pt;font-weight:bold;flex-shrink:0;margin-top:1px}
+  .risk{padding:10px 13px;margin-bottom:7px;border-radius:5px;background:#f7f3ea;border-left:3px solid #d97706}
+  .risk.risk-high{border-left-color:#ba1a1a;background:#fff8f7}
+  .risk.risk-low{border-left-color:#47573b}
+  .risk-head{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;margin-bottom:5px}
+  .risk-title{font-weight:bold;font-size:11pt;line-height:1.4}
+  .risk-sev{font-size:7.5pt;font-weight:bold;color:#75786f;white-space:nowrap;flex-shrink:0}
+  .risk-fix{font-size:10.5pt;color:#444840;line-height:1.5}
+  .insight{display:grid;grid-template-columns:90px 1fr;gap:10px;padding:9px 0;border-bottom:1px solid #e5e2da;font-size:11pt;line-height:1.55}
+  .insight:last-child{border-bottom:none}
+  .insight-cat{font-size:7.5pt;font-weight:bold;letter-spacing:1px;color:#75786f;padding-top:2px}
+  .report-footer{margin-top:36px;border-top:1px solid #e5e2da;padding-top:12px;font-size:8.5pt;color:#75786f;display:flex;justify-content:space-between}
+  @media print{body{padding:18px 22px}@page{margin:12mm 18mm}}
+</style></head><body>
+<div class="report-header">
+  <div class="report-title-main">${esc(reportTitle)}</div>
+  <div class="report-sub">Smart Farm · Task Intelligence</div>
+  <div class="meta">
+    <span>${esc(reportDate)}${reportTime ? ' · ' + esc(reportTime) : ''}</span>
+    <span class="priority">● ${esc(priorityLabel)}</span>
+  </div>
+</div>
+${body}
+<div class="report-footer">
+  <span>Generated by Smart Farm AI${intel.is_fallback ? ' (rule-based fallback)' : ''}</span>
+  <span>${esc(reportDate)}</span>
+</div>
+</body></html>`;
+
+      const w = window.open('', '_blank', 'width=860,height=700');
+      if (!w) { alert('Please allow pop-ups to download the report.'); return; }
+      w.document.write(html);
+      w.document.close();
+      setTimeout(() => { w.focus(); w.print(); }, 400);
+    }
+
     // ── Outside-click modal listeners ──────────────────────────────────────────
     document.getElementById('createTaskModal').addEventListener('click', function(e) {
       if (e.target === this) closeCreateTaskModal();
@@ -1631,6 +2303,12 @@
     });
     document.getElementById('taskDetailModal').addEventListener('click', function(e) {
       if (e.target === this) closeTaskDetailModal();
+    });
+    document.getElementById('solutionModal').addEventListener('click', function(e) {
+      if (e.target === this) closeSolutionModal();
+    });
+    document.getElementById('whyModal').addEventListener('click', function(e) {
+      if (e.target === this) closeWhyModal();
     });
 
     // Called by i18n.js on language switch

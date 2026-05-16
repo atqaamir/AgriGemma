@@ -390,6 +390,45 @@ def run():
             notes="IMPACT_TASKS expected: irrigation.increase days.significant → priority critical, task delayed.",
             crop_id=None, field_id=None, user_id=user[8].id,
         ),
+        Task(
+            title="Irrigate Crops — Morning Round",
+            priority="critical", completed=False,
+            created_at=datetime.utcnow(), due_date=date.today(),
+            task_type="irrigation", task_category="general",
+            description="Irrigate crops during the morning hours to minimize evaporation.",
+            notes="Ensure even water distribution across all fields.",
+            crop_id=None, field_id=None, user_id=user[0].id,
+        ),
+         Task(
+			title="Emergency Pest Control",
+			priority="critical", completed=False,	
+			created_at=datetime.utcnow(), due_date=date.today(),
+			task_type="pest_control", task_category="general",
+			description="Urgent application of pesticide to control sudden pest outbreak.",
+			notes="Identify affected areas and apply targeted treatment.",
+			crop_id=None, field_id=None, user_id=user[0].id,	
+		),
+         Task(	
+			title="Repair Broken Irrigation Pipe",
+			priority="critical", completed=False,
+			created_at=datetime.utcnow(), due_date=date.today(),
+
+			description="Fix the damaged irrigation pipe in the North Field to restore water supply.",	
+
+			notes="Assess damage and replace pipe section as needed.",
+			task_type="repair", task_category="general",
+
+			crop_id=None, field_id=None, user_id=user[0].id,	
+		),
+		 Task(	
+			title="Address Soil Erosion in South Hill Slope",
+			priority="critical", completed=False,
+			created_at=datetime.utcnow(), due_date=date.today(),
+			description="Implement erosion control measures in the South Hill Slope field to prevent further soil loss.",
+			notes="Consider terracing or cover cropping to stabilize soil.",
+			task_type="soil_conservation", task_category="general",
+			crop_id=None, field_id=None, user_id=user[0].id,
+		),
     ]
 
     db.session.add_all(sample_tasks)

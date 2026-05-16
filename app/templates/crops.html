@@ -691,9 +691,9 @@
 
       container.innerHTML = crops.map(crop => {
         const cropName = crop.name || 'Unnamed Crop';
-        const progress = calculateGrowthProgress(crop.planting_date, crop.expected_harvest_date);
+        const progress = crop.growth_progress ?? 0;
         const statusColor = getHealthColor(crop.health_status);
-        const progressBarColor = getProgressBarColor(progress);
+        const progressBarColor = getProgressBarColor(crop.health_status);
         const stageIcon = getStageIcon(crop.growth_stage);
         // pending_task_count is pre-computed by CropCardSchema (category=crop, !completed)
         const pendingCount = crop.pending_task_count ?? 0;
@@ -768,16 +768,6 @@
       }).join('');
     }
 
-  function calculateGrowthProgress(plantingDate, harvestDate) {
-    if (!plantingDate || !harvestDate) return 0;
-    const planted = new Date(plantingDate);
-    const harvest = new Date(harvestDate);
-    const now = new Date();
-    const totalDays = Math.floor((harvest - planted) / (1000 * 60 * 60 * 24));
-    const elapsed = Math.floor((now - planted) / (1000 * 60 * 60 * 24));
-    if (totalDays <= 0 || elapsed <= 0) return 0;
-    return Math.min(Math.round((elapsed / totalDays) * 100), 100);
-  }
 
     function getHealthColor(status) {
       const colorMap = {
@@ -1113,8 +1103,7 @@
     document.getElementById('cropHarvestDate').textContent =
       crop.expected_harvest_date || '—';
 
-    const growthPct = calculateGrowthProgress(crop.planting_date, crop.expected_harvest_date);
-    document.getElementById('cropGrowthProgressLabel').textContent = `${growthPct}%`;
+    document.getElementById('cropGrowthProgressLabel').textContent = `${crop.growth_progress ?? 0}%`;
 
     // active toggle
     const isActive = crop.currently_active !== false;

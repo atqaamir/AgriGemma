@@ -27,10 +27,12 @@ Kaggle Gemma 4 Good Hackathon — Gemma 4 model sizes:
 """
 
 import logging
+import time
 import urllib.request
 import urllib.error
 import json
 import os
+import socket
 
 from app.services.ai_model_service.ai_provider_interface import AIModelProvider
 
@@ -101,6 +103,16 @@ class OllamaProvider(AIModelProvider):
             return self._placeholder(prompt)
         try:
             return self._call_ollama(prompt)
+        except (TimeoutError, socket.timeout) as exc:
+            logger.error("Ollama inference timed out: %s", exc)
+            return self._placeholder(prompt)
+        except urllib.error.URLError as exc:
+            if isinstance(exc.reason, (TimeoutError, socket.timeout)):
+                logger.error("Ollama inference timed out: %s", exc)
+                return self._placeholder(prompt)
+            logger.error("Ollama inference failed: %s", exc)
+            self._available = False
+            return self._placeholder(prompt)
         except Exception as exc:
             logger.error("Ollama inference failed: %s", exc)
             self._available = False
@@ -162,8 +174,57 @@ class OllamaProvider(AIModelProvider):
                 if obj.get("done"):
                     break
 
-    def _call_ollama(self, prompt: str) -> str:
+    def complete_json(self, prompt: str) -> str:
+        """Like complete() but asks Ollama for JSON-mode output.
+        Use when the response must be a JSON object (e.g. dashboard intelligence).
+        Returns empty string on timeout/failure so _parse_response raises and
+        the caller falls back gracefully."""
+        if not self._available:
+            logger.warning("[ollama] complete_json skipped — provider offline (model=%s)", self._model)
+            return ""
+        logger.info(
+            "[ollama] complete_json → model=%s | host=%s | prompt=%d chars | "
+            "format=json | num_predict=1024 | num_ctx=8192 | timeout=120s",
+            self._model, self._host, len(prompt),
+        )
+        try:
+            result = self._call_ollama(prompt, json_mode=True)
+            logger.info("[ollama] complete_json ← %d chars received", len(result))
+            logger.debug("[ollama] complete_json response: %s", result[:500] if result else "<empty>")
+            return result
+        except (TimeoutError, socket.timeout) as exc:
+            logger.error(
+                "[ollama] complete_json TIMED OUT after 120s — model=%s. "
+                "Consider using a smaller model (gemma4:e2b) or increasing timeout. Error: %s",
+                self._model, exc,
+            )
+            return ""
+        except urllib.error.URLError as exc:
+            if isinstance(exc.reason, (TimeoutError, socket.timeout)):
+                logger.error(
+                    "[ollama] complete_json TIMED OUT after 120s — model=%s. "
+                    "Consider using a smaller model (gemma4:e2b) or increasing timeout. Error: %s",
+                    self._model, exc,
+                )
+                return ""
+            logger.error(
+                "[ollama] complete_json CONNECTION FAILED — model=%s, host=%s. "
+                "Is Ollama running? Error: %s",
+                self._model, self._host, exc,
+            )
+            self._available = False
+            return ""
+        except Exception as exc:
+            logger.error(
+                "[ollama] complete_json UNEXPECTED ERROR — model=%s: %s",
+                self._model, exc, exc_info=True,
+            )
+            self._available = False
+            return ""
+
+    def _call_ollama(self, prompt: str, json_mode: bool = False) -> str:
         system, user = self._split_prompt(prompt)
+        num_predict = 1024 if json_mode else 800
         body: dict = {
             "model":  self._model,
             "prompt": user,
@@ -171,24 +232,55 @@ class OllamaProvider(AIModelProvider):
             "options": {
                 "temperature": 0.7,
                 "top_p": 0.9,
-                "num_predict": 512,
-                "num_ctx": 8192,   # Gemma 4 supports up to 128K; 8K covers all intelligence prompts
+                "num_predict": num_predict,
+                "num_ctx": 8192,
             },
         }
         if system:
             body["system"] = system
-        payload = json.dumps(body).encode("utf-8")
+        if json_mode:
+            body["format"] = "json"
 
+        logger.debug(
+            "[ollama] _call_ollama — model=%s | format=%s | num_predict=%d | "
+            "system=%d chars | user=%d chars",
+            self._model,
+            body.get("format", "text"),
+            num_predict,
+            len(system),
+            len(user),
+        )
+
+        payload = json.dumps(body).encode("utf-8")
         req = urllib.request.Request(
             f"{self._host}/api/generate",
             data=payload,
             headers={"Content-Type": "application/json"},
             method="POST",
         )
-        with urllib.request.urlopen(req, timeout=60) as resp:
-            data = json.loads(resp.read())
 
-        return (data.get("response") or "").strip()
+        t0 = time.monotonic()
+        with urllib.request.urlopen(req, timeout=120) as resp:
+            data = json.loads(resp.read())
+        elapsed = time.monotonic() - t0
+
+        response    = (data.get("response") or "").strip()
+        done_reason = data.get("done_reason", "unknown")
+        eval_count  = data.get("eval_count", "?")   # tokens generated
+
+        logger.info(
+            "[ollama] _call_ollama done — elapsed=%.1fs | tokens_out=%s | "
+            "done_reason=%s | response=%d chars",
+            elapsed, eval_count, done_reason, len(response),
+        )
+        if done_reason == "length":
+            logger.warning(
+                "[ollama] output truncated by num_predict=%d — JSON will likely be incomplete. "
+                "Increase num_predict or shorten the prompt.",
+                num_predict,
+            )
+
+        return response
 
     @staticmethod
     def _placeholder(prompt: str) -> str:
