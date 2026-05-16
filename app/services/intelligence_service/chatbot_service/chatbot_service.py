@@ -274,7 +274,7 @@ class ChatbotService:
         return conversation.id
 
     @staticmethod
-    def send_message(user_id: int, conversation_id: int, user_message: str) -> dict:
+    def send_message(user_id: int, conversation_id: int, user_message: str, language: str = 'en') -> dict:
         conversation = ChatRepository.get_conversation(conversation_id)
         if not conversation or conversation.user_id != user_id:
             raise ValueError("Invalid conversation")
@@ -317,6 +317,7 @@ class ChatbotService:
             farmer_context=context_str,
             history=history,
             user_message=user_message,
+            language=language,
             intent=intent_result.primary.value,
             web_results=web_results,
         )
@@ -403,7 +404,7 @@ class ChatbotService:
         return ChatRepository.delete_conversation(conversation_id)
 
     @staticmethod
-    def send_message_stream(user_id: int, conversation_id: int, user_message: str):
+    def send_message_stream(user_id: int, conversation_id: int, user_message: str, language: str = 'en'):
         """
         Generator yielding SSE events for each pipeline stage.
 
@@ -421,7 +422,7 @@ class ChatbotService:
         def _worker():
             with app.app_context():
                 try:
-                    for chunk in ChatbotService._stream_pipeline(user_id, conversation_id, user_message):
+                    for chunk in ChatbotService._stream_pipeline(user_id, conversation_id, user_message, language):
                         event_q.put(chunk)
                 except Exception as exc:
                     logger.error("[CHATBOT-STREAM] Worker error: %s", exc, exc_info=True)
@@ -448,7 +449,7 @@ class ChatbotService:
             pass
 
     @staticmethod
-    def _stream_pipeline(user_id: int, conversation_id: int, user_message: str):
+    def _stream_pipeline(user_id: int, conversation_id: int, user_message: str, language: str = 'en'):
         """
         Full streaming pipeline — runs inside a background thread.
         Yields SSE-formatted strings; always saves the bot message to DB before returning.
@@ -534,6 +535,7 @@ class ChatbotService:
                 farmer_context=context_str,
                 history=history,
                 user_message=user_message,
+                language=language,
                 intent=intent_result.primary.value,
                 web_results=web_results,
             )

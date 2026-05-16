@@ -5,6 +5,28 @@
     show_search  boolean  default True   — show the search button
     page_title   string   default "Climate Adaptation Planner"
 #}
+
+<!-- i18n — defer so it never blocks page rendering -->
+<script src="/static/js/i18n.js" defer></script>
+
+<!-- RTL: only the drawer needs a position fix in right-to-left mode -->
+<style>
+  [dir="rtl"] #sideDrawer {
+    left: auto !important;
+    right: 0 !important;
+    border-right: none !important;
+    border-left: 1px solid #e8e5dc;
+    transform: translateX(100%) !important;
+  }
+  [dir="rtl"] #sideDrawer.open {
+    transform: translateX(0) !important;
+  }
+  .dark [dir="rtl"] #sideDrawer {
+    border-left-color: #3a3a30;
+  }
+  #langToggleBtn { min-width: 2.5rem; text-align: center; }
+</style>
+
 <header class="bg-[#fcf9f0] dark:bg-[#1c1c17] flex justify-between items-center w-full px-6 py-4 sticky top-0 z-50 border-b border-outline-variant/40">
   <div class="flex items-center gap-3">
     <button id="drawerToggleBtn"
@@ -16,6 +38,16 @@
   </div>
   <div class="flex gap-1 items-center">
     {% include "notification_ui.html" %}
+
+    <!-- Language toggle -->
+    <button id="langToggleBtn"
+      onclick="toggleLanguage()"
+      class="hover:bg-[#f1eee5] dark:hover:bg-[#2a2a24] transition-colors px-3 py-1.5 rounded-full active:scale-95 duration-150
+             text-sm font-semibold text-[#47573b] dark:text-[#d5e9c1]"
+      aria-label="Switch to Urdu">
+      اردو
+    </button>
+
     <button onclick="toggleTheme()"
       class="hover:bg-[#f1eee5] dark:hover:bg-[#2a2a24] transition-colors p-2 rounded-full active:scale-95 duration-150">
       <span class="material-symbols-outlined text-[#47573b] dark:text-[#d5e9c1]">brightness_4</span>
@@ -66,7 +98,8 @@
 
   <!-- Drawer footer -->
   <div style="padding:16px 20px; border-top:1px solid #e8e5dc; flex-shrink:0;">
-    <span style="font-size:11px; color:#9e9e8e; font-family:'Work Sans',sans-serif;">
+    <span style="font-size:11px; color:#9e9e8e; font-family:'Work Sans',sans-serif;"
+          data-i18n="app.subtitle">
       Climate Adaptation Planner
     </span>
   </div>
@@ -166,11 +199,16 @@
   if (window.__drawerLoaded) return;
   window.__drawerLoaded = true;
 
+  // Nav items use i18n keys so labels update when the language changes
   const NAV_ITEMS = [
-    { label: 'Dashboard',     href: '/',                   icon: 'dashboard'          },
-    { label: 'Season Plan',   href: '/1/seasonal-plan-page', icon: 'calendar_month'   },
-    { label: 'Weekly Plan',   href: '/1/weekly-plan-page',  icon: 'event_note'        },
-    { label: 'Notifications', href: '/notifications/page', icon: 'notifications'      },
+    { labelKey: 'nav.dashboard',     href: '/',                     icon: 'dashboard'           },
+    { labelKey: 'nav.crops',         href: '/mycrops',              icon: 'eco'                 },
+    { labelKey: 'nav.fields',        href: '/myfields',             icon: 'landscape'           },
+    { labelKey: 'nav.tasks',         href: '/mytasks',              icon: 'assignment_turned_in'},
+    { labelKey: 'nav.season_plan',   href: '/1/seasonal-plan-page', icon: 'calendar_month'      },
+    { labelKey: 'nav.weekly_plan',   href: '/1/weekly-plan-page',   icon: 'event_note'          },
+    { labelKey: 'nav.chat',          href: '/chatbot',              icon: 'chat'                },
+    { labelKey: 'nav.notifications', href: '/notifications/page',   icon: 'notifications'       },
   ];
 
   function buildNav() {
@@ -183,16 +221,20 @@
       const isActive = current === itemPath ||
         (item.href.includes('seasonal-plan-page') && current.includes('seasonal-plan-page')) ||
         (item.href.includes('weekly-plan-page') && current.includes('weekly-plan-page'));
+      const label = (typeof t === 'function') ? t(item.labelKey) : item.labelKey;
       return `
         <a href="${item.href}" class="drawer-nav-item${isActive ? ' active' : ''}">
           <span class="material-symbols-outlined drawer-nav-icon"
                 style="font-variation-settings:'FILL' ${isActive ? 1 : 0},'wght' 400,'GRAD' 0,'opsz' 24;">
             ${item.icon}
           </span>
-          ${item.label}
+          <span data-i18n="${item.labelKey}">${label}</span>
         </a>`;
     }).join('');
   }
+
+  // Expose buildNav globally so i18n.js can call it on language change
+  window.buildNav = buildNav;
 
   function openDrawer() {
     document.getElementById('sideDrawer').classList.add('open');
