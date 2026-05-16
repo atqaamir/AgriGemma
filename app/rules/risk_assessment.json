@@ -1,0 +1,46 @@
+{
+  "overall_change_status": "Change_Impact_Tasks",
+  "as_of_date": "2026-05-18",
+  "end_date": "2026-05-24",
+  "regions_checked": [
+    "Punjab, Pakistan"
+  ],
+  "findings": [
+    {
+      "region": "Punjab, Pakistan",
+      "date": "2026-05-18",
+      "is_today": true,
+      "status": "Change_Impact_Tasks",
+      "factors": [
+        {
+          "factor": "temperature",
+          "baseline_value": 17.0,
+          "forecast_value": 21.5,
+          "difference": 4.5,
+          "baseline_band": "15-20",
+          "forecast_band": "20-30",
+          "band_changed": true,
+          "factor_status": "Change_Impact_Tasks"
+        }
+      ]
+    },
+    {
+      "region": "Punjab, Pakistan",
+      "date": "2026-05-19",
+      "is_today": false,
+      "status": "Change_Impact_Plan",
+      "factors": [
+        {
+          "factor": "temperature",
+          "baseline_value": 17.5,
+          "forecast_value": 21.5,
+          "difference": 4.0,
+          "baseline_band": "15-20",
+          "forecast_band": "20-30",
+          "band_changed": true,
+          "factor_status": "Change_Impact_Plan"
+        }
+      ]
+    }
+  ]
+}

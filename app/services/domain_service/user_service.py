@@ -14,6 +14,12 @@ class UserService:
         return UserRepository.get_by_id(user_id)
 
     @staticmethod
+    def get_user_location(user_id: int) -> str | None:
+        """Return the user's registered location, used as the region for all weather lookups."""
+        user = UserRepository.get_by_id(user_id)
+        return user.location if user else None
+
+    @staticmethod
     def delete_user(user_id):
         user = UserRepository.get_by_id(user_id)
         if user:

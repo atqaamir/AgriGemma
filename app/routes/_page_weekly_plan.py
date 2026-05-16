@@ -2,7 +2,7 @@ from datetime import date
 
 from flask import Blueprint, render_template
 
-from app.services.weekly_planner_service import WeeklyPlannerService
+from app.services.weekly_planning_service.weekly_planner_service import WeeklyPlannerService
 
 weekly_plan_bp = Blueprint("weekly_plan", __name__)
 
