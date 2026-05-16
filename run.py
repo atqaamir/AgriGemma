@@ -39,5 +39,9 @@ if __name__ == "__main__":
     # 2–3. setup + seed
     app = bootstrap()
 
-    # 4. run app
+    # # 4. run test script
+    # from app.rules.test import run as test_run
+    # test_run(app)
+
+    # 5. run app
     app.run(debug=True, host="0.0.0.0", port=5000, threaded=True)
