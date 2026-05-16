@@ -23,10 +23,15 @@ class CropCardSchema(Schema):
     expected_harvest_date = fields.Date(allow_none=True)
     currently_active = fields.Bool()
 
+    growth_progress = fields.Method("get_growth_progress")
     field = fields.Method("get_field")
     task_count = fields.Method("get_task_count")
     pending_task_count = fields.Method("get_pending_task_count")
     tasks_preview = fields.Method("get_tasks_preview")
+
+    def get_growth_progress(self, obj):
+        from app.services.domain_service.crop_service import CropService
+        return CropService.calculate_growth_progress(obj)
 
     def get_field(self, obj):
         if obj.field:
