@@ -5,3 +5,4 @@ from .task import Task
 from .alert import Alert
 from .weather import Weather
 from .dashboard_summary import DashboardSummary
+from .task_intelligence_summary import TaskIntelligenceSummary

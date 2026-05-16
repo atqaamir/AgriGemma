@@ -4,6 +4,7 @@ from datetime import datetime, timezone
 
 from app.services.ai_model_service import ai_model_service
 from app.services.ai_model_service.ai_model_service import fast_complete as _fast_complete
+from app.services.ai_model_service.ai_model_service import fast_complete_json as _fast_complete_json
 from app.services.intelligence_service.chatbot_service.prompts._prompt_task_intelligence import (
     TaskIntelligencePromptBuilder,
     build_task_reasoning_prompt,
@@ -29,14 +30,38 @@ class TaskIntelligenceService:
 
     @staticmethod
     def generate_intelligence(context: dict, user_id: int) -> dict:
+        tasks = context.get("tasks", {})
+        farm  = context.get("farm", {})
+        logger.info(
+            "[intelligence] user=%s | fields=%s active=%s | crops=%s | "
+            "tasks: pending=%s overdue=%s critical=%s high=%s",
+            user_id,
+            farm.get("total_fields", 0), farm.get("active_fields", 0),
+            farm.get("total_crops", 0),
+            tasks.get("pending_count", 0), tasks.get("overdue_count", 0),
+            tasks.get("critical_count", 0), tasks.get("high_priority_count", 0),
+        )
+
         prompt = TaskIntelligencePromptBuilder.build(context)
+        logger.info("[intelligence] prompt built — %d chars", len(prompt))
+        logger.debug("[intelligence] full prompt:\n%s", prompt)
 
         try:
-            raw = _fast_complete(prompt)
+            raw = _fast_complete_json(prompt)
+            logger.debug("[intelligence] raw response (%d chars): %s", len(raw), raw[:500] if raw else "<empty>")
+
+            if not raw:
+                raise ValueError("AI provider returned empty response")
+
             intelligence = TaskIntelligenceService._parse_response(raw)
+            ai_level = intelligence.get("priority_level")
+            # Override priority_level deterministically — Gemma is unreliable for this field
+            intelligence["priority_level"] = TaskIntelligenceService._compute_priority_level(tasks)
             intelligence["is_fallback"] = False
+            logger.info("[intelligence] success — priority_level=%s (ai returned: %s)",
+                        intelligence["priority_level"], ai_level)
         except Exception as exc:
-            logger.warning("AI intelligence failed (user=%s): %s", user_id, exc)
+            logger.warning("[intelligence] failed (user=%s): %s", user_id, exc)
             intelligence = TaskIntelligenceService._build_rule_based_fallback(context)
             intelligence["is_fallback"] = True
 
@@ -193,20 +218,47 @@ class TaskIntelligenceService:
         else:
             content = str(raw)
 
-        # Locate the outermost JSON object in the response text
+        logger.debug("[parse] input length=%d | preview: %r", len(content), content[:300])
+
         start = content.find("{")
-        end = content.rfind("}") + 1
+        end   = content.rfind("}") + 1
         if start == -1 or end <= 0:
+            logger.error(
+                "[parse] no JSON object found — content was %d chars. "
+                "Preview: %r",
+                len(content), content[:400] if content else "<empty>",
+            )
             raise ValueError("No JSON object found in Gemma response")
 
-        parsed = json.loads(content[start:end])
+        json_str = content[start:end]
+        logger.debug("[parse] extracted JSON slice [%d:%d] (%d chars)", start, end, len(json_str))
 
-        # Validate required keys are present
+        try:
+            parsed = json.loads(json_str)
+        except json.JSONDecodeError as exc:
+            logger.error(
+                "[parse] JSON decode error: %s | extracted slice: %r",
+                exc, json_str[:400],
+            )
+            raise ValueError(f"Malformed JSON in Gemma response: {exc}") from exc
+
         required = {"summary", "priority_level", "recommendations", "urgent_actions", "risks", "insights"}
-        if not required.issubset(parsed.keys()):
-            raise ValueError(f"Gemma response missing keys: {required - parsed.keys()}")
+        missing  = required - parsed.keys()
+        if missing:
+            logger.error("[parse] missing keys: %s | got keys: %s", missing, list(parsed.keys()))
+            raise ValueError(f"Gemma response missing keys: {missing}")
 
         return parsed
+
+    @staticmethod
+    def _compute_priority_level(tasks: dict) -> str:
+        if tasks.get("critical_count", 0) > 0:
+            return "critical"
+        if tasks.get("high_priority_count", 0) > 0 or tasks.get("overdue_count", 0) > 0:
+            return "high"
+        if tasks.get("pending_count", 0) > 0:
+            return "medium"
+        return "low"
 
     @staticmethod
     def _build_task_overview_fallback(context: dict) -> str:
@@ -239,9 +291,9 @@ class TaskIntelligenceService:
         high = tasks.get("high_priority_count", 0)
 
         # Determine overall priority
-        if critical > 0 or overdue > 0:
+        if critical > 0:
             priority_level = "critical"
-        elif high > 0:
+        elif high > 0 or overdue > 0:
             priority_level = "high"
         elif pending > 0:
             priority_level = "medium"
