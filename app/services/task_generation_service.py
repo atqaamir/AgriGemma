@@ -5,7 +5,7 @@ from app.services.domain_service.task_service import TaskService
 from app.services.intelligence_service.task_intelligence_service import TaskIntelligenceService
 from app.services.intelligence_service.chatbot_service.context_aggregation_service import ContextAggregationService
 from app.services.seasonal_planner_service import SeasonalPlannerService
-from app.services.weather_service.weekly_planner_service import WeeklyPlannerService
+from app.services.weekly_planning_service.weekly_planner_service import WeeklyPlannerService
 from app.repositories.task_repository import TaskRepository
 
 

@@ -6,6 +6,7 @@ import random
 import calendar
 from datetime import date, timedelta
 from app.services.rule_base_service import rule_base_service
+from app.services.weather_service.weather_data_service import WeatherService
 
 
 class RuleEngine:
@@ -319,8 +320,12 @@ class RuleEngine:
         from app.models.seasonal_plan import SeasonalPlan
         from app.models.crop import Crop
         from app.models.field import Field
+        from app.services.domain_service.user_service import UserService
 
         week_end = week_start_date + timedelta(days=6)
+
+        # All weather lookups use the user's registered location — one region per user.
+        user_location = UserService.get_user_location(user_id)
 
         def _parse(s):
             """'MM/DD/YYYY' → date, or None."""
@@ -360,8 +365,7 @@ class RuleEngine:
 
                 crop_obj        = rule_base_service.get_crop_by_id(entry.crop_id)
                 crop_name       = crop_obj.name if crop_obj else f"Crop {entry.crop_id}"
-                field_name      = field.name          if field else f"Field {entry.field_id}"
-                field_location  = field.location      if field else None
+                field_name      = field.name           if field else f"Field {entry.field_id}"
                 field_moisture  = field.moisture_level if field else None
                 field_ph        = field.ph_level       if field else None
 
@@ -403,7 +407,7 @@ class RuleEngine:
                     "crop_name":      crop_name,
                     "field_id":       entry.field_id,
                     "field_name":     field_name,
-                    "field_location": field_location,
+                    "field_location": user_location,
                     "field_moisture": field_moisture,
                     "field_ph":       field_ph,
                     "growth_stage_id":  growth_stage_id,
@@ -482,7 +486,7 @@ class RuleEngine:
                     "crop_name":      crop_name,
                     "field_id":       crop.field_id,
                     "field_name":     field_name,
-                    "field_location": field.location       if field else None,
+                    "field_location": user_location,
                     "field_moisture": field.moisture_level if field else None,
                     "field_ph":       field.ph_level       if field else None,
                     "growth_stage_id":  stage_id,
@@ -493,10 +497,91 @@ class RuleEngine:
         return result
 
     # ------------------------------------------------------------------ #
+    #  Shared plan-adjustment helpers
+    # ------------------------------------------------------------------ #
+
+    @staticmethod
+    def _apply_action(action: dict, events: list, factor_label: str):
+        """Apply one action rule to the events list in-place. Returns description text or None."""
+        action_type = action.get("action_type", "")
+        adjustment  = action.get("adjustment", "")
+        adj_type    = action.get("adjustment_type", "")
+
+        if action_type == "irrigation":
+            delta = 1 if adj_type == "minimal" else 2
+            if adjustment == "increase days":
+                irr_dates = sorted(
+                    date.fromisoformat(e["date"])
+                    for e in events if e["event_type"] == "irrigation"
+                )
+                base = irr_dates[-1] if irr_dates else date.fromisoformat(events[0]["date"])
+                for i in range(1, delta + 1):
+                    events.append({"event_type": "irrigation", "date": (base + timedelta(days=i)).isoformat()})
+                return f"Added {delta} extra irrigation session(s) this week"
+            if adjustment == "decrease days":
+                irr_indices = [i for i, e in enumerate(events) if e["event_type"] == "irrigation"]
+                for idx in sorted(irr_indices[-delta:], reverse=True):
+                    events.pop(idx)
+                return f"Removed {delta} irrigation session(s) this week"
+
+        elif action_type == "sowing" and adjustment == "delay":
+            days = 4 if adj_type == "minimal" else 7
+            for e in events:
+                if e["event_type"] == "sowing":
+                    e["date"] = (date.fromisoformat(e["date"]) + timedelta(days=days)).isoformat()
+            return f"Sowing delayed by {days} days — unfavourable {factor_label} conditions"
+
+        elif action_type == "harvesting" and adjustment == "delay":
+            days = 4 if adj_type == "minimal" else 7
+            for e in events:
+                if e["event_type"] == "harvesting":
+                    e["date"] = (date.fromisoformat(e["date"]) + timedelta(days=days)).isoformat()
+            return f"Harvesting delayed by {days} days — unfavourable {factor_label} conditions"
+
+        elif action_type == "fertilization":
+            if adjustment == "increase quantity":
+                return f"Increase fertilization quantity — {factor_label} stress detected"
+            if adjustment == "decrease quantity":
+                return f"Reduce fertilization quantity — {factor_label} conditions favour lower input"
+
+        elif action_type == "monitoring":
+            return f"[Monitor] {adjustment}"
+
+        elif action_type == "spraying":
+            return f"[Spray] {adjustment}"
+
+        elif action_type == "avoid":
+            days = 7
+            for e in events:
+                if e["event_type"] in ("sowing", "harvesting"):
+                    e["date"] = (date.fromisoformat(e["date"]) + timedelta(days=days)).isoformat()
+            return f"CRITICAL: {factor_label} conditions are severely unfavourable — immediate intervention required"
+
+        return None
+
+    @staticmethod
+    def _cascade_sowing_delay(events: list, original_events: list) -> None:
+        """Propagate sowing date shift to all non-sowing events in-place."""
+        raw_sowing = next((e for e in original_events if e["event_type"] == "sowing"), None)
+        adj_sowing = next((e for e in events       if e["event_type"] == "sowing"), None)
+        if raw_sowing and adj_sowing:
+            sowing_delta = (
+                date.fromisoformat(adj_sowing["date"]) -
+                date.fromisoformat(raw_sowing["date"])
+            )
+            if sowing_delta.days != 0:
+                for e in events:
+                    if e["event_type"] != "sowing":
+                        e["date"] = (date.fromisoformat(e["date"]) + sowing_delta).isoformat()
+
+    @staticmethod
+    def _filter_to_week(events: list, week_start: date, week_end: date) -> list:
+        """Return only events whose date falls within [week_start, week_end]."""
+        return [e for e in events if week_start <= date.fromisoformat(e["date"]) <= week_end]
 
     @staticmethod
     def adjust_weekly_plan(weekly_plan: list, week_start_date: date) -> list:
-        """Apply climate action rules to the weekly plan.
+        """Apply climate action rules to the weekly plan using baseline weather.
 
         Adjustments are computed once per crop entry (not per event):
         - One weather lookup using the sowing event date, or the first event date.
@@ -530,64 +615,6 @@ class RuleEngine:
              "soil pH"),
         ]
 
-        def _apply_action(action, events, factor_label):
-            """Apply a single action to the events list once. Returns description text or None."""
-            action_type = action.get("action_type", "")
-            adjustment  = action.get("adjustment", "")
-            adj_type    = action.get("adjustment_type", "")
-
-            if action_type == "irrigation":
-                delta = 1 if adj_type == "minimal" else 2
-                if adjustment == "increase days":
-                    irr_dates = sorted(
-                        date.fromisoformat(e["date"])
-                        for e in events if e["event_type"] == "irrigation"
-                    )
-                    base = irr_dates[-1] if irr_dates else date.fromisoformat(events[0]["date"])
-                    for i in range(1, delta + 1):
-                        events.append({"event_type": "irrigation", "date": (base + timedelta(days=i)).isoformat()})
-                    return f"Added {delta} extra irrigation session(s) this week"
-                if adjustment == "decrease days":
-                    irr_indices = [i for i, e in enumerate(events) if e["event_type"] == "irrigation"]
-                    for idx in sorted(irr_indices[-delta:], reverse=True):
-                        events.pop(idx)
-                    return f"Removed {delta} irrigation session(s) this week"
-
-            elif action_type == "sowing" and adjustment == "delay":
-                days = 4 if adj_type == "minimal" else 7
-                for e in events:
-                    if e["event_type"] == "sowing":
-                        e["date"] = (date.fromisoformat(e["date"]) + timedelta(days=days)).isoformat()
-                return f"Sowing delayed by {days} days — unfavourable {factor_label} conditions"
-
-            elif action_type == "harvesting" and adjustment == "delay":
-                days = 4 if adj_type == "minimal" else 7
-                for e in events:
-                    if e["event_type"] == "harvesting":
-                        e["date"] = (date.fromisoformat(e["date"]) + timedelta(days=days)).isoformat()
-                return f"Harvesting delayed by {days} days — unfavourable {factor_label} conditions"
-
-            elif action_type == "fertilization":
-                if adjustment == "increase quantity":
-                    return f"Increase fertilization quantity — {factor_label} stress detected"
-                if adjustment == "decrease quantity":
-                    return f"Reduce fertilization quantity — {factor_label} conditions favour lower input"
-
-            elif action_type == "monitoring":
-                return f"[Monitor] {adjustment}"
-
-            elif action_type == "spraying":
-                return f"[Spray] {adjustment}"
-
-            elif action_type == "avoid":
-                days = 7
-                for e in events:
-                    if e["event_type"] in ("sowing", "harvesting"):
-                        e["date"] = (date.fromisoformat(e["date"]) + timedelta(days=days)).isoformat()
-                return f"CRITICAL: {factor_label} conditions are severely unfavourable — immediate intervention required"
-
-            return None
-
         adjusted_result = []
 
         for entry in weekly_plan:
@@ -597,16 +624,14 @@ class RuleEngine:
             field_moisture  = entry.get("field_moisture")
             field_ph        = entry.get("field_ph")
 
-            # Mutable copy of all events — structural changes applied in place
             events = [dict(e) for e in entry["week_events"]]
 
-            # Single weather lookup: use sowing date if present, else first event date
             sowing_events = [e for e in events if e["event_type"] == "sowing"]
             rep_date = date.fromisoformat(
                 sowing_events[0]["date"] if sowing_events else events[0]["date"]
             ) if events else None
 
-            weather = rule_base_service.get_weather_by_region_and_date(
+            weather = RuleEngine.get_weather_by_region_and_date(
                 field_location, rep_date
             ) if field_location and rep_date else None
 
@@ -618,7 +643,7 @@ class RuleEngine:
                 elif factor == "ph_level":
                     value = field_ph
                 elif weather and weather_attr:
-                    value = getattr(weather, weather_attr, None)
+                    value = weather.get(weather_attr)
                 else:
                     value = None
 
@@ -642,7 +667,7 @@ class RuleEngine:
 
                 texts = []
                 for action in actions:
-                    text = _apply_action(action, events, factor_label)
+                    text = RuleEngine._apply_action(action, events, factor_label)
                     if text:
                         texts.append(text)
 
@@ -653,28 +678,8 @@ class RuleEngine:
                         "adjustment": "; ".join(texts),
                     })
 
-            # ── Cascade sowing delay to all other events ──────────────────
-            # Compare current sowing date against the original raw date to
-            # get the total shift, then apply to irrigation/fertilization/harvesting.
-            raw_sowing = next((e for e in entry["week_events"] if e["event_type"] == "sowing"), None)
-            adj_sowing = next((e for e in events       if e["event_type"] == "sowing"), None)
-            if raw_sowing and adj_sowing:
-                sowing_delta = (
-                    date.fromisoformat(adj_sowing["date"]) -
-                    date.fromisoformat(raw_sowing["date"])
-                )
-                if sowing_delta.days != 0:
-                    for e in events:
-                        if e["event_type"] != "sowing":
-                            e["date"] = (
-                                date.fromisoformat(e["date"]) + sowing_delta
-                            ).isoformat()
-
-            # ── Remove events that now fall outside the current week ───────
-            events = [
-                e for e in events
-                if week_start_date <= date.fromisoformat(e["date"]) <= week_end
-            ]
+            RuleEngine._cascade_sowing_delay(events, entry["week_events"])
+            events = RuleEngine._filter_to_week(events, week_start_date, week_end)
 
             if not climate_adjustments:
                 climate_adjustments.append({
@@ -691,3 +696,139 @@ class RuleEngine:
 
         return adjusted_result
 
+    @staticmethod
+    def update_weekly_plan(weekly_plan: list, week_start_date: date, as_of_date: date) -> list:
+        """Re-apply climate adjustments using forecast weather instead of baseline.
+
+        Same logic as adjust_weekly_plan but:
+        - Uses forecast weather (weather_forecast table) for all lookups.
+        - Only modifies events on or after as_of_date.
+        - Soil moisture and pH are still read from field properties (unchanged).
+        """
+        week_end = week_start_date + timedelta(days=6)
+
+        FACTORS = [
+            ("temperature",   "avg_temperature_c",
+             lambda c, g, b: rule_base_service.get_temperature_action_by_crop_and_range(c, g, b),
+             "temperature"),
+            ("humidity",      "humidity",
+             lambda c, g, b: rule_base_service.get_humidity_action_by_crop_and_range(c, g, b),
+             "humidity"),
+            ("sunlight",      "sunlight_hours",
+             lambda c, g, b: rule_base_service.get_sunlight_action_by_crop_and_range(c, g, b),
+             "sunlight"),
+            ("rainfall",      "rainfall_mm",
+             lambda c, g, b: rule_base_service.get_rainfall_action_by_crop_and_range(c, g, b),
+             "rainfall"),
+            ("soil_moisture", None,
+             lambda c, g, b: rule_base_service.get_soil_moisture_action_by_crop_and_range(c, g, b),
+             "soil moisture"),
+            ("ph_level",      None,
+             lambda c, g, b: rule_base_service.get_ph_action_by_crop_and_category(c, g, b),
+             "soil pH"),
+        ]
+
+        updated_result = []
+
+        for entry in weekly_plan:
+            crop_id         = entry["crop_id"]
+            growth_stage_id = entry.get("growth_stage_id")
+            field_location  = entry.get("field_location")
+            field_moisture  = entry.get("field_moisture")
+            field_ph        = entry.get("field_ph")
+
+            # Only work with events on or after as_of_date
+            events = [
+                dict(e) for e in entry["week_events"]
+                if date.fromisoformat(e["date"]) >= as_of_date
+            ]
+
+            if not events:
+                updated_result.append(entry)
+                continue
+
+            sowing_events = [e for e in events if e["event_type"] == "sowing"]
+            rep_date = date.fromisoformat(
+                sowing_events[0]["date"] if sowing_events else events[0]["date"]
+            )
+
+            # Use forecast weather instead of baseline
+            forecast = RuleEngine.get_forecast_by_region_and_date(
+                field_location, rep_date
+            ) if field_location else None
+
+            climate_adjustments = []
+
+            for factor, weather_attr, lookup_fn, factor_label in FACTORS:
+                if factor == "soil_moisture":
+                    value = field_moisture
+                elif factor == "ph_level":
+                    value = field_ph
+                elif forecast and weather_attr:
+                    value = forecast.get(weather_attr)
+                else:
+                    value = None
+
+                if value is None:
+                    continue
+
+                band        = RuleEngine.classify_value_bands(factor, value)
+                action_rule = lookup_fn(crop_id, growth_stage_id, band)
+
+                if not action_rule:
+                    continue
+
+                raw_actions = action_rule.actions
+                actions = (
+                    json.loads(raw_actions)
+                    if isinstance(raw_actions, str)
+                    else (raw_actions or [])
+                )
+                if not actions:
+                    continue
+
+                texts = []
+                for action in actions:
+                    text = RuleEngine._apply_action(action, events, factor_label)
+                    if text:
+                        texts.append(text)
+
+                if texts:
+                    climate_adjustments.append({
+                        "factor":     factor,
+                        "reasoning":  getattr(action_rule, "reasoning", ""),
+                        "adjustment": "; ".join(texts),
+                    })
+
+            RuleEngine._cascade_sowing_delay(events, entry["week_events"])
+            events = RuleEngine._filter_to_week(events, week_start_date, week_end)
+
+            if not climate_adjustments:
+                climate_adjustments.append({
+                    "factor":     "general",
+                    "reasoning":  "Forecast conditions within acceptable ranges.",
+                    "adjustment": "Proceed as planned; continue monitoring",
+                })
+
+            updated_entry = {k: v for k, v in entry.items()
+                             if k not in ("field_location", "field_moisture", "field_ph", "week_events")}
+            updated_entry["climate_adjustments_made"] = climate_adjustments
+            updated_entry["week_events"] = sorted(events, key=lambda e: e["date"])
+            updated_result.append(updated_entry)
+
+        return updated_result
+
+    # ------------------------------------------------------------------ #
+    #  Weather Lookups
+    # ------------------------------------------------------------------ #
+
+    @staticmethod
+    def get_weather_by_region_and_date(region: str, query_date):
+        """Return weather dict for a given region and date via WeatherService, or None."""
+        return WeatherService().get_for_region_and_date(region, query_date)
+
+    @staticmethod
+    def get_forecast_by_region_and_date(region: str, query_date):
+        """Return forecast weather dict for a given region and date, or None."""
+        from app.services.weather_service.weather_forecast_service import WeatherForecastService
+        return WeatherForecastService().get_for_region_and_date(region, query_date)
