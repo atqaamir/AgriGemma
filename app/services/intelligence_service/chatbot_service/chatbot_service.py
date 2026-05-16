@@ -422,7 +422,7 @@ class ChatbotService:
         def _worker():
             with app.app_context():
                 try:
-                    for chunk in ChatbotService._stream_pipeline(user_id, conversation_id, user_message):
+                    for chunk in ChatbotService._stream_pipeline(user_id, conversation_id, user_message, language):
                         event_q.put(chunk)
                 except Exception as exc:
                     logger.error("[CHATBOT-STREAM] Worker error: %s", exc, exc_info=True)
@@ -449,7 +449,7 @@ class ChatbotService:
             pass
 
     @staticmethod
-    def _stream_pipeline(user_id: int, conversation_id: int, user_message: str):
+    def _stream_pipeline(user_id: int, conversation_id: int, user_message: str, language: str = 'en'):
         """
         Full streaming pipeline — runs inside a background thread.
         Yields SSE-formatted strings; always saves the bot message to DB before returning.

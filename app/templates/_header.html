@@ -201,20 +201,14 @@
 
   // Nav items use i18n keys so labels update when the language changes
   const NAV_ITEMS = [
-<<<<<<< HEAD
     { labelKey: 'nav.dashboard',     href: '/',                     icon: 'dashboard'           },
     { labelKey: 'nav.crops',         href: '/mycrops',              icon: 'eco'                 },
     { labelKey: 'nav.fields',        href: '/myfields',             icon: 'landscape'           },
     { labelKey: 'nav.tasks',         href: '/mytasks',              icon: 'assignment_turned_in'},
     { labelKey: 'nav.season_plan',   href: '/1/seasonal-plan-page', icon: 'calendar_month'      },
+    { labelKey: 'nav.weekly_plan',   href: '/1/weekly-plan-page',   icon: 'event_note'          },
     { labelKey: 'nav.chat',          href: '/chatbot',              icon: 'chat'                },
     { labelKey: 'nav.notifications', href: '/notifications/page',   icon: 'notifications'       },
-=======
-    { label: 'Dashboard',     href: '/',                   icon: 'dashboard'          },
-    { label: 'Season Plan',   href: '/1/seasonal-plan-page', icon: 'calendar_month'   },
-    { label: 'Weekly Plan',   href: '/1/weekly-plan-page',  icon: 'event_note'        },
-    { label: 'Notifications', href: '/notifications/page', icon: 'notifications'      },
->>>>>>> main
   ];
 
   function buildNav() {
@@ -225,13 +219,9 @@
     list.innerHTML = NAV_ITEMS.map(item => {
       const itemPath = item.href.replace(/\/$/, '') || '/';
       const isActive = current === itemPath ||
-<<<<<<< HEAD
-        (item.href.includes('seasonal-plan-page') && current.includes('seasonal-plan-page'));
-      const label = (typeof t === 'function') ? t(item.labelKey) : item.labelKey;
-=======
         (item.href.includes('seasonal-plan-page') && current.includes('seasonal-plan-page')) ||
         (item.href.includes('weekly-plan-page') && current.includes('weekly-plan-page'));
->>>>>>> main
+      const label = (typeof t === 'function') ? t(item.labelKey) : item.labelKey;
       return `
         <a href="${item.href}" class="drawer-nav-item${isActive ? ' active' : ''}">
           <span class="material-symbols-outlined drawer-nav-icon"
