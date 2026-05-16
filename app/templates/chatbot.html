@@ -432,21 +432,16 @@
         const r = await fetch(`${API}/conversations/${id}`);
         if (!r.ok) throw 0;
         const d = await r.json();
-<<<<<<< HEAD
-        openChat(d.messages || []);
-      } catch { toast(t('error.load_conv'), 'error'); }
-=======
         const msgs = d.messages || [];
         openChat(msgs);
-        // If the last message is from the user the bot response is still being
-        // generated in the background — show a thinking indicator and poll.
+        // If the last message is from the user, the bot response may still be
+        // generating — show a thinking indicator and poll.
         if (msgs.length && msgs[msgs.length - 1].sender === 'user') {
           addThinking();
           scrollBottom();
           pollForResponse(id);
         }
-      } catch { toast('Failed to load conversation', 'error'); }
->>>>>>> main
+      } catch { toast(t('error.load_conv'), 'error'); }
     }
 
     function stopPolling() {
