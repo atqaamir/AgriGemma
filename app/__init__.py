@@ -23,6 +23,8 @@ from app.rules.rulebooks.threshold_rules.irrigation_calender_rulebook import Irr
 from app.models.seasonal_plan import SeasonalPlan
 from app.models.seasonal_plan import SeasonalPlanEntry
 from app.models.weekly_plan import WeeklyPlan, WeeklyPlanEntry
+from app.models.weather_forecast import WeatherForecast
+from app.models.weather import Weather
 from app.rules.rulebooks.threshold_rules.irrigation_frequency_rulebook import IrrigationFrequencyRulebook
 from app.routes import register_routes
 from app.jobs.scheduler import start_scheduler
@@ -37,6 +39,7 @@ def create_app():
     admin.init_app(app)
     admin.add_view(ModelView(Crop, db.session))
     admin.add_view(ModelView(Field, db.session))
+    admin.add_view(ModelView(Task, db.session))
     admin.add_view(ModelView(Notification, db.session))
     admin.add_view(ModelView(CropNames, db.session))
     admin.add_view(ModelView(WaterSource, db.session))
@@ -47,6 +50,8 @@ def create_app():
     admin.add_view(ModelView(SeasonalPlanEntry, db.session))
     admin.add_view(ModelView(WeeklyPlan, db.session))
     admin.add_view(ModelView(WeeklyPlanEntry, db.session))
+    admin.add_view(ModelView(WeatherForecast, db.session))
+    admin.add_view(ModelView(Weather, db.session, endpoint="weather_admin"))
     admin.add_view(ModelView(GrowthStage, db.session))
     admin.add_view(ModelView(IrrigationFrequencyRulebook, db.session))
 

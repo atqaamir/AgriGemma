@@ -423,16 +423,6 @@ class RuleBaseService:
         pass
 
     # ------------------------------------------------------------------ #
-    #  Weather Lookups
-    # ------------------------------------------------------------------ #
-
-    @staticmethod
-    def get_weather_by_region_and_date(region: str, query_date):
-        """Return the ClimateProfile row for a given region and date, or None."""
-        from app.models.weather import ClimateProfile
-        return ClimateProfile.query.filter_by(region=region, date=query_date).first()
-
-    # ------------------------------------------------------------------ #
     #  Planning Helpers
     # ------------------------------------------------------------------ #
 

@@ -1,4 +1,5 @@
 import logging
+from datetime import date
 
 from app.agents.dashboard_agent import DashboardAgent
 from app.agents.risk_agent import RiskAgent
@@ -61,6 +62,12 @@ class CoordinatorAgent:
             return execution_responses.ExecutionResponse.success("Weekly planning completed")
         return execution_responses.ExecutionResponse.failure("Weekly planning failed")
 
+    def update_planner(self, user_id: int, tag: str, as_of_date=None) -> dict:
+        status = self.planning_agent.daily_update(user_id, as_of_date=as_of_date, tag=tag)
+        if status == enums_.Status.SUCCESS:
+            return execution_responses.ExecutionResponse.success(f"Plan updated — {tag}")
+        return execution_responses.ExecutionResponse.failure("Plan update failed")
+
     """ 7pm next day task generation — called by daily update workflow and can be exposed for manual trigger if needed """
     def task_generation(self, user_id: int) -> dict:
         status = self.planning_agent.generate_daily_tasks(user_id, tag="daily_planning")
@@ -74,27 +81,29 @@ class CoordinatorAgent:
     # ── Daily update workflow ─────────────────────────────────────────────────
 
     """ 5am daily update workflow — runs risk assessment, then triggers downstream workflows based on risk level changes. Always refreshes dashboard at the end. """
-    def daily_update(self, user_id: int) -> dict:
-        risk_status, change = self.risk_agent.assess_risk(user_id, tag="risk_assessment")
+    def daily_update(self, user_id: int, as_of_date: date = None) -> dict:
+        risk_status, change, _ = self.risk_agent.assess_risk(user_id, tag="risk_assessment", as_of_date=as_of_date)
 
         if change == enums_.ChangeStatus.NO_CHANGE:
-            return execution_responses.ExecutionResponse.success("Risk assessment completed — no change")
-
-        if change == enums_.ChangeStatus.NO_IMPACT:
-            self.call_intelligence(user_id, tag = "critical_task_overview")  # update critical task overview
-            self.send_notification(user_id, tag="weather_only") # generate notification with ai explanations
+            result = execution_responses.ExecutionResponse.success("Risk assessment completed — no change")
+        elif change == enums_.ChangeStatus.NO_IMPACT:
+            self.call_intelligence(user_id, tag="critical_task_overview")
+            self.send_notification(user_id, tag="weather_only")
+            self.dashboard_refresh(user_id)
+            result = execution_responses.ExecutionResponse.success("Daily update completed")
         else:
-            self.weekly_planning(user_id)
-            self.task_generation(user_id)
-            self.call_intelligence(user_id, tag = "critical_task_overview")  # update critical task overview
+            if change == enums_.ChangeStatus.IMPACT_PLAN:
+                self.update_planner(user_id, tag="impact_weekly", as_of_date=as_of_date)
+            elif change == enums_.ChangeStatus.IMPACT_TASKS:
+                self.update_planner(user_id, tag="impact_tasks", as_of_date=as_of_date)
+            self.call_intelligence(user_id, tag="critical_task_overview")
             notification_tag = "weekly" if change == enums_.ChangeStatus.IMPACT_PLAN else "daily"
             self.send_notification(user_id, tag=notification_tag)
+            self.dashboard_refresh(user_id)
+            result = execution_responses.ExecutionResponse.success("Daily update completed") if risk_status == enums_.Status.SUCCESS else execution_responses.ExecutionResponse.failure("Daily update failed")
 
-        self.dashboard_refresh(user_id)
-
-        if risk_status == enums_.Status.SUCCESS:
-            return execution_responses.ExecutionResponse.success("Daily update completed")
-        return execution_responses.ExecutionResponse.failure("Daily update failed")
+        result["change_status"] = change.value
+        return result
 
     # ── Utility workflows ─────────────────────────────────────────────────────
 
@@ -113,3 +122,4 @@ class CoordinatorAgent:
         if status == enums_.Status.SUCCESS:
             return execution_responses.ExecutionResponse.success("Notification sent")
         return execution_responses.ExecutionResponse.failure("Notification dispatch failed")
+

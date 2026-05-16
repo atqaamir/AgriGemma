@@ -9,17 +9,17 @@ class TaskUpdateService:
         task = TaskRepository.get_by_id(task_id)
         if not task:
             raise ValueError("Task not found")
-        
+
         task.status = new_status
         TaskRepository.update(task)
         return task
 
     def evaluate_daily_update(self, field_id: str, seasonal_plan: dict, weekly_plan: dict, daily_forecast: dict, weekly_forecast: dict, soil_condition: dict, crop_health: dict):
-       
+
         # Placeholder logic for determining if a task update is needed
         # In a real implementation, this would involve complex logic and possibly ML models
-        # For now, we return a dummy response indicating that a revision is needed  
-        # 
+        # For now, we return a dummy response indicating that a revision is needed
+        #
         return {
             "needs_plan_revision": True,
             "needs_daily_task_regeneration": True,
