@@ -3,7 +3,7 @@
     "plan_id": 1,
     "week_start_date": "2026-05-18",
     "week_end_date": "2026-05-24",
-    "generated_at": "2026-05-16T19:46:51.136508",
+    "generated_at": "2026-05-16T19:58:09.928224",
     "currently_active": true,
     "seasonal_plan_id": 1,
     "total_entries": 3,
@@ -16,19 +16,9 @@
         "growth_stage": "Sowing",
         "climate_adjustments_made": [
           {
-            "factor": "temperature",
-            "reasoning": "Cool soils below 18C slow maize germination and increase seed rot risk; delay sowing until soil temperature exceeds 18C for uniform stand establishment.",
-            "adjustment": "Sowing delayed by 4 days \u2014 unfavourable temperature conditions"
-          },
-          {
             "factor": "rainfall",
-            "reasoning": "Rainfall below 50mm cannot support maize germination without heavy supplemental irrigation to maintain seed-zone moisture.",
-            "adjustment": "Added 2 extra irrigation session(s) this week; [Monitor] supplement all moisture from irrigation; check seed-zone moisture at 5cm depth daily"
-          },
-          {
-            "factor": "soil_moisture",
-            "reasoning": "Waterlogged seed-beds cause seed rot and oxygen deprivation before emergence; maize cannot establish under flooded conditions.",
-            "adjustment": "Sowing delayed by 7 days \u2014 unfavourable soil moisture conditions; Removed 2 irrigation session(s) this week; [Monitor] activate drainage channels immediately; do not sow until soil moisture drops below 60%"
+            "reasoning": "Below minimum for rainfed maize sowing; supplemental irrigation at germination is critical to maintain seed-zone moisture above wilting point.",
+            "adjustment": "Increase fertilization quantity \u2014 rainfall stress detected"
           }
         ],
         "original_events": [
@@ -37,7 +27,12 @@
             "date": "2026-05-20"
           }
         ],
-        "week_events": []
+        "week_events": [
+          {
+            "event_type": "sowing",
+            "date": "2026-05-20"
+          }
+        ]
       },
       {
         "crop_id": 3,
@@ -47,9 +42,19 @@
         "growth_stage": "Sowing",
         "climate_adjustments_made": [
           {
-            "factor": "general",
-            "reasoning": "All climate conditions within acceptable ranges.",
-            "adjustment": "Proceed as planned; routine crop monitoring recommended"
+            "factor": "temperature",
+            "reasoning": "Below cotton's optimal 28-32C sowing range, germination is slower and less uniform; delay sowing until conditions warm and apply starter fertiliser to compensate.",
+            "adjustment": "Sowing delayed by 4 days \u2014 unfavourable temperature conditions; Increase fertilization quantity \u2014 temperature stress detected"
+          },
+          {
+            "factor": "sunlight",
+            "reasoning": "Moderate light provides adequate soil warming for germination but limits early seedling vigour; ensure soil temperature exceeds 18C before sowing.",
+            "adjustment": "Sowing delayed by 4 days \u2014 unfavourable sunlight conditions"
+          },
+          {
+            "factor": "rainfall",
+            "reasoning": "Below-optimal rainfall at sowing requires supplemental irrigation at germination and early seedling stages to prevent moisture stress.",
+            "adjustment": "Increase fertilization quantity \u2014 rainfall stress detected"
           }
         ],
         "original_events": [
@@ -58,12 +63,7 @@
             "date": "2026-05-21"
           }
         ],
-        "week_events": [
-          {
-            "event_type": "sowing",
-            "date": "2026-05-21"
-          }
-        ]
+        "week_events": []
       },
       {
         "crop_id": 2,
@@ -73,19 +73,9 @@
         "growth_stage": "Sowing",
         "climate_adjustments_made": [
           {
-            "factor": "temperature",
-            "reasoning": "High temperatures accelerate germination but increase desiccation risk; early morning sowing and increased irrigation maintain adequate soil moisture.",
-            "adjustment": "Sowing delayed by 4 days \u2014 unfavourable temperature conditions"
-          },
-          {
-            "factor": "humidity",
-            "reasoning": "Very dry air desiccates sown seeds and topsoil before germination; paddy sowing requires humid conditions to maintain surface moisture.",
-            "adjustment": "Added 2 extra irrigation session(s) this week; [Monitor] monitor seed-bed surface moisture and standing water depth twice daily"
-          },
-          {
-            "factor": "rainfall",
-            "reasoning": "Below 50mm cannot establish standing water for paddy sowing; no viable rainfed paddy production is possible without reliable irrigation to substitute.",
-            "adjustment": "Added 2 extra irrigation session(s) this week; [Monitor] maintain full paddy flooding via supplemental irrigation; monitor water depth twice daily"
+            "factor": "general",
+            "reasoning": "All climate conditions within acceptable ranges.",
+            "adjustment": "Proceed as planned; routine crop monitoring recommended"
           }
         ],
         "original_events": [
@@ -109,7 +99,19 @@
         "week_events": [
           {
             "event_type": "sowing",
+            "date": "2026-05-18"
+          },
+          {
+            "event_type": "irrigation",
+            "date": "2026-05-21"
+          },
+          {
+            "event_type": "irrigation",
             "date": "2026-05-22"
+          },
+          {
+            "event_type": "irrigation",
+            "date": "2026-05-24"
           }
         ]
       }

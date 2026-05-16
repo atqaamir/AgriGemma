@@ -5,7 +5,9 @@
       "Bash(Select-Object -Property Name, FullName)",
       "Bash(Format-Table -AutoSize)",
       "Bash(grep -E \"^d|\\\\.py$|\\\\.html$|\\\\.js$|\\\\.jsx$\")",
-      "Bash(Get-ChildItem \"D:\\\\Work\\\\Climate Adaption Planner\\\\SmartFarming\\\\app\\\\static\\\\js\" -ErrorAction SilentlyContinue)"
+      "Bash(Get-ChildItem \"D:\\\\Work\\\\Climate Adaption Planner\\\\SmartFarming\\\\app\\\\static\\\\js\" -ErrorAction SilentlyContinue)",
+      "Bash(python -c ' *)",
+      "Bash(del \"D:\\\\Work\\\\Climate Adaption Planner\\\\SmartFarming\\\\test_weather_change.py\")"
     ]
   }
 }
