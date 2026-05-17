@@ -122,7 +122,7 @@
   </main>
 
   <!-- Detail modal -->
-  <div id="modal" class="hidden fixed inset-0 z-[200] flex items-end sm:items-center justify-center bg-black/40 px-4 pb-4 sm:pb-0">
+  <div id="modal" class="hidden fixed inset-0 z-[200] flex items-end sm:items-center justify-center bg-black/40 px-4 pb-24 sm:pb-0">
     <div class="w-full max-w-lg bg-white dark:bg-[#222219] rounded-2xl shadow-2xl overflow-hidden">
       <div class="flex items-start justify-between p-5 border-b border-outline-variant/20">
         <div class="flex items-center gap-3">
@@ -133,7 +133,7 @@
           <span class="material-symbols-outlined" style="font-size:20px;">close</span>
         </button>
       </div>
-      <div id="modalBody" class="p-5 text-sm leading-relaxed whitespace-pre-wrap max-h-64 overflow-y-auto"></div>
+      <div id="modalBody" class="p-5 text-sm leading-relaxed whitespace-pre-wrap max-h-[55vh] overflow-y-auto"></div>
       <div class="p-4 border-t border-outline-variant/20 flex justify-end">
         <button onclick="closeModal()"
           class="px-5 py-2 bg-primary text-on-primary rounded-xl text-sm font-semibold hover:bg-primary/90 active:scale-95 transition-all">
@@ -192,15 +192,64 @@
     .dark .bg-warning     { background: #78350f40; }
     .dark .bg-info        { background: #1e3a5f40; }
     .dark .bg-recommendation { background: #14532d40; }
+
+    /* ── Report card (for change-type modal) ── */
+    .rpt-report { display:flex; flex-direction:column; gap:8px; }
+    .rpt-intro { font-size:13px; color:#5a5e54; line-height:1.6; margin:0; }
+    .dark .rpt-intro { color:#9e9e8e; }
+    .rpt-section { background:#f7f3ea; border-radius:10px; padding:8px 12px; }
+    .dark .rpt-section { background:#2a2a24; }
+    .rpt-section-title { font-family:'Manrope',sans-serif; font-weight:700; font-size:12px; text-transform:uppercase; letter-spacing:.05em; color:#47573b; margin-bottom:6px; display:flex; align-items:center; gap:6px; }
+    .dark .rpt-section-title { color:#d5e9c1; }
+    .rpt-count { background:#47573b; color:#fff; font-size:11px; font-weight:700; padding:1px 7px; border-radius:20px; text-transform:none; letter-spacing:0; }
+    .dark .rpt-count { background:#d5e9c1; color:#1c1c17; }
+    .rpt-weather-row { display:flex; align-items:center; flex-wrap:wrap; gap:8px; }
+    .rpt-weather-temp { font-family:'Manrope',sans-serif; font-weight:800; font-size:22px; color:#1c1c17; }
+    .dark .rpt-weather-temp { color:#e5e2da; }
+    .rpt-weather-cond { font-size:14px; font-weight:600; color:#444840; }
+    .dark .rpt-weather-cond { color:#9e9e8e; }
+    .rpt-weather-rain { font-size:12px; color:#5a5e54; }
+    .dark .rpt-weather-rain { color:#9e9e8e; }
+    .rpt-badge { font-size:11px; font-weight:700; padding:2px 8px; border-radius:20px; font-family:'Manrope',sans-serif; }
+    .rpt-badge-red  { background:#ffebee; color:#ba1a1a; }
+    .rpt-badge-blue { background:#e3f2fd; color:#1565c0; }
+    .dark .rpt-badge-red  { background:#4a1010; color:#ff8a80; }
+    .dark .rpt-badge-blue { background:#0d2a4a; color:#90caf9; }
+    .rpt-task-item { padding:5px 0; border-bottom:1px solid #e8e5dc; }
+    .dark .rpt-task-item { border-bottom-color:#3a3a30; }
+    .rpt-task-item:last-child { border-bottom:none; padding-bottom:0; }
+    .rpt-task-title { font-family:'Manrope',sans-serif; font-weight:700; font-size:13px; color:#1c1c17; margin-bottom:4px; display:flex; align-items:center; flex-wrap:wrap; gap:6px; }
+    .dark .rpt-task-title { color:#e5e2da; }
+    .rpt-field { font-size:11px; font-weight:600; background:#e8f0e0; color:#47573b; padding:1px 7px; border-radius:10px; }
+    .dark .rpt-field { background:#2a3a22; color:#d5e9c1; }
+    .rpt-task-changes { margin:0; padding-left:16px; list-style:disc; }
+    .rpt-task-changes li { font-size:12px; color:#5a5e54; line-height:1.6; }
+    .dark .rpt-task-changes li { color:#9e9e8e; }
+    .rpt-plan-item { padding:5px 0; border-bottom:1px solid #e8e5dc; }
+    .dark .rpt-plan-item { border-bottom-color:#3a3a30; }
+    .rpt-plan-item:last-child { border-bottom:none; padding-bottom:0; }
+    .rpt-plan-factor { display:inline-block; font-size:10px; font-weight:800; text-transform:uppercase; letter-spacing:.06em; background:#fff3e0; color:#b45309; padding:2px 8px; border-radius:20px; margin-bottom:4px; }
+    .dark .rpt-plan-factor { background:#3a2a10; color:#fbbf24; }
+    .rpt-plan-reason { font-size:12px; color:#444840; line-height:1.5; }
+    .dark .rpt-plan-reason { color:#9e9e8e; }
+    .rpt-plan-adj { font-size:12px; font-weight:600; color:#47573b; margin-top:2px; }
+    .dark .rpt-plan-adj { color:#d5e9c1; }
+    .rpt-ai-section { border:1px solid #d6e8c5; }
+    .dark .rpt-ai-section { border-color:#3a4a2e; }
+    .rpt-ai-text { font-size:13px; color:#444840; line-height:1.65; margin:0; }
+    .dark .rpt-ai-text { color:#9e9e8e; }
+    .rpt-empty { font-size:12px; color:#9e9e8e; margin:0; }
   </style>
 
   <script>
     const USER_ID = {{ current_user_id }};
     const TYPE_META = {
       critical:       { icon: '🚨', label: 'Critical' },
+      alert:          { icon: '🔴', label: 'Alert' },
       warning:        { icon: '⚠️', label: 'Warning' },
       info:           { icon: 'ℹ️', label: 'Info' },
       recommendation: { icon: '💡', label: 'Tip' },
+      change:         { icon: '🔄', label: 'Change' },
     };
 
     let currentPage = 1;
@@ -281,7 +330,7 @@
         return;
       }
 
-      const CLICKABLE_TYPES = new Set(['warning', 'critical', 'recommendation']);
+      const CLICKABLE_TYPES = new Set(['warning', 'alert', 'critical', 'recommendation', 'change']);
 
       el.innerHTML = notifs.map((n, i) => {
         const meta      = TYPE_META[n.notification_type] || TYPE_META.info;
@@ -303,7 +352,7 @@
                   </div>
                 </div>
                 <p class="text-xs text-on-surface-variant dark:text-[#9e9e8e] mt-1 leading-relaxed line-clamp-2">${esc(n.message)}</p>
-                ${clickable ? `<p class="text-xs text-primary dark:text-[#d5e9c1] mt-1.5 font-medium">Tap for details →</p>` : ''}
+                ${clickable ? `<p class="text-xs text-primary dark:text-[#d5e9c1] mt-1.5 font-medium">View details →</p>` : ''}
               </div>
             </div>
           </div>`;
@@ -359,10 +408,79 @@
 
     function openModal(n) {
       const meta = TYPE_META[n.notification_type] || TYPE_META.info;
+      const body = document.getElementById('modalBody');
       document.getElementById('modalIcon').textContent = meta.icon;
       document.getElementById('modalTitle').textContent = n.title;
-      document.getElementById('modalBody').textContent = n.detail || n.message;
+
+      if (n.notification_type === 'change' && n.detail) {
+        try {
+          const r = JSON.parse(n.detail);
+          if (r && typeof r === 'object' && r.weather !== undefined) {
+            body.innerHTML = renderReport(r, n.message);
+            body.style.whiteSpace = 'normal';
+          } else {
+            body.textContent = n.detail || n.message;
+            body.style.whiteSpace = '';
+          }
+        } catch (_) {
+          body.textContent = n.detail || n.message;
+          body.style.whiteSpace = '';
+        }
+      } else {
+        let summary = n.message;
+        if (n.detail) {
+          try {
+            const r = JSON.parse(n.detail);
+            if (r && r.ai_summary) summary = r.ai_summary;
+          } catch (_) { summary = n.detail; }
+        }
+        body.textContent = summary;
+        body.style.whiteSpace = '';
+      }
       document.getElementById('modal').classList.remove('hidden');
+    }
+
+    function renderReport(r, introMessage) {
+      const w = r.weather || {};
+      const e2 = s => String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+      const tempStr = w.temp != null ? `${Math.round(w.temp)}°C` : '—';
+      const badges = [];
+      if (w.heatwave)      badges.push('<span class="rpt-badge rpt-badge-red">Heatwave Risk</span>');
+      if (w.rain_expected) badges.push('<span class="rpt-badge rpt-badge-blue">Rain Expected</span>');
+
+      const weatherHtml = `<div class="rpt-section"><div class="rpt-section-title">🌤 Weather Today</div>
+        <div class="rpt-weather-row">
+          <span class="rpt-weather-temp">${e2(tempStr)}</span>
+          <span class="rpt-weather-cond">${e2(w.condition||'—')}</span>
+          <span class="rpt-weather-rain">${w.rainfall_mm ? Math.round(w.rainfall_mm)+'mm rainfall' : 'No rainfall'}</span>
+          ${badges.join('')}
+        </div></div>`;
+
+      const tasks = r.tasks || [];
+      const tasksHtml = tasks.length
+        ? `<div class="rpt-section"><div class="rpt-section-title">📋 Tasks Changed <span class="rpt-count">${tasks.length}</span></div>
+            ${tasks.map(t => `<div class="rpt-task-item">
+              <div class="rpt-task-title">${e2(t.title)}${t.field ? `<span class="rpt-field">${e2(t.field)}</span>` : ''}</div>
+              <ul class="rpt-task-changes">${(t.changes||[]).map(ch=>`<li>${e2(ch)}</li>`).join('')}</ul>
+            </div>`).join('')}</div>`
+        : `<div class="rpt-section"><div class="rpt-section-title">📋 Tasks</div><p class="rpt-empty">No task changes recorded.</p></div>`;
+
+      const plan = r.plan || [];
+      const planHtml = plan.length
+        ? `<div class="rpt-section"><div class="rpt-section-title">📅 Weekly Plan Adjustments</div>
+            ${plan.map(adj=>`<div class="rpt-plan-item">
+              <span class="rpt-plan-factor">${e2(adj.factor||'weather')}</span>
+              <div class="rpt-plan-reason">${e2(adj.reasoning||'')}</div>
+              ${adj.adjustment ? `<div class="rpt-plan-adj">→ ${e2(adj.adjustment)}</div>` : ''}
+            </div>`).join('')}</div>`
+        : `<div class="rpt-section"><div class="rpt-section-title">📅 Weekly Plan</div><p class="rpt-empty">No weekly plan changes recorded.</p></div>`;
+
+      const summaryHtml = r.ai_summary
+        ? `<div class="rpt-section rpt-ai-section"><div class="rpt-section-title">🤖 AI Summary</div><p class="rpt-ai-text">${e2(r.ai_summary)}</p></div>`
+        : '';
+
+      const introHtml = introMessage ? `<p class="rpt-intro">${e2(introMessage)}</p>` : '';
+      return `<div class="rpt-report">${introHtml}${weatherHtml}${tasksHtml}${planHtml}${summaryHtml}</div>`;
     }
 
     function closeModal() {
