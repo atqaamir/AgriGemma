@@ -1,300 +1,224 @@
 # AgriGemma: A Climate-Smart Seasonal Planner for Smallholder Farmers
 
-A smart farming assistant that helps farmers adapt to climate change using weather data, soil conditions, crop monitoring, and AI-driven recommendations.
-
-## 🌍 Problem
-
-Due to **climate change and global warming**, traditional farming calendars and practices are no longer reliable. Farmers face:
-
-- Unpredictable rainfall
-- Heatwaves and droughts
-- Shifting planting seasons
-- Reduced crop yields
-
-This creates economic risk and uncertainty.
+A multi-agent farming assistant that helps smallholder farmers adapt to climate change through weather-aware planning, AI-driven explanations, and real-time task adaptation.
 
 ---
 
-## 💡 Solution
+## The Problem
 
-A **mobile-first farming assistant** that:
+Climate change has made traditional farming calendars unreliable. Smallholder farmers are hit hardest:
 
-### 📥 Inputs
-- Weather data (current + forecast)
-- Soil information
-- Farm details (land size, crops, planting dates)
+- Rainfall is unpredictable and no longer follows seasonal patterns
+- Heatwaves and droughts arrive without warning
+- Planting windows are shifting, making last year's schedule wrong for this year
+- Crop yields drop when plans cannot adapt to changing conditions
+- Economic risk falls entirely on the farmer, with no safety net
 
-### 📤 Outputs
-- Season plans and timelines
-- Climate-aware planting decisions
-- Best farming practices
-- Real-time plan adjustments
-- Tasks, alerts, and notifications
-- Chatbot support for farmer questions
-
-AgriGemma uses Gemma 4 to generate crop schedules and adapt them in real time when climate conditions change, helping farmers make safer planting, irrigation, and harvest decisions. Gemma 4 acts as the decision explainer and planner orchestrator, not as a raw weather predictor. 
-
-###### Gemma 4 as an adaptive climate-planning agent for agriculture.
+The result: farmers plant at the wrong time, irrigate inefficiently, and lose harvests to conditions they could not anticipate.
 
 ---
 
-## 👨‍🌾 Target Users
+## The Solution
 
-- Small to medium-scale farmers
-- Low to moderate literacy levels
-- Limited technical experience
-- Mobile users
-- Need simple, visual tools
+AgriGemma is a **mobile-first farming assistant** that connects weather data & patterns, farm conditions, and AI reasoning to give farmers a plan they can act on today — and a system that automatically updates that plan when conditions change.
 
----
+Rather than showing raw weather data, the system translates forecasts into concrete farming decisions: what to do, when to do it, and why it matters. When the forecast changes, the plan changes too — automatically, overnight, before the farmer starts their day.
 
-## Limits
+#### Installation & Setup
 
-- Prototype uses simplified agronomy rules
-- Forecast quality affects advice quality
-- Recommendations should support, not replace, local agronomists
-- Regional calibration is needed for deployment
+See [SETUP.md](SETUP.md) for full setup instructions.
 
----
-
-## ⚙️ Core Features
-
-### 📅 Season Planner (Key Feature)
-- Planting → growing → harvesting timeline
-- Adaptive planning based on weather
-
-### ✅ Tasks & Alerts (Key Feature)
-- Daily actionable tasks
-- Climate-based alerts
-- Simple instructions (e.g., irrigate, fertilize)
-
-### 🤖 Chatbot Assistant (Key Feature)
-- Ask questions
-- Get farming advice
-- Handle "what-if" scenarios
-
-### 🏡 Farm Overview
-- Land size
-- Fields
-- Active crops
-- Basic farm info
-
-### 🌦️ Weather & Forecast
-- Current weather
-- Short-term forecast
-- Climate-based alerts
-
-### 🌱 Crop Monitoring
-- Growth stage tracking
-- Health status
-- Yield estimates
-- Pest/disease alerts
-
-### 🌾 Soil Conditions
-- Moisture
-- Temperature
-- pH (optional)
-
----
-
-## 🧠 Key Value
-
-This app transforms:
-
-> **Weather data → Practical farming decisions**
-
-It acts as a **daily farming companion**, not just a data dashboard.
-
----
-
-## 🛠️ Tech Stack
-
-- **Backend:** Flask (Python)
-- **Frontend:** JavaScript (mobile-friendly)
-- **Database:**  PostgreSQL 
-- **APIs:** Weather APIs, agriculture data APIs
-- **AI:**
-  - Recommendation engine
-  - Chatbot integration
-  - Gemma4
-  
-
----
-
-## 📁 Installation & Setup
-
-Follow these steps to run the project locally.
-
-### 1. Clone the Repository
-
+**Quick start (Windows):**
 ```bash
-git clone http://github.com/your-username/AgriGemma.git
-cd AgriGemma
+python -m venv venv && venv\Scripts\activate && pip install -r requirements.txt && python run.py
 ```
-
-### 2. Create a virtual env
-```bash
-python -m venv venv
-```
-
-### 3. Activate the virtual env
-
-```bash
-venv\Scripts\activate
-```
-### 4. Install Dependencies
-
-```bash
-pip install -r requirements.txt
-```
-
-### 5. Set Up Environment Variables
-Create a .env file in the root directory:
-
-```env
-FLASK_APP=run.py
-FLASK_ENV=development
-SECRET_KEY=your_secret_key
-WEATHER_API_KEY=your_weather_api_key
-DATABASE_URL=sqlite:///app.db
-```
-
-### 6. Initialize the Database (Optional)
-```bash
-flask db init
-flask db migrate -m "initial"
-flask db upgrade
-```
-Skip this step if database migrations are not configured.
-
-### 7. Run the Application
-```bash
-python run.py
-```
-OR
-
-```bash
-flask run
-```
-
-### 8. Open in Browser
-```bash
-http://127.0.0.1:5000/dashboard
-```
-
-
-## 📦 Requirements
-- Python 3.8+
-- pip
-- Virtualenv (recommended)
-
-## ⚡ Quick Start
+**Quick start (Mac/Linux):**
 ```bash
 python -m venv venv && source venv/bin/activate && pip install -r requirements.txt && python run.py
 ```
 
----
+**Inputs**
+- Current weather and multi-day forecast (regional, simulated from climate profiles)
+- Soil conditions (moisture, temperature, pH)
+- Farm profile (land size, fields, active crops, planting dates, growth stage)
 
-## 🌍 Hackathon Context
-
-This project started as part of the:
-
-### 🏆 Gemma 4 Good Hackathon (Kaggle)
-
-The hackathon focuses on building impactful AI-powered solutions that address real-world problems and create social good.
-
----
-
-## 🎯 Our Contribution
-
-We are tackling a critical global issue:
-
-- Climate change disrupting traditional farming practices  
-- Increasing uncertainty in crop planning and yields  
-- Economic risk for small and medium-scale farmers  
-
-### 💡 What We Built: **Climate Adaptation Advisor for Farmers** 
-
-
-## 🧠 Key Innovation
-
-- Combines **climate data + farm data + AI**
-- Supports **multimodal inputs** (text, weather, images)
-- Provides **real-time adaptive recommendations**
-- Focuses on **low-literacy, accessibility-first design**
+**Outputs**
+- A seasonal plan and weekly schedule, generated by AI and grounded in agronomic rules
+- Daily actionable tasks, adapted to today's weather
+- Automated plan updates when climate conditions shift
+- In-app notifications (info, warning, critical, recommendation)
+- Chatbot support for farmer questions in their local language.
 
 ---
 
-## 🧪 Example Workflow
+## Multi-Agent Architecture
 
-1. Farmer inputs:
-   - Farm location  
-   - Land size  
-   - Crop type  
-   - Planting date  
-   - Soil details  
+AgriGemma is built as a **multi-agent system** with a central coordinator that orchestrates five specialised agents. Routes in the application never call agents directly — all requests flow through the coordinator.
 
-2. System processes:
-   - Weather and forecast data  
-   - Soil and crop conditions  
-   - Climate risks  
+```
+CoordinatorAgent
+├── RiskAgent              — assesses daily weather change and determines impact level
+├── PlanningAgent          — generates and updates seasonal plans, weekly plans, and daily tasks
+├── NotificationAgent      — creates notifications based on change type and severity
+├── DashboardAgent         — rebuilds the dashboard summary after any plan or task change
+└── TaskIntelligenceAgent  — runs AI analysis on current tasks and surfaces prioritised insights
+```
 
-3. Application outputs:
-   - Season plan and timeline  
-   - Recommended farming actions  
-   - Tasks and alerts  
-   - Real-time adaptive suggestions  
+**Daily update workflow (runs at 5:00 AM):**
 
-4. Farmer interacts:
-   - Completes tasks  
-   - Receives alerts  
-   - Uses chatbot for assistance  
+1. `RiskAgent` compares today's forecast against yesterday's and classifies the change:
+   - No change — no action required
+   - Change with no planning impact — weather notification sent only
+   - Change that impacts the weekly plan — plan revised, notifications sent
+   - Change that impacts today's tasks — tasks updated, notifications sent
+2. `PlanningAgent` revises the weekly plan or daily tasks depending on the impact level
+3. `NotificationAgent` generates contextual alerts (weather-only, weekly summary, daily change, change summary)
+4. `DashboardAgent` rebuilds the dashboard so the farmer sees an up-to-date view when they open the app
 
----
+**Task intelligence (async, triggered on task events):**
 
-## 🎯 Design Principles
-
-This application is built with:
-
-- **Simplicity first** — designed for non-technical users  
-- **Mobile-first UI** — optimized for smartphones  
-- **Visual communication** — icons, colors, minimal text  
-- **Action-driven** — every insight leads to a clear task  
+`TaskIntelligenceAgent` runs in the background on task create/update/delete/complete events. It aggregates task context, calls Gemma 4 for analysis, and produces prioritised insights and critical alerts. Results are cached for 5 minutes to limit API load, with a rule-based fallback if the AI is unavailable.
 
 ---
 
-## 🔮 Future Improvements
+## Rule Engine
 
-- Voice assistant for low-literacy users
-- Crop Image Analysis 
-- Regional language support  
-- Offline functionality for rural areas  
-- Satellite-based crop monitoring  
-- Advanced crop disease detection  
-- SMS / WhatsApp alert system  
-- Yield prediction and economic insights  
+Planning decisions are not made by AI alone. A **structured rule engine** underpins all planning and risk logic, giving the system deterministic, auditable reasoning before AI is involved.
 
----
+The rule engine covers:
+- **Action rules** — what tasks to generate based on temperature, humidity, rainfall, soil moisture, sunlight, pH, season, and water source
+- **Threshold rules** — acceptable ranges for each environmental variable per crop and growth stage
+- **Compatibility rules** — whether a crop is compatible with current climate, soil type, and season
+- **Event timeline rules** — when in the growth cycle specific interventions are required
+- **Vocabulary** — a shared agronomic vocabulary used across rules and AI prompts
 
-## 🤝 Contributing
-
-Contributions are welcome!
-
-1. Fork the repository  
-2. Create a new branch  
-3. Make your changes  
-4. Commit your updates  
-5. Open a pull request  
+When weather changes, the rule engine determines what the change means for each field and crop before the planning agent rewrites the schedule.
 
 ---
 
+## Background Jobs
 
-## ✨ Authors
+Three scheduled jobs run automatically to keep data and plans current:
 
-Atqa R. Amir, Amna Bukhari, Syed Faizan
+| Job | Schedule | Purpose |
+|-----|----------|---------|
+| Daily Update Job | 5:00 AM | Risk assessment, plan adaptation, notifications |
+| Task Generator Job | 7:00 PM | Generates tomorrow's tasks based on the current weekly plan |
+| Weekly Plan Job | Weekly | Regenerates the full weekly plan from the seasonal plan |
 
-Built to support **climate-resilient farming** through simple, practical, and accessible technology.
+---
+
+## Core Features
+
+### Season Planner
+Generates a full seasonal plan (planting → growing → harvesting) using Gemma 4 and the rule engine. The plan is grounded in regional climate profiles, soil conditions, and crop-specific agronomic rules. Updated automatically when forecasts shift.
+
+### Weekly Plan & Daily Task Adaptation
+Each week is broken into daily tasks. When a weather event impacts the plan, affected tasks are rescheduled — not discarded. Farmers always have a current, actionable task list without having to intervene.
+
+### Risk Assessment Engine
+Every morning, the system compares the updated forecast against the previous day's. The risk agent classifies the change, determines its scope (no impact / weekly plan / daily tasks), and routes the appropriate downstream actions.
+
+### Smart Notifications
+Four notification types with distinct visual treatment:
+- **Info** (ℹ️) — general updates and status changes
+- **Warning** (⚠️) — conditions approaching risk thresholds
+- **Critical** (🚨) — urgent actions required, triggers in-app popup
+- **Recommendation** (💡) — AI-generated suggestions from task intelligence
+
+Notifications are deduplicated within a 30-minute window. The bell icon shows an unread count badge and auto-updates every 10 seconds.
+
+### AI Chatbot Assistant
+Farmers can ask questions in natural language. The chatbot uses Gemma 4 with contextual awareness of the farm's current state — active crops, growth stages, recent weather, pending tasks. Supports "what-if" scenario reasoning and handles multi-turn conversations. Responds in the farmer's preferred language.
+
+### Multi-Lingual Support
+The system is designed to communicate with farmers in their local language, reducing the literacy barrier for users who are not comfortable with English-language interfaces.
+
+### Farm & Field Overview
+Tracks land size, fields, active crops, growth stages, and basic farm info. Each field has one active crop at a time with a manually managed growth stage.
+
+### Weather & Forecast
+Regional weather display with current conditions and a short-term forecast. Climate-based alerts surface when thresholds are breached for temperature, humidity, rainfall, or soil moisture.
+
+### Crop Monitoring
+Growth stage tracking, health status, yield estimates, and pest/disease alert placeholders. Crop health and yield estimates are tied to the current growth stage and environmental conditions.
+
+### Soil Conditions
+Tracks soil moisture, temperature, and pH (optional). Soil readings feed directly into the rule engine and planning decisions.
+
+### Modular AI Provider
+The AI layer is interface-based: any provider can be plugged in by implementing the `AIModelProvider` interface. Current providers:
+- **GoogleAIProvider** — cloud, uses `gemma-4-26b-a4b-it` via Google AI Studio (`USE_GOOGLE_AI=true`)
+- **OllamaProvider** — offline local server, uses Gemma 4 via Ollama (`USE_GOOGLE_AI=false`, default for background tasks in Option A)
+- **GemmaProvider** — fully on-device via LiteRT / MediaPipe, no server needed (`USE_LITERT=true`)
+- **PlaceholderProvider** — testing, returns rule-based responses without any model (`USE_PLACEHOLDER_AI=true`)
+
+See [SETUP.md](SETUP.md) for switching between providers.
+
+---
+
+## Tech Stack
+
+| Layer | Technology |
+|-------|-----------|
+| Backend | Flask (Python) |
+| Frontend | JavaScript, Jinja2 templates (mobile-first) |
+| Database | SQLite (default) / PostgreSQL |
+| AI — cloud | Gemma 4 (`gemma-4-26b-a4b-it`) via Google AI Studio |
+| AI — offline | Gemma 4 via [Ollama](https://ollama.com) (local server, no internet required) |
+| AI — on-device | Gemma 4 1B via LiteRT / MediaPipe (fully embedded, no server needed) |
+| Weather | OpenWeatherMap API |
+| Background Jobs | APScheduler |
+| Architecture | Multi-agent system with coordinator pattern |
+
+---
+
+
+## Target Users
+
+- Small to medium-scale farmers in Pakistan (Lahore, Karachi, Islamabad)
+- Low to moderate literacy levels
+- Limited technical experience
+- Primarily mobile users
+
+---
+
+## Design Principles
+
+- **Simplicity first** — designed for non-technical users
+- **Mobile-first UI** — optimised for smartphones
+- **Visual communication** — icons, colour coding, minimal text
+- **Action-driven** — every insight leads to a clear task
+- **Explainable AI** — Gemma 4 explains its recommendations, not just produces them
+
+---
+
+## Known Limitations & Scope
+
+- Weather is simulated from hardcoded monthly climate profiles — no live API yet
+- Three Pakistani cities supported (Lahore, Karachi, Islamabad); users outside these cities default to Lahore
+- Growth stages are advanced manually — the system does not auto-advance them over time
+- Tasks are scheduled to a date, not a time of day
+- No resource constraints modelled (labour, water, equipment)
+- No task dependency chains — delaying one task does not shift downstream tasks
+
+See [ASSUMPTIONS.md](ASSUMPTIONS.md) for the full list of scope decisions and known limitations.
+
+---
+
+## Hackathon Context
+
+This project was built for the **Gemma 4 Good Hackathon (Kaggle)**, which challenges teams to build impactful AI-powered solutions that address real-world problems and create measurable social good.
+
+AgriGemma uses Gemma 4 as a **climate-planning agent and decision explainer** — not as a raw weather predictor. The model reasons over structured farm data, rule engine outputs, and agronomic context to produce plans that are both AI-generated and rule-grounded.
+
+---
+
+## Authors
+
+**Atqa R. Amir** — Full Stack AI Engineer  
+**Amna Bukhari** — Full Stack AI Engineer  
+**Azka Abiya Amir** — Visual Content Creator
+
+Built to support climate-resilient farming through simple, practical, and accessible technology.  
 Developed for the **Gemma 4 Good Hackathon (Kaggle)**, and beyond.
-
-
-
