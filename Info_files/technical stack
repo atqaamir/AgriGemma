@@ -1,0 +1,30 @@
+**Technical Implementation**
+
+SmartFarming was built using:
+
+- Flask Python web framework with Gunicorn WSGI production server
+- PostgreSQL database with SQLAlchemy ORM and Alembic migration management
+- Flask-Admin administration panel with Flask-Migrate schema versioning
+- Multi-provider Gemma 4 AI architecture (cloud, local, and edge inference)
+- Google AI Studio cloud inference via google-generativeai SDK
+- Ollama-powered local Gemma 4 inference for offline-capable AI reasoning
+- MediaPipe LiteRT on-device edge inference for mobile and embedded deployment
+- Placeholder rule-based AI fallback for fully offline development scenarios
+- Intent classification engine with 9 farm-specific intents (sub-millisecond, no AI calls)
+- Multi-agent orchestration architecture (Coordinator, Dashboard, Planning, Risk, Notification, Intelligence agents)
+- APScheduler cron-based background intelligence pipelines (daily updates, task generation, weekly planning)
+- Climate-aware seasonal planning engine with multi-crop schedule generation
+- Dynamic daily task generation service driven by field conditions and weather
+- Adaptive weekly plan orchestration with milestone tracking
+- Rule engine with 20+ domain rulebooks (compatibility, action, threshold, climate range, timeline)
+- Structured prompt composition pipeline with context aggregation and intent-aware fetching
+- Streaming chatbot service with multi-turn conversation management and persistence
+- DuckDuckGo web search integration for AI response grounding
+- Weather data pipeline with anomaly detection and climate risk assessment
+- Marshmallow and Pydantic schema validation layers
+- Capacitor-based cross-platform mobile wrapper with Android native build
+- Jinja2 server-side templating with Tailwind CSS and Bootstrap UI components
+- Multi-language translation system (Urdu/English) with i18n JavaScript support
+- JSON-structured AI output mode for machine-readable planning responses
+- Change history tracking across tasks, weather, and weekly plans
+- pytest-based test suite covering chatbot, planning, rule engine, and task services
