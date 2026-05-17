@@ -270,27 +270,27 @@ def run():
         # Task 5: Irrigate Crops Morning Round in North Field Alpha (field_id=sample_fields[0])
         Task(
             title="Irrigate Crops — Morning Round",
-            priority="critical", completed=False,
+            priority="low", completed=False,
             created_at=datetime.utcnow(), due_date=date.today(),
             task_type="irrigation", task_category="general",
             description="Irrigate crops during the morning hours to minimize evaporation.",
             notes="Ensure even water distribution across all fields.",
             crop_id=None, field_id=sample_fields[0].id, user_id=user[0].id,
         ),
-        # Task 6: Emergency Pest Control in Punjab Wheat Belt (field_id=sample_fields[2])
+        # Task 6: Emergency Field Inspection in Punjab Wheat Belt (field_id=sample_fields[2])
         Task(
-            title="Emergency Pest Control",
-            priority="critical", completed=False,	
+            title="Emergency Field Inspection — Punjab Wheat Belt",
+            priority="critical", completed=False,
             created_at=datetime.utcnow(), due_date=date.today(),
-            task_type="pest_control", task_category="general",
-            description="Urgent application of pesticide to control sudden pest outbreak.",
-            notes="Identify affected areas and apply targeted treatment.",
-            crop_id=None, field_id=sample_fields[2].id, user_id=user[0].id,	
+            task_type="monitoring", task_category="general",
+            description="Urgent inspection of Punjab Wheat Belt for signs of crop stress, disease, and soil damage.",
+            notes="Check leaf colour, soil surface, and drainage channels. Report findings immediately.",
+            crop_id=None, field_id=sample_fields[2].id, user_id=user[0].id,
         ),
         # Task 7: Repair Broken Irrigation Pipe in North Field Alpha (field_id=sample_fields[0])
         Task(
             title="Repair Broken Irrigation Pipe",
-            priority="critical", completed=False,
+            priority="medium", completed=False,
             created_at=datetime.utcnow(), due_date=date.today(),
             description="Fix the damaged irrigation pipe in the North Field to restore water supply.",	
             notes="Assess damage and replace pipe section as needed.",
@@ -411,8 +411,8 @@ def run():
     # db.session.add_all(sample_alert)
     # db.session.commit()
 
-    # # ---- NOTIFICATIONS ----
-    # sample_notifications = [
+    # ---- NOTIFICATIONS ----
+    sample_notifications = [
     #     Notification(user_id=user[0].id, title="Irrigation recommended for rice",
     #                  message="Your rice crop in North Field Alpha needs irrigation during the vegetative stage.",
     #                  detail="Adequate irrigation at this stage helps ensure strong tiller development and prevents early stress.",
@@ -421,13 +421,13 @@ def run():
     #                  message="High humidity conditions increase fungal risk in your East Creek Basin field.",
     #                  detail="Flowering cotton is especially sensitive to prolonged moisture. Preventive spraying can reduce future losses.",
     #                  notification_type="warning", is_read=False, created_at=datetime.utcnow()),
-    #     Notification(user_id=user[0].id, title="Drainage issue detected",
-    #                  message="Water drainage problems may impact maize health at South Hill Slope.",
-    #                  detail="Poor drainage can result in root stress and nutrient imbalance. Clearing channels is advised as soon as possible.",
-    #                  notification_type="critical", is_read=False, created_at=datetime.utcnow()),
-    #     Notification(user_id=user[0].id, title="Routine equipment check",
-    #                  message="This is a reminder to check irrigation and field equipment near the reservoir plot.",
-    #                  detail=None, notification_type="info", is_read=False, created_at=datetime.utcnow()),
+        Notification(user_id=user[0].id, title="Drainage issue detected",
+                     message="Water drainage problems may impact maize health at South Hill Slope.",
+                     detail="Poor drainage can result in root stress and nutrient imbalance. Clearing channels is advised as soon as possible.",
+                     notification_type="critical", is_read=False, created_at=datetime.utcnow()),
+        Notification(user_id=user[0].id, title="Routine equipment check",
+                     message="This is a reminder to check irrigation and field equipment near the reservoir plot.",
+                     detail=None, notification_type="info", is_read=False, created_at=datetime.utcnow()),
     #     Notification(user_id=user[0].id, title="Wheat flowering stage alert",
     #                  message="Your crop has entered the flowering stage and requires close monitoring.",
     #                  detail="Strong winds during flowering can affect yield. Regular inspection can help detect issues early.",
@@ -440,17 +440,17 @@ def run():
     #                  message="Seedlings may experience stress due to dropping night temperatures.",
     #                  detail="Early-stage wheat is sensitive to cold spells. Monitoring weather forecasts is strongly advised.",
     #                  notification_type="warning", is_read=False, created_at=datetime.utcnow()),
-    #     Notification(user_id=user[0].id, title="High stress alert for rice crop",
-    #                  message="Your rice crop is experiencing high environmental stress during flowering.",
-    #                  detail="Combined heat and nutrient stress at this stage can significantly reduce yield. Immediate attention is required.",
-    #                  notification_type="critical", is_read=False, created_at=datetime.utcnow()),
+        Notification(user_id=user[0].id, title="High stress alert for rice crop",
+                     message="Your rice crop is experiencing high environmental stress during flowering.",
+                     detail="Combined heat and nutrient stress at this stage can significantly reduce yield. Immediate attention is required.",
+                     notification_type="critical", is_read=False, created_at=datetime.utcnow()),
     #     Notification(user_id=user[0].id, title="Maize crop status update",
     #                  message="Your maize crop is healthy and progressing well in the vegetative stage.",
     #                  detail=None, notification_type="info", is_read=False, created_at=datetime.utcnow()),
-    # ]
+    ]
 
-    # db.session.add_all(sample_notifications)
-    # db.session.commit()
+    db.session.add_all(sample_notifications)
+    db.session.commit()
 
     # ---- WEATHER (historical baseline) ----
     # Weather is keyed by user location (one region per user).

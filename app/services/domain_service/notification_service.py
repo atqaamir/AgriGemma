@@ -217,12 +217,13 @@ class NotificationService:
                 message = self._build_change_summary_message(task_summaries, plan_summaries)
                 
                 try:
-                    notification = self.create(
+                    notification = self.create_if_not_duplicate(
                         user_id=user_id,
                         title=title,
                         message=message,
                         notification_type=NotificationType.CHANGE.value,
                         detail=detail,
+                        within_minutes=60,
                     )
                     print(f"[change_summary] create returned: {getattr(notification, 'id', notification)}")
                     logger.info("change_summary: CHANGE notification created for user %d", user_id)
@@ -234,6 +235,129 @@ class NotificationService:
             return Status.SUCCESS
         except Exception as exc:
             logger.error("NotificationService.generate_notifications failed (tag=%s): %s", tag, exc)
+            return Status.FAILED
+
+    def generate_change_notifications(self, user_id: int, tag: str) -> Status:
+        """
+        Collects change data first (DB only), then makes ONE Ollama call whose
+        output is shared between the alert notification (daily/weekly) and the
+        change_summary popup — both created together so the popup is never delayed.
+
+        tag: "daily" | "weekly"
+        """
+        import json
+        from datetime import date as _date
+        try:
+            from app.services.intelligence_service.context.context_builder import build_notification_context
+            context = build_notification_context(user_id)
+            weather = context.get("weather", {})
+
+            # 1. Collect change data FIRST — DB queries only, no AI
+            task_summaries, plan_summaries = self._collect_change_data(user_id)
+            logger.info(
+                "generate_change_notifications [%s]: %d task changes, %d plan changes",
+                tag, len(task_summaries), len(plan_summaries),
+            )
+            print(f"[change_notifications] collected tasks={len(task_summaries)} plan={len(plan_summaries)}")
+
+            # 2. Build prompt context
+            farmer  = context.get("farmer_name", "Farmer")
+            current = weather.get("current", {})
+            temp     = current.get("temp") or current.get("temperature_c", "unknown")
+            rainfall = current.get("rainfall_mm") or current.get("precipitation_mm", 0) or 0
+            crops    = context.get("farm", {}).get("active_crops_data", [])
+            fields   = ", ".join(
+                c.get("field_name") or c.get("name", "") for c in crops[:3]
+                if c.get("field_name") or c.get("name")
+            ) or "the active fields"
+
+            tasks_block = "\n".join(
+                f"- {t['title']}{' (' + t['field'] + ')' if t.get('field') else ''}: {', '.join(t['changes'])}"
+                for t in task_summaries
+            ) or "No individual task changes."
+            plan_block = "\n".join(
+                f"- [{adj['factor']}] {adj['reasoning']} → {adj['adjustment']}"
+                for p in plan_summaries for adj in p["adjustments"]
+            ) or "No weekly plan adjustments."
+
+            # 3. ONE Ollama call — covers both the alert detail and the change_summary AI text
+            ai_summary = ""
+            try:
+                from app.services.ai_model_service.ai_model_service import fast_complete
+                if tag == "daily":
+                    prompt = (
+                        f"You are a farm advisor talking directly to {farmer}. "
+                        f"Weather today: {temp}°C, {rainfall:.0f}mm rainfall on {fields}. "
+                        f"Task changes: {tasks_block}\n"
+                        f"Plan adjustments: {plan_block}\n"
+                        f"Write 2-3 friendly sentences explaining what changed and what to prioritise today. "
+                        f"No bullet points. Be warm and direct."
+                    )
+                else:
+                    prompt = (
+                        f"You are a farm advisor talking directly to {farmer}. "
+                        f"Weather today: {temp}°C, {rainfall:.0f}mm rainfall on {fields}. "
+                        f"Plan adjustments for the coming days: {plan_block}\n"
+                        f"Write 2-3 friendly sentences explaining why the week ahead looks different "
+                        f"and what to roughly expect. Keep it warm — today is still fine. "
+                        f"No bullet points."
+                    )
+                ai_summary = fast_complete(prompt)
+                print(f"[change_notifications] AI done — {len(ai_summary)} chars")
+            except Exception as exc:
+                logger.warning("generate_change_notifications: AI call failed — %s", exc)
+
+            # 4. Create alert notification (daily → ALERT, weekly → WARNING)
+            if tag == "daily":
+                alert_title = "Your tasks have changed today"
+                alert_type  = NotificationType.ALERT.value
+            else:
+                alert_title = "Heads up — your week looks a bit different"
+                alert_type  = NotificationType.WARNING.value
+
+            self.create_if_not_duplicate(
+                user_id=user_id,
+                title=alert_title,
+                message=self._build_short_message(tag, weather),
+                notification_type=alert_type,
+                detail=ai_summary,
+            )
+            print(f"[change_notifications] alert notification created for user={user_id}")
+
+            # 5. Create change_summary popup notification — same AI text, no second Ollama call
+            def _to_float(v):
+                try: return float(v) if v is not None else None
+                except: return None
+
+            weather_ctx = context.get("weather", {})
+            report = {
+                "date":    str(_date.today()),
+                "weather": {
+                    "temp":          _to_float(current.get("temp") or current.get("temperature_c")),
+                    "condition":     (current.get("condition") or "").capitalize(),
+                    "rainfall_mm":   _to_float(current.get("rainfall_mm") or current.get("precipitation_mm")) or 0.0,
+                    "heatwave":      weather_ctx.get("heatwave_risk", False),
+                    "rain_expected": weather_ctx.get("rain_expected", False),
+                },
+                "tasks":      task_summaries,
+                "plan":       [adj for p in plan_summaries for adj in p["adjustments"]],
+                "ai_summary": ai_summary,
+            }
+
+            notif = self.create_if_not_duplicate(
+                user_id=user_id,
+                title=self._build_change_summary_title(task_summaries, plan_summaries),
+                message=self._build_change_summary_message(task_summaries, plan_summaries),
+                notification_type=NotificationType.CHANGE.value,
+                detail=json.dumps(report, ensure_ascii=False),
+                within_minutes=60,
+            )
+            print(f"[change_notifications] change_summary created: id={getattr(notif, 'id', None)}")
+            logger.info("generate_change_notifications: both notifications created for user %d", user_id)
+
+            return Status.SUCCESS
+        except Exception as exc:
+            logger.error("NotificationService.generate_change_notifications failed (tag=%s): %s", tag, exc)
             return Status.FAILED
 
     # ── Direct consumer interface (routes, tests) ──────────────────────────

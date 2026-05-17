@@ -10,7 +10,9 @@
       "PowerShell(Remove-Item \"c:\\\\Users\\\\its\\\\Desktop\\\\Projects\\\\SmartFarming\\\\ASSUMPTIONS.md\" -Confirm:$false)",
       "Bash(python -c \"import matplotlib; import numpy; print\\('ok'\\)\")",
       "Bash(python -)",
-      "PowerShell(New-Item -ItemType Directory -Force \"c:\\\\Users\\\\its\\\\Desktop\\\\Projects\\\\SmartFarming\\\\docs\")"
+      "PowerShell(New-Item -ItemType Directory -Force \"c:\\\\Users\\\\its\\\\Desktop\\\\Projects\\\\SmartFarming\\\\docs\")",
+      "Bash(python Test_Runs/test_task_changes.py)",
+      "Bash(python -X utf8 Test_Runs/test_task_changes.py)"
     ]
   }
 }
