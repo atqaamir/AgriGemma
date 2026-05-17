@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>SmartFarming System Architecture</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: #0f1117;
+    font-family: 'Segoe UI', sans-serif;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    min-height: 100vh;
+    padding: 32px 16px;
+  }
+  .canvas {
+    width: 1100px;
+    position: relative;
+  }
+  h1 {
+    text-align: center;
+    color: #e2e8f0;
+    font-size: 22px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    margin-bottom: 6px;
+  }
+  .subtitle {
+    text-align: center;
+    color: #64748b;
+    font-size: 13px;
+    margin-bottom: 36px;
+    letter-spacing: 0.5px;
+  }
+
+  /* LAYER */
+  .layer {
+    border-radius: 14px;
+    padding: 18px 20px 20px;
+    margin-bottom: 18px;
+    position: relative;
+  }
+  .layer-label {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 14px;
+    opacity: 0.7;
+  }
+  .layer-row {
+    display: flex;
+    gap: 14px;
+    flex-wrap: wrap;
+    align-items: stretch;
+  }
+
+  /* CLIENT LAYER */
+  .layer-client  { background: #1a1f2e; border: 1px solid #2d3a55; }
+  .layer-client .layer-label { color: #7dd3fc; }
+
+  /* API LAYER */
+  .layer-api  { background: #1a2030; border: 1px solid #2d4060; }
+  .layer-api .layer-label { color: #93c5fd; }
+
+  /* CORE LAYER */
+  .layer-core { background: #1a2020; border: 1px solid #2d5040; }
+  .layer-core .layer-label { color: #6ee7b7; }
+
+  /* AI LAYER */
+  .layer-ai   { background: #1e1a2e; border: 1px solid #4a3570; }
+  .layer-ai .layer-label { color: #c4b5fd; }
+
+  /* DATA LAYER */
+  .layer-data { background: #1f1a18; border: 1px solid #5a3820; }
+  .layer-data .layer-label { color: #fdba74; }
+
+  /* INFRA LAYER */
+  .layer-infra { background: #181f1a; border: 1px solid #2a5030; }
+  .layer-infra .layer-label { color: #86efac; }
+
+  /* CARD */
+  .card {
+    border-radius: 10px;
+    padding: 13px 15px;
+    min-width: 140px;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+  }
+  .card-title {
+    font-size: 13px;
+    font-weight: 700;
+    color: #f1f5f9;
+  }
+  .card-sub {
+    font-size: 11px;
+    color: #94a3b8;
+    line-height: 1.5;
+  }
+  .badge {
+    display: inline-block;
+    font-size: 10px;
+    font-weight: 600;
+    padding: 2px 7px;
+    border-radius: 20px;
+    margin-top: 4px;
+    width: fit-content;
+  }
+
+  /* CLIENT CARDS */
+  .c-browser { background: #0f2040; border: 1px solid #1e4080; }
+  .c-mobile  { background: #0f2535; border: 1px solid #1e4560; }
+  .c-android { background: #0a2520; border: 1px solid #1a4a30; }
+
+  /* API CARDS */
+  .c-gunicorn { background: #0d2040; border: 1px solid #1a3a70; }
+  .c-flask    { background: #0f2535; border: 1px solid #1a4060; }
+  .c-routes   { background: #102530; border: 1px solid #1a4555; }
+
+  /* CORE CARDS */
+  .c-agents   { background: #0d2520; border: 1px solid #1a4a30; }
+  .c-services { background: #102520; border: 1px solid #1a4535; }
+  .c-rules    { background: #122520; border: 1px solid #1f4530; }
+  .c-schemas  { background: #0f2520; border: 1px solid #1a4030; }
+
+  /* AI CARDS */
+  .c-google  { background: #1a1030; border: 1px solid #3a2060; }
+  .c-ollama  { background: #1a1535; border: 1px solid #3a2870; }
+  .c-intent  { background: #150f2a; border: 1px solid #302060; }
+  .c-ddg     { background: #0f1a30; border: 1px solid #203060; }
+
+  /* DATA CARDS */
+  .c-postgres { background: #1f0f0a; border: 1px solid #5a2010; }
+  .c-sqlalch  { background: #201510; border: 1px solid #503010; }
+  .c-migrate  { background: #1a1208; border: 1px solid #4a3010; }
+  .c-admin    { background: #1f1408; border: 1px solid #503510; }
+
+  /* INFRA CARDS */
+  .c-apscheduler { background: #0d1f10; border: 1px solid #1a4020; }
+  .c-jobs        { background: #0f2015; border: 1px solid #1e4525; }
+  .c-capacitor   { background: #0a1f15; border: 1px solid #184030; }
+  .c-gradle      { background: #0c1f12; border: 1px solid #1a4020; }
+
+  .badge-blue   { background: #1e3a6e; color: #93c5fd; }
+  .badge-green  { background: #14432a; color: #6ee7b7; }
+  .badge-purple { background: #3a1d6e; color: #c4b5fd; }
+  .badge-orange { background: #5a2a0a; color: #fdba74; }
+  .badge-teal   { background: #0e3a3a; color: #5eead4; }
+  .badge-red    { background: #5a1a1a; color: #fca5a5; }
+
+  /* ARROWS SVG overlay */
+  .arrows-svg {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    pointer-events: none;
+  }
+
+  /* CONNECTOR LINES between layers */
+  .connector {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 22px;
+    gap: 40px;
+    margin: -6px 0;
+    position: relative;
+    z-index: 2;
+  }
+  .connector-line {
+    width: 2px;
+    height: 22px;
+    background: linear-gradient(to bottom, #334155, #475569);
+    border-radius: 1px;
+  }
+  .connector-label {
+    font-size: 10px;
+    color: #475569;
+    letter-spacing: 0.5px;
+    background: #0f1117;
+    padding: 0 6px;
+  }
+
+  .arrow-row {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 28px;
+    margin: -4px 0;
+    position: relative;
+  }
+  .arrow-row svg {
+    height: 28px;
+  }
+
+  .footer {
+    text-align: center;
+    color: #334155;
+    font-size: 11px;
+    margin-top: 24px;
+    padding-bottom: 16px;
+  }
+
+  .two-col {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 18px;
+  }
+  .two-col .layer { margin-bottom: 0; }
+</style>
+</head>
+<body>
+<div class="canvas">
+
+  <h1>SmartFarming — System Architecture</h1>
+  <p class="subtitle">AgriGemma · Climate-Smart AI Farming Advisor</p>
+
+  <!-- CLIENT LAYER -->
+  <div class="layer layer-client">
+    <div class="layer-label">Client Layer</div>
+    <div class="layer-row">
+      <div class="card c-browser">
+        <div class="card-title">Web Browser</div>
+        <div class="card-sub">Jinja2 server-side rendered HTML pages</div>
+        <span class="badge badge-blue">Jinja2</span>
+      </div>
+      <div class="card c-mobile">
+        <div class="card-title">Mobile Web App</div>
+        <div class="card-sub">Tailwind CSS · Bootstrap UI · i18n (Urdu/EN)</div>
+        <span class="badge badge-teal">Tailwind · Bootstrap</span>
+      </div>
+      <div class="card c-android">
+        <div class="card-title">Android Native App</div>
+        <div class="card-sub">Capacitor 8 wraps the web app as native APK</div>
+        <span class="badge badge-green">Capacitor · Gradle</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ARROW -->
+  <div class="connector">
+    <div class="connector-line"></div>
+    <div class="connector-label">HTTP / WebSocket</div>
+    <div class="connector-line"></div>
+  </div>
+
+  <!-- API / SERVER LAYER -->
+  <div class="layer layer-api">
+    <div class="layer-label">API &amp; Web Server Layer</div>
+    <div class="layer-row">
+      <div class="card c-gunicorn">
+        <div class="card-title">Gunicorn</div>
+        <div class="card-sub">WSGI production server · Multi-worker process management</div>
+        <span class="badge badge-blue">WSGI Server</span>
+      </div>
+      <div class="card c-flask">
+        <div class="card-title">Flask 3.0</div>
+        <div class="card-sub">Core web framework · App factory · Blueprint registration</div>
+        <span class="badge badge-blue">Python Web</span>
+      </div>
+      <div class="card c-routes">
+        <div class="card-title">Route Blueprints</div>
+        <div class="card-sub">dashboard · fields · crops · tasks · weather · chatbot · notifications · translate</div>
+        <span class="badge badge-teal">9 Blueprints</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ARROW -->
+  <div class="connector">
+    <div class="connector-line"></div>
+    <div class="connector-label">Service calls</div>
+    <div class="connector-line"></div>
+  </div>
+
+  <!-- CORE LOGIC LAYER -->
+  <div class="layer layer-core">
+    <div class="layer-label">Core Application Layer</div>
+    <div class="layer-row">
+      <div class="card c-agents">
+        <div class="card-title">Agent Orchestration</div>
+        <div class="card-sub">Coordinator · Dashboard · Planning · Risk · Notification · Intelligence agents</div>
+        <span class="badge badge-green">Multi-Agent</span>
+      </div>
+      <div class="card c-services">
+        <div class="card-title">Domain Services</div>
+        <div class="card-sub">Seasonal Planner · Weekly Planner · Task Generator · Chatbot · Weather · Risk · Notification</div>
+        <span class="badge badge-green">Business Logic</span>
+      </div>
+      <div class="card c-rules">
+        <div class="card-title">Rule Engine</div>
+        <div class="card-sub">20+ rulebooks · Crop/soil/climate compatibility · Irrigation · Fertilization thresholds</div>
+        <span class="badge badge-teal">Knowledge Base</span>
+      </div>
+      <div class="card c-schemas">
+        <div class="card-title">Marshmallow · Pydantic</div>
+        <div class="card-sub">Schema validation &amp; serialization for all domain models</div>
+        <span class="badge badge-green">Validation</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ARROW -->
+  <div class="connector">
+    <div class="connector-line"></div>
+    <div class="connector-label">AI inference calls</div>
+    <div class="connector-line"></div>
+  </div>
+
+  <!-- AI LAYER -->
+  <div class="layer layer-ai">
+    <div class="layer-label">AI &amp; Intelligence Layer</div>
+    <div class="layer-row">
+      <div class="card c-google">
+        <div class="card-title">Google AI Studio</div>
+        <div class="card-sub">Gemma 4 cloud inference · Streaming chatbot responses · 256K context window</div>
+        <span class="badge badge-purple">Cloud · Gemma 4</span>
+      </div>
+      <div class="card c-ollama">
+        <div class="card-title">Ollama (Local)</div>
+        <div class="card-sub">On-device Gemma 4 inference · Background intelligence · Fully offline capable</div>
+        <span class="badge badge-purple">Local · Offline</span>
+      </div>
+      <div class="card c-intent">
+        <div class="card-title">Intent Classifier</div>
+        <div class="card-sub">9 farm intents · Keyword-based · Sub-millisecond · No AI call required</div>
+        <span class="badge badge-purple">NLP · Fast</span>
+      </div>
+      <div class="card c-ddg">
+        <div class="card-title">DuckDuckGo Search</div>
+        <div class="card-sub">Web search grounding for GENERAL chatbot intent · No API key required</div>
+        <span class="badge badge-blue">Search API</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ARROW -->
+  <div class="connector">
+    <div class="connector-line"></div>
+    <div class="connector-label">ORM / queries</div>
+    <div class="connector-line"></div>
+  </div>
+
+  <!-- BOTTOM TWO COLUMNS -->
+  <div class="two-col">
+
+    <!-- DATA LAYER -->
+    <div class="layer layer-data">
+      <div class="layer-label">Data Layer</div>
+      <div class="layer-row" style="flex-direction: column; gap: 10px;">
+        <div style="display:flex; gap:10px;">
+          <div class="card c-postgres" style="min-width:0;">
+            <div class="card-title">PostgreSQL</div>
+            <div class="card-sub">Primary production database · psycopg3 driver</div>
+            <span class="badge badge-orange">Database</span>
+          </div>
+          <div class="card c-sqlalch" style="min-width:0;">
+            <div class="card-title">SQLAlchemy 2.0</div>
+            <div class="card-sub">ORM · Repository pattern · Eager loading</div>
+            <span class="badge badge-orange">ORM</span>
+          </div>
+        </div>
+        <div style="display:flex; gap:10px;">
+          <div class="card c-migrate" style="min-width:0;">
+            <div class="card-title">Alembic · Flask-Migrate</div>
+            <div class="card-sub">Schema versioning and migrations</div>
+            <span class="badge badge-orange">Migrations</span>
+          </div>
+          <div class="card c-admin" style="min-width:0;">
+            <div class="card-title">Flask-Admin</div>
+            <div class="card-sub">Admin panel for database management</div>
+            <span class="badge badge-orange">Admin UI</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- INFRA LAYER -->
+    <div class="layer layer-infra">
+      <div class="layer-label">Infrastructure &amp; Scheduling</div>
+      <div class="layer-row" style="flex-direction: column; gap: 10px;">
+        <div style="display:flex; gap:10px;">
+          <div class="card c-apscheduler" style="min-width:0;">
+            <div class="card-title">APScheduler</div>
+            <div class="card-sub">Cron-based background job scheduling</div>
+            <span class="badge badge-green">Scheduler</span>
+          </div>
+          <div class="card c-jobs" style="min-width:0;">
+            <div class="card-title">Scheduled Jobs</div>
+            <div class="card-sub">Daily update (5AM) · Task gen (7PM) · Weekly plan (Mon 3:30AM)</div>
+            <span class="badge badge-green">3 Cron Jobs</span>
+          </div>
+        </div>
+        <div style="display:flex; gap:10px;">
+          <div class="card c-capacitor" style="min-width:0;">
+            <div class="card-title">Capacitor 8</div>
+            <div class="card-sub">Cross-platform mobile build wrapper</div>
+            <span class="badge badge-green">Mobile</span>
+          </div>
+          <div class="card c-gradle" style="min-width:0;">
+            <div class="card-title">Gradle · Android</div>
+            <div class="card-sub">Native Android APK build system</div>
+            <span class="badge badge-green">Build</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="footer">SmartFarming · AgriGemma · Climate Adaptation Planner</div>
+
+</div>
+</body>
+</html>

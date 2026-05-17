@@ -62,6 +62,12 @@ class CropService:
         return CropRepository.get_all().filter_by(currently_active=True).all()
 
     @staticmethod
+    def get_active_crops_by_user(user_id: int) -> list:
+        """Get active crops for a specific user."""
+        crops = CropRepository.get_by_user_id(user_id)
+        return [c for c in crops if c.currently_active]
+
+    @staticmethod
     def calculate_growth_progress(crop) -> int:
         """Returns 0-100 percentage of how far through its growth cycle a crop is."""
         if not crop.planting_date or not crop.expected_harvest_date:

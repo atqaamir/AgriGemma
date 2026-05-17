@@ -5,7 +5,7 @@ from app.extensions import db
 
 from app.rules.rule_engine.populate_vocabulary import run as populate_vocabulary_run
 from app.rules.rule_engine.create_rulebooks   import run as populate_rulebooks_run
-from seed_data                                 import run as seed_data_run
+from Test_Runs.seed_data                                import run as seed_data_run
 from Test_Runs.populate_seasonal_plan                 import run as populate_seasonal_plan_run
 from Test_Runs.populate_weekly_plan                      import run as populate_weekly_plan_run
 

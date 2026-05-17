@@ -50,6 +50,20 @@ class FieldService:
         return {"fields": fields, "tasks": unique_tasks}
 
     @staticmethod
+    def get_active_fields_with_tasks_by_user(user_id: int):
+        """Active fields for a specific user with their PENDING field-category tasks only."""
+        fields = FieldRepository.get_by_user_id(user_id)
+        active_fields = [f for f in fields if f.currently_active]
+        all_tasks = []
+        for field in active_fields:
+            all_tasks.extend(
+                t for t in field.tasks
+                if t.task_category == 'field' and not t.completed
+            )
+        unique_tasks = list({t.id: t for t in all_tasks}.values())
+        return {"fields": active_fields, "tasks": unique_tasks}
+
+    @staticmethod
     def get_all_field_tasks():
         return TaskRepository.get_all_field_tasks()
 

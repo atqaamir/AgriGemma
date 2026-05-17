@@ -36,6 +36,12 @@ class TaskService:
         return TaskRepository.get_pending()
 
     @staticmethod
+    def get_pending_tasks_by_user(user_id: int) -> list:
+        """All incomplete tasks for a specific user."""
+        tasks = TaskRepository.get_by_user_id(user_id)
+        return [t for t in tasks if not t.completed]
+
+    @staticmethod
     def get_tasks_paginated(
         page: int = 1,
         per_page: int = 20,
@@ -62,12 +68,49 @@ class TaskService:
         )
 
     @staticmethod
+    def get_tasks_by_user_paginated(
+        user_id: int,
+        page: int = 1,
+        per_page: int = 20,
+        status: str = "all",
+        search: str = "",
+        priority: str = None,
+    ):
+        """Paginated task list for a specific user with optional filters."""
+        query = TaskRepository.get_all().filter(Task.user_id == user_id)
+
+        if status == "pending":
+            query = query.filter(Task.completed.is_(False))
+        elif status == "completed":
+            query = query.filter(Task.completed.is_(True))
+
+        if search:
+            query = query.filter(Task.title.ilike(f"%{search}%"))
+
+        if priority:
+            query = query.filter(Task.priority == priority)
+
+        return query.order_by(Task.created_at.desc()).paginate(
+            page=page, per_page=per_page, error_out=False
+        )
+
+    @staticmethod
     def count_pending() -> int:
         return TaskRepository.count_pending()
 
     @staticmethod
+    def count_pending_by_user(user_id: int) -> int:
+        """Count incomplete tasks for a specific user."""
+        return TaskRepository.get_all().filter(Task.user_id == user_id, Task.completed.is_(False)).count()
+
+    @staticmethod
     def count_completed() -> int:
         return TaskRepository.count_completed()
+
+    @staticmethod
+    def count_completed_by_user(user_id: int) -> int:
+        """Count completed tasks for a specific user."""
+        return TaskRepository.get_all().filter(Task.user_id == user_id, Task.completed.is_(True)).count()
 
     @staticmethod
     def get_pending_tasks_for_crop(crop_id: int) -> list:

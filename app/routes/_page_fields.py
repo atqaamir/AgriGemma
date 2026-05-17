@@ -22,6 +22,32 @@ def fields_page():
     return render_template("fields.html")
 
 
+@fields_bp.route("/<int:user_id>/fields", methods=["GET"])
+def get_fields_by_user(user_id):
+    """All fields for a specific user with their field-category tasks."""
+    fields = FieldService.get_fields_by_user(user_id)
+
+    all_tasks = []
+    for field in fields:
+        all_tasks.extend(t for t in field.tasks if t.task_category == "field")
+    unique_tasks = list({t.id: t for t in all_tasks}.values())
+
+    return jsonify({
+        "field_cards": field_card_schema.dump(fields),
+        "field_task_cards": task_card_schema.dump(unique_tasks),
+    }), 200
+
+
+@fields_bp.route("/<int:user_id>/fields/active", methods=["GET"])
+def get_active_fields_by_user(user_id):
+    """Active fields for a specific user together with their pending field-category tasks."""
+    result = FieldService.get_active_fields_with_tasks_by_user(user_id)
+    return jsonify({
+        "field_cards": field_card_schema.dump(result["fields"]),
+        "field_task_cards": task_card_schema.dump(result["tasks"]),
+    }), 200
+
+
 @fields_bp.route("/fields/vocabulary", methods=["GET"])
 def get_field_vocabulary():
     return jsonify(FieldService.get_vocabulary()), 200
