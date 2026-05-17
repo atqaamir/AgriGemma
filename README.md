@@ -28,7 +28,11 @@ Rather than showing raw weather data, the system translates forecasts into concr
 
 See [SETUP.md](SETUP.md) for full setup instructions.
 
-**Quick start:**
+**Quick start (Windows):**
+```bash
+python -m venv venv && venv\Scripts\activate && pip install -r requirements.txt && python run.py
+```
+**Quick start (Mac/Linux):**
 ```bash
 python -m venv venv && source venv/bin/activate && pip install -r requirements.txt && python run.py
 ```
@@ -144,10 +148,12 @@ Tracks soil moisture, temperature, and pH (optional). Soil readings feed directl
 
 ### Modular AI Provider
 The AI layer is interface-based: any provider can be plugged in by implementing the `AIModelProvider` interface. Current providers:
-- **GemmaProvider** — production, uses `gemma-4-26b-a4b-it` via Google AI
-- **PlaceholderProvider** — testing, returns deterministic responses without API calls
+- **GoogleAIProvider** — cloud, uses `gemma-4-26b-a4b-it` via Google AI Studio (`USE_GOOGLE_AI=true`)
+- **OllamaProvider** — offline local server, uses Gemma 4 via Ollama (`USE_GOOGLE_AI=false`, default for background tasks in Option A)
+- **GemmaProvider** — fully on-device via LiteRT / MediaPipe, no server needed (`USE_LITERT=true`)
+- **PlaceholderProvider** — testing, returns rule-based responses without any model (`USE_PLACEHOLDER_AI=true`)
 
-Switch providers with `USE_PLACEHOLDER_AI=true`.
+See [SETUP.md](SETUP.md) for switching between providers.
 
 ---
 
@@ -157,9 +163,11 @@ Switch providers with `USE_PLACEHOLDER_AI=true`.
 |-------|-----------|
 | Backend | Flask (Python) |
 | Frontend | JavaScript, Jinja2 templates (mobile-first) |
-| Database | PostgreSQL |
-| AI Model | Gemma 4 (`gemma-4-26b-a4b-it`) via Google AI |
-| Weather | Simulated from monthly regional climate profiles (live API planned) |
+| Database | SQLite (default) / PostgreSQL |
+| AI — cloud | Gemma 4 (`gemma-4-26b-a4b-it`) via Google AI Studio |
+| AI — offline | Gemma 4 via [Ollama](https://ollama.com) (local server, no internet required) |
+| AI — on-device | Gemma 4 1B via LiteRT / MediaPipe (fully embedded, no server needed) |
+| Weather | OpenWeatherMap API |
 | Background Jobs | APScheduler |
 | Architecture | Multi-agent system with coordinator pattern |
 
