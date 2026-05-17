@@ -167,7 +167,9 @@ This application is built with:
 
 ## ✨ Authors
 
-Atqa R. Amir, Amna Bukhari, Syed Faizan
+Atqa R. Amir - Full Stack AI Engineer, 
+Amna Bukhari - Full Stack AI Engineer,
+Azka Abiya Amir - Visual Content Creator
 
 Built to support **climate-resilient farming** through simple, practical, and accessible technology.
 Developed for the **Gemma 4 Good Hackathon (Kaggle)**, and beyond.
