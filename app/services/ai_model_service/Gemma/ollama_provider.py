@@ -49,8 +49,9 @@ class OllamaProvider(AIModelProvider):
     """
 
     def __init__(self, host: str | None = None, model: str | None = None) -> None:
-        self._host  = (host  or os.getenv("OLLAMA_HOST",  _DEFAULT_HOST)).rstrip("/")
-        self._model = model or os.getenv("OLLAMA_MODEL", _DEFAULT_MODEL)
+        self._host    = (host  or os.getenv("OLLAMA_HOST",  _DEFAULT_HOST)).rstrip("/")
+        self._model   = model or os.getenv("OLLAMA_MODEL", _DEFAULT_MODEL)
+        self._timeout = int(os.getenv("OLLAMA_TIMEOUT", "180"))
         self._available = self._check_availability()
 
     # ── Availability check ─────────────────────────────────────────────────
@@ -106,11 +107,29 @@ class OllamaProvider(AIModelProvider):
         except (TimeoutError, socket.timeout) as exc:
             logger.error("Ollama inference timed out: %s", exc)
             return self._placeholder(prompt)
+        except urllib.error.HTTPError as exc:
+            if exc.code >= 500:
+                try:
+                    body = exc.read().decode("utf-8", errors="replace")[:400]
+                except Exception:
+                    body = "<unreadable>"
+                logger.warning(
+                    "Ollama HTTP %d — retrying in 4s (model may still be loading)... body: %s",
+                    exc.code, body,
+                )
+                time.sleep(4)
+                try:
+                    return self._call_ollama(prompt)
+                except Exception as retry_exc:
+                    logger.error("Ollama inference HTTP %d retry failed: %s", exc.code, retry_exc)
+                    return self._placeholder(prompt)
+            self._available = False
+            return self._placeholder(prompt)
         except urllib.error.URLError as exc:
             if isinstance(exc.reason, (TimeoutError, socket.timeout)):
                 logger.error("Ollama inference timed out: %s", exc)
                 return self._placeholder(prompt)
-            logger.error("Ollama inference failed: %s", exc)
+            logger.error("Ollama inference connection failed: %s", exc)
             self._available = False
             return self._placeholder(prompt)
         except Exception as exc:
@@ -148,8 +167,8 @@ class OllamaProvider(AIModelProvider):
             "options": {
                 "temperature": 0.7,
                 "top_p": 0.9,
-                "num_predict": 512,
-                "num_ctx": 8192,   # Gemma 4 supports up to 128K; 8K covers all intelligence prompts
+                "num_predict": 1500,
+                "num_ctx": 8192,
             },
         }
         if system:
@@ -162,7 +181,7 @@ class OllamaProvider(AIModelProvider):
             headers={"Content-Type": "application/json"},
             method="POST",
         )
-        with urllib.request.urlopen(req, timeout=120) as resp:
+        with urllib.request.urlopen(req, timeout=self._timeout) as resp:
             for line in resp:
                 line = line.strip()
                 if not line:
@@ -184,7 +203,7 @@ class OllamaProvider(AIModelProvider):
             return ""
         logger.info(
             "[ollama] complete_json → model=%s | host=%s | prompt=%d chars | "
-            "format=json | num_predict=1024 | num_ctx=8192 | timeout=120s",
+            "format=json | num_predict=2048 | num_ctx=8192 | timeout=120s",
             self._model, self._host, len(prompt),
         )
         try:
@@ -197,6 +216,13 @@ class OllamaProvider(AIModelProvider):
                 "[ollama] complete_json TIMED OUT after 120s — model=%s. "
                 "Consider using a smaller model (gemma4:e2b) or increasing timeout. Error: %s",
                 self._model, exc,
+            )
+            return ""
+        except urllib.error.HTTPError as exc:
+            # 5xx are transient — don't permanently mark unavailable
+            logger.error(
+                "[ollama] complete_json HTTP %d error — model=%s: %s",
+                exc.code, self._model, exc,
             )
             return ""
         except urllib.error.URLError as exc:
@@ -224,7 +250,7 @@ class OllamaProvider(AIModelProvider):
 
     def _call_ollama(self, prompt: str, json_mode: bool = False) -> str:
         system, user = self._split_prompt(prompt)
-        num_predict = 1024 if json_mode else 800
+        num_predict = 2048 if json_mode else 1500
         body: dict = {
             "model":  self._model,
             "prompt": user,
@@ -260,7 +286,7 @@ class OllamaProvider(AIModelProvider):
         )
 
         t0 = time.monotonic()
-        with urllib.request.urlopen(req, timeout=120) as resp:
+        with urllib.request.urlopen(req, timeout=self._timeout) as resp:
             data = json.loads(resp.read())
         elapsed = time.monotonic() - t0
 
