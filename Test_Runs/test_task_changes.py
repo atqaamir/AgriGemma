@@ -2,7 +2,7 @@ import sys
 from datetime import date
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from app import create_app
 from app.services.weekly_planning_service.weekly_planner_service import WeeklyPlannerService
