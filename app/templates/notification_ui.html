@@ -376,10 +376,10 @@
     position: fixed;
     inset: 0;
     background-color: rgba(28, 28, 23, 0.5);
-    z-index: 2000;
+    z-index: 10000;
     align-items: center;
     justify-content: center;
-    padding: 16px;
+    padding: 16px 16px 96px;
   }
 
   .notif-modal-overlay.open {
@@ -478,7 +478,7 @@
     font-size: 14px;
     line-height: 1.65;
     color: #444840;
-    max-height: 420px;
+    max-height: calc(55vh - 100px);
     overflow-y: auto;
     white-space: pre-wrap;
     word-break: break-word;
@@ -1063,12 +1063,15 @@
         const report = JSON.parse(n.detail);
         if (report && typeof report === 'object' && report.weather !== undefined) {
           body.innerHTML = renderReport(report, n.message);
+          body.style.whiteSpace = 'normal';
           hasReport = true;
         } else {
           body.textContent = n.detail || n.message;
+          body.style.whiteSpace = '';
         }
       } catch (_) {
         body.textContent = n.detail || n.message;
+        body.style.whiteSpace = '';
       }
     } else {
       // All other types: show only the ai_summary if available, otherwise message
@@ -1082,6 +1085,7 @@
         }
       }
       body.textContent = summary;
+      body.style.whiteSpace = '';
     }
 
     $id('notifModalOverlay').classList.add('open');
