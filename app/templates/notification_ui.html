@@ -82,6 +82,17 @@
     opacity: 1;
   }
 
+  /* Tiny grey dot when all notifications are read but some exist */
+  .notification-badge.show-read {
+    opacity: 1;
+    background-color: #9e9e8e;
+    min-width: 8px;
+    height: 8px;
+    top: 6px;
+    right: 6px;
+    border-width: 1px;
+  }
+
   /* ── Dropdown ─────────────────────────────────────────────────────────── */
   .notification-dropdown {
     position: fixed;
@@ -265,10 +276,6 @@
     font-size: 12px;
     color: #5a5e54;
     line-height: 1.45;
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
   }
 
   .dark .notif-item-message {
@@ -467,11 +474,11 @@
   }
 
   .notif-modal-body {
-    padding: 18px 20px;
+    padding: 12px 14px;
     font-size: 14px;
     line-height: 1.65;
     color: #444840;
-    max-height: 280px;
+    max-height: 420px;
     overflow-y: auto;
     white-space: pre-wrap;
     word-break: break-word;
@@ -485,7 +492,8 @@
     padding: 14px 20px;
     border-top: 1px solid #e8e5dc;
     display: flex;
-    justify-content: flex-end;
+    justify-content: space-between;
+    align-items: center;
   }
 
   .dark .notif-modal-footer {
@@ -513,88 +521,315 @@
     transform: scale(0.96);
   }
 
-  /* ── Critical Alert Popup ─────────────────────────────────────────────── */
-  .notif-alert-popup {
+  .notif-modal-download-btn {
+    padding: 9px 18px;
+    background: none;
+    color: #47573b;
+    border: 1.5px solid #47573b;
+    border-radius: 10px;
+    font-family: 'Manrope', sans-serif;
+    font-weight: 700;
+    font-size: 14px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: background-color 0.15s, transform 0.1s;
+  }
+
+  .notif-modal-download-btn:hover {
+    background-color: #d6e8c5;
+  }
+
+  .notif-modal-download-btn:active {
+    transform: scale(0.96);
+  }
+
+  .dark .notif-modal-download-btn {
+    color: #d5e9c1;
+    border-color: #d5e9c1;
+  }
+
+  .dark .notif-modal-download-btn:hover {
+    background-color: #3a4a2e;
+  }
+
+  /* ── Change Popup ─────────────────────────────────────────────────────── */
+  .notif-change-popup {
     position: fixed;
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-    background: #fcf9f0;
+    background: #1a0a0a;
+    border: 2px solid #ff3b3b;
     border-radius: 14px;
-    padding: 14px 18px;
-    box-shadow: 0 8px 32px rgba(28, 28, 23, 0.16);
+    padding: 18px 20px;
+    box-shadow: 0 0 0 4px rgba(255, 59, 59, 0.2), 0 16px 48px rgba(0, 0, 0, 0.6);
     z-index: 3000;
     width: calc(100% - 32px);
-    max-width: 420px;
-    border-left: 4px solid #ba1a1a;
-    animation: notifAlertIn 0.3s cubic-bezier(0.22, 0.68, 0, 1.2) both;
+    max-width: 440px;
+    animation: changeAlarmIn 0.25s cubic-bezier(0.22, 0.68, 0, 1.2) both,
+               changeAlarmPulse 2s ease-in-out 0.25s infinite;
   }
 
-  .dark .notif-alert-popup {
-    background: #222219;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
-  }
-
-  @keyframes notifAlertIn {
-    from { opacity: 0; transform: translate(-50%, -50%) scale(0.95); }
+  @keyframes changeAlarmIn {
+    from { opacity: 0; transform: translate(-50%, -50%) scale(0.9); }
     to   { opacity: 1; transform: translate(-50%, -50%) scale(1); }
   }
 
-  .notif-alert-header {
+  @keyframes changeAlarmPulse {
+    0%, 100% { box-shadow: 0 0 0 4px rgba(255, 59, 59, 0.2), 0 16px 48px rgba(0,0,0,0.6); }
+    50%       { box-shadow: 0 0 0 8px rgba(255, 59, 59, 0.35), 0 16px 48px rgba(0,0,0,0.6); }
+  }
+
+  .notif-change-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: #ff3b3b;
+    color: #fff;
+    font-family: 'Manrope', sans-serif;
+    font-weight: 800;
+    font-size: 11px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    padding: 3px 10px;
+    border-radius: 20px;
+    margin-bottom: 10px;
+  }
+
+  .notif-change-header {
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
-    margin-bottom: 6px;
+    margin-bottom: 8px;
     gap: 8px;
   }
 
-  .notif-alert-title {
+  .notif-change-title {
+    font-family: 'Manrope', sans-serif;
+    font-weight: 800;
+    font-size: 16px;
+    color: #ffffff;
+    line-height: 1.3;
+  }
+
+  .notif-change-close-btn {
+    background: rgba(255,255,255,0.1);
+    border: none;
+    cursor: pointer;
+    color: #ffffff;
+    font-size: 18px;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: background 0.15s;
+    line-height: 1;
+  }
+
+  .notif-change-close-btn:hover { background: rgba(255,255,255,0.2); }
+
+  .notif-change-message {
+    font-size: 13px;
+    color: #ffcdd2;
+    line-height: 1.6;
+  }
+
+  /* ── Report card ─────────────────────────────────────────────────────── */
+  .rpt-report { display: flex; flex-direction: column; gap: 8px; }
+
+  .rpt-intro {
+    font-size: 13px;
+    color: #5a5e54;
+    line-height: 1.6;
+    margin: 0;
+  }
+  .dark .rpt-intro { color: #9e9e8e; }
+
+  .rpt-section {
+    background: #f7f3ea;
+    border-radius: 10px;
+    padding: 8px 12px;
+  }
+  .dark .rpt-section { background: #2a2a24; }
+
+  .rpt-section-title {
     font-family: 'Manrope', sans-serif;
     font-weight: 700;
-    font-size: 13px;
-    color: #ba1a1a;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #47573b;
+    margin-bottom: 6px;
     display: flex;
     align-items: center;
     gap: 6px;
   }
+  .dark .rpt-section-title { color: #d5e9c1; }
 
-  .notif-alert-close-btn {
-    background: none;
-    border: none;
-    cursor: pointer;
-    color: #9e9e8e;
-    font-size: 18px;
-    padding: 0;
-    line-height: 1;
-    flex-shrink: 0;
-    transition: color 0.15s;
+  .rpt-count {
+    background: #47573b;
+    color: #fff;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 1px 7px;
+    border-radius: 20px;
+    text-transform: none;
+    letter-spacing: 0;
+  }
+  .dark .rpt-count { background: #d5e9c1; color: #1c1c17; }
+
+  .rpt-weather-row {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
   }
 
-  .notif-alert-close-btn:hover {
+  .rpt-weather-temp {
+    font-family: 'Manrope', sans-serif;
+    font-weight: 800;
+    font-size: 22px;
     color: #1c1c17;
   }
+  .dark .rpt-weather-temp { color: #e5e2da; }
 
-  .dark .notif-alert-close-btn:hover {
-    color: #e5e2da;
+  .rpt-weather-cond {
+    font-size: 14px;
+    font-weight: 600;
+    color: #444840;
   }
+  .dark .rpt-weather-cond { color: #9e9e8e; }
 
-  .notif-alert-message {
+  .rpt-weather-rain {
+    font-size: 12px;
+    color: #5a5e54;
+  }
+  .dark .rpt-weather-rain { color: #9e9e8e; }
+
+  .rpt-badge {
+    font-size: 11px;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 20px;
+    font-family: 'Manrope', sans-serif;
+  }
+  .rpt-badge-red  { background: #ffebee; color: #ba1a1a; }
+  .rpt-badge-blue { background: #e3f2fd; color: #1565c0; }
+  .dark .rpt-badge-red  { background: #4a1010; color: #ff8a80; }
+  .dark .rpt-badge-blue { background: #0d2a4a; color: #90caf9; }
+
+  .rpt-task-item {
+    padding: 5px 0;
+    border-bottom: 1px solid #e8e5dc;
+  }
+  .dark .rpt-task-item { border-bottom-color: #3a3a30; }
+  .rpt-task-item:last-child { border-bottom: none; padding-bottom: 0; }
+
+  .rpt-task-title {
+    font-family: 'Manrope', sans-serif;
+    font-weight: 700;
     font-size: 13px;
+    color: #1c1c17;
+    margin-bottom: 4px;
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+  .dark .rpt-task-title { color: #e5e2da; }
+
+  .rpt-field {
+    font-size: 11px;
+    font-weight: 600;
+    background: #e8f0e0;
+    color: #47573b;
+    padding: 1px 7px;
+    border-radius: 10px;
+  }
+  .dark .rpt-field { background: #2a3a22; color: #d5e9c1; }
+
+  .rpt-task-changes {
+    margin: 0;
+    padding-left: 16px;
+    list-style: disc;
+  }
+  .rpt-task-changes li {
+    font-size: 12px;
+    color: #5a5e54;
+    line-height: 1.6;
+  }
+  .dark .rpt-task-changes li { color: #9e9e8e; }
+
+  .rpt-plan-item {
+    padding: 5px 0;
+    border-bottom: 1px solid #e8e5dc;
+  }
+  .dark .rpt-plan-item { border-bottom-color: #3a3a30; }
+  .rpt-plan-item:last-child { border-bottom: none; padding-bottom: 0; }
+
+  .rpt-plan-factor {
+    display: inline-block;
+    font-size: 10px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    background: #fff3e0;
+    color: #b45309;
+    padding: 2px 8px;
+    border-radius: 20px;
+    margin-bottom: 4px;
+  }
+  .dark .rpt-plan-factor { background: #3a2a10; color: #fbbf24; }
+
+  .rpt-plan-reason {
+    font-size: 12px;
     color: #444840;
     line-height: 1.5;
   }
+  .dark .rpt-plan-reason { color: #9e9e8e; }
 
-  .dark .notif-alert-message {
+  .rpt-plan-adj {
+    font-size: 12px;
+    font-weight: 600;
+    color: #47573b;
+    margin-top: 2px;
+  }
+  .dark .rpt-plan-adj { color: #d5e9c1; }
+
+  .rpt-ai-section { border: 1px solid #d6e8c5; }
+  .dark .rpt-ai-section { border-color: #3a4a2e; }
+
+  .rpt-ai-text {
+    font-size: 13px;
+    color: #444840;
+    line-height: 1.65;
+    margin: 0;
+  }
+  .dark .rpt-ai-text { color: #9e9e8e; }
+
+  .rpt-empty {
+    font-size: 12px;
     color: #9e9e8e;
+    margin: 0;
   }
 
   /* ── Type colours ─────────────────────────────────────────────────────── */
   .notif-type-critical    { color: #ba1a1a; }
+  .notif-type-alert       { color: #ba1a1a; }
   .notif-type-warning     { color: #b45309; }
   .notif-type-info        { color: #1d4ed8; }
   .notif-type-recommendation { color: #166534; }
+  .notif-type-change      { color: #7C3AED; }
+
+  .dark .notif-type-change { color: #c4b5fd; }
 
   .dark .notif-type-critical    { color: #ff8a80; }
+  .dark .notif-type-alert       { color: #ff8a80; }
   .dark .notif-type-warning     { color: #fbbf24; }
   .dark .notif-type-info        { color: #93c5fd; }
   .dark .notif-type-recommendation { color: #86efac; }
@@ -625,6 +860,9 @@
   </div>
 </div>
 
+<!-- ── Change Popup Container ────────────────────────────────────────────────── -->
+<div id="changeAlertsContainer"></div>
+
 <!-- ── Detail Modal ─────────────────────────────────────────────────────────── -->
 <div class="notif-modal-overlay" id="notifModalOverlay">
   <div class="notif-modal">
@@ -639,43 +877,34 @@
     </div>
     <div class="notif-modal-body" id="notifModalBody"></div>
     <div class="notif-modal-footer">
+      <button class="notif-modal-download-btn" id="notifModalDownloadBtn" style="display:none;">
+        <span class="material-symbols-outlined" style="font-size:18px;">download</span>
+        Download Report
+      </button>
       <button class="notif-modal-done-btn" id="notifModalDoneBtn">Done</button>
     </div>
   </div>
 </div>
-
-<!-- ── Critical Alert Container ─────────────────────────────────────────────── -->
-<div id="alertsContainer"></div>
 
 <script>
 (function () {
   if (window.__notifSystemLoaded) return;
   window.__notifSystemLoaded = true;
 
-  const USER_ID = 1;
-  const POLL_MS = 12000;
+  const USER_ID = {{ current_user_id }};
 
   const TYPE_META = {
     info:           { icon: 'ℹ️',  cssClass: 'notif-type-info',           clickable: false },
     warning:        { icon: '⚠️',  cssClass: 'notif-type-warning',        clickable: true  },
+    alert:          { icon: '🔴',  cssClass: 'notif-type-alert',          clickable: true  },
     critical:       { icon: '🚨',  cssClass: 'notif-type-critical',       clickable: true  },
     recommendation: { icon: '💡',  cssClass: 'notif-type-recommendation', clickable: true  },
+    change:         { icon: '🔄',  cssClass: 'notif-type-change',         clickable: true  },
   };
 
   let notifications = [];
-  let alertQueue    = [];
-  let alertActive   = false;
-  const shownAlertKey = `notif_alerts_shown_${USER_ID}`;
-  let shownAlertIds = new Set();
-
-  try {
-    const saved = localStorage.getItem(shownAlertKey);
-    if (saved) shownAlertIds = new Set(JSON.parse(saved));
-  } catch (_) {}
-
-  function saveShownAlerts() {
-    try { localStorage.setItem(shownAlertKey, JSON.stringify([...shownAlertIds])); } catch (_) {}
-  }
+  let changeQueue   = [];
+  let changeActive  = false;
 
   // ── DOM refs ──────────────────────────────────────────────────────────────
   function $id(id) { return document.getElementById(id); }
@@ -684,13 +913,14 @@
   async function loadNotifications() {
     try {
       const res = await fetch(`/notifications/?user_id=${USER_ID}&per_page=50`);
-      if (!res.ok) return;
+      if (!res.ok) {
+        console.error(`[notifications] API error ${res.status}:`, await res.text().catch(() => ''));
+        return;
+      }
       const data = await res.json();
-      // Sort newest first in case the API doesn't guarantee order
       const fetched = (data.notifications || []).sort(
         (a, b) => new Date(b.created_at) - new Date(a.created_at)
       );
-      // Merge: preserve any local is_read=true states set before server syncs
       const localReadIds = new Set(notifications.filter(n => n.is_read).map(n => n.id));
       notifications = fetched.map(n => ({
         ...n,
@@ -698,8 +928,10 @@
       }));
       updateBadge();
       renderDropdown();
-      processAlerts();
-    } catch (_) {}
+      processChangePopups();
+    } catch (err) {
+      console.error('[notifications] fetch failed:', err);
+    }
   }
 
   // ── Badge ─────────────────────────────────────────────────────────────────
@@ -709,12 +941,20 @@
     if (!badge || !icon) return;
 
     const unread = notifications.filter(n => !n.is_read).length;
+    const total  = notifications.length;
     if (unread > 0) {
       badge.textContent = unread > 99 ? '99+' : unread;
       badge.classList.add('show');
+      badge.classList.remove('show-read');
       icon.classList.add('has-unread');
-    } else {
+    } else if (total > 0) {
+      // All read but notifications exist — show a subtle dot so the bell isn't bare
+      badge.textContent = '';
       badge.classList.remove('show');
+      badge.classList.add('show-read');
+      icon.classList.remove('has-unread');
+    } else {
+      badge.classList.remove('show', 'show-read');
       icon.classList.remove('has-unread');
     }
   }
@@ -738,7 +978,7 @@
           <span class="notif-item-icon ${meta.cssClass}">${meta.icon}</span>
           <div class="notif-item-body">
             <div class="notif-item-title">${esc(n.title)}</div>
-            <div class="notif-item-message">${esc(n.message)}</div>
+            ${!meta.clickable ? `<div class="notif-item-message">${esc(n.message)}</div>` : ''}
             <div class="notif-item-footer">
               <span class="notif-item-time">${timeAgo(n.created_at)}</span>
               ${meta.clickable ? '<span class="notif-item-cta">View details →</span>' : ''}
@@ -753,10 +993,13 @@
       const clickable = el.dataset.clickable === 'true';
       el.addEventListener('click', e => {
         e.stopPropagation();
-        markAsRead(id);
         if (clickable) {
+          // Mark as read only when the user explicitly closes the modal (Done/X)
           const n = notifications.find(x => x.id === id);
           if (n) openModal(n);
+        } else {
+          // Non-clickable (info): mark as read on click since there's no modal to close
+          markAsRead(id);
         }
       });
     });
@@ -801,70 +1044,219 @@
   }
 
   // ── Modal ─────────────────────────────────────────────────────────────────
+  let _activeModalNotif = null;
+
   function openModal(n) {
-    const meta = TYPE_META[n.notification_type] || TYPE_META.info;
+    const meta        = TYPE_META[n.notification_type] || TYPE_META.info;
+    const downloadBtn = $id('notifModalDownloadBtn');
+    const body        = $id('notifModalBody');
+    _activeModalNotif = n;
+
     $id('notifModalIcon').textContent  = meta.icon;
     $id('notifModalTitle').textContent = n.title;
-    $id('notifModalBody').textContent  = n.detail || n.message;
+
+    // Only change notifications get the full structured report card
+    let hasReport = false;
+    if (n.notification_type === 'change' && n.detail) {
+      try {
+        const report = JSON.parse(n.detail);
+        if (report && typeof report === 'object' && report.weather !== undefined) {
+          body.innerHTML = renderReport(report, n.message);
+          hasReport = true;
+        } else {
+          body.textContent = n.detail || n.message;
+        }
+      } catch (_) {
+        body.textContent = n.detail || n.message;
+      }
+    } else {
+      // All other types: show only the ai_summary if available, otherwise message
+      let summary = n.message;
+      if (n.detail) {
+        try {
+          const report = JSON.parse(n.detail);
+          if (report && report.ai_summary) summary = report.ai_summary;
+        } catch (_) {
+          summary = n.detail;
+        }
+      }
+      body.textContent = summary;
+    }
+
     $id('notifModalOverlay').classList.add('open');
+    if (downloadBtn) {
+      downloadBtn.style.display = hasReport ? 'flex' : 'none';
+    }
     closeDropdown();
+  }
+
+  function renderReport(r, introMessage) {
+    const w   = r.weather || {};
+    const esc2 = s => String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+
+    // ── Weather card ────────────────────────────────────────────────────
+    const tempStr = w.temp != null ? `${Math.round(w.temp)}°C` : '—';
+    const badges  = [];
+    if (w.heatwave)     badges.push('<span class="rpt-badge rpt-badge-red">Heatwave Risk</span>');
+    if (w.rain_expected) badges.push('<span class="rpt-badge rpt-badge-blue">Rain Expected</span>');
+    const weatherHtml = `
+      <div class="rpt-section">
+        <div class="rpt-section-title">🌤 Weather Today</div>
+        <div class="rpt-weather-row">
+          <span class="rpt-weather-temp">${esc2(tempStr)}</span>
+          <span class="rpt-weather-cond">${esc2(w.condition || '—')}</span>
+          <span class="rpt-weather-rain">${w.rainfall_mm ? Math.round(w.rainfall_mm) + 'mm rainfall' : 'No rainfall'}</span>
+          ${badges.join('')}
+        </div>
+      </div>`;
+
+    // ── Tasks section ───────────────────────────────────────────────────
+    let tasksHtml = '';
+    const tasks = r.tasks || [];
+    if (tasks.length) {
+      const rows = tasks.map(t => {
+        const field = t.field ? `<span class="rpt-field">${esc2(t.field)}</span>` : '';
+        const changes = (t.changes || []).map(ch => `<li>${esc2(ch)}</li>`).join('');
+        return `<div class="rpt-task-item">
+          <div class="rpt-task-title">${esc2(t.title)}${field}</div>
+          <ul class="rpt-task-changes">${changes}</ul>
+        </div>`;
+      }).join('');
+      tasksHtml = `
+        <div class="rpt-section">
+          <div class="rpt-section-title">📋 Tasks Changed <span class="rpt-count">${tasks.length}</span></div>
+          ${rows}
+        </div>`;
+    } else {
+      tasksHtml = `<div class="rpt-section"><div class="rpt-section-title">📋 Tasks</div><p class="rpt-empty">No task changes recorded.</p></div>`;
+    }
+
+    // ── Weekly plan section ─────────────────────────────────────────────
+    let planHtml = '';
+    const plan = r.plan || [];
+    if (plan.length) {
+      const rows = plan.map(adj => `
+        <div class="rpt-plan-item">
+          <span class="rpt-plan-factor">${esc2(adj.factor || 'weather')}</span>
+          <div class="rpt-plan-reason">${esc2(adj.reasoning || '')}</div>
+          ${adj.adjustment ? `<div class="rpt-plan-adj">→ ${esc2(adj.adjustment)}</div>` : ''}
+        </div>`).join('');
+      planHtml = `
+        <div class="rpt-section">
+          <div class="rpt-section-title">📅 Weekly Plan Adjustments</div>
+          ${rows}
+        </div>`;
+    } else {
+      planHtml = `<div class="rpt-section"><div class="rpt-section-title">📅 Weekly Plan</div><p class="rpt-empty">No weekly plan changes recorded.</p></div>`;
+    }
+
+    // ── AI summary ──────────────────────────────────────────────────────
+    const summaryHtml = r.ai_summary ? `
+      <div class="rpt-section rpt-ai-section">
+        <div class="rpt-section-title">🤖 AI Summary</div>
+        <p class="rpt-ai-text">${esc2(r.ai_summary)}</p>
+      </div>` : '';
+
+    const introHtml = introMessage
+      ? `<p class="rpt-intro">${esc2(introMessage)}</p>`
+      : '';
+    return `<div class="rpt-report">${introHtml}${weatherHtml}${tasksHtml}${planHtml}${summaryHtml}</div>`;
   }
 
   function closeModal() {
     const overlay = $id('notifModalOverlay');
     if (overlay) overlay.classList.remove('open');
+    if (_activeModalNotif) markAsRead(_activeModalNotif.id);
+    _activeModalNotif = null;
   }
 
-  // ── Alert popups (critical only) ──────────────────────────────────────────
-  function processAlerts() {
-    const criticals = notifications.filter(n => n.notification_type === 'critical' && !n.is_read);
-    const currentIds = new Set(criticals.map(n => n.id));
+  function downloadReport() {
+    if (!_activeModalNotif) return;
+    const n        = _activeModalNotif;
+    const dateStr  = new Date().toISOString().slice(0, 10);
+    const filename = `farm-change-report-${dateStr}.txt`;
+    let content    = '';
 
-    // Prune stale shown IDs
-    for (const id of shownAlertIds) {
-      if (!currentIds.has(id)) shownAlertIds.delete(id);
-    }
-    saveShownAlerts();
-
-    criticals.forEach(n => {
-      if (!shownAlertIds.has(n.id)) {
-        alertQueue.push(n);
-        shownAlertIds.add(n.id);
-        saveShownAlerts();
+    try {
+      const r = JSON.parse(n.detail || '{}');
+      if (r.weather !== undefined) {
+        const w = r.weather || {};
+        const lines = [`Farm Change Report — ${r.date || dateStr}`, ''];
+        lines.push('WEATHER');
+        lines.push(`  ${w.temp != null ? Math.round(w.temp) + '°C' : '—'}  ${w.condition || ''}  ${w.rainfall_mm ? Math.round(w.rainfall_mm) + 'mm rainfall' : 'No rainfall'}`);
+        if (w.heatwave) lines.push('  ⚠ Heatwave risk');
+        if (w.rain_expected) lines.push('  ⚠ Rain expected');
+        lines.push('');
+        lines.push(`TASKS CHANGED (${(r.tasks || []).length})`);
+        (r.tasks || []).forEach(t => {
+          lines.push(`  • ${t.title}${t.field ? ' — ' + t.field : ''}`);
+          (t.changes || []).forEach(ch => lines.push(`      - ${ch}`));
+        });
+        if (!(r.tasks || []).length) lines.push('  No task changes.');
+        lines.push('');
+        lines.push('WEEKLY PLAN ADJUSTMENTS');
+        (r.plan || []).forEach(adj => {
+          lines.push(`  [${(adj.factor || 'weather').toUpperCase()}] ${adj.reasoning || ''}`);
+          if (adj.adjustment) lines.push(`      → ${adj.adjustment}`);
+        });
+        if (!(r.plan || []).length) lines.push('  No plan changes.');
+        if (r.ai_summary) {
+          lines.push('');
+          lines.push('AI SUMMARY');
+          lines.push(`  ${r.ai_summary}`);
+        }
+        content = lines.join('\n');
       }
-    });
+    } catch (_) {}
 
-    showNextAlert();
+    if (!content) content = n.detail || n.message || '';
+
+    const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement('a');
+    a.href = url; a.download = filename; a.click();
+    URL.revokeObjectURL(url);
   }
 
-  function showNextAlert() {
-    if (alertActive || !alertQueue.length) return;
-    alertActive = true;
+  // ── Change popups ─────────────────────────────────────────────────────────
+  function processChangePopups() {
+    // Show a popup for every unread change notification not already queued/active
+    const queuedIds = new Set(changeQueue.map(n => n.id));
+    notifications
+      .filter(n => n.notification_type === 'change' && !n.is_read && !queuedIds.has(n.id))
+      .forEach(n => changeQueue.push(n));
+    showNextChangePopup();
+  }
 
-    const n         = alertQueue.shift();
-    const container = $id('alertsContainer');
-    if (!container) { alertActive = false; return; }
+  function showNextChangePopup() {
+    if (changeActive || !changeQueue.length) return;
+    changeActive = true;
 
-    const meta = TYPE_META[n.notification_type] || TYPE_META.critical;
-    const el   = document.createElement('div');
-    el.className = 'notif-alert-popup';
-    el.id        = `alert-${n.id}`;
+    const n         = changeQueue.shift();
+    const container = $id('changeAlertsContainer');
+    if (!container) { changeActive = false; return; }
+
+    const el = document.createElement('div');
+    el.className = 'notif-change-popup';
     el.innerHTML = `
-      <div class="notif-alert-header">
-        <div class="notif-alert-title">${meta.icon} ${esc(n.title)}</div>
-        <button class="notif-alert-close-btn" aria-label="Dismiss">&times;</button>
+      <div class="notif-change-badge">🚨 Alert — Action Required</div>
+      <div class="notif-change-header">
+        <div class="notif-change-title">${esc(n.title)}</div>
+        <button class="notif-change-close-btn" aria-label="Dismiss">&times;</button>
       </div>
-      <div class="notif-alert-message">${esc(n.message)}</div>`;
+      <div class="notif-change-message">${esc(n.message)}</div>`;
     container.appendChild(el);
 
     const dismiss = () => {
       el.remove();
-      alertActive = false;
-      setTimeout(showNextAlert, 120);
+      changeActive = false;
+      setTimeout(showNextChangePopup, 120);
     };
 
-    el.querySelector('.notif-alert-close-btn').addEventListener('click', dismiss);
-    setTimeout(dismiss, 10000);
+    el.querySelector('.notif-change-close-btn').addEventListener('click', () => {
+      markAsRead(n.id);
+      dismiss();
+    });
   }
 
   // ── Mark read ─────────────────────────────────────────────────────────────
@@ -884,9 +1276,7 @@
 
   async function markAllRead() {
     notifications.forEach(n => n.is_read = true);
-    alertQueue = [];
-    shownAlertIds.clear();
-    saveShownAlerts();
+    changeQueue = [];
     updateBadge();
     // Update all items' styling without full re-render
     document.querySelectorAll('.notif-item.unread').forEach(el => {
@@ -915,17 +1305,19 @@
 
   // ── Wire up after DOM ready ───────────────────────────────────────────────
   function init() {
-    const bellBtn       = $id('notificationBellBtn');
-    const markAllBtn    = $id('markAllReadBtn');
-    const modalOverlay  = $id('notifModalOverlay');
-    const modalCloseBtn = $id('notifModalCloseBtn');
-    const modalDoneBtn  = $id('notifModalDoneBtn');
+    const bellBtn          = $id('notificationBellBtn');
+    const markAllBtn       = $id('markAllReadBtn');
+    const modalOverlay     = $id('notifModalOverlay');
+    const modalCloseBtn    = $id('notifModalCloseBtn');
+    const modalDoneBtn     = $id('notifModalDoneBtn');
+    const modalDownloadBtn = $id('notifModalDownloadBtn');
 
-    if (bellBtn)       bellBtn.addEventListener('click', e => { e.stopPropagation(); toggleDropdown(); });
-    if (markAllBtn)    markAllBtn.addEventListener('click', e => { e.stopPropagation(); markAllRead(); });
-    if (modalCloseBtn) modalCloseBtn.addEventListener('click', closeModal);
-    if (modalDoneBtn)  modalDoneBtn.addEventListener('click', closeModal);
-    if (modalOverlay)  modalOverlay.addEventListener('click', e => { if (e.target === modalOverlay) closeModal(); });
+    if (bellBtn)          bellBtn.addEventListener('click', e => { e.stopPropagation(); toggleDropdown(); });
+    if (markAllBtn)       markAllBtn.addEventListener('click', e => { e.stopPropagation(); markAllRead(); });
+    if (modalCloseBtn)    modalCloseBtn.addEventListener('click', closeModal);
+    if (modalDoneBtn)     modalDoneBtn.addEventListener('click', closeModal);
+    if (modalDownloadBtn) modalDownloadBtn.addEventListener('click', downloadReport);
+    if (modalOverlay)     modalOverlay.addEventListener('click', e => { if (e.target === modalOverlay) closeModal(); });
 
     document.addEventListener('click', e => {
       const container = $id('notification-container');
@@ -933,7 +1325,8 @@
     });
 
     loadNotifications();
-    setInterval(loadNotifications, POLL_MS);
+    // Poll every 30 seconds so the badge and dropdown stay current without a page refresh
+    setInterval(loadNotifications, 30_000);
   }
 
   if (document.readyState === 'loading') {

@@ -63,7 +63,8 @@ class NotificationRepository:
     def get_unread_critical(user_id: int) -> list:
         return (
             Notification.query
-            .filter_by(user_id=user_id, notification_type="critical", is_read=False)
+            .filter_by(user_id=user_id, is_read=False)
+            .filter(Notification.notification_type.in_(["critical", "alert", "change"]))
             .order_by(Notification.created_at.desc())
             .all()
         )
