@@ -1,4 +1,6 @@
 
+# AgriGemma
+
 ## 📁 Installation & Setup
 
 Follow these steps to run the project locally.
@@ -6,7 +8,7 @@ Follow these steps to run the project locally.
 ### 1. Clone the Repository
 
 ```bash
-git clone http://github.com/your-username/AgriGemma.git
+git clone https://github.com/your-username/AgriGemma.git
 cd AgriGemma
 ```
 
@@ -88,7 +90,7 @@ AgriGemma's core feature is **automatic adaptation** of tasks and weekly plans w
 python test_runs/test_task_changes.py
 ```
 
-It injects a fake weather-change scenario for a set of test users (covering no-impact, rainfall-impact, and temperature-impact cases), then runs the full coordinator pipeline — rescheduling affected tasks, regenerating the weekly plan, and producing change-summary notifications. Watch the terminal output to see each user's adaptation result. Of course, all of the changes are reflected on the frotnend of the application as well.
+It injects a fake weather-change scenario for a set of test users (covering no-impact, rainfall-impact, and temperature-impact cases), then runs the full coordinator pipeline — rescheduling affected tasks, regenerating the weekly plan, and producing change-summary notifications. Watch the terminal output to see each user's adaptation result. Of course, all of the changes are reflected on the frontend of the application as well.
 
 
 ## 📦 Requirements
@@ -99,6 +101,140 @@ It injects a fake weather-change scenario for a set of test users (covering no-i
 - [OpenWeatherMap API key](https://openweathermap.org/api) — free tier is sufficient
 
 ## ⚡ Quick Start
+
+**Windows:**
+```bash
+python -m venv venv && venv\Scripts\activate && pip install -r requirements.txt && python run.py
+```
+
+**Mac/Linux:**
 ```bash
 python -m venv venv && source venv/bin/activate && pip install -r requirements.txt && python run.py
 ```
+
+---
+
+## 🛠️ Troubleshooting
+
+#### "Connection refused on port 11434"
+Ollama is not running. Start it:
+```bash
+ollama serve
+```
+Wait 3–5 seconds for the server to initialize, then retry.
+
+#### "Model not found"
+The model hasn't been pulled yet:
+```bash
+ollama pull gemma4
+```
+
+#### Slow responses
+- First request after starting Ollama is always slower (model loads into memory).
+- If consistently slow, switch to a lighter model: set `OLLAMA_MODEL=gemma4:e2b` in `.env`.
+
+#### "AI model failed: HTTPConnectionPool..."
+Ollama crashed or stopped. Restart it:
+```bash
+ollama serve
+```
+
+#### No AI responses at all (UI testing mode)
+To run without any AI backend, set in `.env`:
+```env
+USE_PLACEHOLDER_AI=true
+```
+
+#### Debugging Flask startup
+Set `FLASK_DEBUG=1` in `.env` to enable debug logging and see which AI provider initialized:
+```env
+FLASK_DEBUG=1
+```
+Look for lines like `✅ Google AI initialized` or `✅ Ollama connected` in the output.
+
+---
+
+## 💻 Hardware Requirements
+
+| Component | Requirement |
+|-----------|-------------|
+| RAM | 4 GB minimum, 8 GB recommended |
+| Disk | 10 GB free (for Ollama model + cache) |
+| CPU | Modern multi-core (ARM/x86) |
+| GPU | Optional — improves Ollama inference speed |
+| Internet | Required for Option A (Google AI) and initial Ollama model pull |
+
+---
+
+## 🧹 Cleanup
+
+#### Remove Ollama model cache
+```bash
+# Windows
+rmdir /s %USERPROFILE%\.ollama\models
+
+# Unix/Mac
+rm -rf ~/.ollama/models
+```
+The model will re-download from Ollama on next use.
+
+#### Reset the database
+Delete `app.db` in the project root, then restart the app — `seed_data.py` will recreate it automatically.
+
+---
+
+## 🔀 Migration Guides
+
+### Switching AI Provider
+
+All three options are controlled entirely by `.env` — no code changes needed. Stop the app, update `.env`, and restart.
+
+#### Option B → Option A (add Google AI for chatbot)
+```env
+USE_GOOGLE_AI=true
+GOOGLE_API_KEY=your_google_ai_key
+GOOGLE_AI_MODEL=gemma-4-26b-a4b-it
+# Keep OLLAMA_HOST and OLLAMA_MODEL — still used for background tasks
+```
+
+#### Option A → Option B (go fully offline)
+```env
+USE_GOOGLE_AI=false
+# GOOGLE_API_KEY can be removed or left — it won't be used
+```
+
+#### Any option → Option C (placeholder, no AI)
+```env
+USE_PLACEHOLDER_AI=true
+```
+
+#### Option C → any real provider
+Remove `USE_PLACEHOLDER_AI` (or set it to `false`), then configure Option A or B as above.
+
+### Database Migrations
+
+Flask-Migrate (Alembic) is used to manage schema changes. Run these whenever models change.
+
+#### Apply existing migrations (after pulling new code)
+```bash
+flask db upgrade
+```
+
+#### Create a new migration after changing a model
+```bash
+flask db migrate -m "describe what changed"
+flask db upgrade
+```
+
+#### Roll back the last migration
+```bash
+flask db downgrade
+```
+
+#### Check current migration state
+```bash
+flask db current   # active revision
+flask db history   # full migration log
+```
+
+> **Note:** The app uses SQLite by default (`app.db`). For a clean slate, delete `app.db` and restart — `seed_data.py` repopulates everything automatically, so you only need migrations when preserving existing data.

@@ -7,7 +7,10 @@
       "PowerShell(head -30)",
       "Read(//c/Users/its/.claude/projects/c--Users-its-Desktop-Projects-SmartFarming/memory/**)",
       "Bash(Remove-Item \"c:\\\\Users\\\\its\\\\Desktop\\\\Projects\\\\SmartFarming\\\\ASSUMPTIONS.md\")",
-      "PowerShell(Remove-Item \"c:\\\\Users\\\\its\\\\Desktop\\\\Projects\\\\SmartFarming\\\\ASSUMPTIONS.md\" -Confirm:$false)"
+      "PowerShell(Remove-Item \"c:\\\\Users\\\\its\\\\Desktop\\\\Projects\\\\SmartFarming\\\\ASSUMPTIONS.md\" -Confirm:$false)",
+      "Bash(python -c \"import matplotlib; import numpy; print\\('ok'\\)\")",
+      "Bash(python -)",
+      "PowerShell(New-Item -ItemType Directory -Force \"c:\\\\Users\\\\its\\\\Desktop\\\\Projects\\\\SmartFarming\\\\docs\")"
     ]
   }
 }
