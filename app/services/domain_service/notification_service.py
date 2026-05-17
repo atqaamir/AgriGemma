@@ -138,17 +138,21 @@ class NotificationService:
     def generate_notifications(self, user_id: int, tag: str = "") -> Status:
         """
         Tag-driven notification dispatch:
-          weather_only → info,   no AI reasoning
-          weekly       → warning, AI reasoning (weekly plan changed, today fine)
-          daily        → change,  AI reasoning (daily tasks + weekly plan changed)
+          weather_only   → INFO    — weather shifted but tasks are unaffected; no AI call
+          weekly         → WARNING — weather changed the weekly plan; today's tasks fine;
+                                     Ollama explains what changed and why
+          daily          → ALERT   — weather changed the weekly plan AND today's tasks;
+                                     Ollama explains the changes and what to prioritise
+          change_summary → CHANGE  — full change report with Ollama summary;
+                                     triggers an alert popup when unread
         """
         try:
             from app.services.intelligence_service.context.context_builder import build_notification_context
             context = build_notification_context(user_id)
-
             weather = context.get("weather", {})
 
             if tag == "weather_only":
+                # INFO — no AI explanation needed
                 self.create_if_not_duplicate(
                     user_id=user_id,
                     title="Weather changed, you're all good",
@@ -156,9 +160,13 @@ class NotificationService:
                     notification_type=NotificationType.INFO.value,
                     detail=None,
                 )
+                print(f"[weather_only notification] created for user={user_id}")
 
             elif tag == "weekly":
+                # WARNING — weekly plan adjusted, today unchanged
+                # Ollama explains the weekly shift
                 detail = self._generate_plan_change_explanation("weekly", context)
+                print(f"[weekly notification] generated detail length={len(detail) if detail else 0}")
                 self.create_if_not_duplicate(
                     user_id=user_id,
                     title="Heads up — your week looks a bit different",
@@ -166,28 +174,62 @@ class NotificationService:
                     notification_type=NotificationType.WARNING.value,
                     detail=detail,
                 )
+                print(f"[weekly notification] create_if_not_duplicate returned for user={user_id}")
 
             elif tag == "daily":
+                # ALERT — today's tasks AND weekly plan changed
+                # Ollama explains what changed today and what to prioritise
                 detail = self._generate_plan_change_explanation("daily", context)
+                print(f"[daily notification] generated detail length={len(detail) if detail else 0}")
                 self.create_if_not_duplicate(
                     user_id=user_id,
-                    title="Today's tasks have changed",
+                    title="Your tasks have changed today",
                     message=self._build_short_message("daily", weather),
-                    notification_type=NotificationType.CHANGE.value,
+                    notification_type=NotificationType.ALERT.value,
                     detail=detail,
                 )
 
+                print(f"[daily notification] create_if_not_duplicate returned for user={user_id}")
+
             elif tag == "change_summary":
-                task_summaries, plan_summaries = self._collect_change_data(user_id)
+                # CHANGE — full structured report with Ollama summary; triggers popup alert
+                # Always create fresh — each report contains unique weather/task/AI data
+                print(f"[change_summary] start for user={user_id}")
+                try:
+                    task_summaries, plan_summaries = self._collect_change_data(user_id)
+                    logger.info("change_summary: collected %d task changes, %d plan changes", 
+                               len(task_summaries), len(plan_summaries))
+                    print(f"[change_summary] collected task_summaries={len(task_summaries)} plan_summaries={len(plan_summaries)}")
+                except Exception as collect_exc:
+                    logger.error("change_summary: collect_change_data failed — %s", collect_exc, exc_info=True)
+                    print(f"[change_summary] collect_change_data failed: {collect_exc}")
+                    task_summaries, plan_summaries = [], []
+                
+                try:
+                    detail = self._build_change_summary_detail(task_summaries, plan_summaries, context)
+                    print(f"[change_summary] built detail (len={len(detail) if detail else 0})")
+                except Exception as detail_exc:
+                    logger.error("change_summary: detail build failed — %s", detail_exc, exc_info=True)
+                    print(f"[change_summary] detail build failed: {detail_exc}")
+                    detail = None
+                
+                title = self._build_change_summary_title(task_summaries, plan_summaries)
                 message = self._build_change_summary_message(task_summaries, plan_summaries)
-                detail  = self._build_change_summary_detail(user_id, task_summaries, plan_summaries, context)
-                self.create_if_not_duplicate(
-                    user_id=user_id,
-                    title="Here's what changed",
-                    message=message,
-                    notification_type=NotificationType.CHANGE.value,
-                    detail=detail,
-                )
+                
+                try:
+                    notification = self.create(
+                        user_id=user_id,
+                        title=title,
+                        message=message,
+                        notification_type=NotificationType.CHANGE.value,
+                        detail=detail,
+                    )
+                    print(f"[change_summary] create returned: {getattr(notification, 'id', notification)}")
+                    logger.info("change_summary: CHANGE notification created for user %d", user_id)
+                except Exception as create_exc:
+                    logger.error("change_summary: create notification failed — %s", create_exc, exc_info=True)
+                    print(f"[change_summary] create failed: {create_exc}")
+                    return Status.FAILED
 
             return Status.SUCCESS
         except Exception as exc:
@@ -374,8 +416,14 @@ class NotificationService:
         # ── Tasks with recorded changes ───────────────────────────────────
         task_summaries = []
         try:
-            from app.repositories.task_repository import TaskRepository
-            tasks = list(TaskRepository.get_pending())
+            from app.models.task import Task
+            from sqlalchemy.orm import joinedload
+            tasks = (
+                Task.query
+                .options(joinedload(Task.field))
+                .filter_by(user_id=user_id, completed=False)
+                .all()
+            )
             for task in tasks:
                 if not task.task_changes:
                     continue
@@ -438,30 +486,43 @@ class NotificationService:
         return task_summaries, plan_summaries
 
     @staticmethod
+    def _build_change_summary_title(task_summaries: list, plan_summaries: list) -> str:
+        """Popup headline — picks the right title based on what actually changed."""
+        has_tasks = bool(task_summaries)
+        has_plan  = bool(plan_summaries)
+        if has_tasks and has_plan:
+            return "Your tasks and weekly plan have been changed"
+        if has_tasks:
+            return "Today's tasks have been changed"
+        if has_plan:
+            return "Your weekly plan has been changed"
+        return "Your plan has been updated"
+
+    @staticmethod
     def _build_change_summary_message(task_summaries: list, plan_summaries: list) -> str:
-        """One-liner for the dropdown based on actual counts."""
+        """Short subtitle shown under the popup title — one concise line."""
         task_count = len(task_summaries)
         plan_count = len(plan_summaries)
 
         if task_count and plan_count:
             return (
                 f"{task_count} task{'s' if task_count != 1 else ''} and your weekly plan "
-                f"have been updated — tap to see the full breakdown."
+                "have been adjusted for today's conditions."
             )
         if task_count:
             return (
-                f"{task_count} task{'s' if task_count != 1 else ''} changed due to today's conditions. "
-                "Tap to see what's different."
+                f"{task_count} task{'s' if task_count != 1 else ''} "
+                "adjusted due to today's conditions."
             )
         if plan_count:
             return (
-                "Your weekly plan has been adjusted across "
-                f"{plan_count} crop entr{'ies' if plan_count != 1 else 'y'}. Tap to see the details."
+                f"Your week has been adjusted across "
+                f"{plan_count} crop entr{'ies' if plan_count != 1 else 'y'}."
             )
-        return "Your plan has been reviewed and updated based on current conditions."
+        return "Your farm plan has been reviewed based on current conditions."
 
     @staticmethod
-    def _build_change_summary_detail(user_id: int, task_summaries: list, plan_summaries: list, context: dict) -> str:
+    def _build_change_summary_detail(task_summaries: list, plan_summaries: list, context: dict) -> str:
         """
         Builds the full report once at notification creation time.
         Saved to notification.detail in DB — never regenerated on 'View details'.
@@ -469,114 +530,78 @@ class NotificationService:
         """
         from datetime import date as _date
 
-        farmer = context.get("farmer_name", "Farmer")
-        current = context.get("weather", {}).get("current", {})
-        temp      = current.get("temp") or current.get("temperature_c", "N/A")
+        def _to_float(val):
+            try:
+                return float(val) if val is not None else None
+            except (TypeError, ValueError):
+                return None
+
+        farmer    = context.get("farmer_name", "Farmer")
+        current   = context.get("weather", {}).get("current", {})
+        temp      = _to_float(current.get("temp") or current.get("temperature_c"))
         condition = (current.get("condition") or "").capitalize()
-        rainfall  = current.get("rainfall_mm") or current.get("precipitation_mm") or 0
+        rainfall  = _to_float(current.get("rainfall_mm") or current.get("precipitation_mm")) or 0.0
 
-        # ── AI task intelligence overview (one Ollama call) ───────────────
-        intelligence_summary = ""
-        try:
-            from app.services.intelligence_service.chatbot_service.context_aggregation_service import ContextAggregationService
-            from app.services.intelligence_service.task_intelligence_service import TaskIntelligenceService
-            intel_ctx = ContextAggregationService.build_task_context(user_id)
-            overview  = TaskIntelligenceService.generate_task_overview(intel_ctx, user_id)
-            intelligence_summary = overview.get("summary", "")
-        except Exception as exc:
-            logger.warning("change_summary: intelligence overview failed — %s", exc)
+        # ── Build text blocks for the AI prompt ──────────────────────────
+        tasks_block = "\n".join(
+            f"- {t['title']}{' (' + t['field'] + ')' if t.get('field') else ''}: {', '.join(t['changes'])}"
+            for t in task_summaries
+        ) or "No individual task changes recorded."
 
-        # ── Build structured data blocks for the report prompt ────────────
-        tasks_block = ""
-        if task_summaries:
-            lines = []
-            for t in task_summaries:
-                field_str = f" ({t['field']})" if t.get("field") else ""
-                lines.append(f"- {t['title']}{field_str}: {', '.join(t['changes'])}")
-            tasks_block = "\n".join(lines)
-        else:
-            tasks_block = "No individual task changes recorded."
+        plan_block = "\n".join(
+            f"- [{adj['factor']}] {adj['reasoning']} → {adj['adjustment']}"
+            for p in plan_summaries for adj in p["adjustments"]
+        ) or "No weekly plan adjustments recorded."
 
-        plan_block = ""
-        if plan_summaries:
-            lines = []
-            for p in plan_summaries:
-                for adj in p["adjustments"]:
-                    lines.append(f"- [{adj['factor']}] {adj['reasoning']} → {adj['adjustment']}")
-            plan_block = "\n".join(lines)
-        else:
-            plan_block = "No weekly plan adjustments recorded."
-
+        # ── AI summary (single Ollama call) ───────────────────────────────
+        ai_summary = ""
         try:
             from app.services.ai_model_service.ai_model_service import fast_complete
-
-            intel_section = (
-                f"AI task intelligence overview:\n{intelligence_summary}\n\n"
-                if intelligence_summary else ""
-            )
-
             prompt = (
-                f"You are a farming advisor writing a detailed change report for {farmer}.\n"
-                f"Today is {_date.today()}, weather: {temp}°C, {condition}, {rainfall:.0f}mm rainfall.\n\n"
-                f"{intel_section}"
-                f"Tasks affected by today's weather:\n{tasks_block}\n\n"
-                f"Weekly plan adjustments:\n{plan_block}\n\n"
-                f"Write a clear, well-structured report in plain English. Use this exact structure:\n"
-                f"1. A short opening sentence summarising the situation.\n"
-                f"2. A paragraph on what changed in today's tasks (mention task names and what specifically changed).\n"
-                f"3. A paragraph on how the weekly plan was adjusted and why.\n"
-                f"4. A short closing with the most important thing {farmer} should do first.\n"
-                f"Keep each paragraph concise. No bullet points. No markdown. Write like a knowledgeable advisor talking directly to a farmer."
+                f"You are a farm advisor. Write 2-3 sentences summarising what changed today for {farmer} "
+                f"due to weather ({f'{temp:.0f}°C' if temp is not None else 'N/A'}, {condition}, {rainfall:.0f}mm). "
+                f"Tasks: {tasks_block}\n"
+                f"Plan: {plan_block}\n"
+                f"Be direct and friendly. No bullet points."
             )
-
-            return fast_complete(prompt)
-
+            ai_summary = fast_complete(prompt)
         except Exception as exc:
-            logger.warning("change_summary: AI report failed — %s", exc)
+            logger.warning("change_summary: AI summary failed — %s", exc)
 
-            # Structured plain-text fallback
-            today_str = _date.today().strftime("%B %d, %Y")
-            sections  = [f"Farm Change Report — {today_str}", f"Weather: {temp}°C, {condition}, {rainfall:.0f}mm rainfall", ""]
-
-            if intelligence_summary:
-                sections += ["AI Overview", "─" * 40, intelligence_summary, ""]
-
-            task_count = len(task_summaries)
-            sections += [
-                f"Tasks Affected ({task_count})",
-                "─" * 40,
-            ]
-            if task_summaries:
-                for t in task_summaries:
-                    field_str = f" — {t['field']}" if t.get("field") else ""
-                    sections.append(f"{t['title']}{field_str}")
-                    for ch in t["changes"]:
-                        sections.append(f"  · {ch}")
-            else:
-                sections.append("No individual tasks were modified.")
-
-            sections += ["", "Weekly Plan Adjustments", "─" * 40]
-            if plan_summaries:
-                for p in plan_summaries:
-                    for adj in p["adjustments"]:
-                        sections.append(f"[{adj['factor']}] {adj['reasoning']}")
-                        if adj.get("adjustment"):
-                            sections.append(f"  → {adj['adjustment']}")
-            else:
-                sections.append("No weekly plan changes recorded.")
-
-            return "\n".join(sections)
+        # ── Return structured JSON — frontend renders as a report card ────
+        import json
+        weather_ctx = context.get("weather", {})
+        report = {
+            "date":    str(_date.today()),
+            "weather": {
+                "temp":         temp,
+                "condition":    condition,
+                "rainfall_mm":  rainfall,
+                "heatwave":     weather_ctx.get("heatwave_risk", False),
+                "rain_expected": weather_ctx.get("rain_expected", False),
+            },
+            "tasks":      task_summaries,
+            "plan":       [adj for p in plan_summaries for adj in p["adjustments"]],
+            "ai_summary": ai_summary,
+        }
+        return json.dumps(report, ensure_ascii=False)
 
     @staticmethod
     def _build_short_message(tag: str, weather: dict) -> str:
         """Build a dynamic one-liner from live weather data for the dropdown message."""
+        def _to_float(val):
+            try:
+                return float(val) if val is not None else None
+            except (TypeError, ValueError):
+                return None
+
         current   = weather.get("current", {})
         forecast  = weather.get("forecast", [])
-        temp      = current.get("temp") or current.get("temperature_c")
+        temp      = _to_float(current.get("temp") or current.get("temperature_c"))
         condition = (current.get("condition") or "").capitalize()
-        rainfall  = current.get("rainfall_mm") or current.get("precipitation_mm") or 0
-        humidity  = current.get("humidity")
-        wind      = current.get("wind_kph")
+        rainfall  = _to_float(current.get("rainfall_mm") or current.get("precipitation_mm")) or 0.0
+        humidity  = _to_float(current.get("humidity"))
+        wind      = _to_float(current.get("wind_kph"))
         heatwave  = weather.get("heatwave_risk", False)
         rain_exp  = weather.get("rain_expected", False)
 

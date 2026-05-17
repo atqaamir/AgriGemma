@@ -25,6 +25,12 @@ NOTIFICATION_METADATA = {
         "color": "#4CAF50",
         "bg_color": "#E8F5E9",
         "label": "Recommendation",
+        "alert": {
+            "symbol": "⚠️",
+            "color": "#FF6F00",
+            "bg_color": "#FFE0B2",
+            "label": "Task Alert",
+        },
     },
     "change": {
         "symbol": "🔄",

@@ -82,14 +82,15 @@ class CoordinatorAgent:
 
     """ 5am daily update workflow — runs risk assessment, then triggers downstream workflows based on risk level changes. Always refreshes dashboard at the end. """
     def daily_update(self, user_id: int, as_of_date: date = None) -> dict:
+        print(f"\n[CoordinatorAgent] Starting daily update for user={user_id} as_of_date={as_of_date}")
         risk_status, change, _ = self.risk_agent.assess_risk(user_id, tag="risk_assessment", as_of_date=as_of_date)
+        print (f"[daily update] risk assessment completed with status={risk_status}, change={change} for user={user_id}")
 
         if change == enums_.ChangeStatus.NO_CHANGE:
             result = execution_responses.ExecutionResponse.success("Risk assessment completed — no change")
-            result["change_status"] = change.value
-            return result
+     
         elif change == enums_.ChangeStatus.NO_IMPACT:
-            self.call_intelligence(user_id, tag="critical_task_overview")
+            # self.call_intelligence(user_id, tag="critical_task_overview")
             self.send_notification(user_id, tag="weather_only")
             self.dashboard_refresh(user_id)
             result = execution_responses.ExecutionResponse.success("Daily update completed")
@@ -98,13 +99,13 @@ class CoordinatorAgent:
                 self.update_planner(user_id, tag="impact_weekly", as_of_date=as_of_date)
             elif change == enums_.ChangeStatus.IMPACT_TASKS:
                 self.update_planner(user_id, tag="impact_tasks", as_of_date=as_of_date)
-            self.call_intelligence(user_id, tag="critical_task_overview")
+            # self.call_intelligence(user_id, tag="critical_task_overview")
             notification_tag = "weekly" if change == enums_.ChangeStatus.IMPACT_PLAN else "daily"
             self.send_notification(user_id, tag=notification_tag)
+            self.send_notification(user_id, tag="change_summary")
             self.dashboard_refresh(user_id)
             result = execution_responses.ExecutionResponse.success("Daily update completed") if risk_status == enums_.Status.SUCCESS else execution_responses.ExecutionResponse.failure("Daily update failed")
 
-        self.send_notification(user_id, tag="change_summary")
         result["change_status"] = change.value
         return result
 

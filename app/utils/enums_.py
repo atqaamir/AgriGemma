@@ -22,9 +22,10 @@ class Region(Enum):
 class NotificationType(Enum):
     INFO = "info"
     WARNING = "warning"
+    ALERT = "alert"       # weather changed today's tasks
     CRITICAL = "critical"
     RECOMMENDATION = "recommendation"
-    CHANGE = "change"  # triggers a popup on creation/unread
+    CHANGE = "change"     # full change report — triggers a popup on creation/unread
 
 
 class IntelligencePriorityLevel(Enum):

@@ -15,7 +15,7 @@ class TaskGenerationService:
 
     def generate_daily_tasks(self, user_id: int) -> dict:
         fields = FieldService.get_fields_by_user(user_id) or []
-        weekly_plan = WeeklyPlannerService().get_active_weekly_plan(user_id) or {}
+        weekly_plan = WeeklyPlannerService().get_active_plan(user_id) or {}
         seasonal_plan = SeasonalPlannerService.get_active_plan(user_id) or {}
         existing_titles = {
             task.title for task in TaskService.get_tasks_by_user(user_id) or [] if not task.completed
