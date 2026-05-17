@@ -56,6 +56,13 @@ OLLAMA_MODEL=gemma4          # gemma4:e2b (lighter) or gemma4:26b (highest quali
 
 # Option C — Placeholder responses (no AI required, for UI testing)
 # USE_PLACEHOLDER_AI=true
+
+# Option D — LiteRT (fully offline, on-device, no Ollama needed)
+# Requires mediapipe>=0.10.21 and the Gemma 4 1B model file (~2 GB)
+# Download model from: https://www.kaggle.com/models/google/gemma-4/litert/gemma4-1b-it-gpu-int4
+# Place at: ~/.gemma_models/gemma4-1b-it-gpu-int4.task  (or set GEMMA_MODEL_PATH)
+# USE_LITERT=true
+# GEMMA_MODEL_PATH=/path/to/gemma4-1b-it-gpu-int4.task   # optional, overrides default
 ```
 
 > **Tip:** `FLASK_ENV` is not required. For Ollama (Option A or B), install from https://ollama.com/download then run `ollama pull gemma4`.
@@ -99,6 +106,7 @@ It injects a fake weather-change scenario for a set of test users (covering no-i
 - [Ollama](https://ollama.com/download) — required for local AI inference (Options A and B); after installing, run `ollama pull gemma4`
 - [Google AI Studio API key](https://aistudio.google.com/apikey) — free, required for Option A (cloud chatbot)
 - [OpenWeatherMap API key](https://openweathermap.org/api) — free tier is sufficient
+- **Option D only:** `mediapipe>=0.10.21` (included in requirements.txt) + Gemma 4 1B `.task` model file downloaded from Kaggle
 
 ## ⚡ Quick Start
 
@@ -209,7 +217,48 @@ USE_PLACEHOLDER_AI=true
 ```
 
 #### Option C → any real provider
-Remove `USE_PLACEHOLDER_AI` (or set it to `false`), then configure Option A or B as above.
+Remove `USE_PLACEHOLDER_AI` (or set it to `false`), then configure Option A, B, or D as above.
+
+#### Any option → Option D (LiteRT, fully offline on-device)
+
+**Step 1:** Ensure mediapipe is installed (already in requirements.txt):
+```bash
+pip install "mediapipe>=0.10.21"
+```
+
+**Step 2:** Download the Gemma 4 1B model from Kaggle:
+```
+https://www.kaggle.com/models/google/gemma-4/litert/gemma4-1b-it-gpu-int4
+```
+Place the `.task` file at `~/.gemma_models/gemma4-1b-it-gpu-int4.task`, or set `GEMMA_MODEL_PATH` to a custom path.
+
+**Step 3:** Update `.env`:
+```env
+USE_LITERT=true
+# Remove or comment out USE_GOOGLE_AI and USE_PLACEHOLDER_AI
+# GEMMA_MODEL_PATH=/custom/path/gemma4-1b-it-gpu-int4.task  # optional
+```
+
+> **Note:** If the model file is missing when `USE_LITERT=true` is set, the app logs an `ERROR` at startup and falls back to placeholder responses — check the terminal output if responses seem generic.
+
+#### Option D → Ollama (switch to local server-based inference)
+
+**Step 1:** Install Ollama and pull the model:
+```bash
+ollama pull gemma4
+```
+
+**Step 2:** Update `.env`:
+```env
+USE_LITERT=false
+OLLAMA_HOST=http://localhost:11434
+OLLAMA_MODEL=gemma4
+```
+
+**Step 3:** Start Ollama before running the app:
+```bash
+ollama serve
+```
 
 ### Database Migrations
 
