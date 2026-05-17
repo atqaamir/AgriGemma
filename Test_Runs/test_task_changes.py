@@ -11,9 +11,9 @@ from app.services.domain_service.notification_service import NotificationService
 
 app = create_app()
 
-# user[0] Ahmad Khan  (Punjab)    → user_id=1 → expected: NO_CHANGE / NO_IMPACT
-# user[1] Ali Raza    (Sindh)     → user_id=2 → expected: IMPACT_TASKS (rainfall band 50-100 → <50)
-# user[2] Faisal      (Islamabad) → user_id=3 → expected: IMPACT_TASKS (temp band 20-30 → 30-40)
+# user[0] Ahmad Khan  (Punjab)    
+# user[1] Ali Raza    (Sindh)     
+# user[2] Faisal      (Islamabad) 
 TEST_USERS = [1]
 WEEK_START = date(2026, 5, 18)
 AS_OF_DATE = date(2026, 5, 18)
