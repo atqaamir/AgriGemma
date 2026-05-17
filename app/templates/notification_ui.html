@@ -902,9 +902,10 @@
     change:         { icon: '🔄',  cssClass: 'notif-type-change',         clickable: true  },
   };
 
-  let notifications = [];
-  let changeQueue   = [];
-  let changeActive  = false;
+  let notifications   = [];
+  let changeQueue     = [];
+  let changeActive    = false;
+  let shownChangeIds  = new Set(); // prevents re-queuing after shift() removes from queue
 
   // ── DOM refs ──────────────────────────────────────────────────────────────
   function $id(id) { return document.getElementById(id); }
@@ -1220,12 +1221,12 @@
 
   // ── Change popups ─────────────────────────────────────────────────────────
   function processChangePopups() {
-    // Show a popup for every unread change notification not already queued/active
-    const queuedIds = new Set(changeQueue.map(n => n.id));
-    const incoming = notifications.filter(n => n.notification_type === 'change' && !n.is_read && !queuedIds.has(n.id));
-    incoming.forEach(n => changeQueue.push(n));
+    const incoming = notifications.filter(n => n.notification_type === 'change' && !n.is_read && !shownChangeIds.has(n.id));
+    incoming.forEach(n => {
+      shownChangeIds.add(n.id);
+      changeQueue.push(n);
+    });
     if (incoming.length > 0) {
-      // Signal other page components (e.g. tasks list) to refresh their data
       document.dispatchEvent(new CustomEvent('farmDataUpdated'));
     }
     showNextChangePopup();
@@ -1280,6 +1281,7 @@
   async function markAllRead() {
     notifications.forEach(n => n.is_read = true);
     changeQueue = [];
+    shownChangeIds.clear();
     updateBadge();
     // Update all items' styling without full re-render
     document.querySelectorAll('.notif-item.unread').forEach(el => {
