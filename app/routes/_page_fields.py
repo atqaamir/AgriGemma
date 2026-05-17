@@ -99,6 +99,38 @@ def get_pending_field_tasks():
 
 # ── Single-field endpoints ────────────────────────────────────────────────────
 
+@fields_bp.route("/<int:user_id>/fields/<int:field_id>", methods=["GET"])
+def get_user_field(user_id, field_id):
+    field = FieldService.get_field_by_id(field_id)
+    if not field:
+        return jsonify({"error": "Field not found"}), 404
+    return jsonify(field_detail_schema.dump(field)), 200
+
+
+@fields_bp.route("/<int:user_id>/fields/<int:field_id>", methods=["PUT"])
+def update_user_field(user_id, field_id):
+    field = FieldService.get_field_by_id(field_id)
+    if not field:
+        return jsonify({"error": "Field not found"}), 404
+
+    data = request.get_json() or {}
+    try:
+        valid_data = field_create_schema.load(data, partial=True)
+    except ValidationError as err:
+        return jsonify({"errors": err.messages}), 400
+
+    updated = FieldService.update_field(field_id, valid_data)
+    return jsonify(field_detail_schema.dump(updated)), 200
+
+
+@fields_bp.route("/<int:user_id>/fields/<int:field_id>", methods=["DELETE"])
+def delete_user_field(user_id, field_id):
+    field = FieldService.delete_field(field_id)
+    if not field:
+        return jsonify({"error": "Field not found"}), 404
+    return jsonify({"message": "Field deleted successfully"}), 200
+
+
 @fields_bp.route("/fields/<int:field_id>", methods=["GET"])
 def get_field(field_id):
     """Field detail including all its tasks."""

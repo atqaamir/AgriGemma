@@ -77,6 +77,40 @@ def get_croptasks():
     return jsonify(result), 200
 
 
+@crops_bp.route("/<int:user_id>/vocabulary", methods=["GET"])
+def get_crop_vocabulary_by_user(user_id):
+    return jsonify(CropService.get_vocabulary()), 200
+
+
+@crops_bp.route("/<int:user_id>/crops/<int:crop_id>", methods=["GET"])
+def get_user_crop(user_id, crop_id):
+    crop = CropService.get_crop_by_id(crop_id)
+    if not crop:
+        return jsonify({"error": "Crop not found"}), 404
+    return jsonify(crop_detail_schema.dump(crop)), 200
+
+
+@crops_bp.route("/<int:user_id>/crops/<int:crop_id>", methods=["PUT"])
+def update_user_crop(user_id, crop_id):
+    data = request.get_json() or {}
+    try:
+        valid_data = crop_update_schema.load(data, partial=True)
+    except ValidationError as err:
+        return jsonify({"errors": err.messages}), 400
+    crop = CropService.update_crop(crop_id, valid_data)
+    if not crop:
+        return jsonify({"error": "Crop not found"}), 404
+    return jsonify(crop_detail_schema.dump(crop)), 200
+
+
+@crops_bp.route("/<int:user_id>/crops/<int:crop_id>", methods=["DELETE"])
+def delete_user_crop(user_id, crop_id):
+    crop = CropService.delete_crop(crop_id)
+    if not crop:
+        return jsonify({"error": "Crop not found"}), 404
+    return jsonify(crop_detail_schema.dump(crop)), 200
+
+
 @crops_bp.route("/crops/<int:crop_id>", methods=["GET"])
 def get_crop(crop_id):
     crop = CropService.get_crop_by_id(crop_id)
