@@ -34,15 +34,9 @@ class SeasonalPlannerService:
 
         crops_output = []
         for entry in plan.entries:
-            crop_name  = rule_base_service.get_crop_by_id(entry.crop_id).name
-            soil_name  = (
-                rule_base_service.get_soil_by_id(entry.soil_type_id).name
-                if entry.soil_type_id else None
-            )
-            water_name = (
-                rule_base_service.get_water_source_by_id(entry.water_source_id).name
-                if entry.water_source_id else None
-            )
+            crop_name  = entry.crop_name_rel.name if entry.crop_name_rel else None
+            soil_name  = entry.soil_rel.name      if entry.soil_rel      else None
+            water_name = entry.water_rel.name     if entry.water_rel     else None
 
             adjustments = json.loads(entry.adjustments_to_make) if entry.adjustments_to_make else []
             feasible    = entry.sowing is not None   # avoid action nullifies sowing
@@ -66,6 +60,7 @@ class SeasonalPlannerService:
                 "soil_type":    soil_name,
                 "water_source": water_name,
                 "feasible":     feasible,
+                "feasibility":  entry.feasibility,
                 "schedule":     schedule,
                 "adjustments":  adjustments,
             })
@@ -87,6 +82,40 @@ class SeasonalPlannerService:
     # ------------------------------------------------------------------ #
     #  Plan generation
     # ------------------------------------------------------------------ #
+
+    @staticmethod
+    def auto_generate_plan(user_id: int, growth_stage: str = "Sowing") -> object:
+        """Auto-generate a seasonal plan from the user's active fields and crops.
+        
+        Reads the user's fields, extracts their soil types and water sources,
+        and generates one seasonal plan entry per active crop in each field.
+        """
+        from app.services.domain_service.field_service import FieldService
+        
+        # Get all active fields for this user
+        fields = FieldService.get_fields_by_user(user_id)
+        active_fields = [f for f in fields if f.currently_active]
+        
+        if not active_fields:
+            return None
+        
+        # Build crop list from fields: one entry per active crop per field
+        crops = []
+        for field in active_fields:
+            # Get the active crop(s) in this field
+            active_crops = [c for c in field.crops if c.currently_active] if field.crops else []
+
+            for crop in active_crops:
+                crops.append({
+                    "crop": crop.crop_name_rel.name if crop.crop_name_rel else crop.crop_name,
+                    "soil_type": field.soil_type_name,
+                    "water_source": field.water_source_name,
+                })
+        
+        if not crops:
+            return None
+        
+        return SeasonalPlannerService.generate_plan(user_id, growth_stage, crops)
 
     @staticmethod
     def generate_plan(user_id: int, growth_stage: str, crops: list) -> object:
@@ -116,15 +145,17 @@ class SeasonalPlannerService:
 
             entry_data = {
                 "plan_id":               plan.id,
-                "crop_id":               rule_base_service.get_crop_by_name(adjusted_plan["crop"]).id,
-                "soil_type_id":          rule_base_service.get_soil_by_name(adjusted_plan["soil_type"]).id,
+                "crop_name_id":          rule_base_service.get_crop_by_name(adjusted_plan["crop"]).id,
+                "soil_id":               rule_base_service.get_soil_by_name(adjusted_plan["soil_type"]).id,
                 "water_source_id":       rule_base_service.get_water_source_by_name(adjusted_plan["water_source"]).id,
+                "growth_id":             growth_stage_id,
                 "sowing":                adjusted_plan["sowing"],
                 "harvesting":            adjusted_plan["harvesting"],
                 "irrigation_start_date": adjusted_plan["irrigation_start_date"],
                 "irrigation_frequency":  adjusted_plan["irrigation_frequency"],
                 "fertilization_date":    adjusted_plan["fertilization_date"],
                 "adjustments_to_make":   json.dumps(adjusted_plan["adjustments_to_make"]),
+                "feasibility":           adjusted_plan.get("feasibility", "Ideal"),
             }
             SeasonalPlanEntryRepository.create(entry_data)
 
@@ -244,7 +275,6 @@ class SeasonalPlannerService:
         irrigation_frequency : int           — times per week
         fertilization_date   : "MM/DD/YYYY"  — direct override
         harvesting           : "MM/DD/YYYY"  — direct override
-        field_id             : int
 
         Returns
         -------
@@ -256,7 +286,7 @@ class SeasonalPlannerService:
 
         DIRECT_FIELDS  = {
             "irrigation_start_date", "irrigation_frequency",
-            "fertilization_date", "harvesting", "field_id",
+            "fertilization_date", "harvesting",
         }
         CASCADE_FIELDS = ("irrigation_start_date", "fertilization_date", "harvesting")
 
@@ -312,64 +342,79 @@ class SeasonalPlannerService:
     # ------------------------------------------------------------------ #
 
     @staticmethod
-    def generate_adjustment_reasoning(plan_data: dict) -> str:
-        """Call Ollama (fast_complete) to produce a one-paragraph plain-English
-        explanation of why the plan's adjustments are needed. Returns a fallback
-        string if the AI call fails."""
+    def generate_adjustment_reasoning(plan_data: dict) -> dict:
+        """Return a dict { crop_name: explanation } for every Not Feasible crop.
+
+        Checks seasonal_plan.ai_explanation (JSON) first. Only calls the AI for
+        crops that don't have a stored explanation yet, then persists the result.
+        Returns an empty dict when there are no Not Feasible crops.
+        """
         from app.services.ai_model_service.ai_model_service import fast_complete
+        from app.extensions import db
 
-        infeasible = [c for c in plan_data.get("crops", []) if not c.get("feasible")]
-        feasible   = [c for c in plan_data.get("crops", []) if c.get("feasible")]
+        not_feasible = [c for c in plan_data.get("crops", []) if c.get("feasibility") == "Not Feasible"]
+        if not not_feasible:
+            return {}
 
-        if not infeasible:
-            crop_names = ", ".join(c["crop"] for c in feasible)
-            return (
-                f"All recommended crops ({crop_names}) are fully compatible with your soil "
-                "and water conditions. No corrective adjustments are required."
+        # Load any already-stored explanations from the plan row
+        plan_obj = SeasonalPlanRepository.get_by_id(plan_data.get("plan_id"))
+        stored: dict = {}
+        if plan_obj and plan_obj.ai_explanation:
+            try:
+                stored = json.loads(plan_obj.ai_explanation)
+            except (json.JSONDecodeError, TypeError):
+                stored = {}
+
+        updated = False
+        for crop in not_feasible:
+            crop_name = crop["crop"]
+            if crop_name in stored:
+                continue  # already cached
+
+            adjustments = crop.get("adjustments") or []
+            adj_text    = "; ".join(adjustments) if adjustments else "incompatible soil or water conditions"
+
+            prompt = (
+                "You are an agricultural advisor. In 2–3 sentences explain to a farmer "
+                f"why {crop_name} cannot be grown under current conditions "
+                f"({crop.get('soil_type', '')} soil, {crop.get('water_source', '')} water), "
+                f"focusing on: {adj_text}. "
+                "Write clearly and practically. No bullet points or headers."
             )
 
-        lines = []
-        for crop in plan_data.get("crops", []):
-            if crop.get("adjustments"):
-                lines.append(f"{crop['crop']} ({crop['soil_type']} soil, {crop['water_source']} water): "
-                             + "; ".join(crop["adjustments"]))
+            try:
+                raw  = fast_complete(prompt)
+                text = (raw.get("response") or raw.get("text") or raw.get("output") or "") \
+                    if isinstance(raw, dict) else str(raw)
+                text = text.strip()
+                stored[crop_name] = text if text else SeasonalPlannerService._adjustment_reasoning_fallback(crop_name, adjustments)
+            except Exception as exc:
+                logger.warning("AI adjustment reasoning failed for %s: %s", crop_name, exc)
+                stored[crop_name] = SeasonalPlannerService._adjustment_reasoning_fallback(crop_name, adjustments)
 
-        adjustments_text = "\n".join(lines) if lines else "No specific adjustments recorded."
+            updated = True
 
-        prompt = (
-            "You are an agricultural advisor. In 2–3 sentences explain to a farmer "
-            "why the following crop adjustments are necessary, focusing on soil and water compatibility risks.\n\n"
-            f"Growth stage: {plan_data.get('growth_stage', 'unknown')}\n"
-            f"Adjustments:\n{adjustments_text}\n\n"
-            "Write a clear, practical explanation. Do not use bullet points or headers."
-        )
+        if updated and plan_obj:
+            plan_obj.ai_explanation = json.dumps(stored)
+            db.session.commit()
 
-        try:
-            raw = fast_complete(prompt)
-            if isinstance(raw, dict):
-                text = raw.get("response") or raw.get("text") or raw.get("output") or ""
-            else:
-                text = str(raw)
-            text = text.strip()
-            return text if text else SeasonalPlannerService._adjustment_reasoning_fallback(plan_data)
-        except Exception as exc:
-            logger.warning("AI adjustment reasoning failed: %s", exc)
-            return SeasonalPlannerService._adjustment_reasoning_fallback(plan_data)
+        return stored
 
     @staticmethod
-    def _adjustment_reasoning_fallback(plan_data: dict) -> str:
-        infeasible = [c["crop"] for c in plan_data.get("crops", []) if not c.get("feasible")]
-        feasible   = [c["crop"] for c in plan_data.get("crops", []) if c.get("feasible")]
-        parts = []
-        if infeasible:
-            parts.append(
-                f"{', '.join(infeasible)} cannot be grown as-is due to soil and water source incompatibilities."
-            )
-        if feasible:
-            parts.append(
-                f"{', '.join(feasible)} can proceed with the adjusted schedule shown in the timeline."
-            )
-        parts.append(
-            "Review each crop's required changes before finalising your seasonal plan."
+    def get_crop_explanation(user_id: int, crop_name: str) -> str:
+        """Return the AI explanation for a single Not Feasible crop.
+        Generates and caches via generate_adjustment_reasoning if not yet stored."""
+        plan = SeasonalPlanRepository.get_active_by_user_id(user_id)
+        if not plan:
+            return ""
+        plan_data    = SeasonalPlannerService._format_plan(plan)
+        explanations = SeasonalPlannerService.generate_adjustment_reasoning(plan_data)
+        return explanations.get(crop_name, "")
+
+    @staticmethod
+    def _adjustment_reasoning_fallback(crop_name: str, adjustments: list) -> str:
+        reason = "; ".join(adjustments) if adjustments else "incompatible soil or water conditions"
+        return (
+            f"{crop_name} cannot be grown as-is: {reason}. "
+            "Review the required changes before finalising your seasonal plan."
         )
-        return " ".join(parts)

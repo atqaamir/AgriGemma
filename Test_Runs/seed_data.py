@@ -59,7 +59,7 @@ def run():
             stress_risk=10.0,
             disease_risk="low",
             water_source_id=2,
-            soil_type_id=2,
+            soil_type_id=1,
             location="Punjab, Pakistan",
             ph_level=6.8,
             currently_active=True,
