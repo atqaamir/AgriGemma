@@ -163,30 +163,6 @@ This application is built with:
 
 ---
 
-## 🔮 Future Improvements
-
-- Voice assistant for low-literacy users
-- Crop Image Analysis 
-- Regional language support  
-- Offline functionality for rural areas  
-- Satellite-based crop monitoring  
-- Advanced crop disease detection  
-- SMS / WhatsApp alert system  
-- Yield prediction and economic insights  
-
----
-
-## 🤝 Contributing
-
-Contributions are welcome!
-
-1. Fork the repository  
-2. Create a new branch  
-3. Make your changes  
-4. Commit your updates  
-5. Open a pull request  
-
----
 
 
 ## ✨ Authors
