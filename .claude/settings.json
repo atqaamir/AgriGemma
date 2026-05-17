@@ -5,7 +5,9 @@
       "Bash(venv/Scripts/python -c \"from duckduckgo_search import DDGS; print\\('OK'\\)\")",
       "Bash(venv/Scripts/python -c ' *)",
       "PowerShell(head -30)",
-      "Read(//c/Users/its/.claude/projects/c--Users-its-Desktop-Projects-SmartFarming/memory/**)"
+      "Read(//c/Users/its/.claude/projects/c--Users-its-Desktop-Projects-SmartFarming/memory/**)",
+      "Bash(Remove-Item \"c:\\\\Users\\\\its\\\\Desktop\\\\Projects\\\\SmartFarming\\\\ASSUMPTIONS.md\")",
+      "PowerShell(Remove-Item \"c:\\\\Users\\\\its\\\\Desktop\\\\Projects\\\\SmartFarming\\\\ASSUMPTIONS.md\" -Confirm:$false)"
     ]
   }
 }
