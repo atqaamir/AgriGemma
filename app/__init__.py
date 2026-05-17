@@ -40,7 +40,13 @@ def create_app():
     admin.add_view(ModelView(Crop, db.session))
     admin.add_view(ModelView(Field, db.session))
     admin.add_view(ModelView(Task, db.session))
-    admin.add_view(ModelView(Notification, db.session))
+    class ReadOnlyNotificationView(ModelView):
+        can_delete = False
+        can_create = False
+        can_edit   = False
+        column_list = ("id", "user_id", "notification_type", "is_read", "title", "message", "created_at")
+        column_default_sort = ("created_at", True)
+    admin.add_view(ReadOnlyNotificationView(Notification, db.session))
     admin.add_view(ModelView(CropNames, db.session))
     admin.add_view(ModelView(WaterSource, db.session))
     admin.add_view(ModelView(IrrigationCalenderRulebook, db.session))
@@ -56,6 +62,11 @@ def create_app():
     admin.add_view(ModelView(IrrigationFrequencyRulebook, db.session))
 
     register_routes(app)
+
+    @app.context_processor
+    def inject_current_user():
+        # No auth yet — hardcoded to user 1. Replace with session/flask-login when auth is added.
+        return {"current_user_id": 1}
 
     with app.app_context():
         db.create_all()

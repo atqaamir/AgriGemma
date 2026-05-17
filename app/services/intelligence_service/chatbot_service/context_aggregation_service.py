@@ -239,8 +239,8 @@ class ContextAggregationService:
     @staticmethod
     def _collect_weekly_plan(user_id: int) -> dict:
         try:
-            from app.services.weather_service.weekly_planner_service import WeeklyPlannerService
-            return WeeklyPlannerService().get_active_weekly_plan(user_id) or {}
+            from app.services.weekly_planning_service.weekly_planner_service import WeeklyPlannerService
+            return WeeklyPlannerService().get_active_plan(user_id) or {}
         except Exception as exc:
             logger.warning("ContextAggregationService: weekly plan collection failed — %s", exc)
             return {}
