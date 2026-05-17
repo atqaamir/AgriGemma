@@ -1083,6 +1083,7 @@
     }
 
     const crop = await response.json();
+    const growthPct = crop.growth_progress ?? 0;
 
     // modal title
     document.getElementById('cropDetailsModalTitle').textContent =

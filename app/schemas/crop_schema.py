@@ -63,8 +63,13 @@ class CropDetailSchema(Schema):
     currently_active = fields.Bool()
     field_id = fields.Int(allow_none=True)
 
+    growth_progress = fields.Method("get_growth_progress")
     field = fields.Method("get_field")
     tasks = fields.Method("get_tasks")
+
+    def get_growth_progress(self, obj):
+        from app.services.domain_service.crop_service import CropService
+        return CropService.calculate_growth_progress(obj)
 
     def get_field(self, obj):
         if obj.field:
