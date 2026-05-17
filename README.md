@@ -2,6 +2,7 @@
 
 A smart farming assistant that helps farmers adapt to climate change using weather data, soil conditions, crop monitoring, and AI-driven recommendations.
 
+
 ## 🌍 Problem
 
 Due to **climate change and global warming**, traditional farming calendars and practices are no longer reliable. Farmers face:
@@ -12,8 +13,6 @@ Due to **climate change and global warming**, traditional farming calendars and 
 - Reduced crop yields
 
 This creates economic risk and uncertainty.
-
----
 
 ## 💡 Solution
 
@@ -38,22 +37,23 @@ AgriGemma uses Gemma 4 to generate crop schedules and adapt them in real time wh
 
 ---
 
+## 📁 Installation & Setup
+
+Follow the instructions in the SETUP.md file to run this application.
+
+## ⚡ Quick Start
+```bash
+python -m venv venv && source venv/bin/activate && pip install -r requirements.txt && python run.py
+```
+---
+
 ## 👨‍🌾 Target Users
 
 - Small to medium-scale farmers
 - Low to moderate literacy levels
 - Limited technical experience
-- Mobile users
+- Mobile users, Desktop also available
 - Need simple, visual tools
-
----
-
-## Limits
-
-- Prototype uses simplified agronomy rules
-- Forecast quality affects advice quality
-- Recommendations should support, not replace, local agronomists
-- Regional calibration is needed for deployment
 
 ---
 
@@ -63,8 +63,8 @@ AgriGemma uses Gemma 4 to generate crop schedules and adapt them in real time wh
 - Planting → growing → harvesting timeline
 - Adaptive planning based on weather
 
-### ✅ Tasks & Alerts (Key Feature)
-- Daily actionable tasks
+### ✅ Smart Tasks Adaption & Alerts (Key Feature)
+- Daily actionable tasks resilient to weather change
 - Climate-based alerts
 - Simple instructions (e.g., irrigate, fertilize)
 
@@ -72,6 +72,9 @@ AgriGemma uses Gemma 4 to generate crop schedules and adapt them in real time wh
 - Ask questions
 - Get farming advice
 - Handle "what-if" scenarios
+
+### 🧠 Multi-Lingual Support (Key Feature)
+- Support to farmers in their local language
 
 ### 🏡 Farm Overview
 - Land size
@@ -114,85 +117,9 @@ It acts as a **daily farming companion**, not just a data dashboard.
 - **Database:**  PostgreSQL 
 - **APIs:** Weather APIs, agriculture data APIs
 - **AI:**
-  - Recommendation engine
   - Chatbot integration
-  - Gemma4
+  - Gemma4 explanations
   
-
----
-
-## 📁 Installation & Setup
-
-Follow these steps to run the project locally.
-
-### 1. Clone the Repository
-
-```bash
-git clone http://github.com/your-username/AgriGemma.git
-cd AgriGemma
-```
-
-### 2. Create a virtual env
-```bash
-python -m venv venv
-```
-
-### 3. Activate the virtual env
-
-```bash
-venv\Scripts\activate
-```
-### 4. Install Dependencies
-
-```bash
-pip install -r requirements.txt
-```
-
-### 5. Set Up Environment Variables
-Create a .env file in the root directory:
-
-```env
-FLASK_APP=run.py
-FLASK_ENV=development
-SECRET_KEY=your_secret_key
-WEATHER_API_KEY=your_weather_api_key
-DATABASE_URL=sqlite:///app.db
-```
-
-### 6. Initialize the Database (Optional)
-```bash
-flask db init
-flask db migrate -m "initial"
-flask db upgrade
-```
-Skip this step if database migrations are not configured.
-
-### 7. Run the Application
-```bash
-python run.py
-```
-OR
-
-```bash
-flask run
-```
-
-### 8. Open in Browser
-```bash
-http://127.0.0.1:5000/dashboard
-```
-
-
-## 📦 Requirements
-- Python 3.8+
-- pip
-- Virtualenv (recommended)
-
-## ⚡ Quick Start
-```bash
-python -m venv venv && source venv/bin/activate && pip install -r requirements.txt && python run.py
-```
-
 ---
 
 ## 🌍 Hackathon Context
@@ -222,33 +149,6 @@ We are tackling a critical global issue:
 - Supports **multimodal inputs** (text, weather, images)
 - Provides **real-time adaptive recommendations**
 - Focuses on **low-literacy, accessibility-first design**
-
----
-
-## 🧪 Example Workflow
-
-1. Farmer inputs:
-   - Farm location  
-   - Land size  
-   - Crop type  
-   - Planting date  
-   - Soil details  
-
-2. System processes:
-   - Weather and forecast data  
-   - Soil and crop conditions  
-   - Climate risks  
-
-3. Application outputs:
-   - Season plan and timeline  
-   - Recommended farming actions  
-   - Tasks and alerts  
-   - Real-time adaptive suggestions  
-
-4. Farmer interacts:
-   - Completes tasks  
-   - Receives alerts  
-   - Uses chatbot for assistance  
 
 ---
 
