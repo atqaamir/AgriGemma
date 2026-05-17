@@ -7,6 +7,9 @@ def testrun_all_jobs():
     app = create_app()
 
     with app.app_context():
+        # print("\n[~] Running Forecast Refresh Job...")
+        # forecast_results = ForecastRefreshJob.run()
+        # print(forecast_results)
 
         print("\n[*] Running Weekly Update Job...")
         weekly_results = WeeklyUpdateJob.run()
