@@ -18,6 +18,7 @@ TASK_TYPE_BY_CATEGORY = {
     "field": [
         {"value": "fertilizing",      "label": "Fertilizing"},
         {"value": "soil_testing",     "label": "Soil Testing"},
+        {"value": "soil_conservation", "label": "Soil Conservation"},
         {"value": "drainage",         "label": "Drainage"},
         {"value": "plowing",          "label": "Plowing"},
         {"value": "weeding",          "label": "Weeding"},
