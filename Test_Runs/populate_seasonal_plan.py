@@ -55,8 +55,8 @@ PLANS = [
     # ── user 1: 1 active (3 crops), 2 inactive ────────────────────────────────
     (1, "Sowing", True, [
         {"crop": "Maize",  "soil_type": "Loamy", "water_source": "Groundwater"},  # A
-        {"crop": "Cotton", "soil_type": "Loamy", "water_source": "Groundwater"},  # A
-        {"crop": "Rice",   "soil_type": "Clay",  "water_source": "River"},        # A
+        {"crop": "Cotton", "soil_type": "Loamy", "water_source": "Recycled"},  # A
+        {"crop": "Rice",   "soil_type": "Sandy",  "water_source": "River"},        # A
     ]),
     (1, "Sowing", False, [
         {"crop": "Maize",  "soil_type": "Sandy", "water_source": "Groundwater"},  # B+D
@@ -97,7 +97,7 @@ PLANS = [
 
     # ── user 5 ────────────────────────────────────────────────────────────────
     (5, "Sowing", True, [
-        {"crop": "Rice",   "soil_type": "Clay",  "water_source": "River"},        # A
+        
         {"crop": "Cotton", "soil_type": "Sandy", "water_source": "River"},        # C+D+F
         {"crop": "Maize",  "soil_type": "Sandy", "water_source": "Groundwater"},  # B+D
     ]),
@@ -111,6 +111,8 @@ class SeasonalPlanSeeder:
         self._clear_tables()
         now = datetime.now(timezone.utc)
         for i, (user_id, growth_stage, active, crops) in enumerate(PLANS):
+            if user_id != 1:
+                continue
             plan = SeasonalPlannerService.generate_plan(user_id, growth_stage, crops)
             # Active plans are "recent"; inactive plans were created progressively further back
             age = timedelta(days=0) if active else timedelta(days=(i + 1) * 7)

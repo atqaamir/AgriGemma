@@ -92,7 +92,6 @@
 
 <!-- Embed plan data for JS -->
 <script id="plan-data" type="application/json">{{ plan | tojson }}</script>
-<script id="ai-reasoning-data" type="application/json">{{ ai_reasoning | tojson }}</script>
 
 {% include "_header.html" %}
 
@@ -152,12 +151,12 @@
                 <p class="text-xs text-on-surface-variant">Water: {{ crop.water_source or '—' }}</p>
               </div>
             </div>
-            {% if not crop.feasible %}
+            {% if crop.feasibility == 'Not Feasible' %}
               <span class="bg-error text-on-error px-2 py-0.5 rounded-full text-[10px] font-bold whitespace-nowrap ml-2">Not Feasible</span>
-            {% elif crop.adjustments %}
-              <span class="bg-secondary-container text-on-secondary-container px-2 py-0.5 rounded-full text-[10px] font-bold whitespace-nowrap ml-2">Feasible</span>
+            {% elif crop.feasibility == 'Conditional' %}
+              <span class="bg-secondary-container text-on-secondary-container px-2 py-0.5 rounded-full text-[10px] font-bold whitespace-nowrap ml-2">Conditional</span>
             {% else %}
-              <span class="bg-primary-fixed text-on-primary-fixed-variant px-2 py-0.5 rounded-full text-[10px] font-bold whitespace-nowrap ml-2">High Potential</span>
+              <span class="bg-primary-fixed text-on-primary-fixed-variant px-2 py-0.5 rounded-full text-[10px] font-bold whitespace-nowrap ml-2">{{ crop.feasibility or 'Ideal' }}</span>
             {% endif %}
           </button>
         {% endfor %}
@@ -214,9 +213,10 @@
 </nav>
 
 <script>
-const PLAN      = JSON.parse(document.getElementById('plan-data').textContent);
-const AI_REASON = JSON.parse(document.getElementById('ai-reasoning-data').textContent);
-const CROPS     = (PLAN && PLAN.crops) ? PLAN.crops : [];
+const PLAN        = JSON.parse(document.getElementById('plan-data').textContent);
+const CROPS       = (PLAN && PLAN.crops) ? PLAN.crops : [];
+const USER_ID     = window.location.pathname.split('/')[1];
+const explanationCache = {};
 
 // Today's date injected by Python (date.today().isoformat()) — avoids client timezone drift
 const TODAY = new Date('{{ today_str }}');
@@ -310,7 +310,7 @@ function selectCrop(el, index) {
   const adjustments = document.getElementById('adjustments-panel');
   const aiText      = document.getElementById('ai-reasoning-text');
 
-  if (crop.feasible) {
+  if (crop.feasibility !== 'Not Feasible') {
     header.textContent = `Timeline for ${crop.crop}`;
     timeline.classList.remove('hidden');
     adjustments.classList.add('hidden');
@@ -336,10 +336,30 @@ function selectCrop(el, index) {
     document.getElementById('adjustment-cards').innerHTML =
       cards || '<p class="text-sm text-on-surface-variant">No specific adjustments recorded.</p>';
 
-    document.getElementById('adjustment-reasoning').textContent = AI_REASON || '';
-
-    aiText.textContent = AI_REASON || '';
+    const reasoningEl = document.getElementById('adjustment-reasoning');
     aiText.classList.remove('hidden');
+
+    if (explanationCache[crop.crop]) {
+      reasoningEl.textContent = explanationCache[crop.crop];
+      aiText.textContent      = explanationCache[crop.crop];
+    } else {
+      const storageKey      = `sp_explained_${USER_ID}_${crop.crop}`;
+      const alreadyReloaded = localStorage.getItem(storageKey);
+      reasoningEl.textContent = 'Generating explanation…';
+      aiText.textContent      = '';
+      fetch(`/${USER_ID}/seasonal-plan-reasoning/${encodeURIComponent(crop.crop)}`)
+        .then(r => r.json())
+        .then(data => {
+          const text = data.explanation || '';
+          explanationCache[crop.crop] = text;
+          reasoningEl.textContent = text;
+          aiText.textContent      = text;
+          if (!alreadyReloaded) { localStorage.setItem(storageKey, '1'); location.reload(); }
+        })
+        .catch(() => {
+          reasoningEl.textContent = 'Could not load explanation.';
+        });
+    }
   }
 }
 

@@ -16,6 +16,7 @@ class SeasonalPlan(db.Model):
     growth_stage_id  = db.Column(db.Integer, nullable=True)
     currently_active = db.Column(db.Boolean, default=True, nullable=False)
     last_updated     = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc), nullable=True)
+    ai_explanation   = db.Column(db.Text,    nullable=True)   # JSON: { "CropName": "explanation" } for Not Feasible crops only
 
     entries = db.relationship(
         "SeasonalPlanEntry",
@@ -30,10 +31,10 @@ class SeasonalPlanEntry(db.Model):
     id              = db.Column(db.Integer, primary_key=True)
     plan_id         = db.Column(db.Integer, db.ForeignKey("seasonal_plan.id"), nullable=False)
 
-    crop_id         = db.Column(db.Integer, nullable=False)
-    field_id        = db.Column(db.Integer, db.ForeignKey("field.id"), nullable=True)
-    soil_type_id    = db.Column(db.Integer, nullable=True)
-    water_source_id = db.Column(db.Integer, nullable=True)
+    crop_name_id    = db.Column(db.Integer, db.ForeignKey("crop_names.id"), nullable=False)
+    soil_id         = db.Column(db.Integer, db.ForeignKey("soil_type.id"), nullable=True)
+    water_source_id = db.Column(db.Integer, db.ForeignKey("water_source.id"), nullable=True)
+    growth_id       = db.Column(db.Integer, db.ForeignKey("growth_stage.id"), nullable=True)
 
     sowing                = db.Column(db.String(20), nullable=True)   # "MM/DD/YYYY"
     harvesting            = db.Column(db.String(20), nullable=True)   # "MM/DD/YYYY"
@@ -41,5 +42,10 @@ class SeasonalPlanEntry(db.Model):
     irrigation_frequency  = db.Column(db.Integer,    nullable=True)   # times / week
     fertilization_date    = db.Column(db.String(20), nullable=True)   # "MM/DD/YYYY"
     adjustments_to_make   = db.Column(db.Text,       nullable=True)   # JSON-serialised list
+    feasibility           = db.Column(db.String(20), nullable=True)   # "Ideal", "Conditional", "Not Feasible"
 
-    plan = db.relationship("SeasonalPlan", back_populates="entries")
+    plan          = db.relationship("SeasonalPlan", back_populates="entries")
+    crop_name_rel = db.relationship("CropNames",    lazy="joined", foreign_keys=[crop_name_id])
+    soil_rel      = db.relationship("Soil_Type",    lazy="joined", foreign_keys=[soil_id])
+    water_rel     = db.relationship("WaterSource",  lazy="joined", foreign_keys=[water_source_id])
+    growth_rel    = db.relationship("GrowthStage",  lazy="joined", foreign_keys=[growth_id])

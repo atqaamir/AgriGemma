@@ -159,8 +159,10 @@ class RuleEngine:
         def _apply_actions(actions_json, plan, crop, context_name, context_label, adjustments):
             """context_name  = e.g. 'Sandy' or 'River'
                context_label = 'soil type' | 'water source'
+               Returns: (updated_plan, has_avoid_action)
             """
             actions = json.loads(actions_json) if isinstance(actions_json, str) else actions_json
+            has_avoid = False
 
             # Loop over actions (as there might be more than one)
             for action in actions:
@@ -179,7 +181,7 @@ class RuleEngine:
                         plan["irrigation_frequency"] = (plan["irrigation_frequency"] or 0) + delta
                         adjustments.append(f"{crop} is not well-suited to {context_name} {context_label} - irrigation frequency increased by {delta}")
                     elif adjustment == "decrease days":
-                        plan["irrigation_frequency"] = max(0, (plan["irrigation_frequency"] or 0) - delta)
+                        plan["irrigation_frequency"] = max(1, (plan["irrigation_frequency"] or 0) - delta)
                         adjustments.append(f"{crop} is not well-suited to {context_name} {context_label} - irrigation frequency decreased by {delta}")
 
                 # if "action_type": "sowing", "adjustment": "delay", "adjustment_type": "minimal" -> add +4 days to sowing date, for substantial add 1 week
@@ -212,12 +214,14 @@ class RuleEngine:
                     plan["irrigation_start_date"] = None
                     plan["fertilization_date"]    = None
                     adjustments.append(f"{crop} is extremely incompatible with {context_name} {context_label} - please consider a different field or a different crop")
+                    has_avoid = True
                     break
 
-            return plan
+            return plan, has_avoid
 
         adjusted_plan        = dict(initial_plan)
         adjustments_to_make  = []
+        has_avoid_action     = False
 
         crop         = adjusted_plan["crop"]
         soil_type    = adjusted_plan["soil_type"]
@@ -233,7 +237,9 @@ class RuleEngine:
         if soil_compat and soil_compat.score < 0.7:
             soil_action = rule_base_service.get_soil_action_by_crop_and_soil(crop_id, soil_type_id)
             if soil_action and soil_action.actions:
-                adjusted_plan = _apply_actions(soil_action.actions, adjusted_plan, crop, soil_type, "soil type", adjustments_to_make)
+                adjusted_plan, soil_avoid = _apply_actions(soil_action.actions, adjusted_plan, crop, soil_type, "soil type", adjustments_to_make)
+                if soil_avoid:
+                    has_avoid_action = True
 
         # Step 2: Check water_source compatibility: if score <0.7 then needs adjustment
         #     same as above for crop_water source compatibility
@@ -241,10 +247,23 @@ class RuleEngine:
         if water_compat and water_compat.score < 0.7:
             water_action = rule_base_service.get_water_source_action_by_crop_and_source(crop_id, water_source_id)
             if water_action and water_action.actions:
-                adjusted_plan = _apply_actions(water_action.actions, adjusted_plan, crop, water_source, "water source", adjustments_to_make)
+                adjusted_plan, water_avoid = _apply_actions(water_action.actions, adjusted_plan, crop, water_source, "water source", adjustments_to_make)
+                if water_avoid:
+                    has_avoid_action = True
+
+        # Step 3: Determine feasibility based on compatibility scores and actions
+        if has_avoid_action:
+            feasibility = "Not Feasible"
+        elif not adjustments_to_make:
+            # Both soil and water are >= 0.7 (ideal)
+            feasibility = "Ideal"
+        else:
+            # Has adjustments but not "avoid" action
+            feasibility = "Conditional"
 
         # adjusted plan has crop, soil_type, water_source, growth_stage, sowing, harvesting, irrigation start, irrigation_frequency, fertilization_start, adjustments_to_make
         adjusted_plan["adjustments_to_make"] = adjustments_to_make
+        adjusted_plan["feasibility"] = feasibility
 
         return adjusted_plan
 
@@ -312,14 +331,12 @@ class RuleEngine:
 
         Each item in the returned list has
         ──────────────────────────────────
-        crop_id, crop_name, field_id, field_name,
-        field_location, field_moisture, field_ph,   ← consumed by adjust_weekly_plan
+        crop_id, crop_name, field_location,
         growth_stage_id, growth_stage,
         week_events: [{ event_type, date }]          ← sorted ascending by date
         """
         from app.models.seasonal_plan import SeasonalPlan
         from app.models.crop import Crop
-        from app.models.field import Field
         from app.services.domain_service.user_service import UserService
 
         week_end = week_start_date + timedelta(days=6)
@@ -361,13 +378,7 @@ class RuleEngine:
                 if not entry.sowing:          # infeasible entry — skip
                     continue
 
-                field = Field.query.get(entry.field_id) if entry.field_id else None
-
-                crop_obj        = rule_base_service.get_crop_by_id(entry.crop_id)
-                crop_name       = crop_obj.name if crop_obj else f"Crop {entry.crop_id}"
-                field_name      = field.name           if field else f"Field {entry.field_id}"
-                field_moisture  = field.moisture_level if field else None
-                field_ph        = field.ph_level       if field else None
+                crop_name = entry.crop_name_rel.name if entry.crop_name_rel else f"Crop {entry.crop_name_id}"
 
                 growth_stage_id   = seasonal_plan.growth_stage_id
                 growth_stage_obj  = rule_base_service.get_stage_by_id(growth_stage_id) if growth_stage_id else None
@@ -403,13 +414,9 @@ class RuleEngine:
                 week_events.sort(key=lambda e: e["date"])
 
                 result.append({
-                    "crop_id":        entry.crop_id,
-                    "crop_name":      crop_name,
-                    "field_id":       entry.field_id,
-                    "field_name":     field_name,
-                    "field_location": user_location,
-                    "field_moisture": field_moisture,
-                    "field_ph":       field_ph,
+                    "crop_id":          entry.crop_name_id,
+                    "crop_name":        crop_name,
+                    "field_location":   user_location,
                     "growth_stage_id":  growth_stage_id,
                     "growth_stage":     growth_stage_name,
                     "week_events":      week_events,

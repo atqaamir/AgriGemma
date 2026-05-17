@@ -96,8 +96,8 @@ AgriGemma's core feature is **automatic adaptation** of tasks and weekly plans w
 ```bash
 python test_runs/test_task_changes.py
 ```
-
 It injects a fake weather-change scenario for a set of test users (covering no-impact, rainfall-impact, and temperature-impact cases), then runs the full coordinator pipeline — rescheduling affected tasks, regenerating the weekly plan, and producing change-summary notifications. Watch the terminal output to see each user's adaptation result. Of course, all of the changes are reflected on the frontend of the application as well.
+It takes about ~40seconds for a popup toasts appears on the screen, along with the notifications.
 
 
 ## 📦 Requirements

@@ -11,42 +11,43 @@
         "soil_type": "Loamy",
         "water_source": "Groundwater",
         "feasible": true,
+        "feasibility": "Ideal",
         "schedule": {
-          "sowing_date": "04/13/2027",
-          "harvesting_date": "09/07/2027",
-          "irrigation_start_date": "04/20/2027",
+          "sowing_date": "04/22/2027",
+          "harvesting_date": "09/26/2027",
+          "irrigation_start_date": "04/29/2027",
           "irrigation_frequency": "2 times per week",
-          "fertilization_date": "04/28/2027"
+          "fertilization_date": "05/07/2027"
         },
         "adjustments": []
       },
       {
         "crop": "Cotton",
         "soil_type": "Loamy",
-        "water_source": "Groundwater",
+        "water_source": "Recycled",
         "feasible": true,
+        "feasibility": "Conditional",
         "schedule": {
-          "sowing_date": "04/07/2027",
-          "harvesting_date": "09/19/2027",
-          "irrigation_start_date": "04/17/2027",
-          "irrigation_frequency": "2 times per week",
-          "fertilization_date": "05/02/2027"
+          "sowing_date": "04/29/2027",
+          "harvesting_date": "09/09/2027",
+          "irrigation_start_date": "05/09/2027",
+          "irrigation_frequency": "1 times per week",
+          "fertilization_date": "05/24/2027"
         },
-        "adjustments": []
+        "adjustments": [
+          "Cotton is not well-suited to Recycled water source - irrigation frequency decreased by 4"
+        ]
       },
       {
         "crop": "Rice",
-        "soil_type": "Clay",
+        "soil_type": "Sandy",
         "water_source": "River",
-        "feasible": true,
-        "schedule": {
-          "sowing_date": "07/05/2026",
-          "harvesting_date": "09/10/2026",
-          "irrigation_start_date": "07/08/2026",
-          "irrigation_frequency": "5 times per week",
-          "fertilization_date": "07/25/2026"
-        },
-        "adjustments": []
+        "feasible": false,
+        "feasibility": "Not Feasible",
+        "schedule": null,
+        "adjustments": [
+          "Rice is extremely incompatible with Sandy soil type - please consider a different field or a different crop"
+        ]
       }
     ]
   }
