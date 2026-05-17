@@ -50,7 +50,8 @@ class DashboardService:
             "field_condition": DashboardService._build_field_condition(fields, active_fields),
             "crop_condition": DashboardService._build_crop_condition(crops),
             "alerts": DashboardService._get_alerts(user_id, pending_tasks),
-            "dashboard_summary": stored
+            "dashboard_summary": stored,
+            "seasonal_plan": DashboardService._build_plan_summary(user_id),
         }
 
     @staticmethod
@@ -281,6 +282,17 @@ class DashboardService:
             "field_name": task.field.name if task.field else None,
             "crop_name": task.crop.name if task.crop else None,
             "overdue": bool(task.due_date and task.due_date < date.today()),
+        }
+
+    @staticmethod
+    def _build_plan_summary(user_id: int) -> dict:
+        from app.services.seasonal_planner_service import SeasonalPlannerService
+        plan = SeasonalPlannerService.get_active_plan(user_id)
+        if not plan:
+            return {}
+        return {
+            "id":               plan.id,
+            "currently_active": plan.currently_active,
         }
 
     @staticmethod
