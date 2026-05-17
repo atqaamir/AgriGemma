@@ -3,7 +3,8 @@
     "allow": [
       "Bash(venv/Scripts/pip install *)",
       "Bash(venv/Scripts/python -c \"from duckduckgo_search import DDGS; print\\('OK'\\)\")",
-      "Bash(venv/Scripts/python -c ' *)"
+      "Bash(venv/Scripts/python -c ' *)",
+      "PowerShell(head -30)"
     ]
   }
 }
