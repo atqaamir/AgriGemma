@@ -101,8 +101,7 @@ class CoordinatorAgent:
                 self.update_planner(user_id, tag="impact_tasks", as_of_date=as_of_date)
             # self.call_intelligence(user_id, tag="critical_task_overview")
             notification_tag = "weekly" if change == enums_.ChangeStatus.IMPACT_PLAN else "daily"
-            self.send_notification(user_id, tag=notification_tag)
-            self.send_notification(user_id, tag="change_summary")
+            self.send_change_notifications(user_id, tag=notification_tag)
             self.dashboard_refresh(user_id)
             result = execution_responses.ExecutionResponse.success("Daily update completed") if risk_status == enums_.Status.SUCCESS else execution_responses.ExecutionResponse.failure("Daily update failed")
 
@@ -126,4 +125,11 @@ class CoordinatorAgent:
         if status == enums_.Status.SUCCESS:
             return execution_responses.ExecutionResponse.success("Notification sent")
         return execution_responses.ExecutionResponse.failure("Notification dispatch failed")
+
+    def send_change_notifications(self, user_id: int, tag: str) -> dict:
+        """Collects change data first, then creates both the alert and change_summary popup in one Ollama call."""
+        status = self.notification_agent.generate_change_notifications(user_id, tag=tag)
+        if status == enums_.Status.SUCCESS:
+            return execution_responses.ExecutionResponse.success("Change notifications sent")
+        return execution_responses.ExecutionResponse.failure("Change notification dispatch failed")
 

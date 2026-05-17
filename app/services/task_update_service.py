@@ -23,7 +23,8 @@ PRIORITY_ORDER = ["low", "medium", "high", "critical"]
 # Used when no crop_id is available (general / field tasks).
 BAND_ACTIONS_GENERAL = {
     "temperature_up": {
-        "irrigation": {"change": "priority", "direction": "up"},
+        "irrigation": {"change": "priority", "target": "critical"},
+        "repair":     {"change": "priority", "target": "critical"},
         "spraying":   {"change": "delay",    "days": 2},
     },
     "temperature_down": {
@@ -201,7 +202,10 @@ def _apply_general_rules(task, band_changes: list, changes: list, as_of_date: da
         change_type = action["change"]
 
         if change_type == "priority":
-            new_p = _priority_shift(task.priority, action["direction"])
+            if "target" in action:
+                new_p = action["target"]
+            else:
+                new_p = _priority_shift(task.priority, action["direction"])
             if new_p != task.priority:
                 task.priority = new_p
                 modified = True
@@ -228,8 +232,19 @@ def _apply_general_rules(task, band_changes: list, changes: list, as_of_date: da
     return modified
 
 
+def _get_crop_name_id(crop_id: int) -> int | None:
+    """Resolve a Crop instance id to its CropNames vocabulary id."""
+    from app.models.crop import Crop
+    crop = Crop.query.get(crop_id)
+    return crop.crop_name_id if crop else None
+
+
 def _apply_crop_rules(task, user_id: int, as_of_date: date, changes: list, band_changes: list) -> bool:
     """Look up rule-engine actions for this crop + growth_stage + forecast band and apply."""
+    crop_name_id    = _get_crop_name_id(task.crop_id)
+    if not crop_name_id:
+        return False
+
     growth_stage_id = _get_growth_stage_by_crop(user_id, task.crop_id)
     user_location   = UserService.get_user_location(user_id)
     forecast        = RuleEngine.get_forecast_by_region_and_date(user_location, as_of_date) if user_location else None
@@ -250,7 +265,7 @@ def _apply_crop_rules(task, user_id: int, as_of_date: date, changes: list, band_
             continue
 
         band        = RuleEngine.classify_value_bands(factor, value)
-        action_rule = lookup_fn(task.crop_id, growth_stage_id, band)
+        action_rule = lookup_fn(crop_name_id, growth_stage_id, band)
         if not action_rule:
             continue
 
@@ -288,11 +303,12 @@ class TaskUpdateService:
         logger.info("TaskUpdateService: band changes for user %s: %s", user_id, band_changes)
 
         all_tasks = TaskRepository.get_by_user_id(user_id)
+        today = date.today()
         pending = [
             t for t in all_tasks
             if not t.completed
             and t.is_active
-            and (t.due_date is None or t.due_date >= as_of_date)
+            and (t.due_date is None or t.due_date >= today)
         ]
 
         modified_count = 0
@@ -303,6 +319,8 @@ class TaskUpdateService:
 
             if task.crop_id is not None and task.task_category == "crop":
                 modified = _apply_crop_rules(task, user_id, as_of_date, task_changes_list, band_changes)
+                if not modified:
+                    modified = _apply_general_rules(task, band_changes, task_changes_list, as_of_date)
             else:
                 modified = _apply_general_rules(task, band_changes, task_changes_list, as_of_date)
 

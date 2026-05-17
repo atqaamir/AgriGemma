@@ -1222,9 +1222,12 @@
   function processChangePopups() {
     // Show a popup for every unread change notification not already queued/active
     const queuedIds = new Set(changeQueue.map(n => n.id));
-    notifications
-      .filter(n => n.notification_type === 'change' && !n.is_read && !queuedIds.has(n.id))
-      .forEach(n => changeQueue.push(n));
+    const incoming = notifications.filter(n => n.notification_type === 'change' && !n.is_read && !queuedIds.has(n.id));
+    incoming.forEach(n => changeQueue.push(n));
+    if (incoming.length > 0) {
+      // Signal other page components (e.g. tasks list) to refresh their data
+      document.dispatchEvent(new CustomEvent('farmDataUpdated'));
+    }
     showNextChangePopup();
   }
 
@@ -1325,8 +1328,8 @@
     });
 
     loadNotifications();
-    // Poll every 30 seconds so the badge and dropdown stay current without a page refresh
-    setInterval(loadNotifications, 30_000);
+    // Poll every 10 seconds so change_summary popups appear promptly after creation
+    setInterval(loadNotifications, 10_000);
   }
 
   if (document.readyState === 'loading') {

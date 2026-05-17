@@ -643,7 +643,7 @@
   </nav>
 
   <script>
-    const USER_ID = 1;
+    const USER_ID = {{ current_user_id }};
     const TASKS_API  = `/mytasks/${USER_ID}`;  // user-scoped list endpoints
     const TASKS_BASE = '/mytasks';              // non-user-scoped task/intelligence endpoints
     const NOTIF_API = '/notifications';
@@ -690,6 +690,13 @@
       loadCriticalQueue();
       loadTaskLookup();
       loadCropsAndFields();
+      loadIntelligence();
+    });
+
+    // Auto-refresh when daily_update completes (notification_ui fires this event)
+    document.addEventListener('farmDataUpdated', () => {
+      loadPendingTasks();
+      loadCriticalQueue();
       loadIntelligence();
     });
 
