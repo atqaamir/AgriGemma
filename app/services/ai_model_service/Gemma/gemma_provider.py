@@ -66,10 +66,13 @@ class GemmaProvider(AIModelProvider):
 
         model_file = Path(self._model_path)
         if not model_file.exists():
-            logger.warning(
-                "Gemma 4 model not found at %s — using placeholder responses. "
-                "Download from https://www.kaggle.com/models/google/gemma-4/litert/",
+            logger.error(
+                "USE_LITERT=true but model file not found at %s. "
+                "All responses will be placeholder text. "
+                "Download from https://www.kaggle.com/models/google/gemma-4/litert/ "
+                "and place at %s, or set GEMMA_MODEL_PATH to the correct path.",
                 self._model_path,
+                _DEFAULT_MODEL_DIR / _MODEL_FILENAME,
             )
             return
 
