@@ -20,11 +20,12 @@ class Region(Enum):
 
 
 class NotificationType(Enum):
-    """The four global notification types shown in the bell dropdown."""
     INFO = "info"
     WARNING = "warning"
-    CRITICAL = "critical"          # also rendered as an alert popup
-    RECOMMENDATION = "recommendation"  # clickable → shows AI explanation
+    ALERT = "alert"       # weather changed today's tasks
+    CRITICAL = "critical"
+    RECOMMENDATION = "recommendation"
+    CHANGE = "change"     # full change report — triggers a popup on creation/unread
 
 
 class IntelligencePriorityLevel(Enum):

@@ -36,14 +36,14 @@ def run():
     # ---- USERS ----
     user = [
         User(name="Ahmad Khan",    location="Punjab, Pakistan"),
-        User(name="Ali Raza",      location="Sindh, Pakistan"),
+        User(name="Ali Raza",      location="Punjab, Pakistan"),
         User(name="Muhammad Usman",location="Khyber Pakhtunkhwa, Pakistan"),
         User(name="Bilal Ahmed",   location="Punjab, Pakistan"),
         User(name="Hassan Qureshi",location="Punjab, Pakistan"),
         User(name="Sajid Hussain", location="Sindh, Pakistan"),
         User(name="Imran Shah",    location="Khyber Pakhtunkhwa, Pakistan"),
         User(name="Naveed Akhtar", location="Sindh, Pakistan"),
-        User(name="Faisal Mehmood",location="Islamabad Capital Territory, Pakistan"),
+        User(name="Faisal Mehmood",location="Punjab, Pakistan"),
     ]
 
     db.session.add_all(user)
@@ -365,7 +365,7 @@ def run():
             task_type="irrigation", task_category="general",
             description="Regular cotton irrigation. Forecast: zero rainfall (band shift 50-100→<50mm) with extreme heat (41°C) — full supplemental irrigation required.",
             notes="IMPACT_TASKS expected: irrigation.increase days.significant → priority critical, task delayed.",
-            crop_id=None, field_id=None, user_id=user[1].id,
+            crop_id=None, field_id=None, user_id=user[0].id,
         ),
         # Spraying task — will be de-prioritized by -1 level when irrigation escalates
         Task(
@@ -375,7 +375,7 @@ def run():
             task_type="spraying", task_category="general",
             description="Preventive pesticide application. Hot dry conditions increase pest pressure.",
             notes="Unaffected by irrigation action directly — priority will drop -1 level (medium→low).",
-            crop_id=None, field_id=None, user_id=user[1].id,
+            crop_id=None, field_id=None, user_id=user[0].id,
         ),
 
         # ── User[8] - Faisal Mehmood (Islamabad) ────────────────────────────
@@ -388,7 +388,7 @@ def run():
             task_type="irrigation", task_category="general",
             description="Scheduled maize irrigation. Heatwave forecast (37°C, band 20-30→30-40) with zero rainfall — critical irrigation frequency increase required.",
             notes="IMPACT_TASKS expected: irrigation.increase days.significant → priority critical, task delayed.",
-            crop_id=None, field_id=None, user_id=user[8].id,
+            crop_id=None, field_id=None, user_id=user[0].id,
         ),
         Task(
             title="Irrigate Crops — Morning Round",
@@ -434,71 +434,71 @@ def run():
     db.session.add_all(sample_tasks)
     db.session.commit()
 
-    # ---- ALERTS ----
-    sample_alert = [
-        Alert(user_id=user[0].id, crop_id=sample_crops[0].id, level="medium",
-              message="Rice crop requires irrigation support during vegetative stage."),
-        Alert(user_id=user[0].id, crop_id=sample_crops[1].id, level="high",
-              message="High humidity increases fungal risk for flowering cotton."),
-        Alert(user_id=user[0].id, crop_id=sample_crops[2].id, level="high",
-              message="Drainage issues may worsen maize crop stress."),
-        Alert(user_id=user[0].id, crop_id=sample_crops[3].id, level="low",
-              message="Routine equipment check recommended near reservoir seedling field."),
-        Alert(user_id=user[0].id, crop_id=sample_crops[4].id, level="high",
-              message="Crop in flowering stage requires inspection due to strong winds."),
-        Alert(user_id=user[0].id, crop_id=sample_crops[5].id, level="medium",
-              message="Vegetative cotton crop would benefit from timely fertilization."),
-        Alert(user_id=user[0].id, crop_id=sample_crops[6].id, level="medium",
-              message="Seedling-stage may be vulnerable to low temperatures in highland area."),
-        Alert(user_id=user[0].id, crop_id=sample_crops[7].id, level="high",
-              message="Flowering rice crop is under high environmental stress in Lower Indus Plain."),
-        Alert(user_id=user[0].id, crop_id=sample_crops[8].id, level="low",
-              message="Maize crop is stable but should continue routine monitoring."),
-    ]
+    # # ---- ALERTS ----
+    # sample_alert = [
+    #     Alert(user_id=user[0].id, crop_id=sample_crops[0].id, level="medium",
+    #           message="Rice crop requires irrigation support during vegetative stage."),
+    #     Alert(user_id=user[0].id, crop_id=sample_crops[1].id, level="high",
+    #           message="High humidity increases fungal risk for flowering cotton."),
+    #     Alert(user_id=user[0].id, crop_id=sample_crops[2].id, level="high",
+    #           message="Drainage issues may worsen maize crop stress."),
+    #     Alert(user_id=user[0].id, crop_id=sample_crops[3].id, level="low",
+    #           message="Routine equipment check recommended near reservoir seedling field."),
+    #     Alert(user_id=user[0].id, crop_id=sample_crops[4].id, level="high",
+    #           message="Crop in flowering stage requires inspection due to strong winds."),
+    #     Alert(user_id=user[0].id, crop_id=sample_crops[5].id, level="medium",
+    #           message="Vegetative cotton crop would benefit from timely fertilization."),
+    #     Alert(user_id=user[0].id, crop_id=sample_crops[6].id, level="medium",
+    #           message="Seedling-stage may be vulnerable to low temperatures in highland area."),
+    #     Alert(user_id=user[0].id, crop_id=sample_crops[7].id, level="high",
+    #           message="Flowering rice crop is under high environmental stress in Lower Indus Plain."),
+    #     Alert(user_id=user[0].id, crop_id=sample_crops[8].id, level="low",
+    #           message="Maize crop is stable but should continue routine monitoring."),
+    # ]
 
-    db.session.add_all(sample_alert)
-    db.session.commit()
+    # db.session.add_all(sample_alert)
+    # db.session.commit()
 
-    # ---- NOTIFICATIONS ----
-    sample_notifications = [
-        Notification(user_id=user[0].id, title="Irrigation recommended for rice",
-                     message="Your rice crop in North Field Alpha needs irrigation during the vegetative stage.",
-                     detail="Adequate irrigation at this stage helps ensure strong tiller development and prevents early stress.",
-                     notification_type="recommendation", is_read=False, created_at=datetime.utcnow()),
-        Notification(user_id=user[0].id, title="Fungal risk warning for cotton",
-                     message="High humidity conditions increase fungal risk in your East Creek Basin field.",
-                     detail="Flowering cotton is especially sensitive to prolonged moisture. Preventive spraying can reduce future losses.",
-                     notification_type="warning", is_read=False, created_at=datetime.utcnow()),
-        Notification(user_id=user[0].id, title="Drainage issue detected",
-                     message="Water drainage problems may impact maize health at South Hill Slope.",
-                     detail="Poor drainage can result in root stress and nutrient imbalance. Clearing channels is advised as soon as possible.",
-                     notification_type="critical", is_read=False, created_at=datetime.utcnow()),
-        Notification(user_id=user[0].id, title="Routine equipment check",
-                     message="This is a reminder to check irrigation and field equipment near the reservoir plot.",
-                     detail=None, notification_type="info", is_read=False, created_at=datetime.utcnow()),
-        Notification(user_id=user[0].id, title="Wheat flowering stage alert",
-                     message="Your crop has entered the flowering stage and requires close monitoring.",
-                     detail="Strong winds during flowering can affect yield. Regular inspection can help detect issues early.",
-                     notification_type="warning", is_read=False, created_at=datetime.utcnow()),
-        Notification(user_id=user[0].id, title="Fertilization recommended for cotton",
-                     message="Cotton at the vegetative stage may benefit from balanced fertilization.",
-                     detail="Timely nutrient application supports healthy canopy development and prepares the crop for flowering.",
-                     notification_type="recommendation", is_read=False, created_at=datetime.utcnow()),
-        Notification(user_id=user[0].id, title="Cold stress risk for wheat seedlings",
-                     message="Seedlings may experience stress due to dropping night temperatures.",
-                     detail="Early-stage wheat is sensitive to cold spells. Monitoring weather forecasts is strongly advised.",
-                     notification_type="warning", is_read=False, created_at=datetime.utcnow()),
-        Notification(user_id=user[0].id, title="High stress alert for rice crop",
-                     message="Your rice crop is experiencing high environmental stress during flowering.",
-                     detail="Combined heat and nutrient stress at this stage can significantly reduce yield. Immediate attention is required.",
-                     notification_type="critical", is_read=False, created_at=datetime.utcnow()),
-        Notification(user_id=user[0].id, title="Maize crop status update",
-                     message="Your maize crop is healthy and progressing well in the vegetative stage.",
-                     detail=None, notification_type="info", is_read=False, created_at=datetime.utcnow()),
-    ]
+    # # ---- NOTIFICATIONS ----
+    # sample_notifications = [
+    #     Notification(user_id=user[0].id, title="Irrigation recommended for rice",
+    #                  message="Your rice crop in North Field Alpha needs irrigation during the vegetative stage.",
+    #                  detail="Adequate irrigation at this stage helps ensure strong tiller development and prevents early stress.",
+    #                  notification_type="recommendation", is_read=False, created_at=datetime.utcnow()),
+    #     Notification(user_id=user[0].id, title="Fungal risk warning for cotton",
+    #                  message="High humidity conditions increase fungal risk in your East Creek Basin field.",
+    #                  detail="Flowering cotton is especially sensitive to prolonged moisture. Preventive spraying can reduce future losses.",
+    #                  notification_type="warning", is_read=False, created_at=datetime.utcnow()),
+    #     Notification(user_id=user[0].id, title="Drainage issue detected",
+    #                  message="Water drainage problems may impact maize health at South Hill Slope.",
+    #                  detail="Poor drainage can result in root stress and nutrient imbalance. Clearing channels is advised as soon as possible.",
+    #                  notification_type="critical", is_read=False, created_at=datetime.utcnow()),
+    #     Notification(user_id=user[0].id, title="Routine equipment check",
+    #                  message="This is a reminder to check irrigation and field equipment near the reservoir plot.",
+    #                  detail=None, notification_type="info", is_read=False, created_at=datetime.utcnow()),
+    #     Notification(user_id=user[0].id, title="Wheat flowering stage alert",
+    #                  message="Your crop has entered the flowering stage and requires close monitoring.",
+    #                  detail="Strong winds during flowering can affect yield. Regular inspection can help detect issues early.",
+    #                  notification_type="warning", is_read=False, created_at=datetime.utcnow()),
+    #     Notification(user_id=user[0].id, title="Fertilization recommended for cotton",
+    #                  message="Cotton at the vegetative stage may benefit from balanced fertilization.",
+    #                  detail="Timely nutrient application supports healthy canopy development and prepares the crop for flowering.",
+    #                  notification_type="recommendation", is_read=False, created_at=datetime.utcnow()),
+    #     Notification(user_id=user[0].id, title="Cold stress risk for wheat seedlings",
+    #                  message="Seedlings may experience stress due to dropping night temperatures.",
+    #                  detail="Early-stage wheat is sensitive to cold spells. Monitoring weather forecasts is strongly advised.",
+    #                  notification_type="warning", is_read=False, created_at=datetime.utcnow()),
+    #     Notification(user_id=user[0].id, title="High stress alert for rice crop",
+    #                  message="Your rice crop is experiencing high environmental stress during flowering.",
+    #                  detail="Combined heat and nutrient stress at this stage can significantly reduce yield. Immediate attention is required.",
+    #                  notification_type="critical", is_read=False, created_at=datetime.utcnow()),
+    #     Notification(user_id=user[0].id, title="Maize crop status update",
+    #                  message="Your maize crop is healthy and progressing well in the vegetative stage.",
+    #                  detail=None, notification_type="info", is_read=False, created_at=datetime.utcnow()),
+    # ]
 
-    db.session.add_all(sample_notifications)
-    db.session.commit()
+    # db.session.add_all(sample_notifications)
+    # db.session.commit()
 
     # ---- WEATHER (historical baseline) ----
     # Weather is keyed by user location (one region per user).
@@ -583,7 +583,7 @@ def run():
     HARSH_FORECAST_REGIONS = {
         "Punjab, Pakistan": [
             # sunlight→7.5 (≤0.5 from all baselines 7.2–8.0), rainfall→60.0 (≤3.0 from all baselines 58.0–63.0)
-            (25.8, 53, 61.5, 7.2, 12, "Negligible — today fine."),
+            (35.8, 53, 61.5, 7.2, 12, "Band change."),
     (25.8, 53, 61.5, 7.2, 12, "Negligible change."),
     (31.5, 53, 60.0, 7.2, 10, "IMPACT_PLAN: 20-30 → 30-40 on future day."),
 	(31.5, 53, 60.0, 7.2, 10, "IMPACT_PLAN: 20-30 → 30-40 on future day."),

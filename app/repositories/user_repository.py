@@ -11,7 +11,7 @@ class UserRepository:
 
     @staticmethod
     def get_all():
-        return User.query
+        return User.query.all()
 
     @staticmethod
     def get_by_id(user_id):
