@@ -643,7 +643,9 @@
   </nav>
 
   <script>
-    const TASKS_API = '/mytasks';
+    const USER_ID = 1;
+    const TASKS_API  = `/mytasks/${USER_ID}`;  // user-scoped list endpoints
+    const TASKS_BASE = '/mytasks';              // non-user-scoped task/intelligence endpoints
     const NOTIF_API = '/notifications';
 
     // State
@@ -694,7 +696,7 @@
     // ── Task Lookup (category → types) ────────────────────────────────────────
     async function loadTaskLookup() {
       try {
-        const res = await fetch(`${TASKS_API}/tasks/lookup`);
+        const res = await fetch(`${TASKS_BASE}/tasks/lookup`);
         if (!res.ok) throw new Error('Failed');
         taskTypeLookup = await res.json();
         populateFilterTaskTypes();
@@ -758,8 +760,8 @@
     async function loadCropsAndFields() {
       try {
         const [cropsRes, fieldsRes] = await Promise.all([
-          fetch('/mycrops/crops'),
-          fetch('/myfields/fields'),
+          fetch(`/mycrops/${USER_ID}/crops`),
+          fetch(`/myfields/${USER_ID}/fields`),
         ]);
         if (cropsRes.ok) {
           const data = await cropsRes.json();
@@ -1103,7 +1105,7 @@
       event.stopPropagation();
       if (!confirm('Delete this task? This cannot be undone.')) return;
       try {
-        const res = await fetch(`${TASKS_API}/tasks/${taskId}`, { method: 'DELETE' });
+        const res = await fetch(`${TASKS_BASE}/tasks/${taskId}`, { method: 'DELETE' });
         if (!res.ok) throw new Error('Failed');
         cachedPendingTasks = cachedPendingTasks.filter(t => t.id !== taskId);
         if (cachedAllTasks) cachedAllTasks = cachedAllTasks.filter(t => t.id !== taskId);
@@ -1115,7 +1117,7 @@
     async function markTaskDone(taskId, event) {
       event.stopPropagation();
       try {
-        const res = await fetch(`${TASKS_API}/tasks/${taskId}`, {
+        const res = await fetch(`${TASKS_BASE}/tasks/${taskId}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ completed: true }),
@@ -1134,7 +1136,7 @@
     async function markTaskPending(taskId, event) {
       event.stopPropagation();
       try {
-        const res = await fetch(`${TASKS_API}/tasks/${taskId}`, {
+        const res = await fetch(`${TASKS_BASE}/tasks/${taskId}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ completed: false }),
@@ -1161,7 +1163,7 @@
       document.getElementById('taskDetailTitle').textContent = 'Loading...';
       document.getElementById('bottomNav').classList.add('hidden');
       try {
-        const res = await fetch(`${TASKS_API}/tasks/${taskId}`);
+        const res = await fetch(`${TASKS_BASE}/tasks/${taskId}`);
         if (!res.ok) throw new Error('Not found');
         populateTaskDetailModal(await res.json());
       } catch (e) { closeTaskDetailModal(); }
@@ -1244,11 +1246,13 @@
         if (fieldSel && fieldSel.value) body.field_id = parseInt(fieldSel.value);
       }
 
+      body.user_id = USER_ID;
+
       submitBtn.disabled = true;
       submitBtn.textContent = 'Creating...';
 
       try {
-        const res = await fetch(`${TASKS_API}/tasks`, {
+        const res = await fetch(`${TASKS_BASE}/tasks`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(body),
@@ -1273,7 +1277,7 @@
     async function openEditTaskModal(taskId, event) {
       event.stopPropagation();
       try {
-        const res = await fetch(`${TASKS_API}/tasks/${taskId}`);
+        const res = await fetch(`${TASKS_BASE}/tasks/${taskId}`);
         if (!res.ok) throw new Error('Failed to fetch task');
         const task = await res.json();
         populateEditTaskModal(task);
@@ -1347,7 +1351,7 @@
       submitBtn.textContent = 'Updating...';
 
       try {
-        const res = await fetch(`${TASKS_API}/tasks/${taskId}`, {
+        const res = await fetch(`${TASKS_BASE}/tasks/${taskId}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(body),
@@ -1735,7 +1739,7 @@
     // ── AI Intelligence Hero ───────────────────────────────────────────────────
     async function loadIntelligence() {
       try {
-        const res = await fetch(`${TASKS_API}/intelligence/stored?user_id=1`);
+        const res = await fetch(`${TASKS_BASE}/intelligence/stored?user_id=${USER_ID}`);
         if (!res.ok) throw new Error(res.status);
         const data = await res.json();
         if (!data) { renderIntelHeroFallback(); return; }
@@ -1752,7 +1756,7 @@
       icon.textContent = 'progress_activity';
       icon.style.animation = 'spin 1s linear infinite';
       try {
-        const res = await fetch(`${TASKS_API}/intelligence/generate?user_id=1`, { method: 'POST' });
+        const res = await fetch(`${TASKS_BASE}/intelligence/generate?user_id=${USER_ID}`, { method: 'POST' });
         if (!res.ok) throw new Error(res.status);
         intelligenceData = await res.json();
         renderIntelHero(intelligenceData);

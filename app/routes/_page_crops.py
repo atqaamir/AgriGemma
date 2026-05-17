@@ -25,6 +25,23 @@ def crops_page():
     return render_template("crops.html")
 
 
+@crops_bp.route("/<int:user_id>/crops", methods=["GET"])
+def get_crops_by_user(user_id):
+    crops = CropService.get_crops_by_user(user_id)
+
+    all_tasks = []
+    for crop in crops:
+        all_tasks.extend([t for t in crop.tasks if t.task_category == 'crop'])
+
+    unique_tasks = list({task.id: task for task in all_tasks}.values())
+
+    result = {
+        "crop_cards": crop_card_schema.dump(crops),
+        "crop_task_cards": task_card_schema.dump(unique_tasks),
+    }
+
+    return jsonify(result), 200
+
 @crops_bp.route("/crops", methods=["GET"])
 def get_crops():
     crops = CropService.get_all_crops()
@@ -68,6 +85,27 @@ def get_crop(crop_id):
         return jsonify({"error": "Crop not found"}), 404
 
     return jsonify(crop_detail_schema.dump(crop)), 200
+
+
+@crops_bp.route("/<int:user_id>/crops/active", methods=["GET"])
+def get_active_crops_by_user(user_id):
+    """Active crops for a specific user with their PENDING crop-category tasks only."""
+    crops = CropService.get_active_crops_by_user(user_id)
+
+    all_tasks = []
+    for crop in crops:
+        if crop.tasks:
+            all_tasks.extend(
+                t for t in crop.tasks
+                if t.task_category == 'crop' and not t.completed
+            )
+
+    unique_tasks = list({task.id: task for task in all_tasks}.values())
+
+    return jsonify({
+        "crop_cards": crop_card_schema.dump(crops),
+        "crop_task_cards": task_card_schema.dump(unique_tasks),
+    }), 200
 
 
 @crops_bp.route("/crops/active", methods=["GET"])

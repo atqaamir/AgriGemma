@@ -92,6 +92,36 @@ def generate_and_store_intelligence():
 
 # ── Task collection ───────────────────────────────────────────────────────────
 
+@tasks_bp.route("/<int:user_id>/tasks", methods=["GET"])
+def get_tasks_by_user(user_id):
+    page = request.args.get("page", 1, type=int)
+    per_page = min(request.args.get("per_page", 20, type=int), 100)
+    status = request.args.get("status", "all")
+    search = request.args.get("search", "").strip()
+    priority = request.args.get("priority")
+
+    paginated = TaskService.get_tasks_by_user_paginated(user_id, page, per_page, status, search, priority)
+
+    return jsonify({
+        "task_cards": task_card_schema.dump(paginated.items),
+        "total": paginated.total,
+        "pending_count": TaskService.count_pending_by_user(user_id),
+        "completed_count": TaskService.count_completed_by_user(user_id),
+        "page": paginated.page,
+        "pages": paginated.pages,
+        "has_next": paginated.has_next,
+    }), 200
+
+
+@tasks_bp.route("/<int:user_id>/tasks/pending", methods=["GET"])
+def get_pending_tasks_by_user(user_id):
+    tasks = TaskService.get_pending_tasks_by_user(user_id)
+    return jsonify({
+        "task_cards": task_card_schema.dump(tasks),
+        "count": len(tasks),
+    }), 200
+
+
 @tasks_bp.route("/tasks", methods=["GET"])
 def get_tasks():
     page = request.args.get("page", 1, type=int)
