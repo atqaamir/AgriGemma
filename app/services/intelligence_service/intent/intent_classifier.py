@@ -53,23 +53,21 @@ class IntentResult:
 _GREETING_EXACT: frozenset[str] = frozenset({
     "hi", "hello", "hey", "hiya", "howdy", "salam", "assalam", "assalamualaikum",
     "good morning", "good afternoon", "good evening", "good day",
-    "who are you", "who are you?", "what are you", "what are you?",
-    "what can you do", "what can you do?", "help", "start",
+    "who are you", "what are you", "what can you do",
 })
 
+_GREETING_STARTERS: tuple[str, ...] = (
+    "hi ", "hello ", "hey ", "good morning", "good afternoon", "good evening",
+)
+
 def _is_greeting(text: str) -> bool:
-    """True for short openers and identity questions that need no farm data."""
+    """True only for explicit greetings — never for short follow-up questions."""
     stripped = text.strip().rstrip("!?.").lower()
     if stripped in _GREETING_EXACT:
         return True
-    # Short messages (≤4 words) with no farm keyword are likely greetings
+    # e.g. "hi there", "hello AgriGemma" — greeting word + ≤1 extra word
     words = stripped.split()
-    return len(words) <= 4 and not any(
-        kw in stripped for kw in (
-            "crop", "field", "soil", "water", "irrigat", "weather", "task",
-            "fertili", "harvest", "pest", "disease", "plant", "alert",
-        )
-    )
+    return len(words) <= 2 and any(stripped.startswith(s) for s in _GREETING_STARTERS)
 
 
 # (intent, weight, substrings_to_match)
