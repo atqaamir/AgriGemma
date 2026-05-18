@@ -222,3 +222,9 @@ AgriGemma uses Gemma 4 as a **climate-planning agent and decision explainer** â€
 
 Built to support climate-resilient farming through simple, practical, and accessible technology.  
 Developed for the **Gemma 4 Good Hackathon (Kaggle)**, and beyond.
+
+---
+
+## License
+
+This project is licensed for non-commercial use only. See [LICENSE](LICENSE) for details.
