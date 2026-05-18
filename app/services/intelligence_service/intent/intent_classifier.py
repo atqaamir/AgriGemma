@@ -82,6 +82,8 @@ _SIGNALS: list[tuple[FarmIntent, float, tuple[str, ...]]] = [
     )),
     (FarmIntent.WEATHER, 1.0, (
         "weather", "forecast", "rain tomorrow", "will it rain",
+        "if it rain", "when it rain", "what if it rain", "going to rain",
+        "rain today", "rain this week", "rain expected", "heavy rain",
         "temperature today", "humidity", "heatwave", "heat wave",
         "frost", "wind speed", "cloudy", "sunny", "monsoon",
         "storm", "how hot",
