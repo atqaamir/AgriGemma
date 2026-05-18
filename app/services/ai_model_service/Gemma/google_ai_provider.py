@@ -278,7 +278,7 @@ class GoogleAIProvider(AIModelProvider):
         ),
     ]
 
-    def _payload(self, prompt: str, *, max_tokens: int = 512) -> bytes:
+    def _payload(self, prompt: str, *, max_tokens: int = 300) -> bytes:
         if _SYSTEM_SEP in prompt:
             system_text, user_text = prompt.split(_SYSTEM_SEP, 1)
             system_text = system_text.strip()
@@ -299,9 +299,6 @@ class GoogleAIProvider(AIModelProvider):
                 "temperature": 0.7,
                 "topP": 0.9,
                 "maxOutputTokens": max_tokens,
-                # Cap thinking tokens — the model requires thinking > 0 but
-                # unconstrained it burns 1000+ tokens on simple questions.
-                "thinkingConfig": {"thinkingBudget": 256},
             },
         }
         if system_text:
