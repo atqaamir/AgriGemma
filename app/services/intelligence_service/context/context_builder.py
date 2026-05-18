@@ -406,7 +406,7 @@ def _fetch_seasonal(user_id: int) -> dict:
         "growth_stage_id": plan.growth_stage_id,
         "entries": [
             {
-                "crop_id":              e.crop_id,
+                "crop_id":              e.crop_name_id,
                 "sowing":               e.sowing,
                 "harvesting":           e.harvesting,
                 "irrigation_frequency": e.irrigation_frequency,

@@ -219,8 +219,8 @@ class ContextAggregationService:
                 "currently_active": plan.currently_active,
                 "entries": [
                     {
-                        "crop_id":               e.crop_id,
-                        "soil_type_id":          e.soil_type_id,
+                        "crop_id":               e.crop_name_id,
+                        "soil_type_id":          e.soil_id,
                         "water_source_id":       e.water_source_id,
                         "sowing":                e.sowing,
                         "harvesting":            e.harvesting,
