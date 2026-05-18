@@ -126,9 +126,13 @@
       right: 0;
       transform: translateX(100%);
     }
-    [dir="rtl"] #sidebar.open,
-    [dir="rtl"] #sidebar.lg\:translate-x-0 {
+    [dir="rtl"] #sidebar.open {
       transform: translateX(0) !important;
+    }
+    @media (min-width: 1024px) {
+      [dir="rtl"] #sidebar.lg\:translate-x-0 {
+        transform: translateX(0) !important;
+      }
     }
   </style>
 </head>
@@ -316,16 +320,22 @@
     // ── Sidebar ────────────────────────────────────────────────────────────
 
     function toggleSidebar() {
-      const open = !document.getElementById('sidebar').classList.contains('-translate-x-full');
-      open ? closeSidebar() : openSidebar();
+      const isRtl   = document.documentElement.dir === 'rtl';
+      const isOpen  = isRtl ? sidebar.classList.contains('open')
+                             : !sidebar.classList.contains('-translate-x-full');
+      isOpen ? closeSidebar() : openSidebar();
     }
     function openSidebar() {
-      document.getElementById('sidebar').classList.remove('-translate-x-full');
-      document.getElementById('backdrop').classList.remove('hidden');
+      const isRtl = document.documentElement.dir === 'rtl';
+      isRtl ? sidebar.classList.add('open')
+            : sidebar.classList.remove('-translate-x-full');
+      backdrop.classList.remove('hidden');
     }
     function closeSidebar() {
-      document.getElementById('sidebar').classList.add('-translate-x-full');
-      document.getElementById('backdrop').classList.add('hidden');
+      const isRtl = document.documentElement.dir === 'rtl';
+      isRtl ? sidebar.classList.remove('open')
+            : sidebar.classList.add('-translate-x-full');
+      backdrop.classList.add('hidden');
     }
 
     // ── Conversation list ──────────────────────────────────────────────────

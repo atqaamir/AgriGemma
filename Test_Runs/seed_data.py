@@ -46,6 +46,7 @@ def run():
     # ---- FIELDS ----
     # soil_type_id: 1=Sandy  2=Loamy  3=Clay
     # water_source_id: 1=Canal/River  2=Groundwater  3=Recycled
+    
     sample_fields = [
         Field(                                      # 0 – North Field Alpha
             name="North Field Alpha",
@@ -59,7 +60,7 @@ def run():
             stress_risk=10.0,
             disease_risk="low",
             water_source_id=2,
-            soil_type_id=2,
+            soil_type_id=1,
             location="Punjab, Pakistan",
             ph_level=6.8,
             currently_active=True,
