@@ -230,6 +230,9 @@ class TaskIntelligenceService:
             )
             raise ValueError("No JSON object found in Gemma response")
 
+        if content.strip() in ("{}", "{ }"):
+            raise ValueError("AI provider returned empty JSON — likely a timeout")
+
         json_str = content[start:end]
         logger.debug("[parse] extracted JSON slice [%d:%d] (%d chars)", start, end, len(json_str))
 
