@@ -13,11 +13,11 @@
         "feasible": true,
         "feasibility": "Ideal",
         "schedule": {
-          "sowing_date": "04/05/2027",
-          "harvesting_date": "09/16/2027",
-          "irrigation_start_date": "04/12/2027",
+          "sowing_date": "04/17/2027",
+          "harvesting_date": "09/07/2027",
+          "irrigation_start_date": "04/24/2027",
           "irrigation_frequency": "2 times per week",
-          "fertilization_date": "04/20/2027"
+          "fertilization_date": "05/02/2027"
         },
         "adjustments": []
       },
@@ -28,11 +28,11 @@
         "feasible": true,
         "feasibility": "Conditional",
         "schedule": {
-          "sowing_date": "04/07/2027",
-          "harvesting_date": "09/01/2027",
-          "irrigation_start_date": "04/17/2027",
+          "sowing_date": "04/15/2027",
+          "harvesting_date": "09/08/2027",
+          "irrigation_start_date": "04/25/2027",
           "irrigation_frequency": "1 times per week",
-          "fertilization_date": "05/02/2027"
+          "fertilization_date": "05/10/2027"
         },
         "adjustments": [
           "Cotton is not well-suited to Recycled water source - irrigation frequency decreased by 4"

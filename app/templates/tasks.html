@@ -256,13 +256,20 @@
         <div class="rounded-xl p-8 flex flex-col justify-between group overflow-hidden relative" style="background-color: rgba(74, 124, 89, 0.70);">
           <div class="relative z-10 space-y-4 flex flex-col items-center text-center h-full">
             <h3 class="text-xl font-bold text-white">Simulate Weather-resilient task changes here</h3>
-            <div class="flex-1 flex items-center justify-center py-4">
+            <div class="flex-1 flex items-center justify-center py-4 gap-3 flex-wrap">
               <button
                 id="weatherSimBtn"
                 onclick="runWeatherSimulator()"
                 class="px-6 py-3 rounded-full bg-white text-[#4a7c59] font-bold text-sm shadow-md hover:shadow-lg hover:scale-105 active:scale-95 transition-all inline-flex items-center gap-2">
                 <span class="material-symbols-outlined text-base">thunderstorm</span>
                 Weather Change Simulator
+              </button>
+              <button
+                id="refreshDataBtn"
+                onclick="runRefreshData()"
+                class="px-6 py-3 rounded-full bg-white/20 border border-white text-white font-bold text-sm shadow-md hover:bg-white hover:text-[#4a7c59] hover:shadow-lg hover:scale-105 active:scale-95 transition-all inline-flex items-center gap-2">
+                <span class="material-symbols-outlined text-base">refresh</span>
+                Refresh Data
               </button>
             </div>
             <p class="text-xs text-white/80 font-medium">The weather change will simulate a heatwave scenario where all the irrigation tasks would be changed to critical priority tasks</p>
@@ -292,6 +299,28 @@
           } finally {
             btn.disabled = false;
             btn.innerHTML = '<span class="material-symbols-outlined text-base">thunderstorm</span> Weather Change Simulator';
+          }
+        }
+
+        async function runRefreshData() {
+          const btn = document.getElementById('refreshDataBtn');
+          btn.disabled = true;
+          btn.innerHTML = '<span class="material-symbols-outlined text-base animate-spin">progress_activity</span> Refreshing…';
+          try {
+            const res = await fetch(`/mytasks/${USER_ID}/run-refresh-data`, { method: 'POST' });
+            const data = await res.json().catch(() => ({}));
+            if (res.ok) {
+              showSimToast(data.message || 'Data refreshed! Reloading…', true);
+              setTimeout(() => location.reload(), 1500);
+            } else {
+              showSimToast(data.error || 'Refresh failed.', false);
+              btn.disabled = false;
+              btn.innerHTML = '<span class="material-symbols-outlined text-base">refresh</span> Refresh Data';
+            }
+          } catch (e) {
+            showSimToast('Could not reach server.', false);
+            btn.disabled = false;
+            btn.innerHTML = '<span class="material-symbols-outlined text-base">refresh</span> Refresh Data';
           }
         }
 
