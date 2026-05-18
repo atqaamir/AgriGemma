@@ -585,14 +585,13 @@
                 streamingMsgEl = createStreamingMsg();
               }
               streamingText = data.text;
-              const textEl = document.getElementById('streamingText');
+              const textEl = streamingMsgEl.querySelector('.bot-text');
               if (textEl) textEl.textContent = streamingText;
               scrollBottom();
             } else if (eventType === 'response') {
               // Finalize: replace raw text with properly formatted version
-              const textEl = document.getElementById('streamingText');
+              const textEl = streamingMsgEl && streamingMsgEl.querySelector('.bot-text');
               if (textEl) {
-                textEl.removeAttribute('id');
                 textEl.innerHTML = fmtBot(data.bot_message || streamingText);
               }
               if (streamingMsgEl) {
