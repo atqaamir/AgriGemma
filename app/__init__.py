@@ -83,11 +83,15 @@ def _register_ai_provider() -> None:
 
         USE_PLACEHOLDER_AI=true   → rule-based placeholder (no model needed)
         USE_LITERT=true           → Gemma via MediaPipe LiteRT (.task file, mobile/Linux)
-        USE_GOOGLE_AI=true        → Dual Gemma 4 setup (Kaggle hackathon mode):
-                                      Chatbot      : Google AI Studio cloud  (gemma-4-26b-a4b-it)
-                                      Intelligence : Ollama local on-device  (gemma4)
+        USE_GOOGLE_AI=true        → Chatbot always uses Google AI Studio.
+                                    Intelligence provider depends on OLLAMA_ENABLED:
+                                      OLLAMA_ENABLED=true  (default): Dual setup —
+                                        Chatbot      : Google AI Studio cloud  (gemma-4-26b-a4b-it)
+                                        Intelligence : Ollama local on-device  (gemma4)
+                                      OLLAMA_ENABLED=false: Google AI for everything —
+                                        Chatbot      : Google AI Studio cloud
+                                        Intelligence : Google AI Studio cloud (JSON mode)
                                     Requires: GOOGLE_API_KEY  (free at aistudio.google.com/apikey)
-                                              Ollama running  (ollama pull gemma4)
                                     Optional: GOOGLE_AI_MODEL (default: gemma-4-26b-a4b-it)
                                               OLLAMA_MODEL    (default: gemma4)
         default                   → Ollama local inference only (gemma4)
@@ -106,15 +110,18 @@ def _register_ai_provider() -> None:
         ai_model_service.register_provider(GemmaProvider())
 
     elif os.getenv("USE_GOOGLE_AI", "false").lower() == "true":
-        # Chatbot  → Google AI Studio (Gemma 4 cloud, streaming, low-latency)
-        # Intelligence → Ollama local (Gemma 4 on-device: task/notification/summary prompts)
-        #   This dual setup means background intelligence works fully OFFLINE — farmers
-        #   in low-connectivity areas still get task explanations and alerts.
         from app.services.ai_model_service.Gemma.google_ai_provider import GoogleAIProvider
-        from app.services.ai_model_service.Gemma.ollama_provider import OllamaProvider
-        chatbot_model = os.getenv("GOOGLE_AI_MODEL", "gemma-4-26b-a4b-it")
-        ai_model_service.register_provider(GoogleAIProvider(model=chatbot_model))
-        ai_model_service.register_fast_provider(OllamaProvider())   # local Gemma 4
+        google_provider = GoogleAIProvider(model=os.getenv("GOOGLE_AI_MODEL", "gemma-4-26b-a4b-it"))
+
+        ai_model_service.register_provider(google_provider)  # chatbot always uses Google AI
+
+        if os.getenv("OLLAMA_ENABLED", "true").lower() == "false":
+            # Ollama disabled — intelligence also uses Google AI
+            ai_model_service.register_fast_provider(google_provider)
+        else:
+            # Ollama enabled — intelligence runs locally on Ollama
+            from app.services.ai_model_service.Gemma.ollama_provider import OllamaProvider
+            ai_model_service.register_fast_provider(OllamaProvider())
 
     else:
         from app.services.ai_model_service.Gemma.ollama_provider import OllamaProvider

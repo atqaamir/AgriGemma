@@ -25,10 +25,7 @@ _BASE = "https://generativelanguage.googleapis.com/v1beta"
 
 
 def _translate_with_gemma(strings: list[str], target_lang: str = "ur") -> dict[str, str]:
-    api_key = os.getenv("GOOGLE_API_KEY", "")
-    model = os.getenv("GOOGLE_AI_MODEL", "gemma-4-26b-a4b-it")
-
-    if not api_key:
+    if not os.getenv("GOOGLE_API_KEY", ""):
         logger.warning("GOOGLE_API_KEY not set — returning originals unchanged")
         return {s: s for s in strings}
 
@@ -47,7 +44,7 @@ def _translate_with_gemma(strings: list[str], target_lang: str = "ur") -> dict[s
         "generationConfig": {"temperature": 0.1, "maxOutputTokens": 2048},
     }).encode()
 
-    url = f"{_BASE}/models/{model}:generateContent?key={api_key}"
+    url = f"{_BASE}/models/{os.getenv('GOOGLE_AI_MODEL', 'gemma-4-26b-a4b-it')}:generateContent?key={os.getenv('GOOGLE_API_KEY')}"
     req = urllib.request.Request(
         url, data=payload, headers={"Content-Type": "application/json"}
     )

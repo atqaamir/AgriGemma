@@ -1,9 +1,8 @@
 """
-Google AI Studio provider — Gemma 4 cloud inference for the chatbot.
+Google AI Studio provider — Gemma 4 cloud inference.
 
-Used ONLY for the real-time chatbot (streaming responses to farmer questions).
-All background intelligence tasks (task/notification explanations, summaries) run
-on local Ollama Gemma 4 to enable offline/low-connectivity operation.
+Always used for the chatbot. Also handles intelligence tasks when OLLAMA_ENABLED=false;
+otherwise Ollama runs intelligence and this provider is chatbot-only.
 
 Setup
 -----
@@ -16,10 +15,6 @@ Setup
 Kaggle Gemma 4 Good Hackathon — available Google AI Studio model IDs:
     gemma-4-26b-a4b-it   MoE: 4B active / 26B total, 256K context  ← default (efficient)
     gemma-4-31b-it       31B dense, 256K context                    (highest quality)
-
-Streaming
----------
-Uses Google's SSE streaming endpoint so tokens appear immediately in the chatbot UI.
 """
 
 import json
@@ -198,6 +193,22 @@ class GoogleAIProvider(AIModelProvider):
             logger.warning("Google AI intent detection failed: %s", exc)
             return set()
 
+    def complete_json(self, prompt: str) -> str:
+        """Request a JSON-mode response. Used by fast_complete_json() for intelligence tasks."""
+        if not self._api_key:
+            logger.error("Google AI: GOOGLE_API_KEY not set — get one at https://aistudio.google.com/apikey")
+            return "{}"
+        logger.debug("Google AI complete_json: %d chars", len(prompt))
+        try:
+            return self._call_api_json(prompt)
+        except urllib.error.HTTPError as exc:
+            body = exc.read().decode("utf-8", errors="replace")
+            logger.error("Google AI JSON %s — model=%s — %s", exc, self._model, body)
+            return "{}"
+        except Exception as exc:
+            logger.error("Google AI JSON inference failed: %s", exc)
+            return "{}"
+
     def complete(self, prompt: str) -> str:
         if not self._api_key:
             logger.error("Google AI: GOOGLE_API_KEY not set — get one at https://aistudio.google.com/apikey")
@@ -294,6 +305,40 @@ class GoogleAIProvider(AIModelProvider):
             payload["systemInstruction"] = {"parts": [{"text": system_text}]}
 
         return json.dumps(payload).encode("utf-8")
+
+    def _json_payload(self, prompt: str, *, max_tokens: int = 4096) -> bytes:
+        """Minimal payload for intelligence/JSON tasks — no chatbot few-shot examples."""
+        if _SYSTEM_SEP in prompt:
+            system_text, user_text = prompt.split(_SYSTEM_SEP, 1)
+            system_text = system_text.strip()
+            user_text = user_text.strip()
+        else:
+            system_text = None
+            user_text = prompt
+
+        contents = [{"role": "user", "parts": [{"text": user_text}]}]
+        payload: dict = {
+            "contents": contents,
+            "generationConfig": {
+                "temperature": 0.3,
+                "maxOutputTokens": max_tokens,
+                "responseMimeType": "application/json",
+            },
+        }
+        if system_text:
+            payload["systemInstruction"] = {"parts": [{"text": system_text}]}
+        return json.dumps(payload).encode("utf-8")
+
+    def _call_api_json(self, prompt: str) -> str:
+        url = f"{_BASE}/models/{self._model}:generateContent?key={self._api_key}"
+        req = urllib.request.Request(
+            url, data=self._json_payload(prompt),
+            headers={"Content-Type": "application/json"}, method="POST",
+        )
+        with urllib.request.urlopen(req, timeout=60) as resp:
+            data = json.loads(resp.read())
+        parts = data["candidates"][0]["content"]["parts"]
+        return "".join(p.get("text", "") for p in parts if not p.get("thought")).strip()
 
     def _call_api(self, prompt: str, *, model: str | None = None) -> str:
         m = model or self._model
