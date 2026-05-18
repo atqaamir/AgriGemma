@@ -1,4 +1,5 @@
 import json
+import threading
 from datetime import datetime, timezone
 
 from flask import Blueprint, request, jsonify, render_template, current_app
@@ -71,23 +72,24 @@ def get_stored_intelligence():
 
 @tasks_bp.route("/intelligence/generate", methods=["POST"])
 def generate_and_store_intelligence():
-    """Run Ollama, store the result, return it — called by the star button."""
+    """Fire AI generation in background — returns immediately so navigation doesn't cancel it."""
     user_id = request.args.get("user_id", USER_ID, type=int)
-    result  = _coordinator.generate_task_intelligence(user_id)
+    app = current_app._get_current_object()
 
-    row = TaskIntelligenceSummary(
-        user_id      = user_id,
-        data         = json.dumps(intelligence_schema.dump(result)),
-        is_fallback  = result.get("is_fallback", False),
-        generated_at = datetime.now(timezone.utc),
-    )
-    db.session.add(row)
-    db.session.commit()
+    def _bg():
+        with app.app_context():
+            result = _coordinator.generate_task_intelligence(user_id)
+            row = TaskIntelligenceSummary(
+                user_id      = user_id,
+                data         = json.dumps(intelligence_schema.dump(result)),
+                is_fallback  = result.get("is_fallback", False),
+                generated_at = datetime.now(timezone.utc),
+            )
+            db.session.add(row)
+            db.session.commit()
 
-    data = json.loads(row.data)
-    data["generated_at"] = row.generated_at.isoformat()
-    data["is_fallback"]  = row.is_fallback
-    return jsonify(data), 200
+    threading.Thread(target=_bg, daemon=False).start()
+    return jsonify({"status": "generating"}), 202
 
 
 # ── Task collection ───────────────────────────────────────────────────────────

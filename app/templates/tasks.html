@@ -1763,15 +1763,31 @@
       icon.textContent = 'progress_activity';
       icon.style.animation = 'spin 1s linear infinite';
       try {
-        const res = await fetch(`${TASKS_BASE}/intelligence/generate?user_id=${USER_ID}`, { method: 'POST' });
-        if (!res.ok) throw new Error(res.status);
-        intelligenceData = await res.json();
-        renderIntelHero(intelligenceData);
+        await fetch(`${TASKS_BASE}/intelligence/generate?user_id=${USER_ID}`, { method: 'POST' });
+        // Generation runs in background — poll until a newer result appears
+        await _pollForIntelligence();
       } catch (e) {
         console.error('Intelligence generation failed:', e);
       } finally {
         icon.style.animation = '';
         icon.textContent = 'auto_awesome';
+      }
+    }
+
+    async function _pollForIntelligence(attempts = 20, interval = 2000) {
+      const before = intelligenceData?.generated_at || '';
+      for (let i = 0; i < attempts; i++) {
+        await new Promise(r => setTimeout(r, interval));
+        try {
+          const res = await fetch(`${TASKS_BASE}/intelligence/stored?user_id=${USER_ID}`);
+          if (!res.ok) continue;
+          const data = await res.json();
+          if (data?.generated_at && data.generated_at !== before) {
+            intelligenceData = data;
+            renderIntelHero(data);
+            return;
+          }
+        } catch { /* network blip — keep polling */ }
       }
     }
 

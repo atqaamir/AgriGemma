@@ -417,15 +417,28 @@
       icon.textContent = 'progress_activity';
       icon.style.animation = 'spin 1s linear infinite';
       try {
-        const res  = await fetch(`/${USER_ID}/dashboard/generate-summary`, { method: 'POST' });
-        if (!res.ok) throw new Error(res.status);
-        const data = await res.json();
-        setText('hero-subtitle', data.summary || '');
+        await fetch(`/${USER_ID}/dashboard/generate-summary`, { method: 'POST' });
+        // Generation runs in background — poll until a new summary appears
+        await _pollForSummary();
       } catch (e) {
         console.error('Summary refresh failed:', e);
       } finally {
         icon.style.animation = '';
         icon.textContent = 'auto_awesome';
+      }
+    }
+
+    async function _pollForSummary(attempts = 20, interval = 2000) {
+      const before = document.getElementById('hero-subtitle')?.textContent || '';
+      for (let i = 0; i < attempts; i++) {
+        await new Promise(r => setTimeout(r, interval));
+        try {
+          const res = await fetch(`/${USER_ID}/dashboard`);
+          if (!res.ok) continue;
+          const data = await res.json();
+          const summary = data.summary || '';
+          if (summary && summary !== before) { setText('hero-subtitle', summary); return; }
+        } catch { /* network blip — keep polling */ }
       }
     }
 
