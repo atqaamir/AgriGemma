@@ -112,8 +112,7 @@ def _register_ai_provider() -> None:
         #   in low-connectivity areas still get task explanations and alerts.
         from app.services.ai_model_service.Gemma.google_ai_provider import GoogleAIProvider
         from app.services.ai_model_service.Gemma.ollama_provider import OllamaProvider
-        chatbot_model = os.getenv("GOOGLE_AI_MODEL", "gemma-4-26b-a4b-it")
-        ai_model_service.register_provider(GoogleAIProvider(model=chatbot_model))
+        ai_model_service.register_provider(GoogleAIProvider(model=os.getenv("GOOGLE_AI_MODEL", "gemma-4-26b-a4b-it")))
         ai_model_service.register_fast_provider(OllamaProvider())   # local Gemma 4
 
     else:
