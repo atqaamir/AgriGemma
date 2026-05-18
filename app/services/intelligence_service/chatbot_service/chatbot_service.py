@@ -517,6 +517,43 @@ class ChatbotService:
                 {"chars": len(context_str), "time_ms": elapsed2},
             )
 
+            # ── Greeting fast-path (no LLM needed) ───────────────────────────
+            if intent_result.primary == FarmIntent.GREETING:
+                farmer_name = context.get("farmer_name") or "there"
+                bot_response = (
+                    f"Hi {farmer_name}! I'm AgriGemma, your AI farm advisor. "
+                    "Ask me anything about your crops, irrigation, weather, tasks, or field health."
+                )
+                bot_msg = ChatRepository.create_message(
+                    conversation_id=conversation_id,
+                    sender="bot",
+                    message=bot_response,
+                    metadata={
+                        "is_fallback": False,
+                        "model": "greeting-fastpath",
+                        "generated_at": datetime.now(timezone.utc).isoformat(),
+                        "urgency": "low",
+                        "actions": [],
+                    },
+                )
+                if len(messages) == 1:
+                    ChatRepository.update_conversation_title(
+                        conversation_id, ChatbotService._generate_title(user_message)
+                    )
+                yield sse("token", {"text": bot_response})
+                yield sse("response", {
+                    "conversation_id": conversation_id,
+                    "user_message_id": user_msg.id,
+                    "bot_message_id":  bot_msg.id,
+                    "user_message":    user_msg.message,
+                    "bot_message":     bot_msg.message,
+                    "timestamp":       bot_msg.created_at.isoformat(),
+                    "metadata":        bot_msg.metadata_,
+                    "total_ms":        ms(),
+                    "stages_log":      stages_log,
+                })
+                return
+
             # ── Stage 2b: web search (GENERAL intent only) ────────────────────
             web_results = []
             if intent_result.primary == FarmIntent.GENERAL:
