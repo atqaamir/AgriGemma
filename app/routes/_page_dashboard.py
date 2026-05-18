@@ -1,4 +1,5 @@
-from flask import Blueprint, jsonify, render_template, request
+import threading
+from flask import Blueprint, current_app, jsonify, render_template, request
 from app.services.dashboard_service import DashboardService
 
 dashboard_bp = Blueprint("dashboard", __name__)
@@ -17,8 +18,12 @@ def get_dashboard(user_id):
 
 @dashboard_bp.route("/<int:user_id>/dashboard/generate-summary", methods=["POST"])
 def generate_summary(user_id):
-    result = DashboardService.generate_and_store_summary(user_id)
-    return jsonify(result), 200
+    app = current_app._get_current_object()
+    def _bg():
+        with app.app_context():
+            DashboardService.generate_and_store_summary(user_id)
+    threading.Thread(target=_bg, daemon=False).start()
+    return jsonify({"status": "generating"}), 202
 
 @dashboard_bp.route("/<int:user_id>/advisor", methods=["GET"])
 def get_advisor(user_id):
