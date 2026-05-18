@@ -27,6 +27,7 @@ Rather than showing raw weather data, the system translates forecasts into concr
 #### Installation & Setup
 
 See [SETUP.md](SETUP.md) for full setup instructions.
+On the Tasks Page, we have temporarily added a "Weather Change Simulator" Button to view weather-resiliant tasks changes in real-time for demo.
 
 **Quick start (Windows):**
 ```bash

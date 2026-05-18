@@ -1,6 +1,6 @@
 import json
 import threading
-from datetime import datetime, timezone
+from datetime import datetime, timezone, date
 
 from flask import Blueprint, request, jsonify, render_template, current_app
 from marshmallow import ValidationError
@@ -199,3 +199,27 @@ def delete_task(task_id):
         return jsonify({"error": "Task not found"}), 404
     TaskService.delete_task(task_id)
     return jsonify({"message": "Task deleted successfully"}), 200
+
+
+# ── Weather Change Simulator ──────────────────────────────────────────────────
+
+@tasks_bp.route("/<int:user_id>/run-weather-simulator", methods=["POST"])
+def run_weather_simulator(user_id):
+    try:
+        from app.services.weekly_planning_service.weekly_planner_service import WeeklyPlannerService
+        today = date.today()
+
+        active = WeeklyPlannerService.get_active_plan(user_id)
+        if not active or active.week_start_date != today:
+            WeeklyPlannerService.generate_plan(user_id, today)
+
+        result = _coordinator.daily_update(user_id=user_id, as_of_date=today)
+
+        return jsonify({
+            "message": f"Simulation complete — {result.get('message', 'done')}",
+            "change_status": result.get("change_status"),
+            "execution_status": result.get("execution_status"),
+        }), 200
+    except Exception as exc:
+        current_app.logger.exception("weather_simulator failed for user %s", user_id)
+        return jsonify({"error": str(exc)}), 500
