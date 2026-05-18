@@ -134,6 +134,10 @@ _SPECS: dict[FarmIntent, ContextSpec] = {
         max_tasks=3,
         max_crops=4,
     ),
+    FarmIntent.GREETING: ContextSpec(
+        needs_crops=False,
+        needs_weather=False,
+    ),
 }
 
 

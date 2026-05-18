@@ -19,6 +19,7 @@ from enum import Enum
 
 
 class FarmIntent(str, Enum):
+    GREETING      = "greeting"
     IRRIGATION    = "irrigation"
     WEATHER       = "weather"
     HARVEST       = "harvest"
@@ -47,6 +48,28 @@ class IntentResult:
 
     def has(self, intent: FarmIntent) -> bool:
         return intent in self.all_intents()
+
+
+_GREETING_EXACT: frozenset[str] = frozenset({
+    "hi", "hello", "hey", "hiya", "howdy", "salam", "assalam", "assalamualaikum",
+    "good morning", "good afternoon", "good evening", "good day",
+    "who are you", "who are you?", "what are you", "what are you?",
+    "what can you do", "what can you do?", "help", "start",
+})
+
+def _is_greeting(text: str) -> bool:
+    """True for short openers and identity questions that need no farm data."""
+    stripped = text.strip().rstrip("!?.").lower()
+    if stripped in _GREETING_EXACT:
+        return True
+    # Short messages (≤4 words) with no farm keyword are likely greetings
+    words = stripped.split()
+    return len(words) <= 4 and not any(
+        kw in stripped for kw in (
+            "crop", "field", "soil", "water", "irrigat", "weather", "task",
+            "fertili", "harvest", "pest", "disease", "plant", "alert",
+        )
+    )
 
 
 # (intent, weight, substrings_to_match)
@@ -123,6 +146,14 @@ def classify(message: str) -> IntentResult:
     Runs in < 1ms. No AI call, no external dependency.
     """
     text = message.lower()
+
+    if _is_greeting(text):
+        return IntentResult(
+            primary=FarmIntent.GREETING,
+            secondary=[],
+            confidence=1.0,
+            method="keyword",
+        )
     scores: dict[FarmIntent, float] = {}
 
     for intent, weight, keywords in _SIGNALS:
