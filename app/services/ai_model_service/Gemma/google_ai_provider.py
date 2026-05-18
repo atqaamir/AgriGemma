@@ -335,7 +335,7 @@ class GoogleAIProvider(AIModelProvider):
             url, data=self._json_payload(prompt),
             headers={"Content-Type": "application/json"}, method="POST",
         )
-        with urllib.request.urlopen(req, timeout=60) as resp:
+        with urllib.request.urlopen(req, timeout=120) as resp:
             data = json.loads(resp.read())
         parts = data["candidates"][0]["content"]["parts"]
         return "".join(p.get("text", "") for p in parts if not p.get("thought")).strip()
