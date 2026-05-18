@@ -4,10 +4,10 @@ from app import create_app
 from app.extensions import db
 
 from app.rules.rule_engine.populate_vocabulary import run as populate_vocabulary_run
-from app.rules.rule_engine.create_rulebooks   import run as populate_rulebooks_run
-from Test_Runs.seed_data                                import run as seed_data_run
-from Test_Runs.populate_seasonal_plan                 import run as populate_seasonal_plan_run
-from Test_Runs.populate_weekly_plan                      import run as populate_weekly_plan_run
+from app.rules.rule_engine.create_rulebooks import run as populate_rulebooks_run
+from Test_Runs.seed_data import run as seed_data_run
+from Test_Runs.populate_seasonal_plan import run as populate_seasonal_plan_run
+from Test_Runs.populate_weekly_plan import run as populate_weekly_plan_run
 
 
 def reset_database(db_path="app.db"):
@@ -29,17 +29,9 @@ def bootstrap():
     return app
 
 
+# IMPORTANT: global app variable for gunicorn
+app = bootstrap()
+
+
 if __name__ == "__main__":
-
-    # 1. delete DB
-    reset_database()
-
-    # 2–3. setup + seed
-    app = bootstrap()
-
-    # # 4. run test script
-    # from app.rules.test import run as test_run
-    # test_run(app)
-
-    # 5. run app
     app.run(debug=True, host="0.0.0.0", port=5000, threaded=True)
