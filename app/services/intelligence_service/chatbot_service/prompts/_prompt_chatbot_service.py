@@ -74,7 +74,8 @@ def build_chatbot_prompt(
 
     user_parts.append(
         f"{question_block}\n\n"
-        "Reply in the same format as the examples above. One line only."
+        "Reply with your actual answer using this exact format (fill in real content, not placeholders):\n"
+        "{RESPONSE: '<your answer>', URGENCY: '<low|medium|high>', ACTIONS: '<action1> | <action2>'}"
     )
 
     user_content = "\n\n".join(user_parts)

@@ -85,7 +85,10 @@ def _parse_llm_response(raw: str) -> dict:
 
     # ── RESPONSE ──────────────────────────────────────────────────────────────
     response_raw = _get("RESPONSE")
-    response = response_raw if response_raw else raw.strip()
+    # Treat placeholder text ("...", very short, or pure punctuation) as a parse
+    # failure — the model echoed the format template instead of filling it in.
+    _is_placeholder = not response_raw or len(response_raw.replace(".", "").strip()) < 8
+    response = response_raw if not _is_placeholder else raw.strip()
 
     # ── URGENCY ───────────────────────────────────────────────────────────────
     raw_urgency = _get("URGENCY").lower()
