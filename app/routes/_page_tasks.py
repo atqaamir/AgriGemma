@@ -203,6 +203,23 @@ def delete_task(task_id):
 
 # ── Weather Change Simulator ──────────────────────────────────────────────────
 
+@tasks_bp.route("/<int:user_id>/run-refresh-data", methods=["POST"])
+def run_refresh_data(user_id):
+    try:
+        import Test_Runs.seed_data as seed_data
+        import Test_Runs.populate_seasonal_plan as populate_seasonal_plan
+        import Test_Runs.populate_weekly_plan as populate_weekly_plan
+
+        seed_data.run()
+        populate_seasonal_plan.run()
+        populate_weekly_plan.run()
+
+        return jsonify({"message": "Data refreshed successfully."}), 200
+    except Exception as exc:
+        current_app.logger.exception("run_refresh_data failed for user %s", user_id)
+        return jsonify({"error": str(exc)}), 500
+
+
 @tasks_bp.route("/<int:user_id>/run-weather-simulator", methods=["POST"])
 def run_weather_simulator(user_id):
     try:
