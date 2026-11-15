@@ -2,8 +2,6 @@
 # This file contains logic ONLY
 
 import json
-import random
-import calendar
 from datetime import date, timedelta
 from app.services.rule_base_service import rule_base_service
 from app.services.weather_service.weather_data_service import WeatherService
@@ -95,9 +93,12 @@ class RuleEngine:
     @staticmethod
     def generate_initial_plan(crop: str, soil_type: str, water_source: str, growth_stage: str = "Seedling") -> dict:
 
-        def _random_date_in_month(year, month):
-            days_in_month = calendar.monthrange(year, month)[1]
-            return date(year, month, random.randint(1, days_in_month))
+        # Fixed day of the month for planned sowing / harvesting, so seasonal plans are
+        # reproducible (same dates on every restart). The 15th exists in every month.
+        PLANNED_DAY_OF_MONTH = 15
+
+        def _fixed_date_in_month(year, month):
+            return date(year, month, PLANNED_DAY_OF_MONTH)
 
         def _month_set(start, end):
             if start <= end:
@@ -125,31 +126,31 @@ class RuleEngine:
 
                 # Step 4: Compare if same:
             if season_m_set == crop_type_sow_set:
-                    # Step 4a: Random date for sowing in the early month
+                    # Step 4a: sowing in the early month
                 sowing_month = crop_type_timeline.sow_start_month
             else:
-                    # Step 4b: Random date in the intersecting month
+                    # Step 4b: the intersecting month
                 sow_intersection = season_m_set & crop_type_sow_set
                 sowing_month = min(sow_intersection) if sow_intersection else crop_type_timeline.sow_start_month
 
             if season_m_set == crop_type_harvest_set:
-                    # Step 4a: Random date for harvesting in the early month
+                    # Step 4a: harvesting in the early month
                 harvesting_month = crop_type_timeline.harvest_start_month
             else:
-                    # Step 4b: Random date in the intersecting month
+                    # Step 4b: the intersecting month
                 harvest_intersection = season_m_set & crop_type_harvest_set
                 harvesting_month = min(harvest_intersection) if harvest_intersection else crop_type_timeline.harvest_start_month
         else:
             # Step 3b: Season months (according to crop instead of crop_type)
             season_months = rule_base_service.get_month_by_season(best_season_crop)
-                #Step 4: Random date for sowing in the early month
+                #Step 4: sowing in the early month
             sowing_month = season_months["start"]
             harvesting_month = crop_type_timeline.harvest_start_month
 
         sowing_year = today.year if sowing_month >= today.month else today.year + 1
         harvest_year = sowing_year if harvesting_month >= sowing_month else sowing_year + 1
-        sowing_date = _random_date_in_month(sowing_year, sowing_month)
-        harvesting_date = _random_date_in_month(harvest_year, harvesting_month)
+        sowing_date = _fixed_date_in_month(sowing_year, sowing_month)
+        harvesting_date = _fixed_date_in_month(harvest_year, harvesting_month)
 
         crop_id = rule_base_service.get_crop_by_name(crop).id
         soil_type_id = rule_base_service.get_soil_by_name(soil_type).id
