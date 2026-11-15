@@ -200,6 +200,12 @@ class RuleEngine:
         }
 
     @staticmethod
+    def _irrigation_period_info(eff: dict) -> dict:
+        """irrigation_period dict for a raw weekly entry (eff = PlanOverrideService.effective_dates)."""
+        iso = lambda d: d.isoformat() if d else None
+        return {"start": iso(eff.get("irrigation_start")), "harvest": iso(eff.get("harvesting"))}
+
+    @staticmethod
     def _apply_sowing_plan(plan: dict, events: list, as_of: date, week_start: date, week_end: date) -> list:
         """Put the chosen sowing date into the events; move the other events by the same
         number of days (rule D). Overdue / decision needed: no sowing, irrigation or
@@ -643,6 +649,7 @@ class RuleEngine:
                     "growth_stage":     growth_stage_name,
                     "week_events":      week_events,
                     "sowing_window":    RuleEngine._sowing_window_info(planned_sowing, eff),
+                    "irrigation_period": RuleEngine._irrigation_period_info(eff),
                 })
 
         # ── Crop model fallback ────────────────────────────────────────────
@@ -730,13 +737,40 @@ class RuleEngine:
     #  Shared plan-adjustment helpers
     # ------------------------------------------------------------------ #
 
+    # Opening words when an "irrigation increase days" rule fires but no day qualifies.
+    _DRY_PREFIX = {"rainfall": "Dry week", "humidity": "Dry air", "soil moisture": "Dry soil"}
+
+    @staticmethod
+    def _irrigation_period(entry: dict, sowing_plan):
+        """(first, last) days for extra irrigation sessions, or None without a seasonal entry.
+
+        first = effective irrigation start (None if not set), last = day before the
+        effective harvest; both move with the sowing date this run chose (rule D).
+        """
+        period = entry.get("irrigation_period")
+        if period is None:
+            return None
+        start = date.fromisoformat(period["start"]) if period.get("start") else None
+        harvest = date.fromisoformat(period["harvest"]) if period.get("harvest") else None
+        if start is None:
+            return (None, None)
+        shift = 0
+        if sowing_plan and sowing_plan.get("date") and sowing_plan["status"] not in RuleEngine.NO_SOWING_STATUSES:
+            shift = (sowing_plan["date"] - sowing_plan["effective"]).days
+        first = start + timedelta(days=shift)
+        last = (harvest + timedelta(days=shift - 1)) if harvest else date.max - timedelta(days=1)
+        return (first, last)
+
     @staticmethod
     def _apply_action(action: dict, events: list, factor_label: str, *,
-                      window_start: date, window_end: date):
+                      window_start: date, window_end: date, irrigation_period=None):
         """Apply one action rule to the events list in-place. Returns description text or None.
 
         window_start / window_end bound where new events may be placed (extra
         irrigation sessions go on free days inside this window only).
+        irrigation_period: None (no seasonal entry: window only) or (first, last)
+        from _irrigation_period — extra sessions only from the effective irrigation
+        start to the day before the effective harvest, never before sowing.
         """
         action_type = action.get("action_type", "")
         adjustment  = action.get("adjustment", "")
@@ -744,6 +778,20 @@ class RuleEngine:
 
         if action_type == "irrigation":
             delta = 1 if adj_type == "minimal" else 2
+            if adjustment == "increase days" and irrigation_period is not None:
+                first, last = irrigation_period
+                fmt = lambda d: f"{d.day} {d.strftime('%b')}"
+                why = None
+                if first is None:
+                    why = "irrigation start not set"
+                elif window_end < first:
+                    why = f"irrigation starts {fmt(first)}"
+                elif window_start > last:
+                    why = f"harvest on {fmt(last + timedelta(days=1))}"
+                if why:
+                    prefix = RuleEngine._DRY_PREFIX.get(factor_label, f"{factor_label.capitalize()} rule")
+                    return f"{prefix}: no extra irrigation – {why}"
+                window_start, window_end = max(window_start, first), min(window_end, last)
             if adjustment == "increase days":
                 irr_days = {
                     date.fromisoformat(e["date"])
@@ -929,6 +977,7 @@ class RuleEngine:
                     text = RuleEngine._apply_action(
                         action, events, factor_label,
                         window_start=week_start_date, window_end=week_end,
+                        irrigation_period=RuleEngine._irrigation_period(entry, sowing_plan),
                     )
                     if text:
                         texts.append(text)
@@ -1075,6 +1124,7 @@ class RuleEngine:
                     text = RuleEngine._apply_action(
                         action, events, factor_label,
                         window_start=max(as_of_date, week_start_date), window_end=week_end,
+                        irrigation_period=RuleEngine._irrigation_period(entry, sowing_plan),
                     )
                     if text:
                         texts.append(text)

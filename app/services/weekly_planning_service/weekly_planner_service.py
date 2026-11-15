@@ -262,9 +262,10 @@ class WeeklyPlannerService:
             seasonal_entry = PlanOverrideService.match_entry(user_id, entry.crop_id, entry.field_id, warn=False)
             planned_sowing = (datetime.strptime(seasonal_entry.sowing, "%m/%d/%Y").date()
                               if seasonal_entry and seasonal_entry.sowing else None)
-            sowing_window = (RuleEngine._sowing_window_info(
-                planned_sowing, PlanOverrideService.effective_dates(seasonal_entry, as_of_date))
-                if planned_sowing else None)
+            eff = PlanOverrideService.effective_dates(seasonal_entry, as_of_date) if seasonal_entry else None
+            sowing_window = (RuleEngine._sowing_window_info(planned_sowing, eff)
+                             if planned_sowing else None)
+            irrigation_period = RuleEngine._irrigation_period_info(eff) if eff else None
             raw_entries.append({
                 "crop_id":         entry.crop_id,
                 "field_id":        entry.field_id,
@@ -274,6 +275,7 @@ class WeeklyPlannerService:
                 "growth_stage_id": entry.growth_stage_id,
                 "week_events":     original_events,
                 "sowing_window":   sowing_window,
+                "irrigation_period": irrigation_period,
                 "seasonal_entry_id": seasonal_entry.id if seasonal_entry else None,
             })
 

@@ -114,6 +114,10 @@ The following assumptions define the current scope and operational boundaries of
   decisions are recalculated, not re-applied, so running the daily update or the simulator twice gives the same result.
 - Temporary adjustments (extra or removed irrigation sessions, "avoid this window") are **not** stored; they are
   recalculated every day from the forecast.
+- **Extra irrigation sessions** (e.g. a dry week: rainfall <50 mm → "irrigation increase days") are only placed on
+  free days from the effective irrigation start up to the day before the effective harvest, never before sowing.
+  If no day of the plan window qualifies, the plan says so, e.g. "Dry week: no extra irrigation – irrigation starts
+  13 May". Pre-sowing irrigation (rauni) is not modelled yet.
 - **Sowing window:** each crop has a sowing window from the planned (seasonal) sowing date to
   planned + `MAX_SOWING_DELAY_DAYS` (14 days, a **placeholder until validated by an agronomist**).
   - Every day the plan picks the **first suitable day** in the window within the visible forecast (today..today+6):
