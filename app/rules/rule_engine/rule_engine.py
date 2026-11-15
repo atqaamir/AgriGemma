@@ -375,6 +375,8 @@ class RuleEngine:
         ).first()
 
         if seasonal_plan:
+            from app.services.plan_override_service import PlanOverrideService
+
             for entry in seasonal_plan.entries:
                 if not entry.sowing:          # infeasible entry — skip
                     continue
@@ -385,27 +387,32 @@ class RuleEngine:
                 growth_stage_obj  = rule_base_service.get_stage_by_id(growth_stage_id) if growth_stage_id else None
                 growth_stage_name = growth_stage_obj.name if growth_stage_obj else None
 
+                # Effective dates: latest applicable override, else the seasonal date.
+                eff = PlanOverrideService.effective_dates(entry, week_start_date)
+
                 week_events = []
 
-                # Sowing
-                sowing = _parse(entry.sowing)
-                if sowing and week_start_date <= sowing <= week_end:
+                # Sowing — not an upcoming event once the farmer has done it
+                sowing = eff["sowing"]
+                if sowing and not eff["sowing_done_on"] and week_start_date <= sowing <= week_end:
                     week_events.append({"event_type": "sowing", "date": sowing.isoformat()})
 
-                # Irrigation — evenly spaced from start date, N times / week
-                irr_start = _parse(entry.irrigation_start_date)
+                # Irrigation — evenly spaced from the effective start, N times / week,
+                # stopping at the effective harvest date
+                irr_start  = eff["irrigation_start"]
+                harvesting = eff["harvesting"]
+                irr_end    = min(week_end, harvesting) if harvesting else week_end
                 if irr_start and entry.irrigation_frequency and entry.irrigation_frequency > 0:
                     interval = 7.0 / entry.irrigation_frequency
-                    for d in _recurring_dates(irr_start, interval, week_start_date, week_end):
+                    for d in _recurring_dates(irr_start, interval, week_start_date, irr_end):
                         week_events.append({"event_type": "irrigation", "date": d.isoformat()})
 
                 # Fertilization — one-time event if it falls in the current week
-                ferti_start = _parse(entry.fertilization_date)
+                ferti_start = eff["fertilization"]
                 if ferti_start and week_start_date <= ferti_start <= week_end:
                     week_events.append({"event_type": "fertilization", "date": ferti_start.isoformat()})
 
                 # Harvesting
-                harvesting = _parse(entry.harvesting)
                 if harvesting and week_start_date <= harvesting <= week_end:
                     week_events.append({"event_type": "harvesting", "date": harvesting.isoformat()})
 
