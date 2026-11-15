@@ -677,7 +677,7 @@
       const farmName   = _dashData?.user?.name ? _dashData.user.name + "'s Farm" : 'Smart Farm';
       const reportDate = intel.generated_at
         ? new Date(intel.generated_at).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })
-        : new Date().toLocaleDateString();
+        : new Date(window.APP_TODAY + 'T00:00').toLocaleDateString();
       const reportTime = intel.generated_at
         ? new Date(intel.generated_at).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
         : '';

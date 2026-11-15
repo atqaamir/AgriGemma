@@ -846,7 +846,7 @@
     }
 
     function updateDueToday(tasks) {
-      const today = new Date().toISOString().split('T')[0];
+      const today = window.APP_TODAY;
       const dueToday = tasks.filter(task => {
         if (!task.due_date) return false;
         return String(task.due_date).split('T')[0] === today;

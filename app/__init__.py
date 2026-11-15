@@ -72,6 +72,12 @@ def create_app():
         # No auth yet — hardcoded to user 1. Replace with session/flask-login when auth is added.
         return {"current_user_id": 1}
 
+    @app.context_processor
+    def inject_app_today():
+        demo = clock.demo_today()
+        return {"app_today": clock.today().isoformat(), "demo_today": demo,
+                "demo_season": clock.cropping_season(demo) if demo else None}
+
     with app.app_context():
         db.create_all()
 

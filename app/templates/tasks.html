@@ -1816,7 +1816,7 @@
 
     function isDueToday(d) {
       if (!d) return false;
-      return String(d).split('T')[0] === new Date().toISOString().split('T')[0];
+      return String(d).split('T')[0] === window.APP_TODAY;
     }
 
     function capitalize(s) { s = String(s || ''); return s.charAt(0).toUpperCase() + s.slice(1); }
@@ -2134,7 +2134,7 @@
     }
 
     function buildWhyStats() {
-      const today    = new Date().toISOString().split('T')[0];
+      const today    = window.APP_TODAY;
       const pending  = cachedPendingTasks.length;
       const overdue  = cachedPendingTasks.filter(t => !t.completed && t.due_date && String(t.due_date).split('T')[0] < today).length;
       const critical = cachedPendingTasks.filter(t => t.priority === 'critical').length;
@@ -2295,7 +2295,7 @@
 
       const reportDate = intel.generated_at
         ? new Date(intel.generated_at).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })
-        : new Date().toLocaleDateString();
+        : new Date(window.APP_TODAY + 'T00:00').toLocaleDateString();
       const reportTime = intel.generated_at
         ? new Date(intel.generated_at).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
         : '';
