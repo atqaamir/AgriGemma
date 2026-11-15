@@ -27,6 +27,17 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 DATE = r"(?:{d}(?:st|nd|rd|th)?\s+may|may\s+{d}(?:st|nd|rd|th)?)"
 day = lambda d: DATE.format(d=d)
 
+# "Must not say" patterns that contradict the plan (reported as WRONG ADVICE). A lookbehind skips
+# negated forms ("do not spray", "don't irrigate").
+NEG = r"(?<!not )(?<!n't )(?<!never )"
+DELAY_MAIZE = [r"delay\w*\s+(?:the\s+)?(?:sowing|planting)[^.]{0,40}maize",
+               r"maize[^.]{0,40}\b" + NEG + r"delay\w*\s+(?:the\s+)?(?:sowing|planting)"]
+IRRIGATE_NOW = [NEG + r"\b(?:start|begin)\w*\s+(?:the\s+)?irrigat\w*[^.]{0,60}\b(?:immediately|right away|now|today)",
+                NEG + r"\birrigate\s+(?:the\s+|your\s+)?maize\s+(?:today|tomorrow|now|immediately)"]
+RICE_LATER = [r"\bwait until\b[^.]{0,60}", r"\bsow\w*\s+(?:the\s+)?rice\s+(?:after|later|when|once|on)\b"]
+# Temperatures the forecast does not have (it peaks at 33.5 °C): invented heat.
+INVENTED_HEAT = r"\b(?:3[6-9]|4\d)(?:\.\d)?\s*(?:°\s*c|°|degrees)"
+
 # id, question, expected intent(s), facts (each group: list of regex, any may match),
 # must-not regexes (wrong advice), follow-up of question id (same conversation)
 QUESTIONS = [
@@ -37,24 +48,24 @@ QUESTIONS = [
      [[day(7), day(8)], [r"sunlight", r"temperature", r"cloud", r"rain", r"shower", r"disturbance", r"weather"]],
      [], None),
     (3, "When will I sow maize?", ["planting"],
-     [[day(6), r"tomorrow"]], [], None),
+     [[day(6), r"tomorrow"]], DELAY_MAIZE, None),
     (4, "Can I grow rice on North Field Alpha?", ["planting"],
      [[r"not feasible", r"not suitable", r"unsuitable", r"sandy", r"not recommended", r"incompatible"]],
-     [r"\b(?:yes|you can)\b[^.]{0,40}\b(?:sow|grow|plant)\w*\s+rice"], None),
+     [r"\b(?:yes|you can)\b[^.]{0,40}\b(?:sow|grow|plant)\w*\s+rice"] + RICE_LATER, None),
     (5, "Should I sow rice this week?", ["planting"],
      [[r"not feasible", r"not suitable", r"unsuitable", r"sandy", r"not recommended", r"incompatible"]],
-     [r"\b(?:yes|go ahead)\b[^.]{0,40}\brice", r"sow\w*\s+rice\s+(?:on|this|tomorrow|today)"], None),
+     [r"\b(?:yes|go ahead)\b[^.]{0,40}\brice", r"sow\w*\s+rice\s+(?:on|this|tomorrow|today)"] + RICE_LATER, None),
     (6, "What tasks do I have today?", ["task"],
      [[r"seedbed"], [r"inspection", r"erosion", r"pipe"]], [], None),
     (7, "What is the most urgent task?", ["task"],
      [[r"emergency field inspection", r"soil erosion", r"erosion"]], [], None),
     (8, "What should I do tomorrow?", ["task"],
-     [[r"sow\w*\s+(?:the\s+)?maize", r"maize"]], [], None),
+     [[r"sow\w*\s+(?:the\s+)?maize", r"maize"]], DELAY_MAIZE, None),
     (9, "Do I need to irrigate this week?", ["irrigation"],
      [[day(13), r"not yet", r"no (?:extra )?irrigation", r"after sowing", r"irrigation starts"]],
-     [r"irrigate\s+(?:the\s+|your\s+)?maize\s+(?:today|tomorrow)"], None),
+     IRRIGATE_NOW, None),
     (10, "When does irrigation start for maize?", ["irrigation"],
-     [[day(13)]], [], None),
+     [[day(13)]], IRRIGATE_NOW, None),
     (11, "Is it going to rain this week?", ["weather"],
      [[day(7), day(8), r"shower", r"thunder", r"disturbance", r"\brain"]], [], None),
     (12, "How hot will it be this week?", ["weather"],
@@ -77,15 +88,15 @@ QUESTIONS = [
      [[r"cotton"], [day(9), r"moved", r"delay", r"postpon", r"later"]], [], None),
     (21, "Is my maize healthy?", ["general", "planting"],
      [[r"not (?:yet )?sown", r"before sowing", r"planned", day(6), r"tomorrow", r"not planted"]],
-     [r"\bflowering\b", r"\bvegetative\b"], None),
+     [r"\bflowering\b", r"\bvegetative\b", r"maize[^.]{0,60}\b(?:under|is in|in an?)\s+[^.]{0,20}(?:stress|alert)"], None),
     (22, "What is the price of cotton seed?", ["general"],
      [], [], None),
     (23, "Hello", ["greeting"], [], [], None),
     (24, "Should I spray fungicide on my cotton?", ["general", "planting", "alert"],
      [[r"not (?:yet )?sown", r"before sowing", r"no need", r"\bno\b", r"not (?:been )?planted"]],
-     [r"spray\w*\s+(?:the\s+)?fungicide\s+(?:today|now|tomorrow)"], None),
+     [NEG + r"\bspray\w*\s+(?:the\s+)?fungicide\s+(?:today|now|tomorrow)"], None),
     (25, "And maize?", ["planting", "general"],
-     [[day(6), r"tomorrow"]], [], 1),
+     [[day(6), r"tomorrow"]], DELAY_MAIZE, 1),
     # Roman Urdu
     (26, "kapas kab boni chahiye?", ["planting"],
      [[day(9), r"\b9\b"]], [r"sow\w*\s+(?:the\s+)?cotton\s+(?:on|by)\s+" + day("[5-8]")], None),
@@ -98,6 +109,18 @@ QUESTIONS = [
 
 def _hits(patterns, text):
     return [p for p in patterns if re.search(p, text, re.IGNORECASE | re.MULTILINE)]
+
+
+def score(qid, answer, context=""):
+    """facts_ok, facts_in_context, wrong-advice hits, invented heat for one answer."""
+    q = next(x for x in QUESTIONS if x[0] == qid)
+    facts, must_not = q[3], q[4]
+    return {
+        "facts_ok": sum(bool(_hits(g, answer)) for g in facts),
+        "facts_in_context": sum(bool(_hits(g, context)) for g in facts) if context else None,
+        "wrong_advice": _hits(must_not, answer),
+        "invented_heat": bool(re.search(INVENTED_HEAT, answer, re.IGNORECASE)),
+    }
 
 
 def main():
@@ -156,18 +179,18 @@ def main():
             context = captured.get("context", "")
             meta = final.get("metadata") or {}
             got_intent = (final.get("intents") or ["?"])[0]
-            fact_ok = [bool(_hits(g, answer)) for g in facts]
-            ctx_ok = [bool(_hits(g, context)) for g in facts]
-            wrong = [p for p in must_not if re.search(p, answer, re.IGNORECASE | re.MULTILINE)]
+            sc = score(qid, answer, context)
+            wrong = sc["wrong_advice"]
             web = [s for s in stages if s.get("stage", "").startswith(("searching_web", "web"))]
             row = {
                 "id": qid, "question": question, "expected_intents": intents, "intent": got_intent,
-                "intent_ok": got_intent in intents, "facts_total": len(facts), "facts_ok": sum(fact_ok),
-                "facts_in_context": sum(ctx_ok), "wrong_advice": wrong, "web_search": bool(web),
+                "intent_ok": got_intent in intents, "facts_total": len(facts), "facts_ok": sc["facts_ok"],
+                "facts_in_context": sc["facts_in_context"] or 0, "wrong_advice": wrong,
+                "invented_heat": sc["invented_heat"], "web_search": bool(web),
                 "fallback": bool(meta.get("is_fallback")), "model": meta.get("model"),
                 "total_ms": final.get("total_ms") or round(wall * 1000), "stage_ms": meta.get("stage_ms"),
                 "stages": [(s.get("stage"), s.get("elapsed_ms")) for s in stages],
-                "context_chars": len(context), "answer": answer, "error": error,
+                "context_chars": len(context), "context": context, "answer": answer, "error": error,
             }
             rows.append(row)
             print(f"[{qid:2}] {'✓' if row['intent_ok'] else '✗'} intent {got_intent:13} facts {row['facts_ok']}/{row['facts_total']} "
@@ -186,6 +209,7 @@ def main():
         "facts_ok": sum(r["facts_ok"] for r in rows), "facts_total": facts_total,
         "facts_in_context": sum(r["facts_in_context"] for r in rows),
         "wrong_advice": [(r["id"], r["wrong_advice"]) for r in rows if r["wrong_advice"]],
+        "invented_heat": [r["id"] for r in rows if r["invented_heat"]],
         "web_searches": sum(r["web_search"] for r in rows),
         "fallbacks": sum(r["fallback"] for r in rows),
         "median_s": sorted(r["total_ms"] for r in rows)[n // 2] / 1000 if n else 0,
