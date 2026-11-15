@@ -69,6 +69,11 @@ def create_app():
 
     register_routes(app)
 
+    @app.route("/health")
+    def health():
+        # Uptime ping target (keeps Render awake); no database access.
+        return "ok", 200, {"Content-Type": "text/plain; charset=utf-8"}
+
     @app.context_processor
     def inject_current_user():
         # No auth yet — hardcoded to user 1. Replace with session/flask-login when auth is added.
