@@ -8,7 +8,9 @@ The following assumptions define the current scope and operational boundaries of
 
 - The farming day begins at **5:00 AM** and ends at **7:00 PM** local time.
 - Daily tasks are generated one day at a time.
-- The weekly planner only covers the current week.
+- The weekly plan is a rolling 7-day window starting today.
+  - The 5:00 AM daily update regenerates it every morning (today..today+6) from the unchanged seasonal plan, then applies the forecast.
+  - The Monday 3:30 AM weekly plan job is still scheduled but now redundant: the daily update already rolls the plan every day.
 
 ---
 
