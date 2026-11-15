@@ -14,6 +14,7 @@ from app.repositories.forecast_repository import ForecastRepository
 from app.services.domain_service.user_service import UserService
 from app.rules.rule_engine.rule_engine import RuleEngine
 from app.services.rule_base_service import rule_base_service
+from app.services.domain_service.task_service import TaskService
 from app.utils import clock
 
 logger = logging.getLogger(__name__)
@@ -82,10 +83,6 @@ def _priority_shift(priority: str, direction: str) -> str:
     if direction == "up":
         return PRIORITY_ORDER[min(idx + 1, len(PRIORITY_ORDER) - 1)]
     return PRIORITY_ORDER[max(idx - 1, 0)]
-
-
-def _as_datetime(d: date) -> datetime:
-    return datetime(d.year, d.month, d.day)
 
 
 def _detect_band_changes(user_location: str, as_of_date: date) -> list:
@@ -326,12 +323,10 @@ class TaskUpdateService:
                 modified = _apply_general_rules(task, band_changes, task_changes_list, as_of_date)
 
             if modified:
-                TaskRepository.update(task, {
+                TaskService.record_changes(task, task_changes_list, {
                     "priority":     task.priority,
                     "due_date":     task.due_date,
                     "is_active":    task.is_active,
-                    "task_changes": json.dumps(task_changes_list),
-                    "created_at":   _as_datetime(as_of_date),
                 })
                 directly_modified_ids.add(task.id)
                 modified_count += 1
@@ -344,11 +339,9 @@ class TaskUpdateService:
                 if task.priority == "low":
                     continue
                 new_p = _priority_shift(task.priority, "down")
-                TaskRepository.update(task, {
-                    "priority":     new_p,
-                    "task_changes": json.dumps([{"change_type": "priority", "original_value": task.priority, "new_value": new_p}]),
-                    "created_at":   _as_datetime(as_of_date),
-                })
+                TaskService.record_changes(
+                    task, [{"change_type": "priority", "original_value": task.priority, "new_value": new_p}],
+                    {"priority": new_p})
                 modified_count += 1
 
         return {"modified": modified_count}

@@ -15,7 +15,8 @@ class Task(db.Model):
     completed = db.Column(db.Boolean, default=False, nullable=False)
     completed_at = db.Column(db.DateTime, nullable=True)  # set on false→true, cleared on true→false (local time)
     is_active = db.Column(db.Boolean, default=True, nullable=False)
-    task_changes = db.Column(db.Text, nullable=True)
+    task_changes = db.Column(db.Text, nullable=True)   # JSON list of changes, each with "changed_on"
+    changed_on = db.Column(db.Date, nullable=True)      # demo date (clock.today()) of the last change
 
     task_type = db.Column(db.String(50), nullable=True) # planting, irrigation, fertilization, harvesting, maintenance, checkup
     task_category = db.Column(db.String(50), nullable=True)  # crop, field, general

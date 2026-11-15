@@ -1,3 +1,4 @@
+import json
 import logging
 from datetime import datetime
 
@@ -15,6 +16,24 @@ class TaskService:
     @staticmethod
     def create_task(data: dict) -> Task:
         return TaskRepository.create(data)
+
+    @staticmethod
+    def record_changes(task: Task, changes: list, updates: dict) -> Task:
+        """Apply `updates` to a task and append `changes` to its history (task_changes).
+
+        Each change gets "changed_on" = clock.today() (the demo date); the task's
+        changed_on column is set too, so change notifications can pick today's
+        changes. created_at is never touched.
+        """
+        today = clock.today()
+        try:
+            history = json.loads(task.task_changes) if task.task_changes else []
+        except (TypeError, ValueError):
+            history = []
+        if isinstance(history, dict):
+            history = [history]
+        history += [{**c, "changed_on": today.isoformat()} for c in changes]
+        return TaskRepository.update(task, {**updates, "task_changes": json.dumps(history), "changed_on": today})
 
     @staticmethod
     def get_all_tasks():

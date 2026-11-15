@@ -24,6 +24,7 @@ logger = logging.getLogger("run")
 ADDED_COLUMNS = [
     ("task", "completed_at"),
     ("task", "seasonal_plan_entry_id"),
+    ("task", "changed_on"),
 ]
 
 

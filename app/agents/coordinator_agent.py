@@ -100,6 +100,10 @@ class CoordinatorAgent:
         # on the day it happens, also on days without a plan impact).
         plan_update = self._apply_forecast_to_plan(user_id, as_of_date)
 
+        # Plan tasks follow the re-planned week right away (also on a simulator click):
+        # move / deactivate / reactivate, create missing ones for today and tomorrow.
+        plan_tasks = self._sync_plan_tasks(user_id, as_of_date)
+
         if change == enums_.ChangeStatus.NO_CHANGE:
             result = execution_responses.ExecutionResponse.success("Risk assessment completed — no change")
 
@@ -122,11 +126,24 @@ class CoordinatorAgent:
         result["change_status"] = change.value
         result["plan_roll"] = plan_roll
         result["plan_update"] = plan_update
+        result["plan_tasks"] = plan_tasks
         if plan_roll["status"] == "failed":
             result["message"] += f" (weekly plan roll failed: {plan_roll['error']})"
         if plan_update["status"] == "failed":
             result["message"] += f" (forecast plan update failed: {plan_update['error']})"
         return result
+
+    def _sync_plan_tasks(self, user_id: int, as_of_date: date) -> dict:
+        """Sync plan tasks with the weekly plan (no AI calls). Never raises."""
+        try:
+            from app.services.task_generation_service import TaskGenerationService
+            summary = TaskGenerationService.sync_plan_tasks(user_id, as_of_date)
+            return {"status": "success", **summary}
+        except Exception as exc:
+            from app.extensions import db
+            db.session.rollback()
+            logger.exception("Daily update: plan task sync FAILED for user=%s as_of_date=%s", user_id, as_of_date)
+            return {"status": "failed", "error": f"{type(exc).__name__}: {exc}"}
 
     def _apply_forecast_to_plan(self, user_id: int, as_of_date: date) -> dict:
         """Run the forecast re-plan (update_plan) on every daily update. Never raises."""

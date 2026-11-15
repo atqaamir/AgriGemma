@@ -549,13 +549,18 @@ class NotificationService:
                 .filter_by(user_id=user_id, completed=False)
                 .all()
             )
+            today = clock.today()
             for task in tasks:
-                if not task.task_changes:
+                # Only tasks changed today (demo date); history entries of other days are skipped.
+                if not task.task_changes or task.changed_on != today:
                     continue
                 try:
                     changes = json.loads(task.task_changes) if isinstance(task.task_changes, str) else task.task_changes
                 except Exception:
                     continue
+                if isinstance(changes, dict):
+                    changes = [changes]
+                changes = [c for c in (changes or []) if c.get("changed_on", today.isoformat()) == today.isoformat()]
                 if not changes:
                     continue
                 lines = []
