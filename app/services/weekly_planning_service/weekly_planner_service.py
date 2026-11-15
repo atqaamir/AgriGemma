@@ -235,13 +235,12 @@ class WeeklyPlannerService:
         overdue) only when notify=True — the daily update passes False on days without
         a plan impact.
         """
-        from datetime import date as date_type
         from app.models.field import Field
         from app.services.domain_service.user_service import UserService
         from app.utils.enums_ import Status
 
         if as_of_date is None:
-            as_of_date = date_type.today()
+            as_of_date = clock.today()
 
         plan = WeeklyPlanRepository.get_active_by_user_id(user_id)
         if not plan:
