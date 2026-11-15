@@ -85,6 +85,31 @@ The following assumptions define the current scope and operational boundaries of
 
 ---
 
+## Planned vs Actual Dates (Plan Event Overrides)
+
+- The **seasonal plan holds the planned dates** and is never changed by daily operations.
+- **Actual dates** live in a separate layer, `PlanEventOverride`, one row per change of a one-time event
+  (sowing, fertilization, harvesting, irrigation start):
+  - `forecast_shift`: a forecast rule moved the event (e.g. "Sowing delayed by 4 days — unfavourable sunlight conditions").
+    A sowing delay also moves harvest, irrigation start and fertilization by the same number of days.
+  - `farmer_completed`: the farmer marked the sowing task done; the actual sowing date is the completion date, and
+    harvest, irrigation start and fertilization move by the difference to the planned sowing date.
+    Un-completing the task removes these rows again.
+- The weekly plan is built from **effective dates**: the latest override per event, otherwise the seasonal date.
+  Irrigation repeats from the effective irrigation start until the effective harvest date.
+- **The farmer beats the forecast:** once sowing is recorded as done, it is no longer an upcoming event and the
+  forecast cannot shift it; a later forecast can still move harvest.
+- Every override stores the day of the decision (`as_of_date`). When planning for a day, that day's own forecast
+  decisions are recalculated, not re-applied, so running the daily update or the simulator twice gives the same result.
+- Temporary adjustments (extra or removed irrigation sessions, "avoid this window") are **not** stored; they are
+  recalculated every day from the forecast.
+- A same-day rebuild without the forecast (weekly job, app restart) shows that day's plan without its forecast
+  decisions until the next daily update or simulator run.
+- **Demo:** overrides are deleted together with the seasonal plans when the app restarts and reseeds (`run.py`),
+  so actual dates do not survive a restart.
+
+---
+
 ## System Behaviour
 
 - All background jobs are assumed to succeed successfully.
