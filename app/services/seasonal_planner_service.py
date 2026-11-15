@@ -276,6 +276,9 @@ class SeasonalPlannerService:
         fertilization_date   : "MM/DD/YYYY"  — direct override
         harvesting           : "MM/DD/YYYY"  — direct override
 
+        Date fields are refused (with a warning) on "Not Feasible" entries:
+        an infeasible crop must not get a schedule.
+
         Returns
         -------
         Updated SeasonalPlanEntry ORM object, or None if not found.
@@ -283,6 +286,17 @@ class SeasonalPlannerService:
         entry = SeasonalPlanEntryRepository.get_by_id(entry_id)
         if not entry:
             return None
+
+        DATE_FIELDS = ("sowing", "irrigation_start_date", "fertilization_date", "harvesting")
+        if entry.feasibility == "Not Feasible":
+            refused = [k for k in DATE_FIELDS if k in data]
+            if refused:
+                crop = entry.crop_name_rel.name if entry.crop_name_rel else entry.crop_name_id
+                logger.warning(
+                    "Refusing to set %s on Not Feasible seasonal plan entry %s (%s)",
+                    ", ".join(refused), entry.id, crop,
+                )
+                data = {k: v for k, v in data.items() if k not in DATE_FIELDS}
 
         DIRECT_FIELDS  = {
             "irrigation_start_date", "irrigation_frequency",

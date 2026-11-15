@@ -50,7 +50,9 @@ ENTRY_UPDATES = [
         "sowing":               _from_today(2), # today + 2 days
         "irrigation_frequency": None,           # ← int
     },
-    # ── Entry 2 : Rice / Clay / River ────────────────────────────────
+    # ── Entry 2 : Rice / Sandy / River ───────────────────────────────
+    # Currently "Not Feasible" (Rice on Sandy soil) → skipped in run(), so no
+    # dates are set. Kept so it applies if the seasonal plan makes it feasible.
     # field_id=2  →  East Creek Basin, Sindh (~34°C heat scenario)
     #                temperature band "30-40" → heat-stress sowing adjustment
     {
@@ -78,6 +80,10 @@ def run(user_id: int = 1):
         for i, update_dict in enumerate(ENTRY_UPDATES):
             if i >= len(entries):
                 print(f"WARNING: ENTRY_UPDATES[{i}] has no matching entry in the plan — skipping.")
+                continue
+
+            if entries[i].feasibility == "Not Feasible":
+                print(f"  Entry {i} ({entries[i].id}): Not Feasible — skipping (no dates for infeasible crops).")
                 continue
 
             payload = {
