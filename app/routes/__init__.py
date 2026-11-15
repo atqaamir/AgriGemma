@@ -23,4 +23,7 @@ def register_routes(app):
     app.register_blueprint(chatbot_bp, url_prefix="/chatbot")
     app.register_blueprint(notifications_bp, url_prefix="/notifications")
     app.register_blueprint(translate_bp)
-    app.register_blueprint(test_ai_bp, url_prefix="/test/ai")
+    # Runs every AI prompt (uses the API quota): only when DEMO_ADMIN_ENABLED=true.
+    from app.utils import demo_flags
+    if demo_flags.admin_enabled():
+        app.register_blueprint(test_ai_bp, url_prefix="/test/ai")

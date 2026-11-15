@@ -1,7 +1,7 @@
 import logging
 from flask import Flask
 from config import Config
-from app.utils import clock
+from app.utils import clock, demo_flags
 
 logging.basicConfig(
     level=logging.INFO,
@@ -40,30 +40,32 @@ def create_app():
 
     db.init_app(app)
     migrate.init_app(app, db)
-    admin.init_app(app)
-    admin.add_view(ModelView(Crop, db.session))
-    admin.add_view(ModelView(Field, db.session))
-    admin.add_view(ModelView(Task, db.session))
-    class ReadOnlyNotificationView(ModelView):
-        can_delete = False
-        can_create = False
-        can_edit   = False
-        column_list = ("id", "user_id", "notification_type", "is_read", "title", "message", "created_at")
-        column_default_sort = ("created_at", True)
-    admin.add_view(ReadOnlyNotificationView(Notification, db.session))
-    admin.add_view(ModelView(CropNames, db.session))
-    admin.add_view(ModelView(WaterSource, db.session))
-    admin.add_view(ModelView(IrrigationCalenderRulebook, db.session))
-    admin.add_view(ModelView(CropSoilCompatibilityRulebook, db.session))
-    admin.add_view(ModelView(SoilActionRulebook, db.session))
-    admin.add_view(ModelView(SeasonalPlan, db.session))
-    admin.add_view(ModelView(SeasonalPlanEntry, db.session))
-    admin.add_view(ModelView(WeeklyPlan, db.session))
-    admin.add_view(ModelView(WeeklyPlanEntry, db.session))
-    admin.add_view(ModelView(WeatherForecast, db.session))
-    admin.add_view(ModelView(Weather, db.session, endpoint="weather_admin"))
-    admin.add_view(ModelView(GrowthStage, db.session))
-    admin.add_view(ModelView(IrrigationFrequencyRulebook, db.session))
+    # Flask-Admin gives full edit access without login: only when DEMO_ADMIN_ENABLED=true.
+    if demo_flags.admin_enabled():
+        admin.init_app(app)
+        admin.add_view(ModelView(Crop, db.session))
+        admin.add_view(ModelView(Field, db.session))
+        admin.add_view(ModelView(Task, db.session))
+        class ReadOnlyNotificationView(ModelView):
+            can_delete = False
+            can_create = False
+            can_edit   = False
+            column_list = ("id", "user_id", "notification_type", "is_read", "title", "message", "created_at")
+            column_default_sort = ("created_at", True)
+        admin.add_view(ReadOnlyNotificationView(Notification, db.session))
+        admin.add_view(ModelView(CropNames, db.session))
+        admin.add_view(ModelView(WaterSource, db.session))
+        admin.add_view(ModelView(IrrigationCalenderRulebook, db.session))
+        admin.add_view(ModelView(CropSoilCompatibilityRulebook, db.session))
+        admin.add_view(ModelView(SoilActionRulebook, db.session))
+        admin.add_view(ModelView(SeasonalPlan, db.session))
+        admin.add_view(ModelView(SeasonalPlanEntry, db.session))
+        admin.add_view(ModelView(WeeklyPlan, db.session))
+        admin.add_view(ModelView(WeeklyPlanEntry, db.session))
+        admin.add_view(ModelView(WeatherForecast, db.session))
+        admin.add_view(ModelView(Weather, db.session, endpoint="weather_admin"))
+        admin.add_view(ModelView(GrowthStage, db.session))
+        admin.add_view(ModelView(IrrigationFrequencyRulebook, db.session))
 
     register_routes(app)
 
@@ -71,6 +73,10 @@ def create_app():
     def inject_current_user():
         # No auth yet — hardcoded to user 1. Replace with session/flask-login when auth is added.
         return {"current_user_id": 1}
+
+    @app.context_processor
+    def inject_demo_admin():
+        return {"demo_admin_enabled": demo_flags.admin_enabled()}
 
     @app.context_processor
     def inject_app_today():

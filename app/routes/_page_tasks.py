@@ -206,6 +206,10 @@ def delete_task(task_id):
 
 @tasks_bp.route("/<int:user_id>/run-refresh-data", methods=["POST"])
 def run_refresh_data(user_id):
+    from app.utils import demo_flags
+    if not demo_flags.admin_enabled():
+        # Wipes and reseeds the whole database: never on the live demo.
+        return jsonify({"error": "Refresh Data is disabled on the live demo."}), 403
     try:
         import Test_Runs.seed_data as seed_data
         import Test_Runs.populate_seasonal_plan as populate_seasonal_plan
@@ -223,6 +227,12 @@ def run_refresh_data(user_id):
 
 @tasks_bp.route("/<int:user_id>/run-weather-simulator", methods=["POST"])
 def run_weather_simulator(user_id):
+    from app.utils import demo_flags
+    wait = demo_flags.simulator_wait_seconds(user_id)
+    if wait:
+        resp = jsonify({"error": f"Simulator just ran – try again in {wait} s", "retry_after": wait})
+        resp.headers["Retry-After"] = str(wait)
+        return resp, 429
     try:
         from app.repositories.weather_repository import WeatherRepository
         from app.services.domain_service.user_service import UserService
