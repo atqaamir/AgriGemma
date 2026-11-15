@@ -517,27 +517,26 @@ def seed_demo_weather(start: date) -> None:
     # Weather is keyed by user location (one region per user).
     # user[0] Ahmad Khan → "Punjab, Pakistan" — primary test user for weekly plan & risk assessment.
     #
-    # Designed rule outcomes for user[0] (7 days from `start`, Punjab):
-    #   ~17°C → band "15-20":
-    #     Maize Sowing  → sowing.delay.minimal  (4 days, nothing else)
-    #     Rice  Sowing  → sowing.delay.significant (7 days) + monitoring
-    #     Cotton Sowing → sowing.delay.significant (7 days) + monitoring
-    #
-    # All rainfall set to 50-100mm band so "increase days" never fires (handler only
-    # acts on "increase days" / "decrease days"; "increase quantity" is silently skipped).
+    # Punjab = early May (Kharif sowing season; run the demo with DEMO_TODAY=2027-05-05).
+    # Typical early-May values for central Punjab: daily mean 31–33 °C, humidity 25–35 %,
+    # no rain, 10–10.5 h of sunshine. Bands: temperature 30–40, humidity <40,
+    # rainfall <50 (daily mm), sunlight >8. Rule outcomes (Sowing stage):
+    #   Maize  → sowing suitable (only 15–20 °C or soil moisture >60 % block it);
+    #            dry days add irrigation (rainfall <50, humidity <40)
+    #   Cotton → sowing suitable (needs 30–40 °C, sunlight >8 h, humidity ≤70 %)
+    #   Rice   → Not Feasible on Sandy soil (skipped); 30–40 °C would also delay its sowing
     # Field moisture for North Field Alpha set to 55% so soil_moisture ">60" does not fire.
 
     NORMAL_REGIONS = {
         "Punjab, Pakistan": [
             # (avg_temp, humidity, rainfall_mm, sunlight_h, wind_kph, notes)
-            # ~25°C → band "20-30" → no rules fire; initial plan is undisturbed
-            (25.0, 55, 60.0, 7.5, 12, "Pleasant spring day; optimal conditions for all crops."),
-            (25.5, 54, 62.0, 7.8, 11, "Warm and clear; good field conditions."),
-            (24.8, 57, 58.0, 7.2, 13, "Mild breeze; soil moisture adequate."),
-            (25.2, 55, 61.0, 7.5, 12, "Stable conditions; no weather stress expected."),
-            (25.0, 56, 59.0, 7.8, 10, "Comfortable temperature; normal week."),
-            (25.5, 53, 63.0, 8.0, 11, "Sunny with light cloud; ideal conditions."),
-            (25.0, 55, 60.0, 7.5, 12, "End of stable week; conditions unchanged."),
+            (31.5, 32, 0.0, 10.2, 11, "Hot and dry; clear skies."),
+            (32.0, 30, 0.0, 10.4, 12, "Hot and sunny; typical early May."),
+            (32.5, 29, 0.0, 10.5, 13, "Clear; afternoon heat around 39 °C."),
+            (32.0, 31, 0.0, 10.3, 12, "Dry and sunny."),
+            (32.8, 28, 0.0, 10.5, 14, "Hot, dry westerly breeze."),
+            (33.0, 27, 0.0, 10.6, 12, "Clear and hot."),
+            (32.5, 30, 0.0, 10.4, 11, "Hot and sunny; no rain expected."),
         ],
         "Sindh, Pakistan": [
             # ~32°C → band "30-40" → Rice Sowing: sowing.delay.minimal + irrigation.increase quantity (ignored)
@@ -591,20 +590,21 @@ def seed_demo_weather(start: date) -> None:
 
     # ---- WEATHER FORECAST (harsh/extreme conditions — for risk & change detection) ----
     # Compared against the weather baseline above to assess climate risk and trigger alerts.
-    # Punjab: severe cold stress. Sindh: extreme heat. KP: flood risk. Islamabad: heatwave.
+    # Punjab: early-May western disturbance (days 3–4). Sindh: extreme heat. KP: flood risk. Islamabad: heatwave.
 
     HARSH_FORECAST_REGIONS = {
         "Punjab, Pakistan": [
-            # sunlight→7.5 (≤0.5 from all baselines 7.2–8.0), rainfall→60.0 (≤3.0 from all baselines 58.0–63.0)
-            (35.8, 53, 61.5, 7.2, 12, "Band change."),
-    (25.8, 53, 61.5, 7.2, 12, "Negligible change."),
-    (31.5, 53, 60.0, 7.2, 10, "IMPACT_PLAN: 20-30 → 30-40 on future day."),
-	(31.5, 53, 60.0, 7.2, 10, "IMPACT_PLAN: 20-30 → 30-40 on future day."),
-            # Day 5: first suitable sowing day for Cotton (needs 30–40 °C AND sunlight >8 h);
-            # days 3–4 are warm enough but sunlight 7.2 h (4–8 band) still blocks sowing.
-            (31.5, 53, 61.5, 8.5, 12, "Warm and sunny – first good cotton sowing day."),
-    (25.8, 53, 61.5, 7.2, 12, "Negligible change."),
-    (25.8, 53, 61.5, 7.2, 12, "Negligible change."),
+            # Same as the baseline, except a western disturbance on days 3–4 (common in
+            # early May): dust storm and thundershowers, cooler and cloudy. Bands change to
+            # temperature 20–30, humidity 40–70, sunlight 4–8 → IMPACT_PLAN; Cotton's sowing
+            # rules reject both days (temperature 20–30 °C, sunlight 4–8 h).
+            (31.8, 31, 0.0, 10.2, 12, "Hot and dry; as expected."),
+            (32.2, 30, 0.0, 10.3, 13, "Hot and sunny; as expected."),
+            (27.5, 58, 8.0,  5.5, 38, "Western disturbance: dust storm, then thundershowers."),
+            (28.0, 55, 4.0,  6.0, 24, "Unsettled; scattered showers and cloud."),
+            (32.5, 33, 0.0, 10.2, 14, "Clearing; hot and sunny again."),
+            (33.2, 28, 0.0, 10.5, 12, "Hot and dry."),
+            (33.5, 27, 0.0, 10.6, 11, "Hot and dry."),
         ],
         "Sindh, Pakistan": [
             # Extreme heat — well above 38°C, severe desiccation and crop failure risk
