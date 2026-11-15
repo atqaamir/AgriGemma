@@ -215,7 +215,7 @@ class GoogleAIProvider(AIModelProvider):
             return self._placeholder(prompt)
         logger.debug("Google AI complete: %d chars", len(prompt))
         try:
-            return self._call_api(prompt)
+            return self._call_api_retry(prompt)
         except urllib.error.HTTPError as exc:
             body = exc.read().decode("utf-8", errors="replace")
             logger.error("Google AI %s — model=%s — %s", exc, self._model, body)
@@ -236,7 +236,7 @@ class GoogleAIProvider(AIModelProvider):
             body = exc.read().decode("utf-8", errors="replace")
             logger.warning("Google AI streaming failed (HTTP %s) — body: %s", exc.code, body[:300])
             try:
-                yield self._call_api(prompt)
+                yield self._call_api_retry(prompt)
             except urllib.error.HTTPError as exc2:
                 body2 = exc2.read().decode("utf-8", errors="replace")
                 logger.error("Google AI non-streaming fallback failed: HTTP %s — body: %s", exc2.code, body2[:300])
@@ -247,7 +247,7 @@ class GoogleAIProvider(AIModelProvider):
         except Exception as exc:
             logger.warning("Google AI streaming failed (%s) — falling back to non-streaming", exc)
             try:
-                yield self._call_api(prompt)
+                yield self._call_api_retry(prompt)
             except Exception as exc2:
                 logger.error("Google AI non-streaming fallback failed: %s", exc2)
                 yield self._placeholder(prompt)
@@ -278,7 +278,9 @@ class GoogleAIProvider(AIModelProvider):
         ),
     ]
 
-    def _payload(self, prompt: str, *, max_tokens: int = 300) -> bytes:
+    # 512: room for an answer even if Gemma writes some reasoning text first (300 cut answers off;
+    # this model does not accept a thinking budget).
+    def _payload(self, prompt: str, *, max_tokens: int = 512) -> bytes:
         if _SYSTEM_SEP in prompt:
             system_text, user_text = prompt.split(_SYSTEM_SEP, 1)
             system_text = system_text.strip()
@@ -339,6 +341,20 @@ class GoogleAIProvider(AIModelProvider):
             data = json.loads(resp.read())
         parts = data["candidates"][0]["content"]["parts"]
         return "".join(p.get("text", "") for p in parts if not p.get("thought")).strip()
+
+    def _call_api_retry(self, prompt: str) -> str:
+        """_call_api, retried once after 2 s on a rate limit, server error or network error."""
+        import time
+        try:
+            return self._call_api(prompt)
+        except urllib.error.HTTPError as exc:
+            if exc.code not in (429, 500, 502, 503, 504):
+                raise
+            logger.warning("Google AI HTTP %s — retrying once in 2 s", exc.code)
+        except urllib.error.URLError as exc:
+            logger.warning("Google AI network error (%s) — retrying once in 2 s", exc)
+        time.sleep(2)
+        return self._call_api(prompt)
 
     def _call_api(self, prompt: str, *, model: str | None = None) -> str:
         m = model or self._model

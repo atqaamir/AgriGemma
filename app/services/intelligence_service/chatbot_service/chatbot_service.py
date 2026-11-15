@@ -106,6 +106,33 @@ def _parse_llm_response(raw: str) -> dict:
     return {"response": response, "urgency": urgency, "actions": actions}
 
 
+_UNAVAILABLE = "The AI advisor is not available right now"
+
+
+def _is_unusable(answer: str, question: str) -> bool:
+    """Empty, a template placeholder (<your answer>), the question echoed back, a leaked
+    reasoning fragment ("* The current..."), or the provider's "not available" text."""
+    a = (answer or "").strip()
+    if len(a.replace(".", "").replace("*", "").strip()) < 8:
+        return True
+    if a.startswith("<") or a.startswith(("* ", "*\t", "- ")) or "RESPONSE:" in a.upper()[:40]:
+        return True
+    if a.lower().rstrip("?!. ") == (question or "").strip().lower().rstrip("?!. "):
+        return True
+    return a.startswith(_UNAVAILABLE)
+
+
+def _answer_with_retry(raw_llm: str, full_prompt: str, user_message: str) -> tuple[dict, bool]:
+    """Parse the answer; if it is unusable, ask once more (non-streaming).
+    Returns (parsed, ok); ok=False means the caller should use the rule-based fallback."""
+    parsed = _parse_llm_response(raw_llm)
+    if not _is_unusable(parsed["response"], user_message):
+        return parsed, True
+    logger.warning("[CHATBOT] unusable answer %r — one non-streaming retry", parsed["response"][:80])
+    parsed = _parse_llm_response(ai_model_service.complete(full_prompt))
+    return parsed, not _is_unusable(parsed["response"], user_message)
+
+
 # ── History helpers ────────────────────────────────────────────────────────────
 _MAX_HISTORY_MESSAGES = 6     # last 3 exchanges (user + bot)
 _MAX_HISTORY_MSG_CHARS = 220  # per message, so one long answer cannot crowd out the rest
@@ -378,7 +405,9 @@ class ChatbotService:
         try:
             raw_llm = ai_model_service.complete(full_prompt)
             logger.info("[CHATBOT] ③ LLM raw output:\n%s", raw_llm)
-            parsed      = _parse_llm_response(raw_llm)
+            parsed, ok  = _answer_with_retry(raw_llm, full_prompt, user_message)
+            if not ok:
+                raise ValueError("unusable AI answer after retry")
             bot_response = parsed["response"]
             logger.info("[CHATBOT] ③ AI (%dms)", (time.time() - t3) * 1000)
         except Exception as exc:
@@ -647,7 +676,9 @@ class ChatbotService:
                         yield sse("token", {"text": accumulated})
                 raw_llm = "".join(raw_tokens)
                 logger.info("[CHATBOT-STREAM] ③ LLM raw output:\n%s", raw_llm)
-                parsed       = _parse_llm_response(raw_llm)
+                parsed, ok   = _answer_with_retry(raw_llm, full_prompt, user_message)
+                if not ok:
+                    raise ValueError("unusable AI answer after retry")
                 bot_response = parsed["response"]
                 elapsed3     = round((time.time() - t3) * 1000)
                 logger.info("[CHATBOT-STREAM] ③ AI (%dms) %d chars", elapsed3, len(bot_response))
