@@ -220,6 +220,7 @@ class WeeklyPlannerService:
         """
         from datetime import date as date_type
         from app.models.field import Field
+        from app.services.domain_service.user_service import UserService
         from app.utils.enums_ import Status
 
         if as_of_date is None:
@@ -229,6 +230,11 @@ class WeeklyPlannerService:
         if not plan:
             return Status.FAILED
 
+        # Entries built from the seasonal plan have no field_id; fall back to the
+        # user's location (as RuleEngine.generate_weekly_plan does) so forecast
+        # lookups still work.
+        user_location = UserService.get_user_location(user_id)
+
         raw_entries = []
         for entry in plan.entries:
             field = Field.query.get(entry.field_id) if entry.field_id else None
@@ -236,7 +242,7 @@ class WeeklyPlannerService:
             raw_entries.append({
                 "crop_id":         entry.crop_id,
                 "field_id":        entry.field_id,
-                "field_location":  field.location       if field else None,
+                "field_location":  field.location       if field else user_location,
                 "field_moisture":  field.moisture_level if field else None,
                 "field_ph":        field.ph_level       if field else None,
                 "growth_stage_id": entry.growth_stage_id,
