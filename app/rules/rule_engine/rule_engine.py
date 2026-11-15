@@ -724,15 +724,17 @@ class RuleEngine:
         return adjusted_result
 
     @staticmethod
-    def update_weekly_plan(weekly_plan: list, week_start_date: date, as_of_date: date) -> list:
+    def update_weekly_plan(weekly_plan: list, week_start_date: date, week_end_date: date,
+                           as_of_date: date) -> list:
         """Re-apply climate adjustments using forecast weather instead of baseline.
 
         Same logic as adjust_weekly_plan but:
         - Uses forecast weather (weather_forecast table) for all lookups.
         - Only modifies events on or after as_of_date.
         - Soil moisture and pH are still read from field properties (unchanged).
+        - The window is the plan's own [week_start_date, week_end_date].
         """
-        week_end = week_start_date + timedelta(days=6)
+        week_end = week_end_date
 
         FACTORS = [
             ("temperature",   "avg_temperature_c",

@@ -249,7 +249,9 @@ class WeeklyPlannerService:
                 "week_events":     original_events,
             })
 
-        updated_plan = RuleEngine.update_weekly_plan(raw_entries, plan.week_start_date, as_of_date)
+        updated_plan = RuleEngine.update_weekly_plan(
+            raw_entries, plan.week_start_date, plan.week_end_date, as_of_date
+        )
 
         updated_by_crop = {item["crop_id"]: item for item in updated_plan}
         for entry in plan.entries:
