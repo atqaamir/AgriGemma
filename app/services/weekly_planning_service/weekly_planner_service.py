@@ -42,8 +42,12 @@ class WeeklyPlannerService:
                 plan.user_id, entry.crop_id, entry.field_id, warn=False)
             done = (PlanOverrideService.done_events(seasonal_entry, plan.week_start_date, plan.week_end_date)
                     if seasonal_entry else [])
+            # planned | window_set | no_suitable_day | overdue | done | None (no sowing window)
+            sowing_status = "done" if done else next(
+                (a.get("status") for a in adjustments if a.get("factor") == "sowing_window"), None)
 
             entries_output.append({
+                "sowing_status":            sowing_status,
                 "crop_id":                  entry.crop_id,
                 "crop_name":                crop_obj.name if crop_obj else None,
                 "field_id":                 entry.field_id,
@@ -221,11 +225,14 @@ class WeeklyPlannerService:
     # ------------------------------------------------------------------ #
 
     @staticmethod
-    def update_plan(user_id: int, as_of_date=None) -> str:
+    def update_plan(user_id: int, as_of_date=None, notify: bool = True) -> str:
         """Update the active weekly plan using forecast weather from as_of_date onwards.
 
-        Loads original events from DB, re-applies adjustments using forecast weather,
-        and persists the updated week_events and climate_adjustments back.
+        Loads original events from DB, re-applies adjustments using forecast weather
+        (incl. the sowing window), persists week_events and climate_adjustments, and
+        records one-time event shifts as overrides. No AI calls. Notifications (sowing
+        overdue) only when notify=True — the daily update passes False on days without
+        a plan impact.
         """
         from datetime import date as date_type
         from app.models.field import Field
@@ -250,10 +257,13 @@ class WeeklyPlannerService:
         for entry in plan.entries:
             field = Field.query.get(entry.field_id) if entry.field_id else None
             original_events = json.loads(entry.original_events) if entry.original_events else []
-            # Cap for weather delays of sowing: seasonal (planned) sowing + MAX_SOWING_DELAY_DAYS
+            # Sowing window: planned (seasonal) sowing date + effective dates as of today
             seasonal_entry = PlanOverrideService.match_entry(user_id, entry.crop_id, entry.field_id, warn=False)
             planned_sowing = (datetime.strptime(seasonal_entry.sowing, "%m/%d/%Y").date()
                               if seasonal_entry and seasonal_entry.sowing else None)
+            sowing_window = (RuleEngine._sowing_window_info(
+                planned_sowing, PlanOverrideService.effective_dates(seasonal_entry, as_of_date))
+                if planned_sowing else None)
             raw_entries.append({
                 "crop_id":         entry.crop_id,
                 "field_id":        entry.field_id,
@@ -262,8 +272,8 @@ class WeeklyPlannerService:
                 "field_ph":        field.ph_level       if field else None,
                 "growth_stage_id": entry.growth_stage_id,
                 "week_events":     original_events,
-                "sowing_cap_date": (planned_sowing + timedelta(days=RuleEngine.MAX_SOWING_DELAY_DAYS)).isoformat()
-                                   if planned_sowing else None,
+                "sowing_window":   sowing_window,
+                "seasonal_entry_id": seasonal_entry.id if seasonal_entry else None,
             })
 
         updated_plan = RuleEngine.update_weekly_plan(
@@ -283,36 +293,37 @@ class WeeklyPlannerService:
         # Record permanent one-time event shifts in the actual-dates layer.
         PlanOverrideService.sync_forecast_shifts(user_id, as_of_date, updated_plan)
 
-        # Sowing delay cap reached → ask the farmer to decide (once per crop per day).
-        for item in updated_plan:
-            if item.get("sowing_window_at_risk"):
-                WeeklyPlannerService._notify_sowing_window_at_risk(user_id, item)
+        # Sowing window passed without completion → ask the farmer (once per entry).
+        if notify:
+            for item in updated_plan:
+                if item.get("sowing_status") == "overdue" and item.get("seasonal_entry_id"):
+                    WeeklyPlannerService._notify_sowing_overdue(user_id, item)
 
         return Status.SUCCESS
 
     @staticmethod
-    def _notify_sowing_window_at_risk(user_id: int, item: dict) -> None:
+    def _notify_sowing_overdue(user_id: int, item: dict) -> None:
+        """One warning per seasonal plan entry (not per day) when sowing is overdue."""
         from app.models.notification import Notification
         from app.repositories.notification_repository import NotificationRepository
 
+        entry_id = item["seasonal_entry_id"]
+        if Notification.query.filter_by(user_id=user_id, entity_type="seasonal_plan_entry",
+                                        entity_id=entry_id, message=RuleEngine.SOWING_OVERDUE_TEXT).count():
+            return
         crop_obj = rule_base_service.get_crop_by_id(item["crop_id"])
         crop = crop_obj.name if crop_obj else f"Crop {item['crop_id']}"
-        title = f"Sowing window at risk – {crop}"
-        since = datetime.utcnow() - timedelta(hours=24)
-        if Notification.query.filter(Notification.user_id == user_id, Notification.title == title,
-                                     Notification.created_at >= since).count():
-            return
-        cap = item.get("sowing_cap_date")
+        window = item.get("sowing_window") or {}
         NotificationRepository.create({
             "user_id":           user_id,
-            "title":             title,
-            "message":           RuleEngine.SOWING_WINDOW_AT_RISK_TEXT,
-            "detail":            (f"{crop}: sowing has already been delayed to the limit of "
-                                  f"{RuleEngine.MAX_SOWING_DELAY_DAYS} days after the planned date "
-                                  f"(latest: {cap}). The forecast is still unfavourable."),
+            "title":             f"{RuleEngine.SOWING_OVERDUE_TEXT} – {crop}",
+            "message":           RuleEngine.SOWING_OVERDUE_TEXT,
+            "detail":            (f"{crop}: the sowing window ({window.get('planned')} – {window.get('end')}) "
+                                  f"has passed and sowing was not recorded as done. Options: "
+                                  f"{RuleEngine.SOWING_OVERDUE_OPTIONS}. The system does not choose."),
             "notification_type": "warning",
-            "entity_type":       "crop_name",
-            "entity_id":         item["crop_id"],
+            "entity_type":       "seasonal_plan_entry",
+            "entity_id":         entry_id,
         })
 
     @staticmethod

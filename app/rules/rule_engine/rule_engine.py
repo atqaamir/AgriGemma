@@ -9,44 +9,196 @@ from app.services.weather_service.weather_data_service import WeatherService
 
 class RuleEngine:
 
-    # Upper limit for the total weather delay of sowing, counted from the seasonal
-    # (planned) sowing date. Placeholder value until validated by an agronomist.
+    # Length of the sowing window: [planned sowing date, planned + MAX_SOWING_DELAY_DAYS].
+    # Placeholder value until validated by an agronomist.
     MAX_SOWING_DELAY_DAYS = 14
-    SOWING_WINDOW_AT_RISK_TEXT = (
-        "Sowing window at risk – the forecast is still unfavourable; farmer decision needed."
-    )
+
+    SOWING_OVERDUE_TEXT = "Sowing overdue – decision needed"
+    SOWING_OVERDUE_OPTIONS = ("sow anyway with precautions; switch to a short-duration variety; "
+                              "switch crop; or skip the season")
+    NO_SUITABLE_SOWING_DAY_TEXT = "No suitable sowing day in the forecast – re-checked daily"
+
+    _BANDS = {
+        "temperature":   ["15-20", "20-30", "30-40"],
+        "humidity":      ["<40", "40-70", ">70"],
+        "sunlight":      ["<4", "4-8", ">8"],
+        "rainfall":      ["<50", "50-100", "100-200", "200-300", ">300"],
+        "soil_moisture": ["<30", "30-60", ">60"],
+        "ph_level":      ["<6.5", "6.5-7.5", ">7.5"],
+    }
+    _BAND_UNITS = {"temperature": " °C", "humidity": " %", "sunlight": " h", "rainfall": " mm",
+                   "soil_moisture": " %", "ph_level": ""}
+
+    # ------------------------------------------------------------------ #
+    #  Sowing window: first suitable day
+    # ------------------------------------------------------------------ #
 
     @staticmethod
-    def _cap_sowing_delay(events: list, original_events: list, cap_date_iso: str | None):
-        """Limit a weather delay of sowing to cap_date (seasonal sowing + MAX_SOWING_DELAY_DAYS).
+    def _rule_factors():
+        """(factor, weather attribute, rule lookup, label) for the weekly action rulebooks."""
+        return [
+            ("temperature",   "avg_temperature_c", rule_base_service.get_temperature_action_by_crop_and_range, "temperature"),
+            ("humidity",      "humidity",          rule_base_service.get_humidity_action_by_crop_and_range, "humidity"),
+            ("sunlight",      "sunlight_hours",    rule_base_service.get_sunlight_action_by_crop_and_range, "sunlight"),
+            ("rainfall",      "rainfall_mm",       rule_base_service.get_rainfall_action_by_crop_and_range, "rainfall"),
+            ("soil_moisture", None,                rule_base_service.get_soil_moisture_action_by_crop_and_range, "soil moisture"),
+            ("ph_level",      None,                rule_base_service.get_ph_action_by_crop_and_category, "soil pH"),
+        ]
 
-        If the rules pushed sowing past the cap, sowing goes back to the cap, or stays
-        at its original (effective) date when that is already at/after the cap.
-        Returns None, or (requested_iso, kept_iso) when the cap was hit.
+    @staticmethod
+    def _rule_blocks_sowing(action_rule) -> bool:
+        """A rule makes a day unsuitable for sowing if it says 'delay sowing' or 'avoid'."""
+        if not action_rule:
+            return False
+        raw = action_rule.actions
+        actions = json.loads(raw) if isinstance(raw, str) else (raw or [])
+        return any(a.get("action_type") == "avoid"
+                   or (a.get("action_type") == "sowing" and a.get("adjustment") == "delay")
+                   for a in actions)
+
+    @staticmethod
+    def _band_text(factor: str, band: str) -> str:
+        label = {"soil_moisture": "soil moisture", "ph_level": "soil pH"}.get(factor, factor)
+        return f"{label} {band.replace('-', '–')}{RuleEngine._BAND_UNITS.get(factor, '')}"
+
+    @staticmethod
+    def _sowing_sensitive_factors(crop_id: int, stage_id: int) -> list:
+        """Factors with at least one band that blocks sowing for this crop and stage."""
+        return [factor for factor, _, lookup, _ in RuleEngine._rule_factors()
+                if any(RuleEngine._rule_blocks_sowing(lookup(crop_id, stage_id, band))
+                       for band in RuleEngine._BANDS[factor])]
+
+    @staticmethod
+    def _assess_sowing_day(crop_id, stage_id, weather, field_moisture, field_ph):
+        """Return (blocking_factors, bands) for one day, or None without weather data.
+        A day is suitable when blocking_factors is empty (rules don't add up)."""
+        if weather is None:
+            return None
+        blocking, bands = [], {}
+        for factor, attr, lookup, _ in RuleEngine._rule_factors():
+            if factor == "soil_moisture":
+                value = field_moisture
+            elif factor == "ph_level":
+                value = field_ph
+            else:
+                value = weather.get(attr)
+            if value is None:
+                continue
+            band = RuleEngine.classify_value_bands(factor, value)
+            bands[factor] = band
+            if RuleEngine._rule_blocks_sowing(lookup(crop_id, stage_id, band)):
+                blocking.append(factor)
+        return blocking, bands
+
+    @staticmethod
+    def _plan_sowing(entry: dict, as_of: date, week_end: date, weather_lookup):
+        """Choose the sowing date inside the sowing window (first suitable day).
+
+        entry["sowing_window"] = {"planned", "end", "effective", "done_on"} (ISO dates).
+        Checks max(planned, as_of) .. min(window end, week_end) with weather_lookup
+        (baseline or forecast). Recomputed from scratch on every run, so sowing can
+        move earlier again, but never before the planned date or before as_of.
+        Returns None when the window logic does not apply (no window, sowing done,
+        no location), else {"status", "date", "effective", "adjustment"} with status
+        planned | window_set | no_suitable_day | overdue.
         """
-        if not cap_date_iso:
+        sw = entry.get("sowing_window")
+        location = entry.get("field_location")
+        if not sw or sw.get("done_on") or not location:
             return None
-        cap = date.fromisoformat(cap_date_iso)
-        sowing = next((e for e in events if e["event_type"] == "sowing"), None)
-        original = next((e for e in original_events if e["event_type"] == "sowing"), None)
-        if not sowing or date.fromisoformat(sowing["date"]) <= cap:
-            return None
-        requested = sowing["date"]
-        original_date = date.fromisoformat(original["date"]) if original else cap
-        sowing["date"] = max(original_date, cap).isoformat()
-        return requested, sowing["date"]
+
+        fmt = lambda d: f"{d.day} {d.strftime('%b')}"
+        planned = date.fromisoformat(sw["planned"])
+        window_end = date.fromisoformat(sw["end"])
+        effective = date.fromisoformat(sw["effective"]) if sw.get("effective") else planned
+        crop_id, stage_id = entry["crop_id"], entry.get("growth_stage_id")
+        window_text = f"Sowing window {fmt(planned)}–{fmt(window_end)} (planned date + {RuleEngine.MAX_SOWING_DELAY_DAYS} days)."
+
+        if as_of > window_end:
+            return {"status": "overdue", "date": None, "effective": effective, "adjustment": {
+                "factor": "sowing_window", "status": "overdue",
+                "adjustment": RuleEngine.SOWING_OVERDUE_TEXT,
+                "reasoning": (f"{window_text} The window has passed and sowing was not recorded as done. "
+                              f"Options: {RuleEngine.SOWING_OVERDUE_OPTIONS}. The system does not choose."),
+            }}
+
+        start, end = max(planned, as_of), min(window_end, week_end)
+        if start > end:   # window starts after the visible days: keep the current date
+            return {"status": "planned", "date": effective, "effective": effective, "adjustment": None}
+
+        unsuitable, chosen = [], None
+        for i in range((end - start).days + 1):
+            day = start + timedelta(days=i)
+            result = RuleEngine._assess_sowing_day(
+                crop_id, stage_id, weather_lookup(location, day),
+                entry.get("field_moisture"), entry.get("field_ph"))
+            if result is None:
+                unsuitable.append((day, None, ["no weather data"]))
+                continue
+            blocking, bands = result
+            if not blocking:
+                chosen = (day, bands)
+                break
+            unsuitable.append((day, blocking, [RuleEngine._band_text(f, bands[f]) for f in blocking]))
+        why = "; ".join(f"{fmt(d)}: {', '.join(texts)}" for d, _, texts in unsuitable)
+
+        if chosen:
+            day, bands = chosen
+            if day == planned:
+                shown = [f for f in RuleEngine._sowing_sensitive_factors(crop_id, stage_id) if f in bands]
+                good = ", ".join(RuleEngine._band_text(f, bands[f]) for f in shown)
+                status = "planned"
+                text = (f"Sowing on the planned date ({fmt(day)}) – conditions suitable"
+                        + (f" ({good})" if good else ""))
+            else:
+                blocked = []
+                for _, factors, _ in unsuitable:
+                    blocked += [f for f in (factors or []) if f not in blocked]
+                shown = [f for f in blocked if f in bands] or \
+                        [f for f in RuleEngine._sowing_sensitive_factors(crop_id, stage_id) if f in bands]
+                good = " and ".join(RuleEngine._band_text(f, bands[f]) for f in shown)
+                status = "window_set"
+                text = (f"Sowing set to {fmt(day)} – first day in the sowing window"
+                        + (f" with {good}" if good else "") + (f" ({why})" if why else ""))
+            reasoning = window_text + (f" Unsuitable: {why}." if why else "")
+        else:
+            day = min(max(start, week_end + timedelta(days=1)), window_end)
+            status = "no_suitable_day"
+            text = RuleEngine.NO_SUITABLE_SOWING_DAY_TEXT
+            reasoning = (f"{window_text} Sowing provisionally {fmt(day)}"
+                         f"{' (window end)' if day == window_end else ' (first window day after the forecast)'}."
+                         + (f" Unsuitable: {why}." if why else ""))
+
+        return {"status": status, "date": day, "effective": effective, "adjustment": {
+            "factor": "sowing_window", "status": status, "adjustment": text, "reasoning": reasoning}}
 
     @staticmethod
-    def _sowing_window_at_risk_adjustment(cap_date_iso: str, capped: tuple) -> dict:
-        requested, kept = capped
-        planned = date.fromisoformat(cap_date_iso) - timedelta(days=RuleEngine.MAX_SOWING_DELAY_DAYS)
+    def _sowing_window_info(planned_sowing: date | None, eff: dict) -> dict | None:
+        """sowing_window dict for a raw weekly entry (eff = PlanOverrideService.effective_dates)."""
+        if planned_sowing is None:
+            return None
+        iso = lambda d: d.isoformat() if d else None
         return {
-            "factor":     "sowing_window",
-            "reasoning":  (f"Forecast rules asked to move sowing to {requested}; kept at {kept}. Weather delays "
-                           f"of sowing are limited to {RuleEngine.MAX_SOWING_DELAY_DAYS} days after the planned "
-                           f"sowing date ({planned.isoformat()}), i.e. not beyond {cap_date_iso}."),
-            "adjustment": RuleEngine.SOWING_WINDOW_AT_RISK_TEXT,
+            "planned":   iso(planned_sowing),
+            "end":       iso(planned_sowing + timedelta(days=RuleEngine.MAX_SOWING_DELAY_DAYS)),
+            "effective": iso(eff.get("sowing")),
+            "done_on":   iso(eff.get("sowing_done_on")),
         }
+
+    @staticmethod
+    def _apply_sowing_plan(plan: dict, events: list, as_of: date, week_start: date, week_end: date) -> list:
+        """Put the chosen sowing date into the events; move the other events by the same
+        number of days (rule D). Overdue: no sowing, irrigation or fertilization events."""
+        events = [e for e in events if e["event_type"] != "sowing"]
+        if plan["status"] == "overdue":
+            return [e for e in events if e["event_type"] not in ("irrigation", "fertilization")]
+        delta = (plan["date"] - plan["effective"]).days
+        if delta:
+            for e in events:
+                e["date"] = (date.fromisoformat(e["date"]) + timedelta(days=delta)).isoformat()
+        if week_start <= plan["date"] <= week_end and plan["date"] >= as_of:
+            events.append({"event_type": "sowing", "date": plan["date"].isoformat()})
+        return events
 
     # @staticmethod
     # def evaluate_sowing(rain_mm: float, crop: str) -> dict:
@@ -456,15 +608,18 @@ class RuleEngine:
                 if harvesting and week_start_date <= harvesting <= week_end:
                     week_events.append({"event_type": "harvesting", "date": harvesting.isoformat()})
 
-                # Keep the entry when the farmer recently completed sowing, even with
-                # nothing else in the window, so the plan can show "Sowed on <date>".
+                # Keep the entry when the farmer recently completed sowing ("Sowed on <date>"),
+                # or while sowing is still open and its window has started by the end of this
+                # plan window (includes overdue entries, so a crop never silently drops out).
+                planned_sowing = _parse(entry.sowing)
                 recently_done = bool(PlanOverrideService.done_events(entry, week_start_date, week_end))
-                if not week_events and not recently_done:
+                sowing_open = (not eff["sowing_done_on"] and planned_sowing is not None
+                               and planned_sowing <= week_end)
+                if not week_events and not recently_done and not sowing_open:
                     continue
 
                 week_events.sort(key=lambda e: e["date"])
 
-                planned_sowing = _parse(entry.sowing)
                 result.append({
                     "crop_id":          entry.crop_name_id,
                     "crop_name":        crop_name,
@@ -472,8 +627,7 @@ class RuleEngine:
                     "growth_stage_id":  growth_stage_id,
                     "growth_stage":     growth_stage_name,
                     "week_events":      week_events,
-                    "sowing_cap_date":  (planned_sowing + timedelta(days=RuleEngine.MAX_SOWING_DELAY_DAYS)).isoformat()
-                                        if planned_sowing else None,
+                    "sowing_window":    RuleEngine._sowing_window_info(planned_sowing, eff),
                 })
 
         # ── Crop model fallback ────────────────────────────────────────────
@@ -703,6 +857,13 @@ class RuleEngine:
 
             events = [dict(e) for e in entry["week_events"]]
 
+            # Sowing window (seasonal entries): first suitable day by baseline weather.
+            sowing_plan = RuleEngine._plan_sowing(
+                entry, week_start_date, week_end, RuleEngine.get_weather_by_region_and_date)
+            if sowing_plan:
+                events = RuleEngine._apply_sowing_plan(
+                    sowing_plan, events, week_start_date, week_start_date, week_end)
+
             sowing_events = [e for e in events if e["event_type"] == "sowing"]
             rep_date = date.fromisoformat(
                 sowing_events[0]["date"] if sowing_events else events[0]["date"]
@@ -713,8 +874,11 @@ class RuleEngine:
             ) if field_location and rep_date else None
 
             climate_adjustments = []
+            if sowing_plan and sowing_plan["adjustment"]:
+                climate_adjustments.append(sowing_plan["adjustment"])
+            overdue = bool(sowing_plan and sowing_plan["status"] == "overdue")
 
-            for factor, weather_attr, lookup_fn, factor_label in FACTORS:
+            for factor, weather_attr, lookup_fn, factor_label in ([] if overdue else FACTORS):
                 if factor == "soil_moisture":
                     value = field_moisture
                 elif factor == "ph_level":
@@ -744,6 +908,9 @@ class RuleEngine:
 
                 texts = []
                 for action in actions:
+                    # With a sowing window, sowing rules only decide day suitability.
+                    if sowing_plan and action.get("action_type") in ("sowing", "avoid"):
+                        continue
                     text = RuleEngine._apply_action(
                         action, events, factor_label,
                         window_start=week_start_date, window_end=week_end,
@@ -758,14 +925,8 @@ class RuleEngine:
                         "adjustment": "; ".join(texts),
                     })
 
-            capped = RuleEngine._cap_sowing_delay(
-                events, entry["week_events"], entry.get("sowing_cap_date"))
-            sowing_at_risk = capped is not None
-            if capped:
-                climate_adjustments.append(
-                    RuleEngine._sowing_window_at_risk_adjustment(entry["sowing_cap_date"], capped))
-
-            RuleEngine._cascade_sowing_delay(events, entry["week_events"])
+            if not sowing_plan:
+                RuleEngine._cascade_sowing_delay(events, entry["week_events"])
             events = RuleEngine._filter_to_week(events, week_start_date, week_end)
 
             if not climate_adjustments:
@@ -777,7 +938,7 @@ class RuleEngine:
 
             adjusted_entry = {k: v for k, v in entry.items()
                               if k not in ("field_location", "field_moisture", "field_ph", "week_events")}
-            adjusted_entry["sowing_window_at_risk"] = sowing_at_risk
+            adjusted_entry["sowing_status"] = sowing_plan["status"] if sowing_plan else None
             adjusted_entry["climate_adjustments_made"] = climate_adjustments
             adjusted_entry["week_events"] = sorted(events, key=lambda e: e["date"])
             adjusted_result.append(adjusted_entry)
@@ -833,27 +994,37 @@ class RuleEngine:
                 if date.fromisoformat(e["date"]) >= as_of_date
             ]
 
-            if not events:
+            # Sowing window (seasonal entries): first suitable day by the forecast.
+            sowing_plan = RuleEngine._plan_sowing(
+                entry, as_of_date, week_end, RuleEngine.get_forecast_by_region_and_date)
+            if sowing_plan:
+                events = RuleEngine._apply_sowing_plan(
+                    sowing_plan, events, as_of_date, week_start_date, week_end)
+
+            if not events and not sowing_plan:
                 updated_result.append(entry)
                 continue
 
             sowing_events = [e for e in events if e["event_type"] == "sowing"]
             rep_date = date.fromisoformat(
                 sowing_events[0]["date"] if sowing_events else events[0]["date"]
-            )
+            ) if events else None
 
             # Use forecast weather instead of baseline
             forecast = RuleEngine.get_forecast_by_region_and_date(
                 field_location, rep_date
-            ) if field_location else None
+            ) if field_location and rep_date else None
 
             climate_adjustments = []
+            if sowing_plan and sowing_plan["adjustment"]:
+                climate_adjustments.append(sowing_plan["adjustment"])
+            overdue = bool(sowing_plan and sowing_plan["status"] == "overdue")
             # Texts of rules that really move a one-time event to a new date, and
             # days moved by "avoid" (temporary: +7 only means "not in this window").
             shift_reasons = {"sowing": [], "harvesting": []}
             temporary_days = {"sowing": 0, "harvesting": 0}
 
-            for factor, weather_attr, lookup_fn, factor_label in FACTORS:
+            for factor, weather_attr, lookup_fn, factor_label in ([] if overdue else FACTORS):
                 if factor == "soil_moisture":
                     value = field_moisture
                 elif factor == "ph_level":
@@ -883,6 +1054,9 @@ class RuleEngine:
 
                 texts = []
                 for action in actions:
+                    # With a sowing window, sowing rules only decide day suitability.
+                    if sowing_plan and action.get("action_type") in ("sowing", "avoid"):
+                        continue
                     text = RuleEngine._apply_action(
                         action, events, factor_label,
                         window_start=max(as_of_date, week_start_date), window_end=week_end,
@@ -903,19 +1077,23 @@ class RuleEngine:
                         "adjustment": "; ".join(texts),
                     })
 
-            capped = RuleEngine._cap_sowing_delay(
-                events, entry["week_events"], entry.get("sowing_cap_date"))
-            sowing_at_risk = capped is not None
-            if capped:
-                climate_adjustments.append(
-                    RuleEngine._sowing_window_at_risk_adjustment(entry["sowing_cap_date"], capped))
-                if shift_reasons["sowing"]:
-                    shift_reasons["sowing"].append(
-                        f"capped at {RuleEngine.MAX_SOWING_DELAY_DAYS} days after the planned sowing date")
-
-            RuleEngine._cascade_sowing_delay(events, entry["week_events"])
+            sow_shift = None
+            if sowing_plan and sowing_plan["status"] != "overdue" \
+                    and sowing_plan["date"] != sowing_plan["effective"]:
+                adj = sowing_plan["adjustment"] or {}
+                reason = adj.get("adjustment", "Sowing window")
+                if sowing_plan["status"] in ("no_suitable_day", "planned"):
+                    reason = f"{reason} — {adj.get('reasoning', '')}".rstrip(" —")
+                sow_shift = {
+                    "from":   sowing_plan["effective"].isoformat(),
+                    "to":     sowing_plan["date"].isoformat(),
+                    "reason": reason,
+                }
+            if not sowing_plan:
+                RuleEngine._cascade_sowing_delay(events, entry["week_events"])
             event_shifts = RuleEngine._one_time_event_shifts(
-                entry["week_events"], events, as_of_date, shift_reasons, temporary_days
+                entry["week_events"], events, as_of_date, shift_reasons, temporary_days,
+                sow_shift=sow_shift, windowed=bool(sowing_plan),
             )
             events = RuleEngine._filter_to_week(events, week_start_date, week_end)
 
@@ -928,7 +1106,7 @@ class RuleEngine:
 
             updated_entry = {k: v for k, v in entry.items()
                              if k not in ("field_location", "field_moisture", "field_ph", "week_events")}
-            updated_entry["sowing_window_at_risk"] = sowing_at_risk
+            updated_entry["sowing_status"] = sowing_plan["status"] if sowing_plan else None
             updated_entry["climate_adjustments_made"] = climate_adjustments
             updated_entry["week_events"] = sorted(events, key=lambda e: e["date"])
             # One-time events moved to a new date by a forecast rule (measured before
@@ -940,12 +1118,14 @@ class RuleEngine:
 
     @staticmethod
     def _one_time_event_shifts(original_events: list, adjusted_events: list, as_of_date: date,
-                               shift_reasons: dict, temporary_days: dict) -> dict:
+                               shift_reasons: dict, temporary_days: dict,
+                               sow_shift: dict = None, windowed: bool = False) -> dict:
         """Real date shifts of sowing / fertilization / harvesting in this window.
 
         Returns {event_type: {"from": iso, "to": iso, "reason": text}}. Temporary
         "avoid" moves are excluded. Fertilization and harvesting shifts include the
-        cascade from a sowing delay (as _cascade_sowing_delay applies it).
+        cascade from a sowing move. With a sowing window (windowed=True) the sowing
+        shift comes from the window choice (sow_shift), not from the events.
         """
         def first(evts, etype):
             return next((date.fromisoformat(e["date"]) for e in evts
@@ -954,7 +1134,12 @@ class RuleEngine:
         shifts = {}
         sow_from, sow_to = first(original_events, "sowing"), first(adjusted_events, "sowing")
         sow_days = 0
-        if sow_from and sow_to:
+        if windowed:
+            if sow_shift:
+                shifts["sowing"] = sow_shift
+                sow_days = (date.fromisoformat(sow_shift["to"]) - date.fromisoformat(sow_shift["from"])).days
+            sow_from = None   # no "avoid" offsets apply to the window choice
+        elif sow_from and sow_to:
             sow_days = (sow_to - sow_from).days - temporary_days["sowing"]
             if sow_days and shift_reasons["sowing"]:
                 shifts["sowing"] = {
