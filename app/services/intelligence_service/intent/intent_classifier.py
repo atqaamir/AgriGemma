@@ -14,6 +14,7 @@ Design constraints (Gemma optimization):
 
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass, field
 from enum import Enum
 
@@ -70,13 +71,15 @@ def _is_greeting(text: str) -> bool:
     return len(words) <= 2 and any(stripped.startswith(s) for s in _GREETING_STARTERS)
 
 
-# (intent, weight, substrings_to_match)
-# Longer, more specific substrings = fewer false positives.
+# (intent, weight, keywords)
+# Keywords match WHOLE words (a plural "s"/"es" is allowed): "task" matches "tasks" but not
+# "multitask", "rice" does not match "price". A keyword ending in "*" is a stem and matches any
+# word starting with it ("irrigat*" → irrigate, irrigation). Roman Urdu keywords are included.
 # Weight > 1.0 marks a domain-specific signal (not just a common word).
 _SIGNALS: list[tuple[FarmIntent, float, tuple[str, ...]]] = [
     (FarmIntent.IRRIGATION, 1.3, (
-        "irrigat", "should i water", "water my", "water the crop",
-        "drip system", "sprinkler", "flood irrigat",
+        "irrigat*", "should i water", "water my", "water the crop",
+        "drip system", "sprinkler", "flood irrigat*", "pani", "paani", "aabpashi",
         "water stress", "water need", "watering schedule",
         "soil moisture", "field dry", "field wet", "too dry",
     )),
@@ -86,22 +89,22 @@ _SIGNALS: list[tuple[FarmIntent, float, tuple[str, ...]]] = [
         "rain today", "rain this week", "rain expected", "heavy rain",
         "temperature today", "humidity", "heatwave", "heat wave",
         "frost", "wind speed", "cloudy", "sunny", "monsoon",
-        "storm", "how hot",
+        "storm", "how hot", "hot", "rain", "garmi", "barish", "baarish", "mausam", "dhoop",
     )),
     (FarmIntent.HARVEST, 1.3, (
-        "harvest", "when to pick", "ready to harvest", "time to harvest",
+        "harvest*", "when to pick", "ready to harvest", "time to harvest",
         "ripening", "matured", "collect crop", "crop ready",
         "reap", "yield this season", "when should i cut",
     )),
     (FarmIntent.FERTILIZATION, 1.3, (
-        "fertili", "npk", "nitrogen", "phosphorus", "potassium",
-        "compost", "manure", "urea", "feed my crop", "nutrient",
+        "fertili*", "npk", "nitrogen", "phosphorus", "potassium",
+        "compost", "manure", "urea", "feed my crop", "nutrient*", "khaad", "khad",
         "deficiency", "fertilizer burn", "micronutrient",
     )),
     (FarmIntent.SOIL, 1.0, (
         "soil type", "soil ph", "ground ph", "organic matter",
         "soil quality", "clay soil", "sandy soil", "loam soil",
-        "topsoil", "soil health", "soil texture",
+        "topsoil", "soil health", "soil texture", "soil", "soil moisture", "mitti",
     )),
     (FarmIntent.TASK, 0.9, (
         "my task", "pending task", "overdue task", "urgent task",
@@ -109,7 +112,8 @@ _SIGNALS: list[tuple[FarmIntent, float, tuple[str, ...]]] = [
         "critical task", "what's due", "what is due",
         "tasks due", "tasks are due", "which task", "any task",
         "show task", "list task", "how many task", "task today",
-        "due today", "due this week", "need to do", "tasks", "task", "priority", "critical"
+        "due today", "due this week", "need to do", "task", "priority", "urgent",
+        "what should i do", "do today", "do tomorrow", "kaam", "kam karna",
     )),
     (FarmIntent.ALERT, 1.1, (
         "alert", "notification", "warning i got", "why did i get",
@@ -123,7 +127,10 @@ _SIGNALS: list[tuple[FarmIntent, float, tuple[str, ...]]] = [
         "should i sow", "what to sow", "planning to plant", "thinking of planting",
         "new crop", "next crop", "start planting", "start growing",
         "suitable crop", "crop for this season", "crop for this weather",
-        "considering the weather", "if weather improves", "crop", "rice", "maize", "cotton"
+        "considering the weather", "if weather improves",
+        # sowing / planting verbs (crop names alone are not a planting question)
+        "sow", "sowing", "plant", "planting", "grow", "growing",
+        "boni", "bona", "boyi", "bowai", "buwai", "kasht", "kaasht",
     )),
 ]
 
@@ -138,6 +145,21 @@ _SPECIFICITY_ORDER = (
     FarmIntent.TASK,
     FarmIntent.ALERT,
 )
+
+
+_PATTERNS: dict[str, "re.Pattern"] = {}
+
+
+def _matches(keyword: str, text: str) -> bool:
+    """Whole-word match (plural s/es allowed); "stem*" matches any word starting with stem."""
+    pat = _PATTERNS.get(keyword)
+    if pat is None:
+        if keyword.endswith("*"):
+            pat = re.compile(r"\b" + re.escape(keyword[:-1]))
+        else:
+            pat = re.compile(r"\b" + re.escape(keyword) + r"(?:s|es)?\b")
+        _PATTERNS[keyword] = pat
+    return bool(pat.search(text))
 
 
 def classify(message: str) -> IntentResult:
@@ -157,7 +179,7 @@ def classify(message: str) -> IntentResult:
     scores: dict[FarmIntent, float] = {}
 
     for intent, weight, keywords in _SIGNALS:
-        hit = sum(weight for kw in keywords if kw in text)
+        hit = sum(weight for kw in keywords if _matches(kw, text))
         if hit:
             scores[intent] = scores.get(intent, 0.0) + hit
 
