@@ -337,6 +337,7 @@ class RuleEngine:
         """
         from app.models.seasonal_plan import SeasonalPlan
         from app.models.crop import Crop
+        from app.models.field import Field
         from app.services.domain_service.user_service import UserService
 
         week_end = week_start_date + timedelta(days=6)
