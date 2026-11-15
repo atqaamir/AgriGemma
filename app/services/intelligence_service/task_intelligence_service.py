@@ -166,7 +166,7 @@ class TaskIntelligenceService:
                     "due_date": str(task.due_date) if task.due_date else None,
                     "field_name": task.field.name if task.field else None,
                     "crop_name": task.crop.name if task.crop else None,
-                    "is_overdue": bool(task.due_date and task.due_date < datetime.now(timezone.utc).date()),
+                    "is_overdue": bool(task.due_date and task.due_date < clock.today()),
                 },
                 {
                     "farmer_name": context.get("farmer_name", "Farmer"),
