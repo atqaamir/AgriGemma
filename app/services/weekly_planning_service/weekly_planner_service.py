@@ -263,6 +263,10 @@ class WeeklyPlannerService:
                 "climate_adjustments": json.dumps(updated.get("climate_adjustments_made", [])),
             })
 
+        # Record permanent one-time event shifts in the actual-dates layer.
+        from app.services.plan_override_service import PlanOverrideService
+        PlanOverrideService.sync_forecast_shifts(user_id, as_of_date, updated_plan)
+
         return Status.SUCCESS
 
     @staticmethod

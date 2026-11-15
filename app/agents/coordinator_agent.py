@@ -94,9 +94,19 @@ class CoordinatorAgent:
         risk_status, change, _ = self.risk_agent.assess_risk(user_id, tag="risk_assessment", as_of_date=as_of_date)
         print (f"[daily update] risk assessment completed with status={risk_status}, change={change} for user={user_id}")
 
+        if change in (enums_.ChangeStatus.NO_CHANGE, enums_.ChangeStatus.NO_IMPACT):
+            # No plan impact today: drop any forecast_shift overrides an earlier run
+            # on the same day may have written, so they don't leak into tomorrow.
+            try:
+                self.planning_agent.clear_forecast_overrides(user_id, as_of_date)
+            except Exception:
+                from app.extensions import db
+                db.session.rollback()
+                logger.exception("Daily update: clearing forecast overrides failed for user=%s", user_id)
+
         if change == enums_.ChangeStatus.NO_CHANGE:
             result = execution_responses.ExecutionResponse.success("Risk assessment completed — no change")
-     
+
         elif change == enums_.ChangeStatus.NO_IMPACT:
             # self.call_intelligence(user_id, tag="critical_task_overview")
             self.send_notification(user_id, tag="weather_only")

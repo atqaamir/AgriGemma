@@ -84,6 +84,81 @@ class PlanOverrideService:
         )
         return None
 
+    # ------------------------------------------------------------------ #
+    #  Forecast shifts (daily update)
+    # ------------------------------------------------------------------ #
+
+    @staticmethod
+    def sync_forecast_shifts(user_id: int, as_of: date, updated_entries: list) -> dict:
+        """Make day `as_of`'s forecast_shift overrides match this run's decisions.
+
+        updated_entries: output of RuleEngine.update_weekly_plan (with "event_shifts").
+        A sowing shift cascades to harvesting, irrigation start and fertilization
+        (rule D) unless that event has its own in-window shift. Identical existing
+        rows are kept (no duplicates); changed ones are updated; rows no longer
+        backed by a decision are deleted. Pass [] to clear the day.
+        """
+        from app.models.seasonal_plan import SeasonalPlan
+
+        plan = SeasonalPlan.query.filter_by(user_id=user_id, currently_active=True).first()
+        stats ={"created": 0, "unchanged": 0, "updated": 0, "deleted": 0}
+        if not plan:
+            return stats
+
+        desired = {}   # (entry_id, event_type) -> {original_date, actual_date, reason}
+        for item in updated_entries:
+            shifts = item.get("event_shifts") or {}
+            if not shifts:
+                continue
+            entry = PlanOverrideService.match_entry(
+                user_id, item.get("crop_id"), item.get("field_id"), context="forecast shift")
+            if entry is None:
+                continue
+            eff = PlanOverrideService.effective_dates(entry, as_of)
+
+            sow = shifts.get("sowing")
+            if sow and eff["sowing_done_on"]:
+                logger.info("Entry %s: sowing done on %s by farmer — forecast sowing shift ignored",
+                            entry.id, eff["sowing_done_on"])
+                sow = None
+            if sow:
+                s_from, s_to = date.fromisoformat(sow["from"]), date.fromisoformat(sow["to"])
+                delta = s_to - s_from
+                desired[(entry.id, "sowing")] = {
+                    "original_date": s_from, "actual_date": s_to, "reason": sow["reason"]}
+                for etype in CASCADE_FROM_SOWING:
+                    if etype in shifts or not eff[etype]:
+                        continue
+                    desired[(entry.id, etype)] = {
+                        "original_date": eff[etype], "actual_date": eff[etype] + delta,
+                        "reason": f"Cascaded from sowing — {sow['reason']}"}
+            for etype in ("fertilization", "harvesting"):
+                if etype in shifts:
+                    sh = shifts[etype]
+                    desired[(entry.id, etype)] = {
+                        "original_date": date.fromisoformat(sh["from"]),
+                        "actual_date": date.fromisoformat(sh["to"]), "reason": sh["reason"]}
+
+        existing = PlanEventOverrideRepository.get_forecast_for_day([e.id for e in plan.entries], as_of)
+        to_delete = []
+        for row in existing:
+            want = desired.pop((row.seasonal_plan_entry_id, row.event_type), None)
+            if want is None:
+                to_delete.append(row)
+            elif all(getattr(row, k) == v for k, v in want.items()):
+                stats["unchanged"] += 1
+            else:
+                PlanEventOverrideRepository.update(row, want)
+                stats["updated"] += 1
+        stats["deleted"] = PlanEventOverrideRepository.delete_many(to_delete)
+        for (entry_id, etype), want in desired.items():
+            PlanEventOverrideRepository.create({
+                "seasonal_plan_entry_id": entry_id, "event_type": etype,
+                "source": PlanEventOverride.SOURCE_FORECAST, "as_of_date": as_of, **want})
+            stats["created"] += 1
+        logger.info("Forecast overrides for user=%s as_of=%s: %s", user_id, as_of, stats)
+        return stats
+
     @staticmethod
     def done_events(entry, as_of: date) -> list:
         """Events the farmer has completed, for display ("done on <date>")."""

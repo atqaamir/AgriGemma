@@ -22,6 +22,12 @@ class PlanningAgent:
         return enums_.Status.SUCCESS if plan else enums_.Status.FAILED
 
     @staticmethod
+    def clear_forecast_overrides(user_id: int, as_of_date) -> dict:
+        """Remove the day's forecast_shift overrides (the forecast no longer impacts the plan)."""
+        from app.services.plan_override_service import PlanOverrideService
+        return PlanOverrideService.sync_forecast_shifts(user_id, as_of_date, [])
+
+    @staticmethod
     def daily_update(user_id: int, as_of_date=None, tag: str = "") -> str:
         if tag == "impact_weekly":
             result = WeeklyPlannerService.update_plan(user_id, as_of_date)

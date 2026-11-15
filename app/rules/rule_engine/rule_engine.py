@@ -794,6 +794,10 @@ class RuleEngine:
             ) if field_location else None
 
             climate_adjustments = []
+            # Texts of rules that really move a one-time event to a new date, and
+            # days moved by "avoid" (temporary: +7 only means "not in this window").
+            shift_reasons = {"sowing": [], "harvesting": []}
+            temporary_days = {"sowing": 0, "harvesting": 0}
 
             for factor, weather_attr, lookup_fn, factor_label in FACTORS:
                 if factor == "soil_moisture":
@@ -831,6 +835,12 @@ class RuleEngine:
                     )
                     if text:
                         texts.append(text)
+                        action_type = action.get("action_type")
+                        if action_type in shift_reasons:
+                            shift_reasons[action_type].append(text)
+                        elif action_type == "avoid":
+                            temporary_days["sowing"] += 7
+                            temporary_days["harvesting"] += 7
 
                 if texts:
                     climate_adjustments.append({
@@ -840,6 +850,9 @@ class RuleEngine:
                     })
 
             RuleEngine._cascade_sowing_delay(events, entry["week_events"])
+            event_shifts = RuleEngine._one_time_event_shifts(
+                entry["week_events"], events, as_of_date, shift_reasons, temporary_days
+            )
             events = RuleEngine._filter_to_week(events, week_start_date, week_end)
 
             if not climate_adjustments:
@@ -853,9 +866,58 @@ class RuleEngine:
                              if k not in ("field_location", "field_moisture", "field_ph", "week_events")}
             updated_entry["climate_adjustments_made"] = climate_adjustments
             updated_entry["week_events"] = sorted(events, key=lambda e: e["date"])
+            # One-time events moved to a new date by a forecast rule (measured before
+            # the window filter). The service layer turns these into overrides.
+            updated_entry["event_shifts"] = event_shifts
             updated_result.append(updated_entry)
 
         return updated_result
+
+    @staticmethod
+    def _one_time_event_shifts(original_events: list, adjusted_events: list, as_of_date: date,
+                               shift_reasons: dict, temporary_days: dict) -> dict:
+        """Real date shifts of sowing / fertilization / harvesting in this window.
+
+        Returns {event_type: {"from": iso, "to": iso, "reason": text}}. Temporary
+        "avoid" moves are excluded. Fertilization and harvesting shifts include the
+        cascade from a sowing delay (as _cascade_sowing_delay applies it).
+        """
+        def first(evts, etype):
+            return next((date.fromisoformat(e["date"]) for e in evts
+                         if e["event_type"] == etype and date.fromisoformat(e["date"]) >= as_of_date), None)
+
+        shifts = {}
+        sow_from, sow_to = first(original_events, "sowing"), first(adjusted_events, "sowing")
+        sow_days = 0
+        if sow_from and sow_to:
+            sow_days = (sow_to - sow_from).days - temporary_days["sowing"]
+            if sow_days and shift_reasons["sowing"]:
+                shifts["sowing"] = {
+                    "from": sow_from.isoformat(),
+                    "to": (sow_from + timedelta(days=sow_days)).isoformat(),
+                    "reason": "; ".join(shift_reasons["sowing"]),
+                }
+            else:
+                sow_days = 0
+        cascade_temp = temporary_days["sowing"] if sow_from else 0
+
+        for etype in ("fertilization", "harvesting"):
+            t_from, t_to = first(original_events, etype), first(adjusted_events, etype)
+            if not (t_from and t_to):
+                continue
+            days = (t_to - t_from).days - cascade_temp - temporary_days.get(etype, 0)
+            if not days:
+                continue
+            reasons = []
+            if sow_days:
+                reasons.append(f"Cascaded from sowing — {shifts['sowing']['reason']}")
+            reasons.extend(shift_reasons.get(etype, []))
+            shifts[etype] = {
+                "from": t_from.isoformat(),
+                "to": (t_from + timedelta(days=days)).isoformat(),
+                "reason": "; ".join(reasons),
+            }
+        return shifts
 
     # ------------------------------------------------------------------ #
     #  Weather Lookups
