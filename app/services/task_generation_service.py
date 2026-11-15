@@ -166,8 +166,9 @@ class TaskGenerationService:
         Only not-completed plan tasks with a seasonal_plan_entry_id are touched:
         - sowing / fertilization / harvest (one task per entry and type):
           event in the window -> the task's due date moves to it (a deactivated task is
-          reactivated instead of creating a new one); event gone -> deactivated, unless
-          its due date has already passed (a missed task stays as it is).
+          reactivated instead of creating a new one); event gone -> deactivated. A missed
+          fertilization/harvest task (due date passed) stays as it is; sowing that is not
+          done is always re-planned by the sowing window, so its task follows the plan.
         - irrigation (date-bound): deactivate + create, matched by entry, type and date,
           never moved. A task whose date is back in the plan is reactivated.
         Then missing tasks for today and tomorrow are created (generate_plan_tasks).
@@ -242,8 +243,8 @@ class TaskGenerationService:
                     reason = (sowing_text[entry_id] if ttype == "planting" and entry_id in sowing_text
                               else f"{label} no longer in the weekly plan ({fmt(as_of)}–{fmt(window_end)})")
                     for t in active:
-                        if t.due_date and t.due_date < as_of:
-                            continue                       # missed task: left as it is
+                        if ttype != "planting" and t.due_date and t.due_date < as_of:
+                            continue                       # missed fertilization/harvest: left as it is
                         TaskService.record_changes(t, [change("is_active", True, False, reason)],
                                                    {"is_active": False})
                         summary["deactivated"].append(f"#{t.id} {t.title} ({t.due_date})")
