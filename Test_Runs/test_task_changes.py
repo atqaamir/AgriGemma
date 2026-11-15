@@ -15,8 +15,9 @@ app = create_app()
 # user[1] Ali Raza    (Sindh)     
 # user[2] Faisal      (Islamabad) 
 TEST_USERS = [1]
-WEEK_START = date(2026, 5, 18)
-AS_OF_DATE = date(2026, 5, 18)
+# Demo weather and the weekly plan are relative to today (rolling 7-day window).
+WEEK_START = date.today()
+AS_OF_DATE = date.today()
 
 # ── Mode ──────────────────────────────────────────────────────────────────────
 # "coordinator" → full daily_update pipeline (needs a weather change to trigger notifications)
