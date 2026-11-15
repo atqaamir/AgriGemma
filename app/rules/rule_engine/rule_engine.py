@@ -18,6 +18,9 @@ class RuleEngine:
     SOWING_OVERDUE_OPTIONS = ("sow anyway with precautions; switch to a short-duration variety; "
                               "switch crop; or skip the season")
     NO_SUITABLE_SOWING_DAY_TEXT = "No suitable sowing day in the forecast – re-checked daily"
+    SOWING_DECISION_TEXT = "No suitable sowing day left in the sowing window – decision needed"
+    # Statuses where the plan schedules no sowing (and no irrigation/fertilization).
+    NO_SOWING_STATUSES = ("overdue", "decision_needed")
 
     _BANDS = {
         "temperature":   ["15-20", "20-30", "30-40"],
@@ -101,7 +104,7 @@ class RuleEngine:
         move earlier again, but never before the planned date or before as_of.
         Returns None when the window logic does not apply (no window, sowing done,
         no location), else {"status", "date", "effective", "adjustment"} with status
-        planned | window_set | no_suitable_day | overdue.
+        planned | window_set | no_suitable_day | decision_needed | overdue.
         """
         sw = entry.get("sowing_window")
         location = entry.get("field_location")
@@ -162,8 +165,18 @@ class RuleEngine:
                 text = (f"Sowing set to {fmt(day)} – first day in the sowing window"
                         + (f" with {good}" if good else "") + (f" ({why})" if why else ""))
             reasoning = window_text + (f" Unsuitable: {why}." if why else "")
+        elif window_end <= week_end:
+            # The rest of the window is in the forecast and no day is suitable:
+            # never sow on an unsuitable (last) day; the farmer decides.
+            return {"status": "decision_needed", "date": None, "effective": effective, "adjustment": {
+                "factor": "sowing_window", "status": "decision_needed",
+                "adjustment": RuleEngine.SOWING_DECISION_TEXT,
+                "reasoning": (f"{window_text} No day left in the window is suitable for sowing"
+                              + (f" ({why})" if why else "") + f". Options: {RuleEngine.SOWING_OVERDUE_OPTIONS}. "
+                              "The system does not choose; re-checked daily until the window ends."),
+            }}
         else:
-            day = min(max(start, week_end + timedelta(days=1)), window_end)
+            day = week_end + timedelta(days=1)   # first window day after the forecast
             status = "no_suitable_day"
             text = RuleEngine.NO_SUITABLE_SOWING_DAY_TEXT
             reasoning = (f"{window_text} Sowing provisionally {fmt(day)}"
@@ -189,9 +202,10 @@ class RuleEngine:
     @staticmethod
     def _apply_sowing_plan(plan: dict, events: list, as_of: date, week_start: date, week_end: date) -> list:
         """Put the chosen sowing date into the events; move the other events by the same
-        number of days (rule D). Overdue: no sowing, irrigation or fertilization events."""
+        number of days (rule D). Overdue / decision needed: no sowing, irrigation or
+        fertilization events."""
         events = [e for e in events if e["event_type"] != "sowing"]
-        if plan["status"] == "overdue":
+        if plan["status"] in RuleEngine.NO_SOWING_STATUSES:
             return [e for e in events if e["event_type"] not in ("irrigation", "fertilization")]
         delta = (plan["date"] - plan["effective"]).days
         if delta:
@@ -877,7 +891,7 @@ class RuleEngine:
             climate_adjustments = []
             if sowing_plan and sowing_plan["adjustment"]:
                 climate_adjustments.append(sowing_plan["adjustment"])
-            overdue = bool(sowing_plan and sowing_plan["status"] == "overdue")
+            overdue = bool(sowing_plan and sowing_plan["status"] in RuleEngine.NO_SOWING_STATUSES)
 
             for factor, weather_attr, lookup_fn, factor_label in ([] if overdue else FACTORS):
                 if factor == "soil_moisture":
@@ -1019,7 +1033,7 @@ class RuleEngine:
             climate_adjustments = []
             if sowing_plan and sowing_plan["adjustment"]:
                 climate_adjustments.append(sowing_plan["adjustment"])
-            overdue = bool(sowing_plan and sowing_plan["status"] == "overdue")
+            overdue = bool(sowing_plan and sowing_plan["status"] in RuleEngine.NO_SOWING_STATUSES)
             # Texts of rules that really move a one-time event to a new date, and
             # days moved by "avoid" (temporary: +7 only means "not in this window").
             shift_reasons = {"sowing": [], "harvesting": []}
@@ -1079,7 +1093,7 @@ class RuleEngine:
                     })
 
             sow_shift = None
-            if sowing_plan and sowing_plan["status"] != "overdue" \
+            if sowing_plan and sowing_plan["status"] not in RuleEngine.NO_SOWING_STATUSES \
                     and sowing_plan["date"] != sowing_plan["effective"]:
                 adj = sowing_plan["adjustment"] or {}
                 reason = adj.get("adjustment", "Sowing window")

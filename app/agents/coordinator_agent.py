@@ -96,9 +96,9 @@ class CoordinatorAgent:
         print (f"[daily update] risk assessment completed with status={risk_status}, change={change} for user={user_id}")
 
         # Always apply the forecast to the plan (sowing window, forecast overrides).
-        # This step makes no AI calls; notifications only when the plan is impacted.
-        plan_impacted = change in (enums_.ChangeStatus.IMPACT_PLAN, enums_.ChangeStatus.IMPACT_TASKS)
-        plan_update = self._apply_forecast_to_plan(user_id, as_of_date, notify=plan_impacted)
+        # No AI calls; the only notification is a sowing decision (once per crop,
+        # on the day it happens, also on days without a plan impact).
+        plan_update = self._apply_forecast_to_plan(user_id, as_of_date)
 
         if change == enums_.ChangeStatus.NO_CHANGE:
             result = execution_responses.ExecutionResponse.success("Risk assessment completed — no change")
@@ -128,10 +128,10 @@ class CoordinatorAgent:
             result["message"] += f" (forecast plan update failed: {plan_update['error']})"
         return result
 
-    def _apply_forecast_to_plan(self, user_id: int, as_of_date: date, notify: bool) -> dict:
+    def _apply_forecast_to_plan(self, user_id: int, as_of_date: date) -> dict:
         """Run the forecast re-plan (update_plan) on every daily update. Never raises."""
         try:
-            status = self.planning_agent.apply_forecast(user_id, as_of_date, notify=notify)
+            status = self.planning_agent.apply_forecast(user_id, as_of_date)
             if status == enums_.Status.SUCCESS:
                 return {"status": "success"}
             error = "update_plan failed (no active weekly plan?)"

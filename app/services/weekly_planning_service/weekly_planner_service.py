@@ -226,14 +226,14 @@ class WeeklyPlannerService:
     # ------------------------------------------------------------------ #
 
     @staticmethod
-    def update_plan(user_id: int, as_of_date=None, notify: bool = True) -> str:
+    def update_plan(user_id: int, as_of_date=None) -> str:
         """Update the active weekly plan using forecast weather from as_of_date onwards.
 
         Loads original events from DB, re-applies adjustments using forecast weather
         (incl. the sowing window), persists week_events and climate_adjustments, and
-        records one-time event shifts as overrides. No AI calls. Notifications (sowing
-        overdue) only when notify=True — the daily update passes False on days without
-        a plan impact.
+        records one-time event shifts as overrides. No AI calls. The only notification
+        is the sowing decision (once per crop, on the day it happens — also on days
+        without a plan impact).
         """
         from app.models.field import Field
         from app.services.domain_service.user_service import UserService
@@ -293,33 +293,40 @@ class WeeklyPlannerService:
         # Record permanent one-time event shifts in the actual-dates layer.
         PlanOverrideService.sync_forecast_shifts(user_id, as_of_date, updated_plan)
 
-        # Sowing window passed without completion → ask the farmer (once per entry).
-        if notify:
-            for item in updated_plan:
-                if item.get("sowing_status") == "overdue" and item.get("seasonal_entry_id"):
-                    WeeklyPlannerService._notify_sowing_overdue(user_id, item)
+        # No suitable sowing day left, or the window passed without completion →
+        # ask the farmer (once per entry, on the day it happens).
+        for item in updated_plan:
+            if item.get("sowing_status") in RuleEngine.NO_SOWING_STATUSES and item.get("seasonal_entry_id"):
+                WeeklyPlannerService._notify_sowing_overdue(user_id, item)
 
         return Status.SUCCESS
 
     @staticmethod
     def _notify_sowing_overdue(user_id: int, item: dict) -> None:
-        """One warning per seasonal plan entry (not per day) when sowing is overdue."""
+        """One warning per seasonal plan entry (not per day) when sowing needs a decision:
+        no suitable day left in the window, or the window passed (overdue)."""
         from app.models.notification import Notification
         from app.repositories.notification_repository import NotificationRepository
 
         entry_id = item["seasonal_entry_id"]
-        if Notification.query.filter_by(user_id=user_id, entity_type="seasonal_plan_entry",
-                                        entity_id=entry_id, message=RuleEngine.SOWING_OVERDUE_TEXT).count():
+        if Notification.query.filter(
+                Notification.user_id == user_id, Notification.entity_type == "seasonal_plan_entry",
+                Notification.entity_id == entry_id,
+                Notification.message.in_((RuleEngine.SOWING_OVERDUE_TEXT, RuleEngine.SOWING_DECISION_TEXT))).count():
             return
         crop_obj = rule_base_service.get_crop_by_id(item["crop_id"])
         crop = crop_obj.name if crop_obj else f"Crop {item['crop_id']}"
         window = item.get("sowing_window") or {}
+        overdue = item.get("sowing_status") == "overdue"
+        text = RuleEngine.SOWING_OVERDUE_TEXT if overdue else RuleEngine.SOWING_DECISION_TEXT
+        what = ("has passed and sowing was not recorded as done" if overdue
+                else "has no suitable sowing day left in the forecast")
         NotificationRepository.create({
             "user_id":           user_id,
-            "title":             f"{RuleEngine.SOWING_OVERDUE_TEXT} – {crop}",
-            "message":           RuleEngine.SOWING_OVERDUE_TEXT,
+            "title":             f"{text} – {crop}",
+            "message":           text,
             "detail":            (f"{crop}: the sowing window ({window.get('planned')} – {window.get('end')}) "
-                                  f"has passed and sowing was not recorded as done. Options: "
+                                  f"{what}. Options: "
                                   f"{RuleEngine.SOWING_OVERDUE_OPTIONS}. The system does not choose."),
             "notification_type": "warning",
             "entity_type":       "seasonal_plan_entry",
