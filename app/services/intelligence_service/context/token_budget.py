@@ -23,7 +23,7 @@ T = TypeVar("T")
 # ── Prompt-level char budgets (full prompt including instructions + data) ──────
 
 BUDGET_CHATBOT_CONTEXT  = 2_800   # context block inside the chatbot prompt (incl. the plan block)
-BUDGET_CHATBOT_HISTORY  = 300     # compressed conversation history block
+BUDGET_CHATBOT_HISTORY  = 1_200   # conversation history block (last ~6 messages, newest kept)
 BUDGET_DASHBOARD_PROMPT = 2_800   # full dashboard intelligence prompt
 BUDGET_TASK_EXPLAIN     = 900     # full single-task explanation prompt
 BUDGET_TASK_UPDATE      = 950     # full task-priority-change explanation prompt

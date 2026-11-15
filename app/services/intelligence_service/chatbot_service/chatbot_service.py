@@ -107,20 +107,22 @@ def _parse_llm_response(raw: str) -> dict:
 
 
 # ── History helpers ────────────────────────────────────────────────────────────
-_MAX_HISTORY_MESSAGES = 3   # last exchange (bot reply) + one prior user turn
+_MAX_HISTORY_MESSAGES = 6     # last 3 exchanges (user + bot)
+_MAX_HISTORY_MSG_CHARS = 220  # per message, so one long answer cannot crowd out the rest
 
 
 def _build_history(messages: list) -> str:
     """
-    Compress recent conversation into a compact history block.
-    Limits to _MAX_HISTORY_MESSAGES and enforces BUDGET_CHATBOT_HISTORY.
+    Compress recent conversation into a compact history block: the last
+    _MAX_HISTORY_MESSAGES messages, each capped; if the block is still over
+    BUDGET_CHATBOT_HISTORY, the OLDEST lines are dropped (the newest are kept).
     """
     recent = messages[-_MAX_HISTORY_MESSAGES:] if messages else []
-    raw = "\n".join(
-        f"{m.sender.upper()}: {m.message}"
-        for m in recent
-    )
-    return truncate(raw, BUDGET_CHATBOT_HISTORY)
+    lines = [f"{m.sender.upper()}: {truncate(' '.join((m.message or '').split()), _MAX_HISTORY_MSG_CHARS)}"
+             for m in recent]
+    while lines and len("\n".join(lines)) > BUDGET_CHATBOT_HISTORY:
+        lines.pop(0)
+    return "\n".join(lines)
 
 
 # ── Farm question vs. general question (web search) ───────────────────────────
