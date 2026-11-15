@@ -1,0 +1,8 @@
+{# Demo clock banner: shown only when DEMO_TODAY is set (context from app/__init__.py) #}
+{% if demo_today %}
+<!-- Demo clock: shown only when DEMO_TODAY is set -->
+<div id="demoDateBanner" role="status"
+  class="w-full px-6 py-1.5 text-center text-sm font-medium bg-[#fff3cd] text-[#5c4400] dark:bg-[#3a3216] dark:text-[#f5e3a3] border-b border-[#e8d9a0] dark:border-[#4a4020]">
+  Demo date: {{ demo_today.day }} {{ demo_today.strftime('%B %Y') }} ({{ demo_season }} season)
+</div>
+{% endif %}
