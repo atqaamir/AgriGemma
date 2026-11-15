@@ -416,7 +416,10 @@ class RuleEngine:
                 if harvesting and week_start_date <= harvesting <= week_end:
                     week_events.append({"event_type": "harvesting", "date": harvesting.isoformat()})
 
-                if not week_events:
+                # Keep the entry when the farmer recently completed sowing, even with
+                # nothing else in the window, so the plan can show "Sowed on <date>".
+                recently_done = bool(PlanOverrideService.done_events(entry, week_start_date, week_end))
+                if not week_events and not recently_done:
                     continue
 
                 week_events.sort(key=lambda e: e["date"])

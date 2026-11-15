@@ -233,10 +233,25 @@ class PlanOverrideService:
         logger.info("Task %s un-completed: %d farmer_completed override(s) removed", task.id, n)
         return n
 
+    DONE_LOOKBACK_DAYS = 7   # a completed event stays visible this many days before the window
+
     @staticmethod
-    def done_events(entry, as_of: date) -> list:
-        """Events the farmer has completed, for display ("done on <date>")."""
-        farmer = PlanEventOverrideRepository.get_farmer_sowing(entry.id, as_of)
+    def done_events(entry, week_start: date, week_end: date) -> list:
+        """Farmer-completed events to show in the weekly plan ("Sowed on <date>").
+
+        Shown while the completion date is inside the window or up to
+        DONE_LOOKBACK_DAYS before it.
+        """
+        from datetime import timedelta
+        farmer = PlanEventOverrideRepository.get_farmer_sowing(entry.id, week_end)
         if not farmer:
             return []
-        return [{"event_type": "sowing", "date": farmer.actual_date.isoformat(), "status": "done"}]
+        done_on = farmer.actual_date
+        if not (week_start - timedelta(days=PlanOverrideService.DONE_LOOKBACK_DAYS) <= done_on <= week_end):
+            return []
+        return [{
+            "event_type": "sowing",
+            "date": done_on.isoformat(),
+            "status": "done",
+            "label": f"Sowed on {done_on.day} {done_on.strftime('%b %Y')}",
+        }]

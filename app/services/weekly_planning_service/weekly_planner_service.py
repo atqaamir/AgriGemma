@@ -40,7 +40,7 @@ class WeeklyPlannerService:
             # Events the farmer already completed (e.g. sowing), shown as "done on <date>"
             seasonal_entry = PlanOverrideService.match_entry(
                 plan.user_id, entry.crop_id, entry.field_id, warn=False)
-            done = (PlanOverrideService.done_events(seasonal_entry, plan.week_end_date)
+            done = (PlanOverrideService.done_events(seasonal_entry, plan.week_start_date, plan.week_end_date)
                     if seasonal_entry else [])
 
             entries_output.append({
