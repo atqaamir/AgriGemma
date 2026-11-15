@@ -158,7 +158,7 @@ def run():
             soil_type_id=3,
             location="Sindh, Pakistan",
             ph_level=7.8,
-            currently_active=False,
+            currently_active=True,    # its Cotton crop is active
         ),
         Field(                                      # 5 – Margalla Foothills Plot
             name="Margalla Foothills Plot",
@@ -191,30 +191,33 @@ def run():
         return planted + timedelta(days=durations.get(name_id, 150))
 
     sample_crops = [
-        Crop(                                       # 0 – Rice in North Field Alpha
+        # User 1 is before sowing (demo scenario): stage Sowing, no planting/harvest date until
+        # the sowing task is completed (the completion hook sets them). The pages show the
+        # planned date from the weekly plan instead.
+        Crop(                                       # 0 – Rice in North Field Alpha (Not Feasible)
             crop_name_id=2, currently_active=True,
-            current_growth_stage_id=3,
+            current_growth_stage_id=4,              # Sowing
             current_health_status="alert",
-            planting_date=today - timedelta(days=120),
-            expected_harvest_date=harvest(2, today - timedelta(days=120)),
+            planting_date=None,
+            expected_harvest_date=None,
             currently_water_requirement=450.0,
             field_id=sample_fields[0].id, user_id=user[0].id,
         ),
         Crop(                                       # 1 – Cotton in The Reservoir
             crop_name_id=3, currently_active=True,
-            current_growth_stage_id=3,
-            current_health_status="alert",
-            planting_date=today - timedelta(days=90),
-            expected_harvest_date=harvest(3, today - timedelta(days=90)),
+            current_growth_stage_id=4,              # Sowing
+            current_health_status="healthy",
+            planting_date=None,
+            expected_harvest_date=None,
             currently_water_requirement=750.0,
             field_id=sample_fields[1].id, user_id=user[0].id,
         ),
         Crop(                                       # 2 – Maize in Punjab Wheat Belt
             crop_name_id=1, currently_active=True,
-            current_growth_stage_id=2,
-            current_health_status="critical",
-            planting_date=today - timedelta(days=30),
-            expected_harvest_date=harvest(1, today - timedelta(days=30)),
+            current_growth_stage_id=4,              # Sowing
+            current_health_status="healthy",
+            planting_date=None,
+            expected_harvest_date=None,
             currently_water_requirement=600.0,
             field_id=sample_fields[2].id, user_id=user[0].id,
         ),
@@ -251,61 +254,34 @@ def run():
     db.session.commit()
 
     # ---- TASKS ----
-    # 15 total tasks: 8 for user[0] (Ahmad Khan), 4 for user[1] (Ali Raza), 3 for user[2] (Faisal Mehmood)
+    # 11 tasks: 5 for user[0] (Ahmad Khan), 3 for user[1] (Ali Raza), 3 for user[2] (Faisal Mehmood)
     # Tasks properly aligned with crops, fields, and users
     sample_tasks = [
-        # ── User[0] - Ahmad Khan (Punjab) — 8 tasks ───────────────────────────────────
-        # Task 1: Sow Rice in North Field Alpha (crop_id=sample_crops[0])
+        # Every seeded task fits a hot, dry early May (DEMO_TODAY, Kharif) and the weekly plan.
+        # Plan tasks (sowing, irrigation, fertilization, harvest) are not seeded: the daily
+        # update / 7 PM job create them from the plan.
+
+        # ── User[0] - Ahmad Khan (Punjab, before sowing) — 5 tasks ────────────────────
+        # Maize sowing planned 6 May (Punjab Wheat Belt), Cotton 7 May (The Reservoir),
+        # Rice on North Field Alpha is Not Feasible.
         Task(
-            title="Sow Rice — North Field Alpha",
+            title="Prepare seedbed for maize — Punjab Wheat Belt",
             priority="high", completed=False,
             created_at=datetime.utcnow(), due_date=today,
-            task_type="planting", task_category="crop",
-            description="Sow rice at North Field Alpha per weekly plan. Baseline conditions (25°C, 50-100mm) are within acceptable range.",
-            notes="Weekly plan event: sowing 2026-05-18.",
-            crop_id=sample_crops[0].id, field_id=sample_fields[0].id, user_id=user[0].id,
+            task_type="land_preparation", task_category="field",
+            description="Plough and level the field and break clods so the maize seed can go in tomorrow (sowing planned in the weekly plan).",
+            notes="Check soil moisture at seed depth; the soil is dry after a hot week.",
+            crop_id=None, field_id=sample_fields[2].id, user_id=user[0].id,
         ),
-        # Task 2: Irrigate Rice in North Field Alpha (crop_id=sample_crops[0])
         Task(
-            title="Irrigate Rice — North Field Alpha",
-            priority="medium", completed=False,
-            created_at=datetime.utcnow(), due_date=today + timedelta(days=3),
-            task_type="irrigation", task_category="crop",
-            description="First irrigation for rice — 3 days post-sowing per rulebook (irrigation_calendar: days_after_sowing=3).",
-            notes="Weekly plan event: irrigation 2026-05-21.",
-            crop_id=sample_crops[0].id, field_id=sample_fields[0].id, user_id=user[0].id,
-        ),
-        # Task 3: Fertilize Maize in Punjab Wheat Belt (crop_id=sample_crops[2])
-        Task(
-            title="Fertilize Maize — Punjab Wheat Belt",
-            priority="medium", completed=False,
-            created_at=datetime.utcnow(), due_date=today + timedelta(days=2),
-            task_type="fertilizing", task_category="field",
-            description="Increase fertilization for maize sowing — 50-100mm rainfall band is below rainfed threshold; supplemental nutrients critical at germination.",
-            notes="Weekly plan adjustment: Maize Sowing + rainfall 50-100mm → fertilization increase (minimal).",
-            crop_id=sample_crops[2].id, field_id=sample_fields[2].id, user_id=user[0].id,
-        ),
-        # Task 4: Spray Fungicide on Cotton in The Reservoir (crop_id=sample_crops[1])
-        Task(
-            title="Spray Fungicide — The Reservoir Cotton",
+            title="Prepare seedbed for cotton — The Reservoir",
             priority="high", completed=False,
-            created_at=datetime.utcnow(), due_date=today,
-            task_type="spraying", task_category="crop",
-            description="Apply preventive fungicide to flowering cotton. Humidity band 40-70% with moisture risk warrants treatment.",
-            notes="Cotton at flowering stage — inspect boll development during application.",
-            crop_id=sample_crops[1].id, field_id=sample_fields[1].id, user_id=user[0].id,
+            created_at=datetime.utcnow(), due_date=today + timedelta(days=1),
+            task_type="land_preparation", task_category="field",
+            description="Plough and level The Reservoir and make the beds for cotton (sowing planned in the weekly plan).",
+            notes="Recycled water: check the irrigation channel before sowing.",
+            crop_id=None, field_id=sample_fields[1].id, user_id=user[0].id,
         ),
-        # Task 5: Irrigate Crops Morning Round in North Field Alpha (field_id=sample_fields[0])
-        Task(
-            title="Irrigate Crops — Morning Round",
-            priority="low", completed=False,
-            created_at=datetime.utcnow(), due_date=today,
-            task_type="irrigation", task_category="general",
-            description="Irrigate crops during the morning hours to minimize evaporation.",
-            notes="Ensure even water distribution across all fields.",
-            crop_id=None, field_id=sample_fields[0].id, user_id=user[0].id,
-        ),
-        # Task 6: Emergency Field Inspection in Punjab Wheat Belt (field_id=sample_fields[2])
         Task(
             title="Emergency Field Inspection — Punjab Wheat Belt",
             priority="critical", completed=False,
@@ -315,17 +291,15 @@ def run():
             notes="Check leaf colour, soil surface, and drainage channels. Report findings immediately.",
             crop_id=None, field_id=sample_fields[2].id, user_id=user[0].id,
         ),
-        # Task 7: Repair Broken Irrigation Pipe in North Field Alpha (field_id=sample_fields[0])
         Task(
             title="Repair Broken Irrigation Pipe",
             priority="medium", completed=False,
             created_at=datetime.utcnow(), due_date=today,
-            description="Fix the damaged irrigation pipe in the North Field to restore water supply.",	
+            description="Fix the damaged irrigation pipe in the North Field to restore water supply.",
             notes="Assess damage and replace pipe section as needed.",
             task_type="maintenance", task_category="general",
-            crop_id=None, field_id=sample_fields[0].id, user_id=user[0].id,	
+            crop_id=None, field_id=sample_fields[0].id, user_id=user[0].id,
         ),
-        # Task 8: Address Soil Erosion in The Reservoir (field_id=sample_fields[1])
         Task(
             title="Address Soil Erosion in The Reservoir",
             priority="critical", completed=False,
@@ -335,38 +309,26 @@ def run():
             task_type="soil_conservation", task_category="field",
             crop_id=None, field_id=sample_fields[1].id, user_id=user[0].id,
         ),
-        Task(
-            title="Drain excess moisture from North Field Apha",
-            priority="critical", completed=False,
-            created_at=datetime.utcnow(), due_date=today,
-            description="Implement erosion control measures in The Reservoir field to prevent further soil loss.",
-            notes="Consider add drainage pipe or some chemicals to stabilize soil moisture.",
-            task_type="drainage", task_category="field",
-            crop_id=None, field_id=sample_fields[0].id, user_id=user[0].id,
-        ),
 
-        # ── User[1] - Ali Raza (Sindh) — 4 tasks ──────────────────────────────────────
-        # Task 9: Irrigate Maize in KP Highland Terrace (crop_id=sample_crops[3])
+        # ── User[1] - Ali Raza (Sindh, extreme heat) — 3 tasks ────────────────────────
         Task(
-            title="Monitor Rice — KP Highland Terrace",
-            priority="medium", completed=False,
+            title="Irrigate Cotton in the evening — Lower Indus Plain",
+            priority="high", completed=False,
             created_at=datetime.utcnow(), due_date=today,
-            task_type="monitoring", task_category="crop",
-            description="Monitor seedling rice crop for early growth indicators and disease signs.",
-            notes="Early-stage rice is sensitive to environmental changes; regular inspection advised.",
-            crop_id=sample_crops[3].id, field_id=sample_fields[3].id, user_id=user[1].id,
+            task_type="irrigation", task_category="crop",
+            description="Extreme heat (41–43 °C) forecast: irrigate the cotton in the evening to cut evaporation losses.",
+            notes="Check the soil moisture at root depth the next morning.",
+            crop_id=sample_crops[4].id, field_id=sample_fields[4].id, user_id=user[1].id,
         ),
-        # Task 10: Spray Pesticide in Lower Indus Plain (crop_id=sample_crops[4])
         Task(
             title="Spray Pesticide — Lower Indus Plain Cotton",
             priority="medium", completed=False,
             created_at=datetime.utcnow(), due_date=today,
             task_type="spraying", task_category="crop",
             description="Preventive pesticide application. Hot dry conditions increase pest pressure.",
-            notes="Unaffected by irrigation action directly — priority will drop -1 level (medium→low).",
+            notes="Spray early in the morning; hot, dry weather raises pest pressure.",
             crop_id=sample_crops[4].id, field_id=sample_fields[4].id, user_id=user[1].id,
         ),
-        # Task 11: Fertilize Cotton in Lower Indus Plain (crop_id=sample_crops[4])
         Task(
             title="Fertilize Cotton — Lower Indus Plain",
             priority="high", completed=False,
@@ -376,29 +338,17 @@ def run():
             notes="Ensure nutrient application before flowering stage begins.",
             crop_id=sample_crops[4].id, field_id=sample_fields[4].id, user_id=user[1].id,
         ),
-        # Task 12: Irrigate Rice in KP Highland Terrace (crop_id=sample_crops[3])
-        Task(
-            title="Irrigate Rice — KP Highland Terrace",
-            priority="low", completed=False,
-            created_at=datetime.utcnow(), due_date=today + timedelta(days=1),
-            task_type="irrigation", task_category="crop",
-            description="Scheduled irrigation for seedling rice crop. Monitor soil moisture and adjust frequency as needed.",
-            notes="Seedling stage rice requires consistent moisture without waterlogging.",
-            crop_id=sample_crops[3].id, field_id=sample_fields[3].id, user_id=user[1].id,
-        ),
 
-        # ── User[2] - Faisal Mehmood (Islamabad) — 3 tasks ────────────────────────────
-        # Task 13: Irrigate Maize in Margalla Foothills Plot (crop_id=sample_crops[5])
+        # ── User[2] - Faisal Mehmood (Islamabad, heatwave) — 3 tasks ──────────────────
         Task(
             title="Irrigate Maize — Margalla Foothills Plot",
             priority="high", completed=False,
             created_at=datetime.utcnow(), due_date=today,
             task_type="irrigation", task_category="crop",
             description="Scheduled maize irrigation. Heatwave forecast with zero rainfall — critical irrigation frequency increase required.",
-            notes="IMPACT_TASKS expected: irrigation.increase days.significant → priority critical, task delayed.",
+            notes="Heatwave: irrigate early in the morning or in the evening.",
             crop_id=sample_crops[5].id, field_id=sample_fields[5].id, user_id=user[2].id,
         ),
-        # Task 14: Apply Mulch in Margalla Foothills Plot (field_id=sample_fields[5])
         Task(
             title="Apply Mulch — Margalla Foothills Plot",
             priority="medium", completed=False,
@@ -408,7 +358,6 @@ def run():
             notes="Mulching essential during heatwave period to prevent crop stress.",
             crop_id=None, field_id=sample_fields[5].id, user_id=user[2].id,
         ),
-        # Task 15: Check Soil pH in Margalla Foothills Plot (field_id=sample_fields[5])
         Task(
             title="Check Soil pH — Margalla Foothills Plot",
             priority="medium", completed=False,
