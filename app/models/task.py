@@ -27,6 +27,9 @@ class Task(db.Model):
     crop_id = db.Column(db.Integer, db.ForeignKey("crop.id"), nullable=True)
     field_id = db.Column(db.Integer, db.ForeignKey("field.id"), nullable=True)
     user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=True)
+    # Seasonal plan entry this task was generated from (weekly plan tasks). No FK:
+    # seasonal entries are deleted/re-seeded independently of tasks.
+    seasonal_plan_entry_id = db.Column(db.Integer, nullable=True)
 
 
     def __repr__(self):

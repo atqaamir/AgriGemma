@@ -23,6 +23,7 @@ logger = logging.getLogger("run")
 # The column type comes from the SQLAlchemy model.
 ADDED_COLUMNS = [
     ("task", "completed_at"),
+    ("task", "seasonal_plan_entry_id"),
 ]
 
 

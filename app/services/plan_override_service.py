@@ -88,6 +88,23 @@ class PlanOverrideService:
         )
         return None
 
+    @staticmethod
+    def active_crop_for_entry(entry, user_id: int):
+        """The user's active crop (on an active field) that a seasonal entry describes:
+        same crop, field with the entry's soil type and water source.
+
+        Returns the Crop when exactly one fits, else None (the caller warns).
+        """
+        from app.models.crop import Crop
+        from app.models.field import Field
+        crops = (Crop.query.join(Field, Crop.field_id == Field.id)
+                 .filter(Crop.user_id == user_id, Crop.crop_name_id == entry.crop_name_id,
+                         Crop.currently_active.is_(True), Field.currently_active.is_(True),
+                         Field.soil_type_id == entry.soil_id,
+                         Field.water_source_id == entry.water_source_id)
+                 .all())
+        return crops[0] if len(crops) == 1 else None
+
     # ------------------------------------------------------------------ #
     #  Forecast shifts (daily update)
     # ------------------------------------------------------------------ #
@@ -171,7 +188,16 @@ class PlanOverrideService:
 
     @staticmethod
     def _entry_for_task(task):
+        """Seasonal entry of a task: its seasonal_plan_entry_id first (tasks generated
+        from the weekly plan), else crop + field matching."""
         from app.models.crop import Crop
+        from app.models.seasonal_plan import SeasonalPlanEntry
+        if getattr(task, "seasonal_plan_entry_id", None):
+            entry = SeasonalPlanEntry.query.get(task.seasonal_plan_entry_id)
+            if entry is not None:
+                return entry
+            logger.warning("Task %s: seasonal_plan_entry_id %s not found — falling back to crop + field",
+                           task.id, task.seasonal_plan_entry_id)
         crop = Crop.query.get(task.crop_id) if task.crop_id else None
         if crop is None:
             logger.warning("Task %s: no crop linked — no farmer override written", task.id)
