@@ -1,6 +1,7 @@
 import logging
 from flask import Flask
 from config import Config
+from app.utils import clock
 
 logging.basicConfig(
     level=logging.INFO,
@@ -31,6 +32,9 @@ from app.jobs.scheduler import start_scheduler
 
 
 def create_app():
+    # A non-empty invalid DEMO_TODAY stops startup here; empty means the real date.
+    clock.demo_today()
+
     app = Flask(__name__)
     app.config.from_object(Config)
 

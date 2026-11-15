@@ -19,6 +19,8 @@ from app.models.dashboard_summary import DashboardSummary
 from app.models.task_intelligence_summary import TaskIntelligenceSummary
 from sqlalchemy import text
 
+from app.utils import clock
+
 
 # Every demo table, children before parents, so the clear also works on databases
 # that enforce foreign keys (Postgres). Vocabulary and rulebook tables are not here:
@@ -182,7 +184,7 @@ def run():
 
     # ---- CROPS ----
     # crop_name_id: 1=Maize(120d), 2=Rice(180d), 3=Cotton(220d)
-    today = date.today()
+    today = clock.today()
 
     def harvest(name_id, planted):
         durations = {1: 120, 2: 180, 3: 220}
@@ -257,7 +259,7 @@ def run():
         Task(
             title="Sow Rice — North Field Alpha",
             priority="high", completed=False,
-            created_at=datetime.utcnow(), due_date=date(2026, 5, 18),
+            created_at=datetime.utcnow(), due_date=today,
             task_type="planting", task_category="crop",
             description="Sow rice at North Field Alpha per weekly plan. Baseline conditions (25°C, 50-100mm) are within acceptable range.",
             notes="Weekly plan event: sowing 2026-05-18.",
@@ -267,7 +269,7 @@ def run():
         Task(
             title="Irrigate Rice — North Field Alpha",
             priority="medium", completed=False,
-            created_at=datetime.utcnow(), due_date=date(2026, 5, 21),
+            created_at=datetime.utcnow(), due_date=today + timedelta(days=3),
             task_type="irrigation", task_category="crop",
             description="First irrigation for rice — 3 days post-sowing per rulebook (irrigation_calendar: days_after_sowing=3).",
             notes="Weekly plan event: irrigation 2026-05-21.",
@@ -277,7 +279,7 @@ def run():
         Task(
             title="Fertilize Maize — Punjab Wheat Belt",
             priority="medium", completed=False,
-            created_at=datetime.utcnow(), due_date=date(2026, 5, 20),
+            created_at=datetime.utcnow(), due_date=today + timedelta(days=2),
             task_type="fertilizing", task_category="field",
             description="Increase fertilization for maize sowing — 50-100mm rainfall band is below rainfed threshold; supplemental nutrients critical at germination.",
             notes="Weekly plan adjustment: Maize Sowing + rainfall 50-100mm → fertilization increase (minimal).",
@@ -287,7 +289,7 @@ def run():
         Task(
             title="Spray Fungicide — The Reservoir Cotton",
             priority="high", completed=False,
-            created_at=datetime.utcnow(), due_date=date(2026, 5, 18),
+            created_at=datetime.utcnow(), due_date=today,
             task_type="spraying", task_category="crop",
             description="Apply preventive fungicide to flowering cotton. Humidity band 40-70% with moisture risk warrants treatment.",
             notes="Cotton at flowering stage — inspect boll development during application.",
@@ -297,7 +299,7 @@ def run():
         Task(
             title="Irrigate Crops — Morning Round",
             priority="low", completed=False,
-            created_at=datetime.utcnow(), due_date=date.today(),
+            created_at=datetime.utcnow(), due_date=today,
             task_type="irrigation", task_category="general",
             description="Irrigate crops during the morning hours to minimize evaporation.",
             notes="Ensure even water distribution across all fields.",
@@ -307,7 +309,7 @@ def run():
         Task(
             title="Emergency Field Inspection — Punjab Wheat Belt",
             priority="critical", completed=False,
-            created_at=datetime.utcnow(), due_date=date.today(),
+            created_at=datetime.utcnow(), due_date=today,
             task_type="inspection", task_category="general",
             description="Urgent inspection of Punjab Wheat Belt for signs of crop stress, disease, and soil damage.",
             notes="Check leaf colour, soil surface, and drainage channels. Report findings immediately.",
@@ -317,7 +319,7 @@ def run():
         Task(
             title="Repair Broken Irrigation Pipe",
             priority="medium", completed=False,
-            created_at=datetime.utcnow(), due_date=date.today(),
+            created_at=datetime.utcnow(), due_date=today,
             description="Fix the damaged irrigation pipe in the North Field to restore water supply.",	
             notes="Assess damage and replace pipe section as needed.",
             task_type="maintenance", task_category="general",
@@ -327,7 +329,7 @@ def run():
         Task(
             title="Address Soil Erosion in The Reservoir",
             priority="critical", completed=False,
-            created_at=datetime.utcnow(), due_date=date.today(),
+            created_at=datetime.utcnow(), due_date=today,
             description="Implement erosion control measures in The Reservoir field to prevent further soil loss.",
             notes="Consider terracing or cover cropping to stabilize soil.",
             task_type="soil_conservation", task_category="field",
@@ -336,7 +338,7 @@ def run():
         Task(
             title="Drain excess moisture from North Field Apha",
             priority="critical", completed=False,
-            created_at=datetime.utcnow(), due_date=date.today(),
+            created_at=datetime.utcnow(), due_date=today,
             description="Implement erosion control measures in The Reservoir field to prevent further soil loss.",
             notes="Consider add drainage pipe or some chemicals to stabilize soil moisture.",
             task_type="drainage", task_category="field",
@@ -348,7 +350,7 @@ def run():
         Task(
             title="Monitor Rice — KP Highland Terrace",
             priority="medium", completed=False,
-            created_at=datetime.utcnow(), due_date=date(2026, 5, 18),
+            created_at=datetime.utcnow(), due_date=today,
             task_type="monitoring", task_category="crop",
             description="Monitor seedling rice crop for early growth indicators and disease signs.",
             notes="Early-stage rice is sensitive to environmental changes; regular inspection advised.",
@@ -358,7 +360,7 @@ def run():
         Task(
             title="Spray Pesticide — Lower Indus Plain Cotton",
             priority="medium", completed=False,
-            created_at=datetime.utcnow(), due_date=date(2026, 5, 18),
+            created_at=datetime.utcnow(), due_date=today,
             task_type="spraying", task_category="crop",
             description="Preventive pesticide application. Hot dry conditions increase pest pressure.",
             notes="Unaffected by irrigation action directly — priority will drop -1 level (medium→low).",
@@ -368,7 +370,7 @@ def run():
         Task(
             title="Fertilize Cotton — Lower Indus Plain",
             priority="high", completed=False,
-            created_at=datetime.utcnow(), due_date=date(2026, 5, 19),
+            created_at=datetime.utcnow(), due_date=today + timedelta(days=1),
             task_type="fertilizing", task_category="field",
             description="Apply balanced fertilizer to cotton at vegetative stage to support canopy development.",
             notes="Ensure nutrient application before flowering stage begins.",
@@ -378,7 +380,7 @@ def run():
         Task(
             title="Irrigate Rice — KP Highland Terrace",
             priority="low", completed=False,
-            created_at=datetime.utcnow(), due_date=date(2026, 5, 19),
+            created_at=datetime.utcnow(), due_date=today + timedelta(days=1),
             task_type="irrigation", task_category="crop",
             description="Scheduled irrigation for seedling rice crop. Monitor soil moisture and adjust frequency as needed.",
             notes="Seedling stage rice requires consistent moisture without waterlogging.",
@@ -390,7 +392,7 @@ def run():
         Task(
             title="Irrigate Maize — Margalla Foothills Plot",
             priority="high", completed=False,
-            created_at=datetime.utcnow(), due_date=date(2026, 5, 18),
+            created_at=datetime.utcnow(), due_date=today,
             task_type="irrigation", task_category="crop",
             description="Scheduled maize irrigation. Heatwave forecast with zero rainfall — critical irrigation frequency increase required.",
             notes="IMPACT_TASKS expected: irrigation.increase days.significant → priority critical, task delayed.",
@@ -400,7 +402,7 @@ def run():
         Task(
             title="Apply Mulch — Margalla Foothills Plot",
             priority="medium", completed=False,
-            created_at=datetime.utcnow(), due_date=date(2026, 5, 17),
+            created_at=datetime.utcnow(), due_date=today - timedelta(days=1),
             task_type="mulching", task_category="field",
             description="Apply organic mulch to maize field to retain soil moisture and regulate temperature.",
             notes="Mulching essential during heatwave period to prevent crop stress.",
@@ -410,7 +412,7 @@ def run():
         Task(
             title="Check Soil pH — Margalla Foothills Plot",
             priority="medium", completed=False,
-            created_at=datetime.utcnow(), due_date=date(2026, 5, 20),
+            created_at=datetime.utcnow(), due_date=today + timedelta(days=2),
             task_type="soil_testing", task_category="field",
             description="Test soil pH level to ensure optimal nutrient availability for maize crop.",
             notes="Target pH 6.5-7.0 for maize; adjust if needed.",
@@ -487,7 +489,7 @@ def run():
     db.session.add_all(sample_notifications)
     db.session.commit()
 
-    seed_demo_weather(start=date.today())
+    seed_demo_weather(start=clock.today())
 
     print("Sample data seeded successfully.")
     print(f"Users:        {User.query.count()}")

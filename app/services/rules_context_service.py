@@ -12,6 +12,7 @@ from datetime import date
 
 from app.services.rule_base_service import rule_base_service
 from app.rules.vocabulary.mappings import SEASON_MONTHS, get_id_maps
+from app.utils import clock
 
 logger = logging.getLogger(__name__)
 
@@ -62,7 +63,7 @@ class RulesContextService:
         if not crops_data:
             return ""
 
-        month = date.today().month
+        month = clock.today().month
         season_id = _current_season_id(month)
         current = weather.get("current", {})
         rainfall_mm = current.get("rainfall_mm") if current.get("rainfall_mm") is not None else current.get("precipitation_mm", 0.0)

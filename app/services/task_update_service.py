@@ -14,6 +14,7 @@ from app.repositories.forecast_repository import ForecastRepository
 from app.services.domain_service.user_service import UserService
 from app.rules.rule_engine.rule_engine import RuleEngine
 from app.services.rule_base_service import rule_base_service
+from app.utils import clock
 
 logger = logging.getLogger(__name__)
 
@@ -288,7 +289,7 @@ class TaskUpdateService:
         Returns a summary dict with counts of modified tasks.
         """
         if as_of_date is None:
-            as_of_date = date.today()
+            as_of_date = clock.today()
 
         user_location = UserService.get_user_location(user_id)
         if not user_location:
@@ -303,7 +304,7 @@ class TaskUpdateService:
         logger.info("TaskUpdateService: band changes for user %s: %s", user_id, band_changes)
 
         all_tasks = TaskRepository.get_by_user_id(user_id)
-        today = date.today()
+        today = clock.today()
         pending = [
             t for t in all_tasks
             if not t.completed

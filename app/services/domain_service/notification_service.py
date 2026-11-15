@@ -5,6 +5,7 @@ from app.models.notification import Notification
 
 from app.routes.weather import weather
 from app.utils.enums_ import NotificationType, Status
+from app.utils import clock
 
 logger = logging.getLogger(__name__)
 
@@ -331,7 +332,7 @@ class NotificationService:
 
             weather_ctx = context.get("weather", {})
             report = {
-                "date":    str(_date.today()),
+                "date":    str(clock.today()),
                 "weather": {
                     "temp":          _to_float(current.get("temp") or current.get("temperature_c")),
                     "condition":     (current.get("condition") or "").capitalize(),
@@ -696,7 +697,7 @@ class NotificationService:
         import json
         weather_ctx = context.get("weather", {})
         report = {
-            "date":    str(_date.today()),
+            "date":    str(clock.today()),
             "weather": {
                 "temp":         temp,
                 "condition":    condition,

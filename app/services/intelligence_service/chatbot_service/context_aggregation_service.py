@@ -3,6 +3,7 @@ from datetime import date
 
 from app.repositories.field_repository import FieldRepository
 from app.repositories.task_repository import TaskRepository
+from app.utils import clock
 
 logger = logging.getLogger(__name__)
 
@@ -16,7 +17,7 @@ class ContextAggregationService:
 
     @staticmethod
     def build_task_context(user_id: int) -> dict:
-        today = date.today()
+        today = clock.today()
 
         field_ctx = ContextAggregationService._collect_field_context()
         crop_ctx = ContextAggregationService._collect_crop_context()

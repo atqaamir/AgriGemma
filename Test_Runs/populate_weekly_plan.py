@@ -6,6 +6,7 @@ from app.extensions import db
 from app.models.weekly_plan import WeeklyPlan, WeeklyPlanEntry
 from app.services.seasonal_planner_service import SeasonalPlannerService
 from app.services.weekly_planning_service.weekly_planner_service import WeeklyPlannerService
+from app.utils import clock
 
 OUTPUT = Path(__file__).parent / "weekly_plan_output.json"
 
@@ -14,7 +15,7 @@ OUTPUT = Path(__file__).parent / "weekly_plan_output.json"
 # =============================================================================
 
 # Window for the initial weekly plan: rolling 7 days starting today.
-_today = date.today()
+_today = clock.today()
 WEEK_START = _today
 
 

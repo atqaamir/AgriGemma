@@ -2,6 +2,7 @@ import json
 import logging
 from datetime import datetime, timezone
 
+from app.utils import clock
 from app.services.ai_model_service import ai_model_service
 from app.services.ai_model_service.ai_model_service import fast_complete as _fast_complete
 from app.services.ai_model_service.ai_model_service import fast_complete_json as _fast_complete_json
@@ -138,7 +139,7 @@ class TaskIntelligenceService:
                     "due_date":      str(task.due_date) if task.due_date else None,
                     "field_name":    task.field.name if task.field else None,
                     "crop_name":     task.crop.name if task.crop else None,
-                    "is_overdue":    bool(task.due_date and task.due_date < __import__("datetime").date.today()),
+                    "is_overdue":    bool(task.due_date and task.due_date < clock.today()),
                     "change_reason": change_reason,
                 },
                 context,

@@ -6,6 +6,7 @@ from app.repositories.weather_repository import WeatherRepository
 from app.repositories.forecast_repository import ForecastRepository
 from app.services.domain_service.user_service import UserService
 from app.rules.rule_engine.rule_engine import RuleEngine
+from app.utils import clock
 
 
 # Sweet-spot thresholds for NO_CHANGE.
@@ -54,7 +55,7 @@ class RiskService:
     ) -> tuple:
         """Returns (Status, ChangeStatus, detail_dict)."""
         if as_of_date is None:
-            as_of_date = date.today()
+            as_of_date = clock.today()
         detail = self.assess_weather_change(user_id, as_of_date)
         return Status.SUCCESS, detail["overall_change_status"], detail
 

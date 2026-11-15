@@ -3,6 +3,7 @@ from datetime import date
 from flask import Blueprint, render_template, jsonify
 
 from app.services.seasonal_planner_service import SeasonalPlannerService
+from app.utils import clock
 
 seasonal_plan_bp = Blueprint("seasonal_plan", __name__)
 
@@ -13,7 +14,7 @@ def seasonal_plan_page(user_id):
     return render_template(
         "seasonal_plan.html",
         plan=plan,
-        today_str=date.today().isoformat(),
+        today_str=clock.today().isoformat(),
     )
 
 

@@ -8,6 +8,7 @@ from app.agents.notification_agent import  NotificationAgent
 from app.agents.intelligence_agent import TaskIntelligenceAgent
 from app.utils import enums_
 from app.utils import execution_responses
+from app.utils import clock
 
 logger = logging.getLogger(__name__)
 
@@ -83,7 +84,7 @@ class CoordinatorAgent:
     """ 5am daily update workflow — rolls the weekly plan forward, runs risk assessment, then triggers downstream workflows based on risk level changes. Always refreshes dashboard at the end. """
     def daily_update(self, user_id: int, as_of_date: date = None) -> dict:
         if as_of_date is None:
-            as_of_date = date.today()
+            as_of_date = clock.today()
         print(f"\n[CoordinatorAgent] Starting daily update for user={user_id} as_of_date={as_of_date}")
 
         # Roll the weekly plan: regenerate as_of_date..+6 from the (unmodified)

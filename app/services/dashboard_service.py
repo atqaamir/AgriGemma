@@ -10,6 +10,7 @@ from app.services.domain_service.notification_service import NotificationService
 from app.services.intelligence_service.chatbot_service.chatbot_service import ChatbotService
 from app.services.intelligence_service.task_intelligence_service import TaskIntelligenceService
 from app.services.intelligence_service.chatbot_service.context_aggregation_service import ContextAggregationService
+from app.utils import clock
 
 
 def _avg(values: list) -> float:
@@ -72,7 +73,7 @@ class DashboardService:
 
     @staticmethod
     def _build_default_summary(pending_tasks, active_fields, crops) -> dict:
-        today    = date.today()
+        today    = clock.today()
         overdue  = sum(1 for t in pending_tasks if t.due_date and t.due_date < today)
         critical = sum(1 for t in pending_tasks if t.priority == "critical")
         high     = sum(1 for t in pending_tasks if t.priority == "high")
@@ -208,7 +209,7 @@ class DashboardService:
     @staticmethod
     def _get_critical_tasks(pending_tasks) -> list:
         high_priority = [t for t in pending_tasks if t.priority in ("critical", "high")]
-        today = date.today()
+        today = clock.today()
         priority_order = {"critical": 0, "high": 1}
 
         def sort_key(task):
@@ -281,7 +282,7 @@ class DashboardService:
             "due_date": task.due_date.isoformat() if task.due_date else None,
             "field_name": task.field.name if task.field else None,
             "crop_name": task.crop.name if task.crop else None,
-            "overdue": bool(task.due_date and task.due_date < date.today()),
+            "overdue": bool(task.due_date and task.due_date < clock.today()),
         }
 
     @staticmethod

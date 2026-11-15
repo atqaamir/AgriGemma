@@ -1,6 +1,7 @@
 import requests
 import os
 from datetime import date, timedelta
+from app.utils import clock
 
 """
 API_KEY = os.getenv("WEATHER_API_KEY")
@@ -28,7 +29,7 @@ _DUMMY_FORECASTS = [
 
 
 def get_weather(location: str, n: int = 7) -> dict:
-    today = date.today()
+    today = clock.today()
     forecast = []
     for i, (label, max_t, min_t, rain_chance, condition, humidity, wind) in enumerate(_DUMMY_FORECASTS[:n]):
         forecast.append({

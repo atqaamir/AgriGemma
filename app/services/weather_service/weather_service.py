@@ -5,6 +5,7 @@ from ...repositories.forecast_repository import ForecastRepository
 
 from .weather_fetch_api import get_weather, get_yearly_climate, get_monthly_climate
 
+from app.utils import clock
 from app.utils.enums_ import Region
 
 from app.schemas.weather.weekly_forecast import (
@@ -114,7 +115,7 @@ class ForecastService:
         """Return current-month, next two months, and full yearly climate profile."""
         location = ForecastService._resolve_location(user_id)
         try:
-            now = datetime.now()
+            now = clock.now()
             current_month = now.month
             next_month    = (current_month % 12) + 1
             month_after   = (next_month   % 12) + 1

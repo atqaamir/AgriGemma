@@ -21,6 +21,7 @@ from dataclasses import dataclass, field as dc_field
 from datetime import date
 
 from app.services.intelligence_service.intent.intent_classifier import FarmIntent, IntentResult
+from app.utils import clock
 
 logger = logging.getLogger(__name__)
 
@@ -185,7 +186,7 @@ def build_chatbot_context(user_id: int, intent_result: IntentResult) -> dict:
     Returns a flat dict consumed by components.py renderers.
     """
     spec  = _merge_specs(intent_result)
-    today = date.today()
+    today = clock.today()
     ctx: dict = {}
 
     ctx["farmer_name"] = _safe("farmer_name", _fetch_farmer_name, user_id)

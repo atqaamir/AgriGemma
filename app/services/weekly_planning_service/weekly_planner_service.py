@@ -12,6 +12,7 @@ from app.rules.rule_engine.rule_engine import RuleEngine
 from app.repositories.weekly_plan_repository import WeeklyPlanRepository, WeeklyPlanEntryRepository
 from app.services.rule_base_service import rule_base_service
 from app.models.seasonal_plan import SeasonalPlan
+from app.utils import clock
 
 
 class WeeklyPlannerService:
@@ -111,7 +112,7 @@ class WeeklyPlannerService:
         WeeklyPlan ORM object
         """
         if week_start_date is None:
-            week_start_date = date.today()
+            week_start_date = clock.today()
 
         week_end_date = week_start_date + timedelta(days=6)
 

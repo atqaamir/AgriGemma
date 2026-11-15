@@ -3,6 +3,7 @@ from app.repositories.crop_repository import CropRepository
 from app.services.domain_service.task_service import TaskService
 from app.rules.vocabulary.crop_names import CropNames
 from app.rules.vocabulary.growth_stage import GrowthStage
+from app.utils import clock
 
 # Keyed by crop_name_id: 1=Maize, 2=Rice, 3=Cotton
 CROP_DURATION_DAYS = {
@@ -72,7 +73,7 @@ class CropService:
         """Returns 0-100 percentage of how far through its growth cycle a crop is."""
         if not crop.planting_date or not crop.expected_harvest_date:
             return 0
-        today = date.today()
+        today = clock.today()
         total_days = (crop.expected_harvest_date - crop.planting_date).days
         elapsed = (today - crop.planting_date).days
         if total_days <= 0 or elapsed <= 0:

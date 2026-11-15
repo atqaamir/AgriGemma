@@ -16,6 +16,7 @@ from app.schemas.task_schema import (
     UpdateTaskSchema,
 )
 from app.schemas.intelligence_schema import TaskIntelligenceSchema
+from app.utils import clock
 
 tasks_bp = Blueprint("tasks_bp", __name__)
 
@@ -226,7 +227,7 @@ def run_weather_simulator(user_id):
         from app.repositories.weather_repository import WeatherRepository
         from app.services.domain_service.user_service import UserService
         from Test_Runs.seed_data import seed_demo_weather
-        today = date.today()
+        today = clock.today()
 
         # Self-healing demo weather: if the app has been up longer than the seeded
         # 7-day window, top up baseline + forecast starting today.

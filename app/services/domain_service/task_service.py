@@ -5,6 +5,7 @@ from app.extensions import db
 from app.models.task import Task
 from app.repositories.task_repository import TaskRepository
 from app.services.plan_override_service import PlanOverrideService
+from app.utils import clock
 
 logger = logging.getLogger(__name__)
 
@@ -42,7 +43,7 @@ class TaskService:
         was_completed = bool(task.completed)
         now_completed = bool(data.get("completed", was_completed))
         if now_completed and not was_completed:
-            data = {**data, "completed_at": datetime.now()}
+            data = {**data, "completed_at": clock.now()}
         elif was_completed and not now_completed:
             data = {**data, "completed_at": None}
 

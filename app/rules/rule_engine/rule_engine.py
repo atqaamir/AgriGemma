@@ -5,6 +5,7 @@ import json
 from datetime import date, timedelta
 from app.services.rule_base_service import rule_base_service
 from app.services.weather_service.weather_data_service import WeatherService
+from app.utils import clock
 
 
 class RuleEngine:
@@ -257,7 +258,7 @@ class RuleEngine:
                 return set(range(start, end + 1))
             return set(range(start, 13)) | set(range(1, end + 1))
 
-        today = date.today()
+        today = clock.today()
 
         # Step 1: Best Suited Season for Crop Type
         best_season_crop_type = rule_base_service.get_best_season_by_crop_type(crop)

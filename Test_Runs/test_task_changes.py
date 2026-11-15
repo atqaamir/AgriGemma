@@ -8,6 +8,7 @@ from app import create_app
 from app.services.weekly_planning_service.weekly_planner_service import WeeklyPlannerService
 from app.agents.coordinator_agent import CoordinatorAgent
 from app.services.domain_service.notification_service import NotificationService
+from app.utils import clock
 
 app = create_app()
 
@@ -16,8 +17,8 @@ app = create_app()
 # user[2] Faisal      (Islamabad) 
 TEST_USERS = [1]
 # Demo weather and the weekly plan are relative to today (rolling 7-day window).
-WEEK_START = date.today()
-AS_OF_DATE = date.today()
+WEEK_START = clock.today()
+AS_OF_DATE = clock.today()
 
 # ── Mode ──────────────────────────────────────────────────────────────────────
 # "coordinator" → full daily_update pipeline (needs a weather change to trigger notifications)
