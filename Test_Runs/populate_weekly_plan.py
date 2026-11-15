@@ -13,14 +13,18 @@ OUTPUT = Path(__file__).parent / "weekly_plan_output.json"
 #  FILL IN before running
 # =============================================================================
 
-# Week to generate the plan for: Monday of the current week, so the demo works on any day.
+# Week for the initial weekly plan: Monday of the current week.
 _today = date.today()
 WEEK_START = _today - timedelta(days=_today.weekday())
 
 
-def _week_day(offset: int) -> str:
-    """Date `offset` days after WEEK_START, in the "MM/DD/YYYY" format update_entry expects."""
-    return (WEEK_START + timedelta(days=offset)).strftime("%m/%d/%Y")
+def _from_today(offset: int) -> str:
+    """Date `offset` days after today, in the "MM/DD/YYYY" format update_entry expects.
+
+    Sowing dates are relative to today (not WEEK_START) so they are never in the past
+    and always fall inside the week the Weather Change Simulator builds from today.
+    """
+    return (_today + timedelta(days=offset)).strftime("%m/%d/%Y")
 
 # One dict per entry in user 1's active seasonal plan.
 # Entries are in insertion order: Maize, Cotton, Rice (from populate_seasonal_plan.py).
@@ -34,7 +38,7 @@ ENTRY_UPDATES = [
     # field_id=1  →  North Field Alpha, Punjab (~15°C cold spell)
     #                temperature band "15-20" → cold-stress sowing adjustment
     {
-        "sowing":               _week_day(2),   # Wednesday of this week
+        "sowing":               _from_today(1), # tomorrow
         "irrigation_frequency": None,           # ← int, e.g. 3
         "field_id":             1,              # North Field Alpha — Punjab, Pakistan
         # "irrigation_start_date": "",          # ← override cascade if needed
@@ -43,14 +47,14 @@ ENTRY_UPDATES = [
     },
     # ── Entry 1 : Cotton / Loamy / Groundwater ───────────────────────
     {
-        "sowing":               _week_day(3),   # Thursday of this week
+        "sowing":               _from_today(2), # today + 2 days
         "irrigation_frequency": None,           # ← int
     },
     # ── Entry 2 : Rice / Clay / River ────────────────────────────────
     # field_id=2  →  East Creek Basin, Sindh (~34°C heat scenario)
     #                temperature band "30-40" → heat-stress sowing adjustment
     {
-        "sowing":               _week_day(0),   # Monday of this week
+        "sowing":               _from_today(0), # today
         "irrigation_frequency": None,           # ← int
         "field_id":             2,              # East Creek Basin — Sindh, Pakistan
     },
