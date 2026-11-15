@@ -123,6 +123,42 @@ def _build_history(messages: list) -> str:
     return truncate(raw, BUDGET_CHATBOT_HISTORY)
 
 
+# ── Farm question vs. general question (web search) ───────────────────────────
+
+# Words that make a question about this farm's own data (English + Roman Urdu).
+_FARM_WORDS = re.compile(
+    r"\b(?:my|mine|our|farm|field|fields|plan|plans|task|tasks|today|tomorrow|this week|"
+    r"mera|meri|mere|hamara|hamari|khet|aaj|kal|is hafte)\b", re.IGNORECASE)
+_MARKET_WORDS = re.compile(r"\b(?:price|prices|rate|rates|cost|market|buy|sell|qeemat|keemat|bhao)\b",
+                           re.IGNORECASE)
+_CROP_ALIASES = ("kapas", "makai", "makki", "chawal", "dhaan", "dhan")
+
+
+def _is_farm_question(message: str, context: dict) -> bool:
+    """True when the question is about this farm's own data: no web search for it.
+
+    Farm words ("my", "field", "plan", "today", Roman Urdu "mera", "khet"...), one of the
+    user's field names, or a crop name unless it is a market question ("price of cotton seed").
+    """
+    if _FARM_WORDS.search(message):
+        return True
+    text = message.lower()
+    fields = [f.get("name", "") for f in (context.get("fields") or [])]
+    fields += [c.get("field") or "" for c in ((context.get("plan") or {}).get("crops") or [])]
+    if any(n and n.lower() in text for n in fields):
+        return True
+    crops = [c.get("crop", "") for c in ((context.get("plan") or {}).get("crops") or [])]
+    crops += [c.get("name", "") for c in (context.get("crops") or [])]
+    mentions_crop = any(n and re.search(r"\b" + re.escape(n.lower()) + r"\b", text) for n in crops) \
+        or any(re.search(r"\b" + a + r"\b", text) for a in _CROP_ALIASES)
+    return mentions_crop and not _MARKET_WORDS.search(message)
+
+
+def _wants_web_search(intent_result: IntentResult, message: str, context: dict) -> bool:
+    """Web search only for GENERAL questions that are not about the farm (time-limited)."""
+    return intent_result.primary == FarmIntent.GENERAL and not _is_farm_question(message, context)
+
+
 # ── Context formatting ─────────────────────────────────────────────────────────
 
 def _format_farmer_context(
@@ -319,7 +355,8 @@ class ChatbotService:
 
         # Stage 2b — web search (GENERAL intent only)
         web_results = []
-        if intent_result.primary == FarmIntent.GENERAL:
+        farm_question = _is_farm_question(user_message, context)
+        if _wants_web_search(intent_result, user_message, context):
             web_results = web_search_service.search(user_message)
 
         # Stage 3 — AI
@@ -330,6 +367,7 @@ class ChatbotService:
             language=language,
             intent=intent_result.primary.value,
             web_results=web_results,
+            farm_question=farm_question,
         )
 
         t3 = time.time()
@@ -564,9 +602,10 @@ class ChatbotService:
                 })
                 return
 
-            # ── Stage 2b: web search (GENERAL intent only) ────────────────────
+            # ── Stage 2b: web search (GENERAL, non-farm questions only) ─────────
             web_results = []
-            if intent_result.primary == FarmIntent.GENERAL:
+            farm_question = _is_farm_question(user_message, context)
+            if _wants_web_search(intent_result, user_message, context):
                 yield stage_sse("searching_web", "Searching the web...")
                 tw = time.time()
                 web_results = web_search_service.search(user_message)
@@ -585,6 +624,7 @@ class ChatbotService:
                 language=language,
                 intent=intent_result.primary.value,
                 web_results=web_results,
+                farm_question=farm_question,
             )
 
             # ── Stage 3: AI streaming ─────────────────────────────────────────

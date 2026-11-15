@@ -37,6 +37,11 @@ _GENERAL_NOTE = (
     "to answer fully and practically. Don't limit your answer to what the farm data says."
 )
 
+_GENERAL_NOTE_FARM = (
+    "This question is about the farm. Answer from the farm data and the [PLAN] first; "
+    "use general agricultural knowledge only for what the data does not cover."
+)
+
 _GENERAL_NOTE_NO_WEB = (
     "This is a general question. The farm data above is background context only — "
     "draw primarily on your expert agricultural knowledge to answer fully and practically. "
@@ -60,6 +65,7 @@ def build_chatbot_prompt(
     language: str = 'en',
     intent: str = "general",
     web_results: list | None = None,
+    farm_question: bool = False,
 ) -> str:
     system = CHATBOT_SYSTEM + (_URDU_ADDENDUM if language == 'ur' else "")
     user_parts = [f"FARM DATA:\n{farmer_context}"]
@@ -72,7 +78,7 @@ def build_chatbot_prompt(
 
     question_block = f"FARMER ASKS: {user_message}"
     if intent == "general":
-        note = _GENERAL_NOTE if web_results else _GENERAL_NOTE_NO_WEB
+        note = _GENERAL_NOTE_FARM if farm_question else (_GENERAL_NOTE if web_results else _GENERAL_NOTE_NO_WEB)
         question_block += f"\n\nNOTE: {note}"
 
     user_parts.append(
