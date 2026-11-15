@@ -103,11 +103,24 @@ The following assumptions define the current scope and operational boundaries of
   decisions are recalculated, not re-applied, so running the daily update or the simulator twice gives the same result.
 - Temporary adjustments (extra or removed irrigation sessions, "avoid this window") are **not** stored; they are
   recalculated every day from the forecast.
-- **Limit on weather delays of sowing:** sowing is delayed by the weather at most `MAX_SOWING_DELAY_DAYS = 14` days
-  after the planned (seasonal) sowing date. Several rules firing on the same day add up (e.g. temperature +4 and
-  sunlight +4 = 8 days). When the limit is reached, sowing is not delayed further; the plan keeps the date and shows,
-  with a warning notification: "Sowing window at risk – the forecast is still unfavourable; farmer decision needed."
-  The value 14 is a **placeholder until validated by an agronomist**.
+- **Sowing window:** each crop has a sowing window from the planned (seasonal) sowing date to
+  planned + `MAX_SOWING_DELAY_DAYS` (14 days, a **placeholder until validated by an agronomist**).
+  - Every day the plan picks the **first suitable day** in the window within the visible forecast (today..today+6):
+    a day where none of the crop's sowing-stage rules (temperature, humidity, sunlight, rainfall, soil moisture, pH)
+    says "delay sowing" or "avoid". Rules don't add up — a day is suitable or not.
+  - It is recalculated from scratch every day, so sowing can move **earlier** again when the forecast improves,
+    but never before the planned date and never before today.
+  - No suitable day in the forecast: sowing is provisionally the first window day after the forecast (or the window
+    end), with "No suitable sowing day in the forecast – re-checked daily".
+  - Harvest, irrigation start and fertilization follow the effective sowing date. A completed sowing (farmer) is never
+    moved.
+- **Sowing overdue → human decision:** when the window has passed and sowing was not completed, the crop stays in the
+  weekly plan as "Sowing overdue – decision needed" (no sowing, irrigation or fertilization events) with the options:
+  sow anyway with precautions, switch to a short-duration variety, switch crop, or skip the season. The system does
+  not choose. One notification per crop is sent — on a day the daily update finds a plan impact.
+- **The daily update always applies the forecast to the weekly plan** (sowing window, actual dates). This step makes no
+  AI calls and sends no notifications; notifications, task updates and AI summaries only follow on days with a plan
+  impact (plus the existing weather-only notification on "change without impact" days).
 - A same-day rebuild without the forecast (weekly job, app restart) shows that day's plan without its forecast
   decisions until the next daily update or simulator run.
 - **Demo:** overrides are deleted together with the seasonal plans when the app restarts and reseeds (`run.py`),
