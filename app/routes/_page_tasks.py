@@ -98,7 +98,7 @@ def generate_and_store_intelligence():
 @tasks_bp.route("/<int:user_id>/tasks", methods=["GET"])
 def get_tasks_by_user(user_id):
     page = request.args.get("page", 1, type=int)
-    per_page = min(request.args.get("per_page", 20, type=int), 100)
+    per_page = min(request.args.get("per_page", 20, type=int), 500)   # "all tasks" view asks for 500
     status = request.args.get("status", "all")
     search = request.args.get("search", "").strip()
     priority = request.args.get("priority")
