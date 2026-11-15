@@ -14,31 +14,27 @@ class VocabularySeeder:
         self.db = db
 
     def seed_all(self):
+        """Upsert the fixed vocabulary (id → name from mappings.py).
+
+        Never deletes: crop, field and seasonal_plan_entry rows reference these
+        tables by foreign key, so a delete fails on databases that enforce FKs
+        (Postgres) on every start after the first. Merging by the fixed ids keeps
+        the references valid and makes repeated starts safe.
+        """
         vocab = get_vocabulary()
 
-        self._clear_tables()
-
-        self._seed(CropType,    vocab['Crop_Type'],    'name')
-        self._seed(CropNames,   vocab['Crop_Name'],    'name')
-        self._seed(GrowthStage, vocab['Growth_Stage'], 'name')
-        self._seed(Soil_Type,   vocab['Soil_Type'],    'name')
-        self._seed(WaterSource, vocab['Water_Source'], 'name')
-        self._seed(SeasonNames, vocab['Season'],       'name')
+        self._upsert(CropType,    vocab['Crop_Type'],    'name')
+        self._upsert(CropNames,   vocab['Crop_Name'],    'name')
+        self._upsert(GrowthStage, vocab['Growth_Stage'], 'name')
+        self._upsert(Soil_Type,   vocab['Soil_Type'],    'name')
+        self._upsert(WaterSource, vocab['Water_Source'], 'name')
+        self._upsert(SeasonNames, vocab['Season'],       'name')
 
         self.db.session.commit()
 
-    def _seed(self, model, mapping: dict, name_field: str):
-        self.db.session.bulk_save_objects(
-            [model(id=k, **{name_field: v}) for k, v in mapping.items()]
-        )
-
-    def _clear_tables(self):
-        CropNames.query.delete()
-        CropType.query.delete()
-        Soil_Type.query.delete()
-        GrowthStage.query.delete()
-        WaterSource.query.delete()
-        SeasonNames.query.delete()
+    def _upsert(self, model, mapping: dict, name_field: str):
+        for k, v in mapping.items():
+            self.db.session.merge(model(id=k, **{name_field: v}))
 
 
 def run():

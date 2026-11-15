@@ -14,26 +14,49 @@ from app.models.weather_forecast import WeatherForecast
 from app.models.seasonal_plan import SeasonalPlan, SeasonalPlanEntry
 from app.models.weekly_plan import WeeklyPlan, WeeklyPlanEntry
 from app.models.plan_event_override import PlanEventOverride
+from app.models.chat import Conversation, ChatMessage
+from app.models.dashboard_summary import DashboardSummary
+from app.models.task_intelligence_summary import TaskIntelligenceSummary
+from sqlalchemy import text
+
+
+# Every demo table, children before parents, so the clear also works on databases
+# that enforce foreign keys (Postgres). Vocabulary and rulebook tables are not here:
+# they are upserted / reseeded separately and only referenced, never referencing.
+DEMO_TABLES_CHILD_FIRST = [
+    PlanEventOverride,                 # → seasonal_plan_entry, task (lost on reseed in the demo)
+    Task,                              # → crop, field, user
+    Alert, Notification,               # → user
+    ChatMessage, Conversation,         # → conversation, user
+    DashboardSummary, TaskIntelligenceSummary,   # → user
+    WeeklyPlanEntry, WeeklyPlan,       # → weekly_plan, user
+    SeasonalPlanEntry, SeasonalPlan,   # → seasonal_plan, user
+    Crop,                              # → field, user
+    Field,                             # → user
+    User,
+    Weather, WeatherForecast,
+]
+
+
+def clear_demo_tables():
+    """Empty all demo tables. On Postgres, TRUNCATE ... RESTART IDENTITY also resets the
+    id sequences, so seeded ids start at 1 again (as they do on SQLite after a full delete);
+    the seeders and the demo rely on user 1. No CASCADE: if another table still referenced
+    these, Postgres raises instead of silently emptying it."""
+    if db.engine.dialect.name == "postgresql":
+        quote = db.engine.dialect.identifier_preparer.quote
+        tables = ", ".join(quote(m.__tablename__) for m in DEMO_TABLES_CHILD_FIRST)
+        db.session.execute(text(f"TRUNCATE TABLE {tables} RESTART IDENTITY"))
+    else:
+        for model in DEMO_TABLES_CHILD_FIRST:
+            model.query.delete()
+    db.session.commit()
 
 
 def run():
     # DO NOT create app here (run.py already did it)
 
-    # Clear in correct dependency order
-    Task.query.delete()
-    Alert.query.delete()
-    Notification.query.delete()
-    Crop.query.delete()
-    Field.query.delete()
-    WeeklyPlanEntry.query.delete()
-    WeeklyPlan.query.delete()
-    PlanEventOverride.query.delete()   # actual-dates layer is lost on reseed (demo)
-    SeasonalPlanEntry.query.delete()
-    SeasonalPlan.query.delete()
-    User.query.delete()
-    Weather.query.delete()
-    WeatherForecast.query.delete()
-    db.session.commit()
+    clear_demo_tables()
 
     # ---- USERS ----
     user = [
