@@ -165,8 +165,8 @@ def build_notification_context(user_id: int) -> dict:
     ctx["farmer_name"] = _safe("farmer_name", _fetch_farmer_name, user_id)
     ctx["weather"]     = _safe("weather", _fetch_weather, user_id) or {}
 
-    fields = _safe("fields", _fetch_fields) or []
-    crops  = _safe("crops",  _fetch_crops)  or []
+    fields = _safe("fields", _fetch_fields, user_id) or []
+    crops  = _safe("crops",  _fetch_crops, user_id)  or []
 
     # Keep the nested structure that _detect_from_context() expects
     ctx["farm"] = {
@@ -200,10 +200,10 @@ def build_chatbot_context(user_id: int, intent_result: IntentResult) -> dict:
         ctx["weather"] = weather
 
     if spec.needs_fields:
-        ctx["fields"] = (_safe("fields", _fetch_fields) or [])[: spec.max_fields]
+        ctx["fields"] = (_safe("fields", _fetch_fields, user_id) or [])[: spec.max_fields]
 
     if spec.needs_crops:
-        ctx["crops"] = (_safe("crops", _fetch_crops) or [])[: spec.max_crops]
+        ctx["crops"] = (_safe("crops", _fetch_crops, user_id) or [])[: spec.max_crops]
 
     if spec.needs_tasks:
         ctx["tasks"] = _safe(
@@ -211,7 +211,7 @@ def build_chatbot_context(user_id: int, intent_result: IntentResult) -> dict:
         ) or {}
 
     if spec.needs_alerts:
-        raw_fields = _safe("fields_raw", _fetch_fields_raw) or []
+        raw_fields = _safe("fields_raw", _fetch_fields_raw, user_id) or []
         ctx["alerts"] = (_safe("alerts", _fetch_alerts, raw_fields) or [])[:5]
 
     if spec.needs_rules:
@@ -296,8 +296,13 @@ def _fetch_weather(user_id: int) -> dict:
     return ForecastService.get_current_summary(user_id) or {}
 
 
-def _fetch_fields() -> list:
+def _active_fields_of(user_id: int) -> list:
     from app.repositories.field_repository import FieldRepository
+    return [f for f in FieldRepository.get_by_user_id(user_id) if f.currently_active]
+
+
+def _fetch_fields(user_id: int) -> list:
+    """The user's active fields."""
     return [
         {
             "id":           f.id,
@@ -308,16 +313,16 @@ def _fetch_fields() -> list:
             "stress_risk":  f.stress_risk,
             "disease_risk": f.disease_risk,
         }
-        for f in FieldRepository.get_all_active()
+        for f in _active_fields_of(user_id)
     ]
 
 
-def _fetch_fields_raw() -> list:
-    from app.repositories.field_repository import FieldRepository
-    return FieldRepository.get_all_active()
+def _fetch_fields_raw(user_id: int) -> list:
+    return _active_fields_of(user_id)
 
 
-def _fetch_crops() -> list:
+def _fetch_crops(user_id: int) -> list:
+    """The user's active crops."""
     from app.services.domain_service.crop_service import CropService
     return [
         {
@@ -332,7 +337,7 @@ def _fetch_crops() -> list:
             "moisture_level": c.field.moisture_level if c.field else None,
             "field_name":     c.field.name if c.field else None,
         }
-        for c in CropService.get_active_crops()
+        for c in CropService.get_active_crops_by_user(user_id)
     ]
 
 

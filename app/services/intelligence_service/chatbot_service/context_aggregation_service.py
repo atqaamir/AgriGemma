@@ -19,8 +19,8 @@ class ContextAggregationService:
     def build_task_context(user_id: int) -> dict:
         today = clock.today()
 
-        field_ctx = ContextAggregationService._collect_field_context()
-        crop_ctx = ContextAggregationService._collect_crop_context()
+        field_ctx = ContextAggregationService._collect_field_context(user_id)
+        crop_ctx = ContextAggregationService._collect_crop_context(user_id)
         task_ctx = ContextAggregationService._collect_task_context(today, user_id)
         alert_ctx = ContextAggregationService._collect_alert_context(field_ctx.get("_active_fields", []))
         weather_ctx = ContextAggregationService._collect_weather_context(user_id)
@@ -71,10 +71,11 @@ class ContextAggregationService:
             return "Farmer"
 
     @staticmethod
-    def _collect_field_context() -> dict:
+    def _collect_field_context(user_id: int) -> dict:
+        """The user's fields only."""
         try:
-            all_fields = FieldRepository.get_all()
-            active_fields = FieldRepository.get_all_active()
+            all_fields = FieldRepository.get_by_user_id(user_id)
+            active_fields = [f for f in all_fields if f.currently_active]
             return {
                 "total": len(all_fields),
                 "active": len(active_fields),
@@ -99,10 +100,11 @@ class ContextAggregationService:
             return {"total": 0, "active": 0, "_active_fields": [], "active_data": []}
 
     @staticmethod
-    def _collect_crop_context() -> dict:
+    def _collect_crop_context(user_id: int) -> dict:
+        """The user's active crops only."""
         try:
             from app.services.domain_service.crop_service import CropService
-            active_crops = CropService.get_active_crops()
+            active_crops = CropService.get_active_crops_by_user(user_id)
             return {
                 "total": len(active_crops),
                 "active_data": [
