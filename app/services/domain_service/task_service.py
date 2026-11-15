@@ -28,6 +28,9 @@ class TaskService:
     def delete_task(task_id: int) -> None:
         task = TaskRepository.get_by_id(task_id)
         if task:
+            # Delete = un-complete: drop this task's farmer_completed overrides first,
+            # so dates fall back to the forecast / seasonal plan.
+            PlanOverrideService.undo_farmer_task(task)
             TaskRepository.delete(task)
 
     @staticmethod
