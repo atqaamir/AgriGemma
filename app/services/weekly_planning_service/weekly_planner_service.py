@@ -6,7 +6,7 @@ formatted read helpers for the API layer.
 """
 
 import json
-from datetime import date, timedelta
+from datetime import date, datetime, timedelta
 
 from app.rules.rule_engine.rule_engine import RuleEngine
 from app.repositories.weekly_plan_repository import WeeklyPlanRepository, WeeklyPlanEntryRepository
@@ -244,10 +244,16 @@ class WeeklyPlannerService:
         # lookups still work.
         user_location = UserService.get_user_location(user_id)
 
+        from app.services.plan_override_service import PlanOverrideService
+
         raw_entries = []
         for entry in plan.entries:
             field = Field.query.get(entry.field_id) if entry.field_id else None
             original_events = json.loads(entry.original_events) if entry.original_events else []
+            # Cap for weather delays of sowing: seasonal (planned) sowing + MAX_SOWING_DELAY_DAYS
+            seasonal_entry = PlanOverrideService.match_entry(user_id, entry.crop_id, entry.field_id, warn=False)
+            planned_sowing = (datetime.strptime(seasonal_entry.sowing, "%m/%d/%Y").date()
+                              if seasonal_entry and seasonal_entry.sowing else None)
             raw_entries.append({
                 "crop_id":         entry.crop_id,
                 "field_id":        entry.field_id,
@@ -256,6 +262,8 @@ class WeeklyPlannerService:
                 "field_ph":        field.ph_level       if field else None,
                 "growth_stage_id": entry.growth_stage_id,
                 "week_events":     original_events,
+                "sowing_cap_date": (planned_sowing + timedelta(days=RuleEngine.MAX_SOWING_DELAY_DAYS)).isoformat()
+                                   if planned_sowing else None,
             })
 
         updated_plan = RuleEngine.update_weekly_plan(
@@ -273,10 +281,39 @@ class WeeklyPlannerService:
             })
 
         # Record permanent one-time event shifts in the actual-dates layer.
-        from app.services.plan_override_service import PlanOverrideService
         PlanOverrideService.sync_forecast_shifts(user_id, as_of_date, updated_plan)
 
+        # Sowing delay cap reached → ask the farmer to decide (once per crop per day).
+        for item in updated_plan:
+            if item.get("sowing_window_at_risk"):
+                WeeklyPlannerService._notify_sowing_window_at_risk(user_id, item)
+
         return Status.SUCCESS
+
+    @staticmethod
+    def _notify_sowing_window_at_risk(user_id: int, item: dict) -> None:
+        from app.models.notification import Notification
+        from app.repositories.notification_repository import NotificationRepository
+
+        crop_obj = rule_base_service.get_crop_by_id(item["crop_id"])
+        crop = crop_obj.name if crop_obj else f"Crop {item['crop_id']}"
+        title = f"Sowing window at risk – {crop}"
+        since = datetime.utcnow() - timedelta(hours=24)
+        if Notification.query.filter(Notification.user_id == user_id, Notification.title == title,
+                                     Notification.created_at >= since).count():
+            return
+        cap = item.get("sowing_cap_date")
+        NotificationRepository.create({
+            "user_id":           user_id,
+            "title":             title,
+            "message":           RuleEngine.SOWING_WINDOW_AT_RISK_TEXT,
+            "detail":            (f"{crop}: sowing has already been delayed to the limit of "
+                                  f"{RuleEngine.MAX_SOWING_DELAY_DAYS} days after the planned date "
+                                  f"(latest: {cap}). The forecast is still unfavourable."),
+            "notification_type": "warning",
+            "entity_type":       "crop_name",
+            "entity_id":         item["crop_id"],
+        })
 
     @staticmethod
     def delete(plan_id: int):

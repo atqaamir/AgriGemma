@@ -103,6 +103,11 @@ The following assumptions define the current scope and operational boundaries of
   decisions are recalculated, not re-applied, so running the daily update or the simulator twice gives the same result.
 - Temporary adjustments (extra or removed irrigation sessions, "avoid this window") are **not** stored; they are
   recalculated every day from the forecast.
+- **Limit on weather delays of sowing:** sowing is delayed by the weather at most `MAX_SOWING_DELAY_DAYS = 14` days
+  after the planned (seasonal) sowing date. Several rules firing on the same day add up (e.g. temperature +4 and
+  sunlight +4 = 8 days). When the limit is reached, sowing is not delayed further; the plan keeps the date and shows,
+  with a warning notification: "Sowing window at risk – the forecast is still unfavourable; farmer decision needed."
+  The value 14 is a **placeholder until validated by an agronomist**.
 - A same-day rebuild without the forecast (weekly job, app restart) shows that day's plan without its forecast
   decisions until the next daily update or simulator run.
 - **Demo:** overrides are deleted together with the seasonal plans when the app restarts and reseeds (`run.py`),

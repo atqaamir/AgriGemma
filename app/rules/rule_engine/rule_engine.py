@@ -11,6 +11,45 @@ from app.services.weather_service.weather_data_service import WeatherService
 
 class RuleEngine:
 
+    # Upper limit for the total weather delay of sowing, counted from the seasonal
+    # (planned) sowing date. Placeholder value until validated by an agronomist.
+    MAX_SOWING_DELAY_DAYS = 14
+    SOWING_WINDOW_AT_RISK_TEXT = (
+        "Sowing window at risk – the forecast is still unfavourable; farmer decision needed."
+    )
+
+    @staticmethod
+    def _cap_sowing_delay(events: list, original_events: list, cap_date_iso: str | None):
+        """Limit a weather delay of sowing to cap_date (seasonal sowing + MAX_SOWING_DELAY_DAYS).
+
+        If the rules pushed sowing past the cap, sowing goes back to the cap, or stays
+        at its original (effective) date when that is already at/after the cap.
+        Returns None, or (requested_iso, kept_iso) when the cap was hit.
+        """
+        if not cap_date_iso:
+            return None
+        cap = date.fromisoformat(cap_date_iso)
+        sowing = next((e for e in events if e["event_type"] == "sowing"), None)
+        original = next((e for e in original_events if e["event_type"] == "sowing"), None)
+        if not sowing or date.fromisoformat(sowing["date"]) <= cap:
+            return None
+        requested = sowing["date"]
+        original_date = date.fromisoformat(original["date"]) if original else cap
+        sowing["date"] = max(original_date, cap).isoformat()
+        return requested, sowing["date"]
+
+    @staticmethod
+    def _sowing_window_at_risk_adjustment(cap_date_iso: str, capped: tuple) -> dict:
+        requested, kept = capped
+        planned = date.fromisoformat(cap_date_iso) - timedelta(days=RuleEngine.MAX_SOWING_DELAY_DAYS)
+        return {
+            "factor":     "sowing_window",
+            "reasoning":  (f"Forecast rules asked to move sowing to {requested}; kept at {kept}. Weather delays "
+                           f"of sowing are limited to {RuleEngine.MAX_SOWING_DELAY_DAYS} days after the planned "
+                           f"sowing date ({planned.isoformat()}), i.e. not beyond {cap_date_iso}."),
+            "adjustment": RuleEngine.SOWING_WINDOW_AT_RISK_TEXT,
+        }
+
     # @staticmethod
     # def evaluate_sowing(rain_mm: float, crop: str) -> dict:
     #     sowing_rules = rule_base_service.get_sowing_rules(crop)
@@ -424,6 +463,7 @@ class RuleEngine:
 
                 week_events.sort(key=lambda e: e["date"])
 
+                planned_sowing = _parse(entry.sowing)
                 result.append({
                     "crop_id":          entry.crop_name_id,
                     "crop_name":        crop_name,
@@ -431,6 +471,8 @@ class RuleEngine:
                     "growth_stage_id":  growth_stage_id,
                     "growth_stage":     growth_stage_name,
                     "week_events":      week_events,
+                    "sowing_cap_date":  (planned_sowing + timedelta(days=RuleEngine.MAX_SOWING_DELAY_DAYS)).isoformat()
+                                        if planned_sowing else None,
                 })
 
         # ── Crop model fallback ────────────────────────────────────────────
@@ -715,6 +757,13 @@ class RuleEngine:
                         "adjustment": "; ".join(texts),
                     })
 
+            capped = RuleEngine._cap_sowing_delay(
+                events, entry["week_events"], entry.get("sowing_cap_date"))
+            sowing_at_risk = capped is not None
+            if capped:
+                climate_adjustments.append(
+                    RuleEngine._sowing_window_at_risk_adjustment(entry["sowing_cap_date"], capped))
+
             RuleEngine._cascade_sowing_delay(events, entry["week_events"])
             events = RuleEngine._filter_to_week(events, week_start_date, week_end)
 
@@ -727,6 +776,7 @@ class RuleEngine:
 
             adjusted_entry = {k: v for k, v in entry.items()
                               if k not in ("field_location", "field_moisture", "field_ph", "week_events")}
+            adjusted_entry["sowing_window_at_risk"] = sowing_at_risk
             adjusted_entry["climate_adjustments_made"] = climate_adjustments
             adjusted_entry["week_events"] = sorted(events, key=lambda e: e["date"])
             adjusted_result.append(adjusted_entry)
@@ -852,6 +902,16 @@ class RuleEngine:
                         "adjustment": "; ".join(texts),
                     })
 
+            capped = RuleEngine._cap_sowing_delay(
+                events, entry["week_events"], entry.get("sowing_cap_date"))
+            sowing_at_risk = capped is not None
+            if capped:
+                climate_adjustments.append(
+                    RuleEngine._sowing_window_at_risk_adjustment(entry["sowing_cap_date"], capped))
+                if shift_reasons["sowing"]:
+                    shift_reasons["sowing"].append(
+                        f"capped at {RuleEngine.MAX_SOWING_DELAY_DAYS} days after the planned sowing date")
+
             RuleEngine._cascade_sowing_delay(events, entry["week_events"])
             event_shifts = RuleEngine._one_time_event_shifts(
                 entry["week_events"], events, as_of_date, shift_reasons, temporary_days
@@ -867,6 +927,7 @@ class RuleEngine:
 
             updated_entry = {k: v for k, v in entry.items()
                              if k not in ("field_location", "field_moisture", "field_ph", "week_events")}
+            updated_entry["sowing_window_at_risk"] = sowing_at_risk
             updated_entry["climate_adjustments_made"] = climate_adjustments
             updated_entry["week_events"] = sorted(events, key=lambda e: e["date"])
             # One-time events moved to a new date by a forecast rule (measured before
