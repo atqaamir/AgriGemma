@@ -66,6 +66,23 @@ The following assumptions define the current scope and operational boundaries of
 
 ---
 
+## Demo Scenario: Pre-Sowing Decision
+
+- The demo represents a farmer **planning to sow this week**, not a crop already in the ground.
+  - Seeded sowing dates are set relative to the current date (today to today + 2), so they always fall inside the simulator's week.
+- The whole seasonal plan uses the growth stage **Sowing**.
+  - The rulebook lookups and the seeded demo weather were designed for this stage (e.g. a cold spell → "delay sowing by 4 days").
+- **Why not sowing dates in the past?** In real farming, sowing usually happened earlier, and that is valid.
+  But a past sowing date combined with the fixed "Sowing" stage would be inconsistent, and sowing-stage rules
+  (such as delaying sowing) have nothing to act on once sowing is over.
+- **Intended future behaviour:**
+  - The farmer enters the actual sowing date per field.
+  - The growth stage advances automatically based on days since sowing.
+  - The rules for the current stage apply, so mid-season weather triggers stage-specific changes
+    (e.g. more irrigation during flowering in a heatwave).
+
+---
+
 ## System Behaviour
 
 - All background jobs are assumed to succeed successfully.
