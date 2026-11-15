@@ -70,8 +70,18 @@ The following assumptions define the current scope and operational boundaries of
 
 ## Demo Scenario: Pre-Sowing Decision
 
+- **The rule base covers Kharif crops** (Maize, Rice, Cotton), which are sown roughly April–July.
+  Outside that season (e.g. in November) no day is suitable for sowing them, which is the correct answer.
+- **The demo runs on a simulated date in the Kharif season** (demo clock):
+  - `DEMO_TODAY=YYYY-MM-DD` in the environment (e.g. `2027-05-05`) sets "today" for planning, weather,
+    tasks, jobs and seeders. Empty or unset means the real date.
+  - Timestamps (created at, job start/end) keep the real time.
+  - The UI shows a banner such as "Demo date: 5 May 2027 (Kharif season)" when it is set.
+- **Rabi crops** (wheat, chickpea) are a data addition for later: crop and rulebook values validated by an agronomist.
 - The demo represents a farmer **planning to sow this week**, not a crop already in the ground.
-  - Seeded sowing dates are set relative to the current date (today to today + 2), so they always fall inside the simulator's week.
+  - Seeded sowing dates are set relative to today (today to today + 2), so they always fall inside the simulator's week.
+  - The demo weather is realistic for early May in Punjab (hot, dry, long sunshine) with a two-day western
+    disturbance that the rules reject for Cotton sowing. Nothing in it is hand-picked for a crop.
 - The whole seasonal plan uses the growth stage **Sowing**.
   - The rulebook lookups and the seeded demo weather were designed for this stage (e.g. a cold spell → "delay sowing by 4 days").
 - **Why not sowing dates in the past?** In real farming, sowing usually happened earlier, and that is valid.
@@ -110,17 +120,21 @@ The following assumptions define the current scope and operational boundaries of
     says "delay sowing" or "avoid". Rules don't add up — a day is suitable or not.
   - It is recalculated from scratch every day, so sowing can move **earlier** again when the forecast improves,
     but never before the planned date and never before today.
-  - No suitable day in the forecast: sowing is provisionally the first window day after the forecast (or the window
-    end), with "No suitable sowing day in the forecast – re-checked daily".
+  - No suitable day in the forecast: sowing is provisionally the first window day after the forecast, with
+    "No suitable sowing day in the forecast – re-checked daily".
+  - **No suitable day left in the window** (the window end is in the forecast and no remaining day is suitable):
+    sowing is **not** scheduled on an unsuitable day. The crop shows "No suitable sowing day left in the sowing
+    window – decision needed" with the same options as overdue; it is re-checked daily until the window ends.
   - Harvest, irrigation start and fertilization follow the effective sowing date. A completed sowing (farmer) is never
     moved.
 - **Sowing overdue → human decision:** when the window has passed and sowing was not completed, the crop stays in the
   weekly plan as "Sowing overdue – decision needed" (no sowing, irrigation or fertilization events) with the options:
   sow anyway with precautions, switch to a short-duration variety, switch crop, or skip the season. The system does
-  not choose. One notification per crop is sent — on a day the daily update finds a plan impact.
+  not choose. **One notification per crop** (decision needed or overdue, whichever comes first) is sent **on the day it
+  happens**, also on days without a plan impact.
 - **The daily update always applies the forecast to the weekly plan** (sowing window, actual dates). This step makes no
-  AI calls and sends no notifications; notifications, task updates and AI summaries only follow on days with a plan
-  impact (plus the existing weather-only notification on "change without impact" days).
+  AI calls; its only notification is the sowing decision above. Other notifications, task updates and AI summaries
+  only follow on days with a plan impact (plus the existing weather-only notification on "change without impact" days).
 - A same-day rebuild without the forecast (weekly job, app restart) shows that day's plan without its forecast
   decisions until the next daily update or simulator run.
 - **Demo:** overrides are deleted together with the seasonal plans when the app restarts and reseeds (`run.py`),
