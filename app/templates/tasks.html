@@ -1024,9 +1024,10 @@
       const iconBg   = task.completed ? 'bg-primary/10' : 'bg-secondary-container';
       const iconColor = task.completed ? 'text-primary' : 'text-on-secondary-container';
       const icon     = task.completed ? 'check_circle' : getTaskIcon(task.task_type);
+      const cancelled = task.is_active === false;   // deactivated: shown only in "all tasks"
 
       return `
-        <div class="${outerClass}" data-task-id="${task.id}" onclick="openTaskDetailModal(${task.id})">
+        <div class="${outerClass}${cancelled ? ' opacity-60 grayscale' : ''}" data-task-id="${task.id}" onclick="openTaskDetailModal(${task.id})">
           <!-- Priority strip -->
           <div class="h-1.5 ${barColor}"></div>
 
@@ -1057,15 +1058,15 @@
           <div class="p-4 flex flex-col gap-2 flex-1">
             <div>
               <h4 class="font-bold text-on-surface text-sm line-clamp-2 leading-tight">${escapeHtml(getDynTranslation(task.title) || 'Untitled')}</h4>
-              <p class="text-[10px] text-on-surface-variant font-medium truncate mt-0.5">${escapeHtml(getTaskSubtitle(task))}</p>
+              <p class="text-[10px] text-on-surface-variant font-medium ${cancelled ? 'line-clamp-2' : 'truncate'} mt-0.5">${escapeHtml(cancelled ? (task.cancel_reason || 'Cancelled') : getTaskSubtitle(task))}</p>
               ${task.due_date ? `<p class="text-[10px] text-outline mt-0.5">${formatDate(task.due_date)}</p>` : ''}
             </div>
 
             <div class="flex items-center justify-between mt-auto pt-1">
-              <span class="text-[10px] font-bold uppercase ${task.completed ? 'text-primary' : 'text-amber-600'}">
-                ${task.completed ? t('common.done') : t('common.pending')}
+              <span class="text-[10px] font-bold uppercase ${cancelled ? 'text-outline' : (task.completed ? 'text-primary' : 'text-amber-600')}">
+                ${cancelled ? 'Cancelled' : (task.completed ? t('common.done') : t('common.pending'))}
               </span>
-              ${!task.completed ? `
+              ${cancelled ? '' : !task.completed ? `
                 <button onclick="markTaskDone(${task.id}, event)"
                   class="h-8 w-8 rounded-full border-2 border-primary flex items-center justify-center hover:bg-primary hover:text-on-primary transition-colors text-primary active:scale-90"
                   title="${t('common.mark_done')}">
@@ -1274,8 +1275,10 @@
       p.className = `text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wide ${pColors[task.priority] || pColors.low}`;
 
       const s = document.getElementById('taskDetailStatus');
-      s.textContent = task.completed ? t('common.completed') : t('common.pending');
-      s.className = `text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wide ${task.completed ? 'bg-primary/10 text-primary' : 'bg-amber-100 text-amber-700'}`;
+      const cancelled = task.is_active === false;
+      s.textContent = cancelled ? `Cancelled – ${task.cancel_reason || ''}`.replace(/ – $/, '')
+                                : (task.completed ? t('common.completed') : t('common.pending'));
+      s.className = `text-xs font-bold px-3 py-1 rounded-full ${cancelled ? 'bg-surface-container text-outline normal-case' : 'uppercase tracking-wide ' + (task.completed ? 'bg-primary/10 text-primary' : 'bg-amber-100 text-amber-700')}`;
 
       document.getElementById('taskDetailField').textContent    = getDynTranslation(task.field_name)   || '—';
       document.getElementById('taskDetailCrop').textContent     = translateCropName(task.crop_name)    || '—';
