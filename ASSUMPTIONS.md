@@ -170,7 +170,11 @@ The following assumptions define the current scope and operational boundaries of
 - Weather-rule task updates (impact-on-tasks days) skip plan tasks (the plan already contains the weather's effect) and
   leave unaffected tasks' priority alone.
 - Every task change is recorded in the task's history with the (demo) date (`changed_on`); change notifications report
-  only the changes of that day. Deactivated tasks are not hidden in the task lists yet.
+  only the changes of that day.
+- **A deactivated task is "Cancelled", not something to do:** it is left out of every pending list and count (tasks,
+  crop and field pages and cards, dashboard) and of the chatbot / AI task context. The "all tasks" view shows it greyed
+  out as "Cancelled" with the reason from its history. Completed tasks stay as they are.
+- The chatbot and AI task context only contain the current user's tasks.
 
 ---
 
