@@ -22,21 +22,16 @@ class PlanningAgent:
         return enums_.Status.SUCCESS if plan else enums_.Status.FAILED
 
     @staticmethod
-    def clear_forecast_overrides(user_id: int, as_of_date) -> dict:
-        """Remove the day's forecast_shift overrides (the forecast no longer impacts the plan)."""
-        from app.services.plan_override_service import PlanOverrideService
-        return PlanOverrideService.sync_forecast_shifts(user_id, as_of_date, [])
+    def apply_forecast(user_id: int, as_of_date=None, notify: bool = True) -> str:
+        """Forecast re-plan of the active weekly plan (runs on every daily update)."""
+        result = WeeklyPlannerService.update_plan(user_id, as_of_date, notify=notify)
+        return enums_.Status.SUCCESS if result == enums_.Status.SUCCESS else enums_.Status.FAILED
 
     @staticmethod
     def daily_update(user_id: int, as_of_date=None, tag: str = "") -> str:
-        if tag == "impact_weekly":
-            result = WeeklyPlannerService.update_plan(user_id, as_of_date)
-            return enums_.Status.SUCCESS if result == enums_.Status.SUCCESS else enums_.Status.FAILED
-
+        """Impact-specific follow-up after the forecast re-plan (which the coordinator
+        already ran via apply_forecast): task updates when today's tasks are impacted."""
         if tag == "impact_tasks":
             from app.services.task_update_service import TaskUpdateService
-            plan_result = WeeklyPlannerService.update_plan(user_id, as_of_date)
             TaskUpdateService.update_tasks(user_id, as_of_date)
-            return enums_.Status.SUCCESS if plan_result == enums_.Status.SUCCESS else enums_.Status.FAILED
-
         return enums_.Status.SUCCESS

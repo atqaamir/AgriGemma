@@ -94,15 +94,10 @@ class CoordinatorAgent:
         risk_status, change, _ = self.risk_agent.assess_risk(user_id, tag="risk_assessment", as_of_date=as_of_date)
         print (f"[daily update] risk assessment completed with status={risk_status}, change={change} for user={user_id}")
 
-        if change in (enums_.ChangeStatus.NO_CHANGE, enums_.ChangeStatus.NO_IMPACT):
-            # No plan impact today: drop any forecast_shift overrides an earlier run
-            # on the same day may have written, so they don't leak into tomorrow.
-            try:
-                self.planning_agent.clear_forecast_overrides(user_id, as_of_date)
-            except Exception:
-                from app.extensions import db
-                db.session.rollback()
-                logger.exception("Daily update: clearing forecast overrides failed for user=%s", user_id)
+        # Always apply the forecast to the plan (sowing window, forecast overrides).
+        # This step makes no AI calls; notifications only when the plan is impacted.
+        plan_impacted = change in (enums_.ChangeStatus.IMPACT_PLAN, enums_.ChangeStatus.IMPACT_TASKS)
+        plan_update = self._apply_forecast_to_plan(user_id, as_of_date, notify=plan_impacted)
 
         if change == enums_.ChangeStatus.NO_CHANGE:
             result = execution_responses.ExecutionResponse.success("Risk assessment completed — no change")
@@ -125,9 +120,28 @@ class CoordinatorAgent:
 
         result["change_status"] = change.value
         result["plan_roll"] = plan_roll
+        result["plan_update"] = plan_update
         if plan_roll["status"] == "failed":
             result["message"] += f" (weekly plan roll failed: {plan_roll['error']})"
+        if plan_update["status"] == "failed":
+            result["message"] += f" (forecast plan update failed: {plan_update['error']})"
         return result
+
+    def _apply_forecast_to_plan(self, user_id: int, as_of_date: date, notify: bool) -> dict:
+        """Run the forecast re-plan (update_plan) on every daily update. Never raises."""
+        try:
+            status = self.planning_agent.apply_forecast(user_id, as_of_date, notify=notify)
+            if status == enums_.Status.SUCCESS:
+                return {"status": "success"}
+            error = "update_plan failed (no active weekly plan?)"
+            logger.error("Daily update: forecast plan update FAILED for user=%s: %s", user_id, error)
+        except Exception as exc:
+            from app.extensions import db
+            db.session.rollback()
+            error = f"{type(exc).__name__}: {exc}"
+            logger.exception("Daily update: forecast plan update FAILED for user=%s as_of_date=%s",
+                             user_id, as_of_date)
+        return {"status": "failed", "error": error}
 
     def _roll_weekly_plan(self, user_id: int, as_of_date: date) -> dict:
         """Regenerate the weekly plan for as_of_date..as_of_date+6. Never raises."""
