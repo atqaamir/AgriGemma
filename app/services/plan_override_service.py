@@ -185,7 +185,8 @@ class PlanOverrideService:
         """Sowing task marked done → farmer_completed overrides (sowing + cascades).
 
         actual_date = task.completed_at.date(). Harvest, irrigation start and
-        fertilization move by (actual − effective sowing). Nothing is written for
+        fertilization move by (actual − previous sowing date, i.e. the effective date
+        before completion, which may already be forecast-shifted). Nothing is written for
         a "Not Feasible" entry (the task itself stays done).
         """
         entry = PlanOverrideService._entry_for_task(task)
@@ -205,12 +206,17 @@ class PlanOverrideService:
             return []
 
         eff = PlanOverrideService.effective_dates(entry, actual)
-        planned = eff["sowing"]
-        delta = (actual - planned) if planned else None
+        previous = eff["sowing"]            # last scheduled sowing date (may be forecast-shifted)
+        delta = (actual - previous) if previous else None
+        seasonal = datetime.strptime(entry.sowing, "%m/%d/%Y").date() if entry.sowing else None
+        if previous == seasonal:
+            compared = f"vs the planned sowing date {previous}"
+        else:
+            compared = f"vs the previous sowing date {previous}; seasonal plan {seasonal}"
         base = {"seasonal_plan_entry_id": entry.id, "source": PlanEventOverride.SOURCE_FARMER,
                 "as_of_date": actual, "task_id": task.id}
         rows = [PlanEventOverrideRepository.create({
-            **base, "event_type": "sowing", "original_date": planned, "actual_date": actual,
+            **base, "event_type": "sowing", "original_date": previous, "actual_date": actual,
             "reason": f"Sowing done on {actual} (task #{task.id} '{task.title}')"})]
         if delta:
             for etype in CASCADE_FROM_SOWING:
@@ -219,7 +225,7 @@ class PlanOverrideService:
                         **base, "event_type": etype, "original_date": eff[etype],
                         "actual_date": eff[etype] + delta,
                         "reason": f"Cascaded from sowing done on {actual} "
-                                  f"({delta.days:+d} days vs planned {planned}, task #{task.id})"}))
+                                  f"({delta.days:+d} day{'' if abs(delta.days) == 1 else 's'} {compared}, task #{task.id})"}))
         logger.info("Task %s: %d farmer_completed override(s) for entry %s (%s)",
                     task.id, len(rows), entry.id, crop)
         return rows

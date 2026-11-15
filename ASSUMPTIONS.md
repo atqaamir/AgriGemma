@@ -103,7 +103,8 @@ The following assumptions define the current scope and operational boundaries of
   - `forecast_shift`: a forecast rule moved the event (e.g. "Sowing delayed by 4 days — unfavourable sunlight conditions").
     A sowing delay also moves harvest, irrigation start and fertilization by the same number of days.
   - `farmer_completed`: the farmer marked the sowing task done; the actual sowing date is the completion date, and
-    harvest, irrigation start and fertilization move by the difference to the planned sowing date.
+    harvest, irrigation start and fertilization move by the difference to the previous sowing date (the date the plan
+    showed until then, which may already include a forecast shift).
     Un-completing the task removes these rows again.
 - The weekly plan is built from **effective dates**: the latest override per event, otherwise the seasonal date.
   Irrigation repeats from the effective irrigation start until the effective harvest date.
