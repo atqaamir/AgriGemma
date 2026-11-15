@@ -50,6 +50,12 @@ def weather_block(weather: dict, days: int = 3) -> str:
             rc   = f.get("rain_chance")
             tmax = f.get("max_temp_c")
             seg  = f"{day}: {cond}"
+            if f.get("avg_temp_c") is not None:          # forecast table (same as the plan)
+                seg += f" avg {f['avg_temp_c']:g}°C, {f.get('rain_mm') or 0:g}mm rain"
+                if f.get("sunlight_h") is not None:
+                    seg += f", {f['sunlight_h']:g}h sun"
+                fc_parts.append(seg)
+                continue
             if tmax is not None:
                 seg += f" {tmax}°C"
             if rc is not None:
@@ -60,7 +66,36 @@ def weather_block(weather: dict, days: int = 3) -> str:
     return "[WEATHER]\n" + "\n".join(lines) if lines else ""
 
 
-def weather_signals(weather: dict, fields: list) -> str:
+def plan_block(plan: dict) -> str:
+    """Today's date + the weekly plan / seasonal dates per crop. Authoritative for dates."""
+    if not plan:
+        return ""
+    lines = [f"[PLAN — today is {plan.get('today')}; use these dates, they are the farm's plan]"]
+    for c in plan.get("crops", []):
+        where = f" ({c['field']})" if c.get("field") else ""
+        if c.get("not_feasible"):
+            lines.append(f"  {c['crop']}{where}: NOT FEASIBLE — do not sow or recommend it."
+                         + (f" Reason: {c['reason']}" if c.get("reason") else ""))
+            continue
+        parts = []
+        if c.get("sown_on"):
+            parts.append(f"sown on {c['sown_on']}")
+        elif c.get("sowing"):
+            parts.append(f"sowing {c['sowing']}" + (f" — {c['sowing_note']}" if c.get("sowing_note") else ""))
+        elif c.get("sowing_note"):
+            parts.append(c["sowing_note"])
+        dates = [f"{k} {c[key]}" for k, key in (("irrigation from", "irrigation_start"),
+                                                  ("fertilization", "fertilization"),
+                                                  ("harvest", "harvest")) if c.get(key)]
+        if dates:
+            parts.append(", ".join(dates))
+        for n in c.get("notes", []):
+            parts.append(n)
+        lines.append(f"  {c['crop']}{where}: " + ". ".join(parts))
+    return "\n".join(lines)
+
+
+def weather_signals(weather: dict, fields: list, harvest_soon: bool = True) -> str:
     """
     Actionable signals derived from the forecast.
     HIGH PRIORITY — Gemma should lead with these when present.
@@ -95,7 +130,9 @@ def weather_signals(weather: dict, fields: list) -> str:
 
     # Dry window → harvest opportunity
     dry = [f for f in forecast[:4] if (f.get("rain_chance") or 0) < 25]
-    if len(dry) >= 2:
+    if not harvest_soon:
+        pass                      # nothing to harvest: a dry window is not a harvest signal
+    elif len(dry) >= 2:
         signals.append(
             f"DRY WINDOW ({dry[0].get('day','?')}–{dry[1].get('day','?')}): "
             "good window for harvesting ready crops"

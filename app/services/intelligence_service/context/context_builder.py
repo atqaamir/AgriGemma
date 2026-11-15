@@ -60,7 +60,7 @@ _SPECS: dict[FarmIntent, ContextSpec] = {
         needs_fields=False,
         needs_crops=True,
         needs_tasks=False,
-        needs_weather=True, forecast_days=5,
+        needs_weather=True, forecast_days=7,
         needs_alerts=False,
         needs_rules=False,
         needs_climate=True,
@@ -69,7 +69,7 @@ _SPECS: dict[FarmIntent, ContextSpec] = {
     FarmIntent.HARVEST: ContextSpec(
         needs_fields=False,
         needs_crops=True,
-        needs_tasks=True,   task_types=frozenset({"harvest", "general"}),
+        needs_tasks=True,   task_types=frozenset({"harvesting", "general"}),
         needs_weather=True, forecast_days=4,
         needs_alerts=False,
         needs_rules=False,
@@ -80,7 +80,7 @@ _SPECS: dict[FarmIntent, ContextSpec] = {
     FarmIntent.FERTILIZATION: ContextSpec(
         needs_fields=False,
         needs_crops=True,
-        needs_tasks=True,   task_types=frozenset({"fertilization"}),
+        needs_tasks=True,   task_types=frozenset({"fertilization", "fertilizing"}),
         needs_weather=True, forecast_days=2,
         needs_alerts=False,
         needs_rules=True,
@@ -117,7 +117,7 @@ _SPECS: dict[FarmIntent, ContextSpec] = {
         needs_fields=True,
         needs_crops=True,
         needs_tasks=False,
-        needs_weather=True, forecast_days=5,
+        needs_weather=True, forecast_days=7,
         needs_alerts=False,
         needs_rules=True,
         needs_climate=True,
@@ -126,13 +126,13 @@ _SPECS: dict[FarmIntent, ContextSpec] = {
         max_crops=6,
     ),
     FarmIntent.GENERAL: ContextSpec(
-        needs_fields=False,
+        needs_fields=True,
         needs_crops=True,
         needs_tasks=True,
-        needs_weather=True, forecast_days=2,
-        needs_alerts=False,
+        needs_weather=True, forecast_days=3,
+        needs_alerts=True,
         needs_rules=False,
-        max_tasks=3,
+        max_tasks=5,
         max_crops=4,
     ),
     FarmIntent.GREETING: ContextSpec(
@@ -191,6 +191,8 @@ def build_chatbot_context(user_id: int, intent_result: IntentResult) -> dict:
 
     ctx["farmer_name"] = _safe("farmer_name", _fetch_farmer_name, user_id)
     ctx["intent"]      = intent_result.primary.value
+    # The farm's plan (dates, sowing status, Not Feasible crops) for every question.
+    ctx["plan"]        = _safe("plan", _fetch_plan, user_id) or {}
 
     if spec.needs_weather:
         weather = _safe("weather", _fetch_weather, user_id) or {}
@@ -382,6 +384,62 @@ def _fetch_tasks(today: date, type_filter: frozenset[str], user_id: int) -> dict
             for t in pending
         ],
     }
+
+
+def _fetch_plan(user_id: int) -> dict:
+    """Per crop of the active seasonal plan: field, sowing status/date and its reason
+    (weekly plan), and the effective irrigation start, fertilization and harvest dates."""
+    from datetime import timedelta
+    import json as _json
+    from app.models.seasonal_plan import SeasonalPlan
+    from app.services.plan_override_service import PlanOverrideService
+    from app.services.weekly_planning_service.weekly_planner_service import WeeklyPlannerService
+
+    today = clock.today()
+    fmt = lambda d: f"{d.day} {d.strftime('%b')}" if d else None
+    plan = SeasonalPlan.query.filter_by(user_id=user_id, currently_active=True).first()
+    if not plan:
+        return {}
+    weekly = {}
+    try:
+        for e in WeeklyPlannerService.show_active_plan(user_id).get("entries", []):
+            weekly[e["crop_name"]] = e
+    except Exception:
+        pass
+
+    crops = []
+    for entry in plan.entries:
+        name = entry.crop_name_rel.name if entry.crop_name_rel else f"Crop {entry.crop_name_id}"
+        crop = PlanOverrideService.active_crop_for_entry(entry, user_id)
+        field = crop.field.name if crop and crop.field else None
+        if entry.feasibility == "Not Feasible":
+            try:
+                reason = "; ".join(_json.loads(entry.adjustments_to_make or "[]"))
+            except (TypeError, ValueError):
+                reason = entry.adjustments_to_make
+            crops.append({"crop": name, "field": field, "not_feasible": True, "reason": reason})
+            continue
+        # today + 1: also counts today's forecast decisions (as-of rule)
+        eff = PlanOverrideService.effective_dates(entry, today + timedelta(days=1))
+        w = weekly.get(name, {})
+        adj = w.get("climate_adjustments_made", [])
+        sowing_note = next((a.get("adjustment") for a in adj if a.get("factor") == "sowing_window"), None)
+        week_sowing = next((x["date"] for x in w.get("week_events", []) if x.get("event_type") == "sowing"), None)
+        sowing = (date.fromisoformat(week_sowing) if week_sowing
+                  else None if w.get("sowing_status") in ("decision_needed", "overdue") else eff["sowing"])
+        notes = [a["adjustment"] for a in adj
+                 if a.get("factor") != "sowing_window" and "irrigation" in (a.get("adjustment") or "").lower()
+                 and not a["adjustment"].startswith("[Monitor]")][:1]
+        crops.append({
+            "crop": name, "field": field,
+            "sown_on": fmt(eff["sowing_done_on"]),
+            "sowing": fmt(sowing), "sowing_note": sowing_note,
+            "irrigation_start": fmt(eff["irrigation_start"]),
+            "fertilization": fmt(eff["fertilization"]),
+            "harvest": fmt(eff["harvesting"]),
+            "notes": [n.split(";")[0] for n in notes],
+        })
+    return {"today": f"{today.strftime('%A')} {today.day} {today.strftime('%B %Y')}", "crops": crops}
 
 
 def _fetch_alerts(active_fields: list) -> list:

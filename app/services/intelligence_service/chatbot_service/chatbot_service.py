@@ -53,6 +53,7 @@ from app.services.intelligence_service.prompts.components import (
     alert_block,
     rules_block,
     climate_block,
+    plan_block,
 )
 from app.repositories.chat_repository import ChatRepository
 from app.services import web_search_service
@@ -145,13 +146,19 @@ def _format_farmer_context(
 
     parts = [f"Farmer: {farmer_name}"]
 
+    # The plan first: dates and Not Feasible crops must survive the budget cut.
+    plan_txt = plan_block(context.get("plan") or {})
+    if plan_txt:
+        parts.append(plan_txt)
+
     # Weather signals first — highest priority for Gemma
-    wx_signals = weather_signals(weather, fields)
+    harvest_soon = any((c.get("growth_stage") or "").lower() == "harvesting" for c in crops)
+    wx_signals = weather_signals(weather, fields, harvest_soon=harvest_soon)
     if wx_signals:
         parts.append(wx_signals)
 
     # Weather block
-    wx = weather_block(weather, days=3)
+    wx = weather_block(weather, days=len(weather.get("forecast") or []) or 3)
     if wx:
         parts.append(wx)
 

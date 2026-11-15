@@ -76,7 +76,7 @@ _CLIMATE_PROFILES = {
             (2,  "February",  22,  9,  22,  4, "Mild",            "Wheat tillering; mustard flowering; prepare for spring planting"),
             (3,  "March",     28, 14,  28,  5, "Warm and Windy",  "Wheat heading; sow summer vegetables; increase irrigation"),
             (4,  "April",     35, 20,  16,  3, "Hot and Dry",     "Wheat harvest window; sow cotton and maize; watch for aphids"),
-            (5,  "May",       40, 26,   8,  2, "Very Hot",        "Complete wheat harvest; heavy irrigation critical; avoid new sowing"),
+            (5,  "May",       40, 26,   8,  2, "Very Hot",        "Complete wheat harvest; cotton and maize sowing; heavy irrigation critical"),
             (6,  "June",      42, 29,  18,  3, "Extreme Heat",    "Cotton growing; pre-monsoon dust storms; irrigate every 5–7 days"),
             (7,  "July",      37, 28, 120, 12, "Monsoon",         "Rice planting; reduce irrigation; high fungal disease and pest risk"),
             (8,  "August",    36, 27, 110, 11, "Peak Monsoon",    "Monitor drainage; peak fungal risk; avoid field work after rain"),

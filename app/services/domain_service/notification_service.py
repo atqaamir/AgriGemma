@@ -410,21 +410,29 @@ class NotificationService:
 
     def get_active_alerts(self, field_id) -> list:
         """
-        Used by ContextAggregationService to collect per-field alerts.
-        Returns a static sample — replace with a real DB lookup when available.
+        Per-field alerts for the chatbot / AI context, from the field's current data
+        (soil moisture, health status, disease risk). Was a static sample that showed
+        "Low soil moisture" for every field.
         """
-        return [
-            {
-                "message": "Low soil moisture: crops may suffer water stress",
-                "level": "high",
-                "type": "soil",
-            },
-            {
-                "message": "Crop health warning: needs attention",
-                "level": "medium",
-                "type": "crop",
-            },
-        ]
+        from app.models.field import Field
+        f = Field.query.get(field_id)
+        if f is None:
+            return []
+        alerts = []
+        m = f.moisture_level
+        if m is not None and m < 30:
+            alerts.append({"message": f"Low soil moisture on {f.name} ({m:.0f}%): water stress risk",
+                           "level": "high", "type": "soil"})
+        elif m is not None and m > 70:
+            alerts.append({"message": f"Very wet soil on {f.name} ({m:.0f}%): waterlogging risk",
+                           "level": "medium", "type": "soil"})
+        health = (f.health_status or "").lower()
+        if health in ("poor", "alert", "critical", "warning"):
+            alerts.append({"message": f"Field health '{f.health_status}' on {f.name}: inspect the field",
+                           "level": "high" if health == "critical" else "medium", "type": "field"})
+        if (f.disease_risk or "").lower() == "high":
+            alerts.append({"message": f"High disease risk on {f.name}", "level": "medium", "type": "field"})
+        return alerts
 
     # ── Private helpers ────────────────────────────────────────────────────
 

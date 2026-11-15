@@ -101,7 +101,15 @@ class ForecastService:
 
     @staticmethod
     def get_current_summary(user_id: int = None) -> dict:
-        """Return normalized current weather and forecast context for the chatbot."""
+        """Return normalized current weather and forecast context for the chatbot.
+
+        Uses the same 7-day forecast as the weekly plan (WeatherForecast rows for the
+        user's region) when it exists, so the chatbot and the plan agree; otherwise the
+        static demo forecast.
+        """
+        from_table = ForecastService._summary_from_forecast_table(user_id)
+        if from_table:
+            return from_table
         location = ForecastService._resolve_location(user_id)
         try:
             raw_weather_data = get_weather(location)
@@ -109,6 +117,65 @@ class ForecastService:
         except Exception as exc:
             logger.warning("ForecastService: failed to fetch current weather for %s — %s", location, exc)
             return {}
+
+    @staticmethod
+    def _summary_from_forecast_table(user_id: int = None) -> dict:
+        """Today..today+6 from the WeatherForecast table (the forecast the plan uses)."""
+        if user_id is None:
+            return {}
+        try:
+            from datetime import timedelta
+            from app.models.weather_forecast import WeatherForecast
+            from app.services.domain_service.user_service import UserService
+            region = UserService.get_user_location(user_id)
+            today = clock.today()
+            rows = (WeatherForecast.query
+                    .filter(WeatherForecast.region == region, WeatherForecast.date >= today,
+                            WeatherForecast.date <= today + timedelta(days=6))
+                    .order_by(WeatherForecast.date).all())
+        except Exception as exc:
+            logger.warning("ForecastService: forecast table lookup failed — %s", exc)
+            return {}
+        if not rows:
+            return {}
+
+        def condition(r):
+            rain, sun, temp = r.rainfall_mm or 0, r.sunlight_hours or 0, r.avg_temperature_c or 0
+            if rain >= 2:
+                return "Showers"
+            if sun < 7:
+                return "Cloudy"
+            return "Hot and sunny" if temp >= 30 else "Sunny"
+
+        forecast = []
+        for i, r in enumerate(rows):
+            label = "Today" if i == 0 else "Tomorrow" if i == 1 else r.date.strftime("%a")
+            rain = r.rainfall_mm or 0
+            forecast.append({
+                "day": f"{label} {r.date.day} {r.date.strftime('%b')}",
+                "date": r.date.isoformat(),
+                "condition": condition(r),
+                "avg_temp_c": r.avg_temperature_c,
+                "max_temp_c": None,              # the plan works with daily averages
+                "rain_mm": rain,
+                "rain_chance": 70 if rain >= 2 else (30 if rain > 0 else 5),
+                "sunlight_h": r.sunlight_hours,
+                "humidity": r.humidity,
+            })
+        first = rows[0]
+        return {
+            "current": {
+                "temp": first.avg_temperature_c,
+                "condition": forecast[0]["condition"],
+                "humidity": first.humidity,
+                "rainfall_mm": first.rainfall_mm or 0,
+                "wind_kph": first.wind_speed_kph,
+            },
+            "forecast": forecast,
+            "rain_expected": any(f["rain_mm"] >= 2 for f in forecast[:3]),
+            "heatwave_risk": any((f["avg_temp_c"] or 0) >= 36 for f in forecast[:3]),
+            "source": "forecast table (same as the weekly plan)",
+        }
 
     @staticmethod
     def get_climate_context(user_id: int = None) -> dict:
