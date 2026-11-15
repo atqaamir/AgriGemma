@@ -182,6 +182,19 @@ The following assumptions define the current scope and operational boundaries of
 
 ---
 
+## Chatbot
+
+- The chatbot answers from the farm's own data: every question gets the plan (today's date, each crop's field,
+  sowing date and reason, irrigation start, fertilization and harvest dates, Not Feasible crops) and the same 7-day
+  forecast the weekly plan uses. The plan's dates are authoritative.
+- Intents are found by whole-word keywords (English and some Roman Urdu); no AI call for that.
+- Web search only for general questions that are not about the farm (e.g. a seed price), with a 3 s limit.
+- The last 6 messages of the conversation are passed as history.
+- An unusable AI answer (empty, a template, an echo) is retried once; then a rule-based answer is shown.
+- Evaluation: `Test_Runs/chatbot_eval.py` (28 questions incl. 3 Roman Urdu, expected facts and "must not say" checks).
+
+---
+
 ## Live Demo (Render)
 
 - There is no login. To keep the public demo safe, the admin tools are **off unless `DEMO_ADMIN_ENABLED=true`**
