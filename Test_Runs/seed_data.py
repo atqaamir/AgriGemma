@@ -598,7 +598,9 @@ def seed_demo_weather(start: date) -> None:
     (25.8, 53, 61.5, 7.2, 12, "Negligible change."),
     (31.5, 53, 60.0, 7.2, 10, "IMPACT_PLAN: 20-30 → 30-40 on future day."),
 	(31.5, 53, 60.0, 7.2, 10, "IMPACT_PLAN: 20-30 → 30-40 on future day."),
-    (25.8, 53, 61.5, 7.2, 12, "Negligible change."),
+            # Day 5: first suitable sowing day for Cotton (needs 30–40 °C AND sunlight >8 h);
+            # days 3–4 are warm enough but sunlight 7.2 h (4–8 band) still blocks sowing.
+            (31.5, 53, 61.5, 8.5, 12, "Warm and sunny – first good cotton sowing day."),
     (25.8, 53, 61.5, 7.2, 12, "Negligible change."),
     (25.8, 53, 61.5, 7.2, 12, "Negligible change."),
         ],
