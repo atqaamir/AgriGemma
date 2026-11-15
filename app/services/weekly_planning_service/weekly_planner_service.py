@@ -26,6 +26,8 @@ class WeeklyPlannerService:
         if plan is None:
             return {"status": "no_plan", "message": "No weekly plan found."}
 
+        from app.services.plan_override_service import PlanOverrideService
+
         entries_output = []
         for entry in plan.entries:
             crop_obj   = rule_base_service.get_crop_by_id(entry.crop_id)
@@ -34,6 +36,12 @@ class WeeklyPlannerService:
             original_events = json.loads(entry.original_events)    if entry.original_events    else []
             events          = json.loads(entry.week_events)         if entry.week_events         else []
             adjustments     = json.loads(entry.climate_adjustments) if entry.climate_adjustments else []
+
+            # Events the farmer already completed (e.g. sowing), shown as "done on <date>"
+            seasonal_entry = PlanOverrideService.match_entry(
+                plan.user_id, entry.crop_id, entry.field_id, warn=False)
+            done = (PlanOverrideService.done_events(seasonal_entry, plan.week_end_date)
+                    if seasonal_entry else [])
 
             entries_output.append({
                 "crop_id":                  entry.crop_id,
@@ -44,6 +52,7 @@ class WeeklyPlannerService:
                 "climate_adjustments_made": adjustments,
                 "original_events":          original_events,
                 "week_events":              events,
+                "done_events":              done,
             })
 
         return {

@@ -1,5 +1,12 @@
+import logging
+from datetime import datetime
+
+from app.extensions import db
 from app.models.task import Task
 from app.repositories.task_repository import TaskRepository
+from app.services.plan_override_service import PlanOverrideService
+
+logger = logging.getLogger(__name__)
 
 
 class TaskService:
@@ -28,7 +35,28 @@ class TaskService:
         task = TaskRepository.get_by_id(task_id)
         if not task:
             return None
-        return TaskRepository.update(task, data)
+
+        was_completed = bool(task.completed)
+        now_completed = bool(data.get("completed", was_completed))
+        if now_completed and not was_completed:
+            data = {**data, "completed_at": datetime.now()}
+        elif was_completed and not now_completed:
+            data = {**data, "completed_at": None}
+
+        task = TaskRepository.update(task, data)
+
+        # Farmer completion of a sowing task → actual-dates layer. The task update
+        # itself is already saved; an override problem is logged, not raised.
+        if now_completed != was_completed and task.task_type in PlanOverrideService.SOWING_TASK_TYPES:
+            try:
+                if now_completed:
+                    PlanOverrideService.record_farmer_sowing(task)
+                else:
+                    PlanOverrideService.undo_farmer_task(task)
+            except Exception:
+                db.session.rollback()
+                logger.exception("Task %s: updating farmer_completed overrides failed", task.id)
+        return task
 
     @staticmethod
     def get_pending_tasks() -> list:

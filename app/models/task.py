@@ -13,6 +13,7 @@ class Task(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
     due_date = db.Column(db.Date, nullable=True)
     completed = db.Column(db.Boolean, default=False, nullable=False)
+    completed_at = db.Column(db.DateTime, nullable=True)  # set on false→true, cleared on true→false (local time)
     is_active = db.Column(db.Boolean, default=True, nullable=False)
     task_changes = db.Column(db.Text, nullable=True)
 

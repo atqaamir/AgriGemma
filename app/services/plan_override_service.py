@@ -54,7 +54,8 @@ class PlanOverrideService:
     # ------------------------------------------------------------------ #
 
     @staticmethod
-    def match_entry(user_id: int, crop_name_id: int, field_id: int = None, context: str = ""):
+    def match_entry(user_id: int, crop_name_id: int, field_id: int = None, context: str = "",
+                    warn: bool = True):
         """Find the active seasonal plan entry for a crop (and field, if known).
 
         With a field: crop + the field's soil type and water source must match.
@@ -66,8 +67,9 @@ class PlanOverrideService:
 
         plan = SeasonalPlan.query.filter_by(user_id=user_id, currently_active=True).first()
         if not plan or crop_name_id is None:
-            logger.warning("No seasonal entry match (%s): user=%s crop=%s — no active plan or crop",
-                           context, user_id, crop_name_id)
+            if warn:
+                logger.warning("No seasonal entry match (%s): user=%s crop=%s — no active plan or crop",
+                               context, user_id, crop_name_id)
             return None
         candidates = [e for e in plan.entries if e.crop_name_id == crop_name_id]
 
@@ -78,6 +80,8 @@ class PlanOverrideService:
 
         if len(candidates) == 1:
             return candidates[0]
+        if not warn:
+            return None
         logger.warning(
             "No unique seasonal entry match (%s): user=%s crop=%s field=%s → %d candidates; nothing written",
             context, user_id, crop_name_id, field_id, len(candidates),
@@ -158,6 +162,76 @@ class PlanOverrideService:
             stats["created"] += 1
         logger.info("Forecast overrides for user=%s as_of=%s: %s", user_id, as_of, stats)
         return stats
+
+    # ------------------------------------------------------------------ #
+    #  Farmer completion (task hook)
+    # ------------------------------------------------------------------ #
+
+    SOWING_TASK_TYPES = ("planting", "sowing")
+
+    @staticmethod
+    def _entry_for_task(task):
+        from app.models.crop import Crop
+        crop = Crop.query.get(task.crop_id) if task.crop_id else None
+        if crop is None:
+            logger.warning("Task %s: no crop linked — no farmer override written", task.id)
+            return None
+        return PlanOverrideService.match_entry(
+            task.user_id or crop.user_id, crop.crop_name_id, task.field_id or crop.field_id,
+            context=f"task {task.id}")
+
+    @staticmethod
+    def record_farmer_sowing(task) -> list:
+        """Sowing task marked done → farmer_completed overrides (sowing + cascades).
+
+        actual_date = task.completed_at.date(). Harvest, irrigation start and
+        fertilization move by (actual − effective sowing). Nothing is written for
+        a "Not Feasible" entry (the task itself stays done).
+        """
+        entry = PlanOverrideService._entry_for_task(task)
+        if entry is None:
+            return []
+        crop = entry.crop_name_rel.name if entry.crop_name_rel else entry.crop_name_id
+        if entry.feasibility == "Not Feasible":
+            logger.warning("Task %s completed, but seasonal entry %s (%s) is Not Feasible — "
+                           "no override written", task.id, entry.id, crop)
+            return []
+
+        actual = task.completed_at.date()
+        existing = PlanEventOverrideRepository.get_farmer_sowing(entry.id, date.max)
+        if existing and existing.task_id != task.id:
+            logger.warning("Task %s: sowing of entry %s (%s) already recorded as done on %s by task %s — "
+                           "no override written", task.id, entry.id, crop, existing.actual_date, existing.task_id)
+            return []
+
+        eff = PlanOverrideService.effective_dates(entry, actual)
+        planned = eff["sowing"]
+        delta = (actual - planned) if planned else None
+        base = {"seasonal_plan_entry_id": entry.id, "source": PlanEventOverride.SOURCE_FARMER,
+                "as_of_date": actual, "task_id": task.id}
+        rows = [PlanEventOverrideRepository.create({
+            **base, "event_type": "sowing", "original_date": planned, "actual_date": actual,
+            "reason": f"Sowing done on {actual} (task #{task.id} '{task.title}')"})]
+        if delta:
+            for etype in CASCADE_FROM_SOWING:
+                if eff[etype]:
+                    rows.append(PlanEventOverrideRepository.create({
+                        **base, "event_type": etype, "original_date": eff[etype],
+                        "actual_date": eff[etype] + delta,
+                        "reason": f"Cascaded from sowing done on {actual} "
+                                  f"({delta.days:+d} days vs planned {planned}, task #{task.id})"}))
+        logger.info("Task %s: %d farmer_completed override(s) for entry %s (%s)",
+                    task.id, len(rows), entry.id, crop)
+        return rows
+
+    @staticmethod
+    def undo_farmer_task(task) -> int:
+        """Sowing task un-completed → delete exactly that task's farmer_completed overrides."""
+        rows = [r for r in PlanEventOverrideRepository.get_by_task(task.id)
+                if r.source == PlanEventOverride.SOURCE_FARMER]
+        n = PlanEventOverrideRepository.delete_many(rows)
+        logger.info("Task %s un-completed: %d farmer_completed override(s) removed", task.id, n)
+        return n
 
     @staticmethod
     def done_events(entry, as_of: date) -> list:

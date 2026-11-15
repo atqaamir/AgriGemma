@@ -7,6 +7,7 @@ class TaskCardSchema(Schema):
     priority = fields.Str()
     due_date = fields.Date(allow_none=True)
     completed = fields.Bool()
+    completed_at = fields.DateTime(allow_none=True, dump_only=True)
     task_type = fields.Str(allow_none=True)
     task_category = fields.Str(allow_none=True)
     crop_id = fields.Int(allow_none=True)
@@ -28,6 +29,7 @@ class TaskDetailSchema(Schema):
     created_at = fields.DateTime(allow_none=True)
     due_date = fields.Date(allow_none=True)
     completed = fields.Bool()
+    completed_at = fields.DateTime(allow_none=True, dump_only=True)
 
     task_type = fields.Str(allow_none=True)
     task_category = fields.Str(allow_none=True)
