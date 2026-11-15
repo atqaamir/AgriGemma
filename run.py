@@ -1,3 +1,4 @@
+import logging
 import os
 
 from app import create_app
@@ -15,23 +16,51 @@ def reset_database(db_path="app.db"):
         os.remove(db_path)
 
 
+logger = logging.getLogger("run")
+
 # Nullable columns added to existing tables after the first deploy. db.create_all()
-# only creates missing tables, so add these columns if an existing DB lacks them.
+# only creates missing tables, so these are added if an existing DB lacks them.
+# The column type comes from the SQLAlchemy model.
 ADDED_COLUMNS = [
-    ("task", "completed_at", "TIMESTAMP"),
+    ("task", "completed_at"),
 ]
 
 
 def ensure_added_columns():
+    """Add missing *nullable* columns listed in ADDED_COLUMNS (SQLite and Postgres).
+
+    Only ever runs `ALTER TABLE <table> ADD COLUMN <column> <type>`. It never drops,
+    renames or alters anything; a non-nullable column is refused (needs a migration).
+    """
     from sqlalchemy import inspect, text
 
-    inspector = inspect(db.engine)
-    for table, column, sql_type in ADDED_COLUMNS:
-        existing = {c["name"] for c in inspector.get_columns(table)}
-        if column not in existing:
-            with db.engine.begin() as conn:
-                conn.execute(text(f"ALTER TABLE {table} ADD COLUMN {column} {sql_type}"))
-            print(f"Added missing column {table}.{column}")
+    engine = db.engine
+    inspector = inspect(engine)
+    quote = engine.dialect.identifier_preparer.quote
+    existing_tables = set(inspector.get_table_names())
+
+    for table_name, column_name in ADDED_COLUMNS:
+        table = db.metadata.tables.get(table_name)
+        column = table.columns.get(column_name) if table is not None else None
+        if column is None:
+            logger.error("Schema check: %s.%s is not defined in the models — skipped", table_name, column_name)
+            continue
+        if not column.nullable or column.primary_key:
+            logger.error("Schema check: %s.%s is not nullable — refusing ADD COLUMN, needs a real migration",
+                         table_name, column_name)
+            continue
+        if table_name not in existing_tables:
+            continue   # create_all() has just created the whole table
+        if column_name in {c["name"] for c in inspector.get_columns(table_name)}:
+            continue
+
+        col_type = column.type.compile(dialect=engine.dialect)
+        sql = f"ALTER TABLE {quote(table_name)} ADD COLUMN {quote(column_name)} {col_type}"
+        with engine.begin() as conn:
+            conn.execute(text(sql))
+        logger.warning("Schema check: added nullable column %s.%s (%s) on %s",
+                       table_name, column_name, col_type, engine.dialect.name)
+        print(f"Added missing column {table_name}.{column_name} ({col_type}) on {engine.dialect.name}")
 
 
 def bootstrap():
