@@ -462,11 +462,35 @@ def run():
     db.session.add_all(sample_notifications)
     db.session.commit()
 
+    seed_demo_weather(start=date.today())
+
+    print("Sample data seeded successfully.")
+    print(f"Users:        {User.query.count()}")
+    print(f"Crops:        {Crop.query.count()}")
+    print(f"Fields:       {Field.query.count()}")
+    print(f"Tasks:        {Task.query.count()}")
+    print(f"Weather rows: {Weather.query.count()}")
+
+
+def seed_demo_weather(start: date) -> None:
+    """Insert 7 days of baseline weather and harsh forecasts, starting at `start`.
+
+    Demo weather is always relative to the given start date (normally today), so
+    the Weather Change Simulator finds data on any day. Existing rows in the
+    7-day window are replaced to avoid duplicates.
+    """
+    end = start + timedelta(days=6)
+    Weather.query.filter(Weather.date >= start, Weather.date <= end).delete()
+    WeatherForecast.query.filter(
+        WeatherForecast.date >= start, WeatherForecast.date <= end
+    ).delete()
+    db.session.commit()
+
     # ---- WEATHER (historical baseline) ----
     # Weather is keyed by user location (one region per user).
     # user[0] Ahmad Khan → "Punjab, Pakistan" — primary test user for weekly plan & risk assessment.
     #
-    # Designed rule outcomes for user[0] (week 18–24 May 2026, Punjab):
+    # Designed rule outcomes for user[0] (7 days from `start`, Punjab):
     #   ~17°C → band "15-20":
     #     Maize Sowing  → sowing.delay.minimal  (4 days, nothing else)
     #     Rice  Sowing  → sowing.delay.significant (7 days) + monitoring
@@ -525,7 +549,7 @@ def run():
         for offset, (temp, hum, rain, sun, wind, note) in enumerate(days):
             weather_rows.append(Weather(
                 region=region,
-                date=date(2026, 5, 18) + timedelta(days=offset),
+                date=start + timedelta(days=offset),
                 avg_temperature_c=temp,
                 humidity=hum,
                 rainfall_mm=rain,
@@ -590,7 +614,7 @@ def run():
         for offset, (temp, hum, rain, sun, wind, note) in enumerate(days):
             weather_forecast_rows.append(WeatherForecast(
                 region=region,
-                date=date(2026, 5, 18) + timedelta(days=offset),
+                date=start + timedelta(days=offset),
                 avg_temperature_c=temp,
                 humidity=hum,
                 rainfall_mm=rain,
@@ -602,10 +626,3 @@ def run():
 
     db.session.add_all(weather_forecast_rows)
     db.session.commit()
-
-    print("Sample data seeded successfully.")
-    print(f"Users:        {User.query.count()}")
-    print(f"Crops:        {Crop.query.count()}")
-    print(f"Fields:       {Field.query.count()}")
-    print(f"Tasks:        {Task.query.count()}")
-    print(f"Weather rows: {Weather.query.count()}")
