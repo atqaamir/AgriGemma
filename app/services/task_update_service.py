@@ -120,13 +120,13 @@ def _detect_band_changes(user_location: str, as_of_date: date) -> list:
     return changes
 
 
-def _get_growth_stage_by_crop(user_id: int, crop_id: int):
-    """Return growth_stage_id for a crop from the user's active weekly plan entries."""
+def _get_growth_stage_by_crop(user_id: int, crop_name_id: int):
+    """Return growth_stage_id for a crop (CropNames id) from the user's active weekly plan entries."""
     plan = WeeklyPlanRepository.get_active_by_user_id(user_id)
     if not plan:
         return None
     for entry in plan.entries:
-        if entry.crop_id == crop_id:
+        if entry.crop_id == crop_name_id:     # WeeklyPlanEntry.crop_id is a CropNames id
             return entry.growth_stage_id
     return None
 
@@ -243,7 +243,7 @@ def _apply_crop_rules(task, user_id: int, as_of_date: date, changes: list, band_
     if not crop_name_id:
         return False
 
-    growth_stage_id = _get_growth_stage_by_crop(user_id, task.crop_id)
+    growth_stage_id = _get_growth_stage_by_crop(user_id, crop_name_id)
     user_location   = UserService.get_user_location(user_id)
     forecast        = RuleEngine.get_forecast_by_region_and_date(user_location, as_of_date) if user_location else None
     if not forecast:
@@ -302,15 +302,17 @@ class TaskUpdateService:
 
         all_tasks = TaskRepository.get_by_user_id(user_id)
         today = clock.today()
+        # Plan tasks are skipped: the weekly plan already contains the weather's effect,
+        # and sync_plan_tasks keeps them in line with it (no second delay here).
         pending = [
             t for t in all_tasks
             if not t.completed
             and t.is_active
+            and t.task_category != "plan"
             and (t.due_date is None or t.due_date >= today)
         ]
 
         modified_count = 0
-        directly_modified_ids = set()
 
         for task in pending:
             task_changes_list = []
@@ -328,20 +330,7 @@ class TaskUpdateService:
                     "due_date":     task.due_date,
                     "is_active":    task.is_active,
                 })
-                directly_modified_ids.add(task.id)
                 modified_count += 1
 
-        # Lower priority by one level for all unaffected tasks when any change occurred
-        if directly_modified_ids:
-            for task in pending:
-                if task.id in directly_modified_ids:
-                    continue
-                if task.priority == "low":
-                    continue
-                new_p = _priority_shift(task.priority, "down")
-                TaskService.record_changes(
-                    task, [{"change_type": "priority", "original_value": task.priority, "new_value": new_p}],
-                    {"priority": new_p})
-                modified_count += 1
-
+        # Unaffected tasks keep their priority (no blanket demotion).
         return {"modified": modified_count}
