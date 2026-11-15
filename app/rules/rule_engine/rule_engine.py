@@ -509,8 +509,13 @@ class RuleEngine:
     # ------------------------------------------------------------------ #
 
     @staticmethod
-    def _apply_action(action: dict, events: list, factor_label: str):
-        """Apply one action rule to the events list in-place. Returns description text or None."""
+    def _apply_action(action: dict, events: list, factor_label: str, *,
+                      window_start: date, window_end: date):
+        """Apply one action rule to the events list in-place. Returns description text or None.
+
+        window_start / window_end bound where new events may be placed (extra
+        irrigation sessions go on free days inside this window only).
+        """
         action_type = action.get("action_type", "")
         adjustment  = action.get("adjustment", "")
         adj_type    = action.get("adjustment_type", "")
@@ -518,14 +523,25 @@ class RuleEngine:
         if action_type == "irrigation":
             delta = 1 if adj_type == "minimal" else 2
             if adjustment == "increase days":
-                irr_dates = sorted(
+                irr_days = {
                     date.fromisoformat(e["date"])
                     for e in events if e["event_type"] == "irrigation"
-                )
-                base = irr_dates[-1] if irr_dates else date.fromisoformat(events[0]["date"])
-                for i in range(1, delta + 1):
-                    events.append({"event_type": "irrigation", "date": (base + timedelta(days=i)).isoformat()})
-                return f"Added {delta} extra irrigation session(s) this week"
+                }
+                added = []
+                day = window_start
+                while day <= window_end and len(added) < delta:
+                    if day not in irr_days:
+                        events.append({"event_type": "irrigation", "date": day.isoformat()})
+                        added.append(day)
+                    day += timedelta(days=1)
+
+                if not added:
+                    return f"No extra irrigation session added — no free days left this week (wanted {delta})"
+                days_text = ", ".join(d.strftime("%m-%d") for d in added)
+                if len(added) < delta:
+                    return (f"Added {len(added)} of {delta} extra irrigation session(s) this week "
+                            f"({days_text}) — no free days left for the rest")
+                return f"Added {len(added)} extra irrigation session(s) this week ({days_text})"
             if adjustment == "decrease days":
                 irr_indices = [i for i, e in enumerate(events) if e["event_type"] == "irrigation"]
                 for idx in sorted(irr_indices[-delta:], reverse=True):
@@ -675,7 +691,10 @@ class RuleEngine:
 
                 texts = []
                 for action in actions:
-                    text = RuleEngine._apply_action(action, events, factor_label)
+                    text = RuleEngine._apply_action(
+                        action, events, factor_label,
+                        window_start=week_start_date, window_end=week_end,
+                    )
                     if text:
                         texts.append(text)
 
@@ -797,7 +816,10 @@ class RuleEngine:
 
                 texts = []
                 for action in actions:
-                    text = RuleEngine._apply_action(action, events, factor_label)
+                    text = RuleEngine._apply_action(
+                        action, events, factor_label,
+                        window_start=max(as_of_date, week_start_date), window_end=week_end,
+                    )
                     if text:
                         texts.append(text)
 
