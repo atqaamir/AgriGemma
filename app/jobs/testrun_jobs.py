@@ -1,5 +1,5 @@
 from app import create_app
-from app.jobs.weekly_plan_job import WeeklyUpdateJob
+from app.jobs.weekly_plan_job import WeeklyPlanJob
 from app.jobs.daily_update_job import DailyUpdateJob
 
 
@@ -12,11 +12,11 @@ def testrun_all_jobs():
         # print(forecast_results)
 
         print("\n[*] Running Weekly Update Job...")
-        weekly_results = WeeklyUpdateJob.run()
+        weekly_results = WeeklyPlanJob().run()
         print(weekly_results)
 
         print("\n[*] Running Daily Update Job...")
-        daily_results = DailyUpdateJob.run()
+        daily_results = DailyUpdateJob().run()
         print(daily_results)
 
 

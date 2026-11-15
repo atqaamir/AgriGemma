@@ -17,6 +17,6 @@ class WeeklyPlanJob(BaseJob):
 
     def process_target(self, user):
 
-        return CoordinatorAgent.weekly_planning(
+        return CoordinatorAgent().weekly_planning(
             user_id=user.id
         )

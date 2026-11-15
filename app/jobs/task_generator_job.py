@@ -17,6 +17,6 @@ class TaskGeneratorJob(BaseJob):
 
     def process_target(self, user):
 
-        return CoordinatorAgent.task_generation(
+        return CoordinatorAgent().task_generation(
             user_id=user.id
         )

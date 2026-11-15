@@ -1,6 +1,3 @@
-
-from app.agents.coordinator_agent import CoordinatorAgent
-
 """
 Runs daily at 5am, performs the following:
 - Invokes the CoordinatorAgent -> daily_update function
@@ -18,6 +15,6 @@ class DailyUpdateJob(BaseJob):
 
     def process_target(self, user):
 
-        return CoordinatorAgent.daily_update(
+        return CoordinatorAgent().daily_update(
             user_id=user.id
         )

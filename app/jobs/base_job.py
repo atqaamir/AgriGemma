@@ -84,12 +84,9 @@ class BaseJob:
                 failed_targets += 1
 
                 results.append(
-                    ExecutionResponse.failed(
-                        message="Target processing failed",
+                    ExecutionResponse.failure(
+                        message=f"Target {target.id} processing failed",
                         error=str(e),
-                        data={
-                            "target_id": target.id,
-                        }
                     )
                 )
 
@@ -128,7 +125,7 @@ class BaseJob:
             message=f"{self.name} completed",
             data={
                 "job_name": self.name,
-                "execution_status": Status.COMPLETED,
+                "execution_status": Status.SUCCESS,
                 "started_at": started_at.isoformat(),
                 "completed_at": completed_at.isoformat(),
                 "successful_targets": successful_targets,
