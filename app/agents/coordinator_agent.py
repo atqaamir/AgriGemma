@@ -80,9 +80,17 @@ class CoordinatorAgent:
 
     # ── Daily update workflow ─────────────────────────────────────────────────
 
-    """ 5am daily update workflow — runs risk assessment, then triggers downstream workflows based on risk level changes. Always refreshes dashboard at the end. """
+    """ 5am daily update workflow — rolls the weekly plan forward, runs risk assessment, then triggers downstream workflows based on risk level changes. Always refreshes dashboard at the end. """
     def daily_update(self, user_id: int, as_of_date: date = None) -> dict:
+        if as_of_date is None:
+            as_of_date = date.today()
         print(f"\n[CoordinatorAgent] Starting daily update for user={user_id} as_of_date={as_of_date}")
+
+        # Roll the weekly plan: regenerate as_of_date..+6 from the (unmodified)
+        # seasonal plan every run, so adjustments never compound. A failure here
+        # is logged and reported but does not skip the rest of the update.
+        plan_roll = self._roll_weekly_plan(user_id, as_of_date)
+
         risk_status, change, _ = self.risk_agent.assess_risk(user_id, tag="risk_assessment", as_of_date=as_of_date)
         print (f"[daily update] risk assessment completed with status={risk_status}, change={change} for user={user_id}")
 
@@ -106,7 +114,34 @@ class CoordinatorAgent:
             result = execution_responses.ExecutionResponse.success("Daily update completed") if risk_status == enums_.Status.SUCCESS else execution_responses.ExecutionResponse.failure("Daily update failed")
 
         result["change_status"] = change.value
+        result["plan_roll"] = plan_roll
+        if plan_roll["status"] == "failed":
+            result["message"] += f" (weekly plan roll failed: {plan_roll['error']})"
         return result
+
+    def _roll_weekly_plan(self, user_id: int, as_of_date: date) -> dict:
+        """Regenerate the weekly plan for as_of_date..as_of_date+6. Never raises."""
+        try:
+            status = self.planning_agent.generate_weekly_plan(
+                user_id, tag="daily_roll", week_start_date=as_of_date
+            )
+            if status == enums_.Status.SUCCESS:
+                return {"status": "success"}
+            error = "generate_plan returned no plan"
+        except Exception as exc:
+            from app.extensions import db
+            db.session.rollback()   # keep the session usable for the rest of the update
+            error = f"{type(exc).__name__}: {exc}"
+            logger.exception(
+                "Daily update: weekly plan roll FAILED for user=%s as_of_date=%s — "
+                "continuing with risk check", user_id, as_of_date,
+            )
+        else:
+            logger.error(
+                "Daily update: weekly plan roll FAILED for user=%s as_of_date=%s: %s — "
+                "continuing with risk check", user_id, as_of_date, error,
+            )
+        return {"status": "failed", "error": error}
 
     # ── Utility workflows ─────────────────────────────────────────────────────
 

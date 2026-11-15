@@ -7,8 +7,8 @@ from app.utils import enums_
 
 class PlanningAgent:
     @staticmethod
-    def generate_weekly_plan(user_id: int, tag: str = "") -> str:
-        plan = WeeklyPlannerService.generate_plan(user_id)
+    def generate_weekly_plan(user_id: int, tag: str = "", week_start_date: date = None) -> str:
+        plan = WeeklyPlannerService.generate_plan(user_id, week_start_date)
         return enums_.Status.SUCCESS if plan else enums_.Status.FAILED
 
     @staticmethod

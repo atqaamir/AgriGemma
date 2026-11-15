@@ -223,7 +223,6 @@ def run_refresh_data(user_id):
 @tasks_bp.route("/<int:user_id>/run-weather-simulator", methods=["POST"])
 def run_weather_simulator(user_id):
     try:
-        from app.services.weekly_planning_service.weekly_planner_service import WeeklyPlannerService
         from app.repositories.weather_repository import WeatherRepository
         from app.services.domain_service.user_service import UserService
         from Test_Runs.seed_data import seed_demo_weather
@@ -235,10 +234,7 @@ def run_weather_simulator(user_id):
         if location and not WeatherRepository.get_by_region_and_date(location, today):
             seed_demo_weather(start=today)
 
-        active = WeeklyPlannerService.get_active_plan(user_id)
-        if not active or active.week_start_date != today:
-            WeeklyPlannerService.generate_plan(user_id, today)
-
+        # daily_update rolls the weekly plan to today..today+6 itself.
         result = _coordinator.daily_update(user_id=user_id, as_of_date=today)
 
         return jsonify({
