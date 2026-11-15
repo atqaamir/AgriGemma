@@ -82,7 +82,11 @@ The following assumptions define the current scope and operational boundaries of
   - Seeded sowing dates are set relative to today (today to today + 2), so they always fall inside the simulator's week.
   - The demo weather is realistic for early May in Punjab (hot, dry, long sunshine) with a two-day western
     disturbance that the rules reject for Cotton sowing. Nothing in it is hand-picked for a crop.
-- The whole seasonal plan uses the growth stage **Sowing**.
+- The whole seasonal plan uses the growth stage **Sowing**, and so do user 1's crop records.
+  - A crop has no planting date until its sowing task is completed; the completion sets the planting date (and the
+    harvest date from the crop duration), un-completing clears it. Until then the pages show
+    "Planned: <date> (weekly plan)" from the effective sowing date, or "Not Feasible".
+  - Every seeded task fits a hot, dry early May and the plan (no tasks for Not Feasible or unsown crops).
   - The rulebook lookups and the seeded demo weather were designed for this stage (e.g. a cold spell → "delay sowing by 4 days").
 - **Why not sowing dates in the past?** In real farming, sowing usually happened earlier, and that is valid.
   But a past sowing date combined with the fixed "Sowing" stage would be inconsistent, and sowing-stage rules
@@ -174,7 +178,7 @@ The following assumptions define the current scope and operational boundaries of
 - **A deactivated task is "Cancelled", not something to do:** it is left out of every pending list and count (tasks,
   crop and field pages and cards, dashboard) and of the chatbot / AI task context. The "all tasks" view shows it greyed
   out as "Cancelled" with the reason from its history. Completed tasks stay as they are.
-- The chatbot and AI task context only contain the current user's tasks.
+- The chatbot, AI and notification context only contain the current user's tasks, fields and crops.
 
 ---
 
