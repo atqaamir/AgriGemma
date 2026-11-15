@@ -42,6 +42,7 @@ from datetime import datetime, timezone, timedelta
 from pathlib import Path
 
 from app.models.seasonal_plan import SeasonalPlan, SeasonalPlanEntry
+from app.models.plan_event_override import PlanEventOverride
 from app.extensions import db
 from app.services.seasonal_planner_service import SeasonalPlannerService
 from app.repositories.seasonal_plan_repository import SeasonalPlanRepository
@@ -122,6 +123,7 @@ class SeasonalPlanSeeder:
             db.session.commit()
 
     def _clear_tables(self):
+        PlanEventOverride.query.delete()
         SeasonalPlanEntry.query.delete()
         SeasonalPlan.query.delete()
         db.session.commit()

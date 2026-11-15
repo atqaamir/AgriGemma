@@ -13,6 +13,7 @@ from app.models.weather import Weather
 from app.models.weather_forecast import WeatherForecast
 from app.models.seasonal_plan import SeasonalPlan, SeasonalPlanEntry
 from app.models.weekly_plan import WeeklyPlan, WeeklyPlanEntry
+from app.models.plan_event_override import PlanEventOverride
 
 
 def run():
@@ -26,6 +27,7 @@ def run():
     Field.query.delete()
     WeeklyPlanEntry.query.delete()
     WeeklyPlan.query.delete()
+    PlanEventOverride.query.delete()   # actual-dates layer is lost on reseed (demo)
     SeasonalPlanEntry.query.delete()
     SeasonalPlan.query.delete()
     User.query.delete()

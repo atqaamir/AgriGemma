@@ -348,6 +348,10 @@ class SeasonalPlannerService:
         plan = SeasonalPlanRepository.get_by_id(plan_id)
         if not plan:
             return None
+        from app.models.plan_event_override import PlanEventOverride
+        PlanEventOverride.query.filter(
+            PlanEventOverride.seasonal_plan_entry_id.in_([e.id for e in plan.entries])
+        ).delete(synchronize_session=False)
         SeasonalPlanRepository.delete(plan)   # cascades to entries via relationship
         return plan
 
