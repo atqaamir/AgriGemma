@@ -137,13 +137,40 @@ The following assumptions define the current scope and operational boundaries of
   sow anyway with precautions, switch to a short-duration variety, switch crop, or skip the season. The system does
   not choose. **One notification per crop** (decision needed or overdue, whichever comes first) is sent **on the day it
   happens**, also on days without a plan impact.
-- **The daily update always applies the forecast to the weekly plan** (sowing window, actual dates). This step makes no
-  AI calls; its only notification is the sowing decision above. Other notifications, task updates and AI summaries
-  only follow on days with a plan impact (plus the existing weather-only notification on "change without impact" days).
+- **The daily update always applies the forecast to the weekly plan** (sowing window, actual dates) and then syncs the
+  plan tasks (below). These steps make no AI calls; their only notification is the sowing decision above. Other
+  notifications, weather-rule task updates and AI summaries only follow on days with a plan impact (plus the existing
+  weather-only notification on "change without impact" days).
 - A same-day rebuild without the forecast (weekly job, app restart) shows that day's plan without its forecast
   decisions until the next daily update or simulator run.
 - **Demo:** overrides are deleted together with the seasonal plans when the app restarts and reseeds (`run.py`),
   so actual dates do not survive a restart.
+
+---
+
+## Tasks from the Weekly Plan
+
+- **Plan tasks** (`task_category = "plan"`) are created from the weekly plan's events: sowing, irrigation,
+  fertilization and harvesting, e.g. "Sow Cotton – The Reservoir". No AI call.
+  - The 7 PM job creates tomorrow's tasks; every daily update (and the Weather Change Simulator) also creates any
+    missing tasks for today and tomorrow.
+  - A task is linked to its seasonal plan entry, and to a crop + field only when exactly one active crop on an active
+    field matches the entry (crop, soil type, water source); otherwise it is created unlinked with a warning.
+  - No task for a "Not Feasible" entry or for a sowing that is already recorded as done; never duplicated.
+- **Plan tasks follow the plan** after every re-plan:
+  - Sowing, fertilization and harvest have one task per entry: when the plan moves the event, the task's due date
+    moves; when the event leaves the 7-day window (e.g. no suitable sowing day, decision needed) the task is
+    deactivated; when it comes back, the same task is reactivated with the new date. A missed fertilization or
+    harvest task (due date passed) is left as it is.
+  - **Irrigation tasks are never moved**: an irrigation change is handled as deactivate (dropped date) + create (new
+    date), matched by entry, type and date. A date that comes back reactivates its task.
+  - Completed tasks are never changed.
+- **The weekly plan owns a plan task's due date, type and category**: the API ignores changes to them and the edit form
+  shows them read-only ("Set by the weekly plan"). Completing, notes, title, priority and description stay editable.
+- Weather-rule task updates (impact-on-tasks days) skip plan tasks (the plan already contains the weather's effect) and
+  leave unaffected tasks' priority alone.
+- Every task change is recorded in the task's history with the (demo) date (`changed_on`); change notifications report
+  only the changes of that day. Deactivated tasks are not hidden in the task lists yet.
 
 ---
 
