@@ -33,5 +33,27 @@ class Task(db.Model):
     seasonal_plan_entry_id = db.Column(db.Integer, nullable=True)
 
 
+    @property
+    def is_pending(self) -> bool:
+        """Something to do: not completed and not cancelled (deactivated)."""
+        return not self.completed and bool(self.is_active)
+
+    @property
+    def cancel_reason(self):
+        """Reason of the latest deactivation in the change history (None if active)."""
+        if self.is_active or not self.task_changes:
+            return None
+        import json
+        try:
+            history = json.loads(self.task_changes)
+        except (TypeError, ValueError):
+            return None
+        if isinstance(history, dict):
+            history = [history]
+        for c in reversed(history):
+            if c.get("change_type") == "is_active" and not c.get("new_value"):
+                return c.get("reason") or "Cancelled"
+        return "Cancelled"
+
     def __repr__(self):
         return f"<Task {self.id} - {self.title}>"

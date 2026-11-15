@@ -31,11 +31,13 @@ class TaskRepository:
         )
 
     @staticmethod
-    def get_pending() -> list:
+    def get_pending(user_id: int = None) -> list:
+        """Tasks to do (not completed, not cancelled), most urgent first; one user's if given."""
+        q = Task.query.options(joinedload(Task.crop), joinedload(Task.field)).filter_by(completed=False, is_active=True)
+        if user_id is not None:
+            q = q.filter_by(user_id=user_id)
         return (
-            Task.query
-            .options(joinedload(Task.crop), joinedload(Task.field))
-            .filter_by(completed=False)
+            q
             .order_by(
                 db.case(
                     (Task.priority == "critical", 0),
@@ -54,11 +56,11 @@ class TaskRepository:
 
     @staticmethod
     def get_pending_field_tasks() -> list:
-        return Task.query.filter_by(task_category="field", completed=False).all()
+        return Task.query.filter_by(task_category="field", completed=False, is_active=True).all()
 
     @staticmethod
     def get_pending_tasks_by_field_id(field_id: int) -> list:
-        return Task.query.filter_by(field_id=field_id, completed=False).all()
+        return Task.query.filter_by(field_id=field_id, completed=False, is_active=True).all()
 
     @staticmethod
     def get_tasks_by_field_id(field_id: int) -> list:
@@ -66,7 +68,7 @@ class TaskRepository:
 
     @staticmethod
     def count_pending() -> int:
-        return Task.query.filter_by(completed=False).count()
+        return Task.query.filter_by(completed=False, is_active=True).count()
 
     @staticmethod
     def count_completed() -> int:

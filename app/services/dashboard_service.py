@@ -30,7 +30,8 @@ class DashboardService:
         # Crops are subqueryloaded on fields — avoid a second round-trip
         crops = [c for f in fields for c in f.crops if c.currently_active]
 
-        tasks = TaskService.get_tasks_by_user(user_id)
+        # Cancelled (deactivated) tasks are left out of every dashboard number.
+        tasks = [t for t in TaskService.get_tasks_by_user(user_id) if t.is_active]
         pending_tasks = [t for t in tasks if not t.completed]
 
         stored = DashboardService._fetch_stored_summary(user_id) \

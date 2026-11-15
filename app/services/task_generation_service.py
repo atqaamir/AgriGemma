@@ -290,7 +290,7 @@ class TaskGenerationService:
     def _generate_field_tasks(user_id: int) -> list:
         fields = FieldService.get_fields_by_user(user_id) or []
         existing_titles = {
-            task.title for task in TaskService.get_tasks_by_user(user_id) or [] if not task.completed
+            task.title for task in TaskService.get_tasks_by_user(user_id) or [] if task.is_pending
         }
         context = None
         created_tasks = []

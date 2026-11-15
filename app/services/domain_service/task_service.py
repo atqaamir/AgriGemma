@@ -101,7 +101,7 @@ class TaskService:
     def get_pending_tasks_by_user(user_id: int) -> list:
         """All incomplete tasks for a specific user."""
         tasks = TaskRepository.get_by_user_id(user_id)
-        return [t for t in tasks if not t.completed]
+        return [t for t in tasks if t.is_pending]
 
     @staticmethod
     def get_tasks_paginated(
@@ -115,7 +115,7 @@ class TaskService:
         query = TaskRepository.get_all()
 
         if status == "pending":
-            query = query.filter(Task.completed.is_(False))
+            query = query.filter(Task.completed.is_(False), Task.is_active.is_(True))
         elif status == "completed":
             query = query.filter(Task.completed.is_(True))
 
@@ -142,7 +142,7 @@ class TaskService:
         query = TaskRepository.get_all().filter(Task.user_id == user_id)
 
         if status == "pending":
-            query = query.filter(Task.completed.is_(False))
+            query = query.filter(Task.completed.is_(False), Task.is_active.is_(True))
         elif status == "completed":
             query = query.filter(Task.completed.is_(True))
 
@@ -163,7 +163,8 @@ class TaskService:
     @staticmethod
     def count_pending_by_user(user_id: int) -> int:
         """Count incomplete tasks for a specific user."""
-        return TaskRepository.get_all().filter(Task.user_id == user_id, Task.completed.is_(False)).count()
+        return TaskRepository.get_all().filter(Task.user_id == user_id, Task.completed.is_(False),
+                                               Task.is_active.is_(True)).count()
 
     @staticmethod
     def count_completed() -> int:
@@ -176,7 +177,7 @@ class TaskService:
 
     @staticmethod
     def get_pending_tasks_for_crop(crop_id: int) -> list:
-        return TaskRepository.get_all().filter_by(crop_id=crop_id, completed=False).all()
+        return TaskRepository.get_all().filter_by(crop_id=crop_id, completed=False, is_active=True).all()
 
     @staticmethod
     def get_tasks_by_user(user_id: int) -> list:
@@ -184,4 +185,4 @@ class TaskService:
 
     @staticmethod
     def get_tasks_for_field(field_id: int) -> list:
-        return TaskRepository.get_all().filter_by(field_id=field_id, completed=False).all()
+        return TaskRepository.get_all().filter_by(field_id=field_id, completed=False, is_active=True).all()

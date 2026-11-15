@@ -38,7 +38,7 @@ class FieldRepository:
     @staticmethod
     def get_pending_tasks_by_field_id(field_id):
         from app.models.task import Task
-        return Task.query.filter_by(field_id=field_id, completed=False).all()
+        return Task.query.filter_by(field_id=field_id, completed=False, is_active=True).all()
 
     @staticmethod
     def delete(field):

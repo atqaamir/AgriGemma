@@ -47,13 +47,13 @@ class FieldCardSchema(Schema):
         return None
 
     def get_task_count(self, obj):
-        return len([t for t in obj.tasks if t.task_category == 'field'])
+        return len([t for t in obj.tasks if t.task_category in ('field', 'plan') and t.is_active])
 
     def get_pending_task_count(self, obj):
-        return len([t for t in obj.tasks if t.task_category == 'field' and not t.completed])
+        return len([t for t in obj.tasks if t.task_category in ('field', 'plan') and t.is_pending])
 
     def get_tasks_preview(self, obj):
-        pending = [t for t in obj.tasks if t.task_category == 'field' and not t.completed][:3]
+        pending = [t for t in obj.tasks if t.task_category in ('field', 'plan') and t.is_pending][:3]
         return TaskCardSchema(many=True).dump(pending)
 
 
@@ -88,7 +88,7 @@ class FieldDetailSchema(Schema):
         return None
 
     def get_tasks(self, obj):
-        field_tasks = [t for t in obj.tasks if t.task_category == 'field']
+        field_tasks = [t for t in obj.tasks if t.task_category in ('field', 'plan') and t.is_active]
         return TaskCardSchema(many=True).dump(field_tasks)
 
 

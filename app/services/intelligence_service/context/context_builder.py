@@ -207,7 +207,7 @@ def build_chatbot_context(user_id: int, intent_result: IntentResult) -> dict:
 
     if spec.needs_tasks:
         ctx["tasks"] = _safe(
-            "tasks", _fetch_tasks, today, spec.task_types
+            "tasks", _fetch_tasks, today, spec.task_types, user_id
         ) or {}
 
     if spec.needs_alerts:
@@ -336,9 +336,10 @@ def _fetch_crops() -> list:
     ]
 
 
-def _fetch_tasks(today: date, type_filter: frozenset[str]) -> dict:
+def _fetch_tasks(today: date, type_filter: frozenset[str], user_id: int) -> dict:
+    """The user's pending tasks (not completed, not cancelled)."""
     from app.repositories.task_repository import TaskRepository
-    pending = list(TaskRepository.get_pending())
+    pending = list(TaskRepository.get_pending(user_id))
 
     if type_filter:
         filtered = [t for t in pending if t.task_type in type_filter]

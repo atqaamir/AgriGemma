@@ -39,13 +39,13 @@ class CropCardSchema(Schema):
         return None
 
     def get_task_count(self, obj):
-        return len([t for t in obj.tasks if t.task_category == 'crop'])
+        return len([t for t in obj.tasks if t.task_category in ('crop', 'plan') and t.is_active])
 
     def get_pending_task_count(self, obj):
-        return len([t for t in obj.tasks if t.task_category == 'crop' and not t.completed])
+        return len([t for t in obj.tasks if t.task_category in ('crop', 'plan') and t.is_pending])
 
     def get_tasks_preview(self, obj):
-        pending = [t for t in obj.tasks if t.task_category == 'crop' and not t.completed][:3]
+        pending = [t for t in obj.tasks if t.task_category in ('crop', 'plan') and t.is_pending][:3]
         return TaskCardSchema(many=True).dump(pending)
 
 
@@ -77,7 +77,7 @@ class CropDetailSchema(Schema):
         return None
 
     def get_tasks(self, obj):
-        crop_tasks = [t for t in obj.tasks if t.task_category == 'crop']
+        crop_tasks = [t for t in obj.tasks if t.task_category in ('crop', 'plan') and t.is_active]
         return TaskCardSchema(many=True).dump(crop_tasks)
 
 

@@ -21,7 +21,7 @@ class ContextAggregationService:
 
         field_ctx = ContextAggregationService._collect_field_context()
         crop_ctx = ContextAggregationService._collect_crop_context()
-        task_ctx = ContextAggregationService._collect_task_context(today)
+        task_ctx = ContextAggregationService._collect_task_context(today, user_id)
         alert_ctx = ContextAggregationService._collect_alert_context(field_ctx.get("_active_fields", []))
         weather_ctx = ContextAggregationService._collect_weather_context(user_id)
         farmer_name = ContextAggregationService._collect_farmer_name(user_id)
@@ -127,11 +127,11 @@ class ContextAggregationService:
             return {"total": 0, "active_data": []}
 
     @staticmethod
-    def _collect_task_context(today: date) -> dict:
+    def _collect_task_context(today: date, user_id: int) -> dict:
+        """The user's tasks: pending = not completed and not cancelled."""
         try:
-            pending = TaskRepository.get_pending()
-            all_query = TaskRepository.get_all()
-            total = all_query.count()
+            pending = TaskRepository.get_pending(user_id)
+            total = len([t for t in TaskRepository.get_by_user_id(user_id) if t.is_active])
 
             overdue = [t for t in pending if t.due_date and t.due_date < today]
             critical = [t for t in pending if t.priority == "critical"]
