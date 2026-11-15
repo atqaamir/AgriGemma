@@ -10,6 +10,9 @@ from app.utils import clock
 
 logger = logging.getLogger(__name__)
 
+PLAN_TASK_CATEGORY = "plan"
+PLAN_OWNED_FIELDS = ("due_date", "task_type", "task_category")
+
 
 class TaskService:
 
@@ -58,6 +61,14 @@ class TaskService:
         task = TaskRepository.get_by_id(task_id)
         if not task:
             return None
+
+        if task.task_category == PLAN_TASK_CATEGORY:
+            # The weekly plan owns these (sync_plan_tasks is the only thing that changes them);
+            # completing, notes, title, priority and description stay editable.
+            ignored = sorted(k for k in PLAN_OWNED_FIELDS if k in data)
+            if ignored:
+                logger.info("Task %s is a plan task: ignoring %s", task.id, ignored)
+                data = {k: v for k, v in data.items() if k not in PLAN_OWNED_FIELDS}
 
         was_completed = bool(task.completed)
         now_completed = bool(data.get("completed", was_completed))

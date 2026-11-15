@@ -29,7 +29,7 @@ def get_fields_by_user(user_id):
 
     all_tasks = []
     for field in fields:
-        all_tasks.extend(t for t in field.tasks if t.task_category == "field")
+        all_tasks.extend(t for t in field.tasks if t.task_category in ("field", "plan"))
     unique_tasks = list({t.id: t for t in all_tasks}.values())
 
     return jsonify({
@@ -62,7 +62,7 @@ def get_fields():
 
     all_tasks = []
     for field in fields:
-        all_tasks.extend(t for t in field.tasks if t.task_category == "field")
+        all_tasks.extend(t for t in field.tasks if t.task_category in ("field", "plan"))
     unique_tasks = list({t.id: t for t in all_tasks}.values())
 
     return jsonify({

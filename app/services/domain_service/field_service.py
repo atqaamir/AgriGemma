@@ -44,7 +44,7 @@ class FieldService:
         for field in fields:
             all_tasks.extend(
                 t for t in field.tasks
-                if t.task_category == 'field' and not t.completed
+                if t.task_category in ('field', 'plan') and not t.completed
             )
         unique_tasks = list({t.id: t for t in all_tasks}.values())
         return {"fields": fields, "tasks": unique_tasks}
@@ -58,7 +58,7 @@ class FieldService:
         for field in active_fields:
             all_tasks.extend(
                 t for t in field.tasks
-                if t.task_category == 'field' and not t.completed
+                if t.task_category in ('field', 'plan') and not t.completed
             )
         unique_tasks = list({t.id: t for t in all_tasks}.values())
         return {"fields": active_fields, "tasks": unique_tasks}

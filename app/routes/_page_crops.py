@@ -31,7 +31,7 @@ def get_crops_by_user(user_id):
 
     all_tasks = []
     for crop in crops:
-        all_tasks.extend([t for t in crop.tasks if t.task_category == 'crop'])
+        all_tasks.extend([t for t in crop.tasks if t.task_category in ('crop', 'plan')])
 
     unique_tasks = list({task.id: task for task in all_tasks}.values())
 
@@ -48,7 +48,7 @@ def get_crops():
 
     all_tasks = []
     for crop in crops:
-        all_tasks.extend([t for t in crop.tasks if t.task_category == 'crop'])
+        all_tasks.extend([t for t in crop.tasks if t.task_category in ('crop', 'plan')])
 
     unique_tasks = list({task.id: task for task in all_tasks}.values())
 
@@ -65,7 +65,7 @@ def get_croptasks():
 
     all_tasks = []
     for crop in crops:
-        all_tasks.extend([t for t in crop.tasks if t.task_category == 'crop'])
+        all_tasks.extend([t for t in crop.tasks if t.task_category in ('crop', 'plan')])
 
     unique_tasks = list({task.id: task for task in all_tasks}.values())
 
@@ -131,7 +131,7 @@ def get_active_crops_by_user(user_id):
         if crop.tasks:
             all_tasks.extend(
                 t for t in crop.tasks
-                if t.task_category == 'crop' and not t.completed
+                if t.task_category in ('crop', 'plan') and not t.completed
             )
 
     unique_tasks = list({task.id: task for task in all_tasks}.values())
@@ -152,7 +152,7 @@ def get_active_crops():
         if crop.tasks:
             all_tasks.extend(
                 t for t in crop.tasks
-                if t.task_category == 'crop' and not t.completed
+                if t.task_category in ('crop', 'plan') and not t.completed
             )
 
     unique_tasks = list({task.id: task for task in all_tasks}.values())

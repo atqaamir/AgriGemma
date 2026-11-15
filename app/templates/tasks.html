@@ -553,7 +553,8 @@
         <div>
           <label class="text-[10px] uppercase tracking-widest text-on-surface-variant block mb-1">Due Date</label>
           <input type="date" name="due_date"
-            class="w-full bg-surface-container rounded-lg px-4 py-3 text-sm text-on-surface outline-none focus:ring-2 focus:ring-primary">
+            class="w-full bg-surface-container rounded-lg px-4 py-3 text-sm text-on-surface outline-none focus:ring-2 focus:ring-primary read-only:opacity-60 read-only:cursor-not-allowed">
+          <p id="editPlanHint" class="hidden text-xs text-on-surface-variant italic mt-1">Set by the weekly plan</p>
         </div>
         <div>
           <label class="text-[10px] uppercase tracking-widest text-on-surface-variant block mb-1">Description</label>
@@ -1404,6 +1405,28 @@
         if (editField) editField.value = task.field_id || '';
       }
 
+      // Plan tasks: category, type and due date are set by the weekly plan (read-only).
+      const isPlan = task.task_category === 'plan';
+      form.dataset.plan = isPlan ? '1' : '';
+      const catSel  = document.getElementById('editTaskCategory');
+      const typeSel = document.getElementById('editTaskType');
+      let planOpt = catSel.querySelector('option[value="plan"]');
+      if (isPlan) {
+        if (!planOpt) { planOpt = new Option('Plan (from weekly plan)', 'plan'); catSel.appendChild(planOpt); }
+        catSel.value = 'plan';
+        catSel.disabled = true;
+        typeSel.innerHTML = '';
+        typeSel.appendChild(new Option(formatTaskType(task.task_type) || '—', task.task_type || ''));
+        typeSel.disabled = true;
+        document.getElementById('editCropRow').classList.add('hidden');
+        document.getElementById('editFieldRow').classList.add('hidden');
+      } else {
+        if (planOpt) planOpt.remove();
+        catSel.disabled = false;
+      }
+      form.due_date.readOnly = isPlan;
+      document.getElementById('editPlanHint').classList.toggle('hidden', !isPlan);
+
       document.getElementById('editTaskError').classList.add('hidden');
     }
 
@@ -1422,6 +1445,9 @@
 
       const body = {};
       for (const [k, v] of new FormData(form).entries()) { if (v !== '') body[k] = v; }
+      if (form.dataset.plan) {                       // set by the weekly plan, not editable
+        delete body.task_category; delete body.task_type; delete body.due_date;
+      }
 
       // Inject crop_id / field_id based on category
       const cat = body.task_category;
