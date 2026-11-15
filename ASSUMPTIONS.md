@@ -178,6 +178,19 @@ The following assumptions define the current scope and operational boundaries of
 
 ---
 
+## Live Demo (Render)
+
+- There is no login. To keep the public demo safe, the admin tools are **off unless `DEMO_ADMIN_ENABLED=true`**
+  (unset on Render): Flask-Admin (`/admin`), "Refresh Data" (wipes and reseeds the database) and the AI prompt test
+  page (`/test/ai`). Locally, `.env` sets `DEMO_ADMIN_ENABLED=true`.
+- The Weather Change Simulator stays public (it is the demo). Each run makes an AI call, so one user can run it at most
+  every `SIMULATOR_COOLDOWN_SECONDS` (default 30); a click inside the cooldown gets "Simulator just ran – try again in
+  N s" (HTTP 429). The cooldown is kept in memory, which works because the app runs one gunicorn worker.
+- `GET /health` returns "ok" for an uptime ping that keeps the free Render instance awake.
+- `SECRET_KEY` should be set on Render (the app has no sessions yet, so the default is not a risk today).
+
+---
+
 ## System Behaviour
 
 - All background jobs are assumed to succeed successfully.
