@@ -13,6 +13,7 @@ from app.repositories.weekly_plan_repository import WeeklyPlanRepository, Weekly
 from app.services.rule_base_service import rule_base_service
 from app.models.seasonal_plan import SeasonalPlan
 from app.utils import clock
+from app.extensions import db
 
 
 class WeeklyPlannerService:
@@ -294,44 +295,75 @@ class WeeklyPlannerService:
         PlanOverrideService.sync_forecast_shifts(user_id, as_of_date, updated_plan)
 
         # No suitable sowing day left, or the window passed without completion →
-        # ask the farmer (once per entry, on the day it happens).
+        # ask the farmer (on the day it happens). A "decision needed" that the
+        # forecast reverses gets one short follow-up.
         for item in updated_plan:
-            if item.get("sowing_status") in RuleEngine.NO_SOWING_STATUSES and item.get("seasonal_entry_id"):
-                WeeklyPlannerService._notify_sowing_overdue(user_id, item)
+            if item.get("seasonal_entry_id"):
+                WeeklyPlannerService._notify_sowing_decision(user_id, item)
 
         return Status.SUCCESS
 
+    SOWING_DAY_APPEARED_TEXT = "A suitable sowing day appeared"
+
     @staticmethod
-    def _notify_sowing_overdue(user_id: int, item: dict) -> None:
-        """One warning per seasonal plan entry (not per day) when sowing needs a decision:
-        no suitable day left in the window, or the window passed (overdue)."""
+    def _notify_sowing_decision(user_id: int, item: dict) -> None:
+        """Sowing decision notifications for one seasonal plan entry (fixed texts, no AI).
+
+        - decision needed / overdue: a warning, unless the latest sowing notification
+          for this entry already asks for a decision (not repeated every day).
+        - decision needed reversed (a suitable day appeared, sowing scheduled again):
+          "A suitable sowing day appeared: sow on <date>", once per reversal.
+        """
         from app.models.notification import Notification
         from app.repositories.notification_repository import NotificationRepository
 
+        status = item.get("sowing_status")
         entry_id = item["seasonal_entry_id"]
-        if Notification.query.filter(
-                Notification.user_id == user_id, Notification.entity_type == "seasonal_plan_entry",
-                Notification.entity_id == entry_id,
-                Notification.message.in_((RuleEngine.SOWING_OVERDUE_TEXT, RuleEngine.SOWING_DECISION_TEXT))).count():
-            return
+        decision_texts = (RuleEngine.SOWING_OVERDUE_TEXT, RuleEngine.SOWING_DECISION_TEXT)
+        appeared = WeeklyPlannerService.SOWING_DAY_APPEARED_TEXT
+        latest = (Notification.query
+                  .filter(Notification.user_id == user_id,
+                          Notification.entity_type == "seasonal_plan_entry",
+                          Notification.entity_id == entry_id,
+                          db.or_(Notification.message.in_(decision_texts),
+                                 Notification.message.like(f"{appeared}%")))
+                  .order_by(Notification.id.desc()).first())
+        latest_is_decision = bool(latest and latest.message in decision_texts)
         crop_obj = rule_base_service.get_crop_by_id(item["crop_id"])
         crop = crop_obj.name if crop_obj else f"Crop {item['crop_id']}"
-        window = item.get("sowing_window") or {}
-        overdue = item.get("sowing_status") == "overdue"
-        text = RuleEngine.SOWING_OVERDUE_TEXT if overdue else RuleEngine.SOWING_DECISION_TEXT
-        what = ("has passed and sowing was not recorded as done" if overdue
-                else "has no suitable sowing day left in the forecast")
-        NotificationRepository.create({
-            "user_id":           user_id,
-            "title":             f"{text} – {crop}",
-            "message":           text,
-            "detail":            (f"{crop}: the sowing window ({window.get('planned')} – {window.get('end')}) "
-                                  f"{what}. Options: "
-                                  f"{RuleEngine.SOWING_OVERDUE_OPTIONS}. The system does not choose."),
-            "notification_type": "warning",
-            "entity_type":       "seasonal_plan_entry",
-            "entity_id":         entry_id,
-        })
+        base = {"user_id": user_id, "entity_type": "seasonal_plan_entry", "entity_id": entry_id}
+
+        if status in RuleEngine.NO_SOWING_STATUSES:
+            if latest_is_decision:
+                return
+            window = item.get("sowing_window") or {}
+            overdue = status == "overdue"
+            text = RuleEngine.SOWING_OVERDUE_TEXT if overdue else RuleEngine.SOWING_DECISION_TEXT
+            what = ("has passed and sowing was not recorded as done" if overdue
+                    else "has no suitable sowing day left in the forecast")
+            NotificationRepository.create({
+                **base,
+                "title":             f"{text} – {crop}",
+                "message":           text,
+                "detail":            (f"{crop}: the sowing window ({window.get('planned')} – {window.get('end')}) "
+                                      f"{what}. Options: "
+                                      f"{RuleEngine.SOWING_OVERDUE_OPTIONS}. The system does not choose."),
+                "notification_type": "warning",
+            })
+            return
+
+        sowing = next((e["date"] for e in item.get("week_events", []) if e["event_type"] == "sowing"), None)
+        if (status in ("planned", "window_set") and sowing
+                and latest and latest.message == RuleEngine.SOWING_DECISION_TEXT):
+            d = date.fromisoformat(sowing)
+            text = f"{appeared}: sow on {d.day} {d.strftime('%b')}"
+            NotificationRepository.create({
+                **base,
+                "title":             f"{appeared} – {crop}",
+                "message":           text,
+                "detail":            f"{crop}: {text}. The earlier 'decision needed' no longer applies.",
+                "notification_type": "info",
+            })
 
     @staticmethod
     def delete(plan_id: int):
