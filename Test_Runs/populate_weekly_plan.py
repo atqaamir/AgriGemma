@@ -35,31 +35,25 @@ def _from_today(offset: int) -> str:
 #   - To override a cascaded date explicitly, uncomment and set it here.
 #   - Set a key to None (or omit it) to leave that field unchanged.
 ENTRY_UPDATES = [
-    # ── Entry 0 : Maize / Loamy / Groundwater ────────────────────────
-    # field_id=1  →  North Field Alpha, Punjab (~15°C cold spell)
-    #                temperature band "15-20" → cold-stress sowing adjustment
+    # ── Entry 0 : Maize / Loamy / Groundwater  (field: Punjab Wheat Belt) ──
     {
         "sowing":               _from_today(1), # tomorrow
         "irrigation_frequency": None,           # ← int, e.g. 3
-        "field_id":             1,              # North Field Alpha — Punjab, Pakistan
         # "irrigation_start_date": "",          # ← override cascade if needed
         # "fertilization_date":    "",          # ← override cascade if needed
         # "harvesting":            "",          # ← override cascade if needed
     },
-    # ── Entry 1 : Cotton / Loamy / Groundwater ───────────────────────
+    # ── Entry 1 : Cotton / Loamy / Recycled  (field: The Reservoir) ──
     {
         "sowing":               _from_today(2), # today + 2 days
         "irrigation_frequency": None,           # ← int
     },
-    # ── Entry 2 : Rice / Sandy / River ───────────────────────────────
-    # Currently "Not Feasible" (Rice on Sandy soil) → skipped in run(), so no
-    # dates are set. Kept so it applies if the seasonal plan makes it feasible.
-    # field_id=2  →  East Creek Basin, Sindh (~34°C heat scenario)
-    #                temperature band "30-40" → heat-stress sowing adjustment
+    # ── Entry 2 : Rice / Sandy / Groundwater  (field: North Field Alpha) ──
+    # "Not Feasible" (Rice on Sandy soil) → skipped in run(), so no dates are
+    # set. Kept so it applies if the seasonal plan makes it feasible.
     {
         "sowing":               _from_today(0), # today
         "irrigation_frequency": None,           # ← int
-        "field_id":             2,              # East Creek Basin — Sindh, Pakistan
     },
 ]
 

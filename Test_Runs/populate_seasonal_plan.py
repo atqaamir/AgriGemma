@@ -16,8 +16,13 @@ Plan layout  (user_id=1 has exactly 1 active plan and 2 inactive plans)
   Plan  user  active  crops (crop / soil / water)                   Expected outcomes per crop
   ----  ----  ------  ------------------------------------------   ----------------------------
    1     1     yes    Maize  / Loamy / Groundwater                  A
-                      Cotton / Loamy / Groundwater                  A
-                      Rice   / Clay  / River                        A
+                      Cotton / Loamy / Recycled                     E
+                      Rice   / Sandy / Groundwater                  G (soil avoid → Not Feasible)
+
+  Plan 1 matches user 1's active crops/fields (seed_data.py), one each, soil + water equal:
+    Maize  → Punjab Wheat Belt (Loamy/Groundwater)
+    Cotton → The Reservoir     (Loamy/Recycled)
+    Rice   → North Field Alpha (Sandy/Groundwater)
    2     1     no     Maize  / Sandy / Groundwater                  B + D
                       Cotton / Sandy / Groundwater                  C + D
    3     1     no     Rice   / Clay  / Recycled                     G (water avoid)
@@ -55,9 +60,9 @@ OUTPUT = Path(__file__).parent / "seasonal_plan_output.json"
 PLANS = [
     # ── user 1: 1 active (3 crops), 2 inactive ────────────────────────────────
     (1, "Sowing", True, [
-        {"crop": "Maize",  "soil_type": "Loamy", "water_source": "Groundwater"},  # A
-        {"crop": "Cotton", "soil_type": "Loamy", "water_source": "Recycled"},  # A
-        {"crop": "Rice",   "soil_type": "Sandy",  "water_source": "River"},        # A
+        {"crop": "Maize",  "soil_type": "Loamy", "water_source": "Groundwater"},  # A  → Punjab Wheat Belt
+        {"crop": "Cotton", "soil_type": "Loamy", "water_source": "Recycled"},     # E  → The Reservoir
+        {"crop": "Rice",   "soil_type": "Sandy", "water_source": "Groundwater"},  # G (soil avoid) → North Field Alpha
     ]),
     (1, "Sowing", False, [
         {"crop": "Maize",  "soil_type": "Sandy", "water_source": "Groundwater"},  # B+D

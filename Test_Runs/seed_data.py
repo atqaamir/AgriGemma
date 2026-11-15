@@ -99,7 +99,7 @@ def run():
             health_status="healthy",
             field_score=95.0,
             health_percentage=82.0,
-            moisture_level=70.0,
+            moisture_level=55.0,  # 55% → band "30-60"; >60 would block Cotton sowing every day
             heat_level=30.0,
             stress_risk=8.0,
             disease_risk="high",
@@ -124,7 +124,7 @@ def run():
             soil_type_id=2,
             location="Punjab, Pakistan",
             ph_level=7.0,
-            currently_active=False,
+            currently_active=True,   # Maize's field in user 1's active seasonal plan
         ),
         Field(                                      # 3 – KP Highland Terrace
             name="KP Highland Terrace",
@@ -210,7 +210,7 @@ def run():
             field_id=sample_fields[1].id, user_id=user[0].id,
         ),
         Crop(                                       # 2 – Maize in Punjab Wheat Belt
-            crop_name_id=1, currently_active=False,
+            crop_name_id=1, currently_active=True,
             current_growth_stage_id=2,
             current_health_status="critical",
             planting_date=today - timedelta(days=30),
