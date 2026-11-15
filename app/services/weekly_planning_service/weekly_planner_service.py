@@ -90,15 +90,15 @@ class WeeklyPlannerService:
         Parameters
         ----------
         user_id         : int
-        week_start_date : date (defaults to today's Monday if omitted)
+        week_start_date : date (defaults to today if omitted — the weekly plan
+                          is a rolling 7-day window today..today+6)
 
         Returns
         -------
         WeeklyPlan ORM object
         """
         if week_start_date is None:
-            today = date.today()
-            week_start_date = today - timedelta(days=today.weekday())   # Monday
+            week_start_date = date.today()
 
         week_end_date = week_start_date + timedelta(days=6)
 

@@ -13,16 +13,16 @@ OUTPUT = Path(__file__).parent / "weekly_plan_output.json"
 #  FILL IN before running
 # =============================================================================
 
-# Week for the initial weekly plan: Monday of the current week.
+# Window for the initial weekly plan: rolling 7 days starting today.
 _today = date.today()
-WEEK_START = _today - timedelta(days=_today.weekday())
+WEEK_START = _today
 
 
 def _from_today(offset: int) -> str:
     """Date `offset` days after today, in the "MM/DD/YYYY" format update_entry expects.
 
-    Sowing dates are relative to today (not WEEK_START) so they are never in the past
-    and always fall inside the week the Weather Change Simulator builds from today.
+    Sowing dates are relative to today so they are never in the past and always
+    fall inside the rolling weekly window (today..today+6).
     """
     return (_today + timedelta(days=offset)).strftime("%m/%d/%Y")
 
