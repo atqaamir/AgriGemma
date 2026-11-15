@@ -741,6 +741,7 @@
                   </p>
                   <span class="text-[10px] font-bold ${getHealthColor(crop.health_status)}">${progress}%</span>
                 </div>
+                ${crop.planned_label ? `<p class="text-[10px] text-on-surface-variant italic mt-0.5 truncate">${escapeHtml(crop.planned_label)}</p>` : ''}
               </div>
 
               <div class="flex items-center gap-2 py-1">
@@ -1094,7 +1095,7 @@
       crop.name || '—';
 
     document.getElementById('cropPlantingDate').textContent =
-      crop.planting_date || '—';
+      crop.planting_date || crop.planned_label || '—';
 
     document.getElementById('cropGrowthStage').textContent =
       crop.growth_stage || '—';

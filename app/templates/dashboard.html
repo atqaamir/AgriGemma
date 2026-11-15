@@ -895,7 +895,7 @@ ${body}
               <div class="mt-1.5 h-1.5 bg-surface-variant rounded-full overflow-hidden">
                 <div class="${stage.bar} h-full rounded-full" style="width:${pct}%"></div>
               </div>
-              <p class="text-[10px] ${stage.text} mt-1">${stage.label}</p>
+              <p class="text-[10px] ${stage.text} mt-1">${crop.planned_label ? escapeHtml(crop.planned_label) : stage.label}</p>
             </div>
           </div>`;
       }).join('');

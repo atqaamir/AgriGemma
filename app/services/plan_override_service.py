@@ -254,15 +254,69 @@ class PlanOverrideService:
                                   f"({delta.days:+d} day{'' if abs(delta.days) == 1 else 's'} {compared}, task #{task.id})"}))
         logger.info("Task %s: %d farmer_completed override(s) for entry %s (%s)",
                     task.id, len(rows), entry.id, crop)
+        PlanOverrideService._set_crop_planting(task, entry, actual)
         return rows
+
+    @staticmethod
+    def planned_sowing_label(crop):
+        """Label for a crop that is not sown yet: "Planned: 9 May 2027 (weekly plan)" from the
+        effective sowing date, "Not Feasible" for an infeasible entry, None once sown."""
+        from datetime import timedelta
+        from app.utils import clock
+        if crop.planting_date:
+            return None
+        entry = PlanOverrideService.match_entry(crop.user_id, crop.crop_name_id, crop.field_id, warn=False)
+        if entry is None:
+            return None
+        if entry.feasibility == "Not Feasible":
+            return "Not Feasible"
+        # today + 1: also counts today's forecast decision (as-of rule: forecast overrides < as_of)
+        day = PlanOverrideService.effective_dates(entry, clock.today() + timedelta(days=1))["sowing"]
+        if day is None:
+            return None
+        label = f"Planned: {day.day} {day.strftime('%b %Y')} (weekly plan)"
+        return label + (" – overdue" if day < clock.today() else "")
+
+    @staticmethod
+    def _crop_for_task(task, entry):
+        """The Crop record a sowing task is about: its crop_id, else the entry's active crop."""
+        from app.models.crop import Crop
+        if task.crop_id:
+            return Crop.query.get(task.crop_id)
+        if entry is not None:
+            return PlanOverrideService.active_crop_for_entry(entry, task.user_id)
+        return None
+
+    @staticmethod
+    def _set_crop_planting(task, entry, planted):
+        """Sowing done → the crop's planting date (and harvest from the crop duration);
+        planted=None clears both again (un-complete / delete)."""
+        from app.extensions import db
+        from app.services.domain_service.crop_service import CropService
+        crop = PlanOverrideService._crop_for_task(task, entry)
+        if crop is None:
+            return
+        crop.planting_date = planted
+        crop.expected_harvest_date = CropService._calc_harvest_date(crop.crop_name_id, planted) if planted else None
+        db.session.commit()
+        logger.info("Task %s: crop %s planting_date=%s expected_harvest_date=%s",
+                    task.id, crop.id, crop.planting_date, crop.expected_harvest_date)
 
     @staticmethod
     def undo_farmer_task(task) -> int:
         """Sowing task un-completed → delete exactly that task's farmer_completed overrides."""
         rows = [r for r in PlanEventOverrideRepository.get_by_task(task.id)
                 if r.source == PlanEventOverride.SOURCE_FARMER]
+        sowing_row = next((r for r in rows if r.event_type == "sowing"), None)
+        entry = None
+        if sowing_row is not None:
+            from app.models.seasonal_plan import SeasonalPlanEntry
+            entry = SeasonalPlanEntry.query.get(sowing_row.seasonal_plan_entry_id)
         n = PlanEventOverrideRepository.delete_many(rows)
         logger.info("Task %s un-completed: %d farmer_completed override(s) removed", task.id, n)
+        if sowing_row is not None:
+            # Only a task that had recorded the sowing clears the crop's planting date.
+            PlanOverrideService._set_crop_planting(task, entry, None)
         return n
 
     DONE_LOOKBACK_DAYS = 7   # a completed event stays visible this many days before the window

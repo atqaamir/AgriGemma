@@ -24,6 +24,7 @@ class CropCardSchema(Schema):
     currently_active = fields.Bool()
 
     growth_progress = fields.Method("get_growth_progress")
+    planned_label = fields.Method("get_planned_label")
     field = fields.Method("get_field")
     task_count = fields.Method("get_task_count")
     pending_task_count = fields.Method("get_pending_task_count")
@@ -32,6 +33,10 @@ class CropCardSchema(Schema):
     def get_growth_progress(self, obj):
         from app.services.domain_service.crop_service import CropService
         return CropService.calculate_growth_progress(obj)
+
+    def get_planned_label(self, obj):
+        from app.services.plan_override_service import PlanOverrideService
+        return PlanOverrideService.planned_sowing_label(obj)
 
     def get_field(self, obj):
         if obj.field:
@@ -64,12 +69,17 @@ class CropDetailSchema(Schema):
     field_id = fields.Int(allow_none=True)
 
     growth_progress = fields.Method("get_growth_progress")
+    planned_label = fields.Method("get_planned_label")
     field = fields.Method("get_field")
     tasks = fields.Method("get_tasks")
 
     def get_growth_progress(self, obj):
         from app.services.domain_service.crop_service import CropService
         return CropService.calculate_growth_progress(obj)
+
+    def get_planned_label(self, obj):
+        from app.services.plan_override_service import PlanOverrideService
+        return PlanOverrideService.planned_sowing_label(obj)
 
     def get_field(self, obj):
         if obj.field:
