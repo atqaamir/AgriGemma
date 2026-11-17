@@ -1,4 +1,5 @@
-"""Chatbot evaluation: 28 questions for user 1 on the demo date (25 English + 3 Roman Urdu).
+"""Chatbot evaluation: 35 questions for user 1 on the demo date (32 English + 3 Roman Urdu),
+incl. a 5-question conversation from the live app (bare fields, nothing sown yet).
 
 Runs the same streaming pipeline as the chat page (ChatbotService._stream_pipeline) and logs,
 per question: detected intent, context size, web search, time per stage, the answer, which
@@ -35,6 +36,11 @@ DELAY_MAIZE = [r"delay\w*\s+(?:the\s+)?(?:sowing|planting)[^.]{0,40}maize",
 IRRIGATE_NOW = [NEG + r"\b(?:start|begin)\w*\s+(?:the\s+)?irrigat\w*[^.]{0,60}\b(?:immediately|right away|now|today)",
                 NEG + r"\birrigate\s+(?:the\s+|your\s+)?maize\s+(?:today|tomorrow|now|immediately)"]
 RICE_LATER = [r"\bwait until\b[^.]{0,60}", r"\bsow\w*\s+(?:the\s+)?rice\s+(?:after|later|when|once|on)\b"]
+# User 1's fields are bare on the demo date: no plant terms. Style: no "I understand you" openers,
+# no "you must".
+PLANT_TERMS = [r"\bleaf\b", r"\bleaves\b", r"\bstems?\b", r"\bwilt\w*", r"\bstunted\b", r"\byellowing\b"]
+STYLE = [r"\bI understand you", r"\bI know you", r"\byou must\b"]
+SOIL = [r"\bsoil\b", r"stubble", r"crust", r"moisture", r"seedbed"]
 # Temperatures the forecast does not have (it peaks at 33.5 °C): invented heat.
 INVENTED_HEAT = r"\b(?:3[6-9]|4\d)(?:\.\d)?\s*(?:°\s*c|°|degrees)"
 
@@ -104,6 +110,26 @@ QUESTIONS = [
      [[r"seedbed", r"inspection", r"erosion", r"pipe"]], [], None),
     (28, "is hafte garmi hogi?", ["weather"],
      [[r"\b3[0-4]", r"garm", r"hot"]], [], None),
+    # Live-app conversation (verbatim, 16 Nov): fields are bare, nothing is sown yet
+    (29, "My crops look unhealthy — what could be wrong?", ["general", "alert", "soil"],
+     [[r"not (?:yet )?sown", r"no crops?\b", r"bare", r"not (?:yet )?planted", r"before sowing", r"planned"],
+      [r"\bsoil\b", r"seedbed", r"prepar"]], PLANT_TERMS + STYLE, None),
+    (30, "whats an emergency field inspection?", ["general", "alert"],
+     [[r"check(?:ing)? (?:the )?soil before sowing", r"soil check", r"check(?:ing)? the soil"]],
+     PLANT_TERMS + STYLE, 29),
+    (31, "what happens in it", ["general", "alert", "soil"],
+     [SOIL], PLANT_TERMS + STYLE, 30),
+    (32, "why should i do it?", ["general", "alert", "soil"],
+     [SOIL, [r"sow", r"maize", r"seed"]], PLANT_TERMS + STYLE, 31),
+    (33, "what else should I do today", ["task", "general"],
+     [[r"seedbed"], [r"erosion", r"pipe", r"soil"]], PLANT_TERMS + STYLE, 32),
+    # Single questions: alert reason; stress and disease risk must not be mixed
+    (34, "Why is Punjab Wheat Belt on alert?", ["alert", "general", "soil"],
+     [[r"stubble", r"crust", r"\bsoil\b", r"seedbed"]], PLANT_TERMS + STYLE, None),
+    (35, "Is The Reservoir at high risk?", ["general", "alert", "soil"],
+     [[r"\bno\b", r"\blow\b", r"not at (?:a )?high"]],
+     PLANT_TERMS + STYLE + [r"(?<!not )(?<!no )\bhigh\b[^.]{0,30}\b(?:stress|disease)",
+                            r"\bstress\b[^.]{0,30}\bhigh\b"], None),
 ]
 
 
