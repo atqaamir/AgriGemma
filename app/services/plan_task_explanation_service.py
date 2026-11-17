@@ -23,36 +23,7 @@ MAX_BATCH = 10      # tasks per AI call
 PLAN_TASK_CATEGORY = "plan"
 DROPPED = ""        # explanation dropped by the date guard: not retried (None = not tried yet)
 
-_MONTHS = ("jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec")
-_MON = r"(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\.?"
-_DATE_PATTERNS = [
-    (re.compile(r"\b(\d{1,2})(?:st|nd|rd|th)?\s+(?:of\s+)?" + _MON, re.I), "dm"),    # 9 May, 9th May
-    (re.compile(r"\b" + _MON + r"\s+(\d{1,2})(?:st|nd|rd|th)?\b", re.I), "md"),       # May 9, May 9th
-    (re.compile(r"\b(\d{4})-(\d{1,2})-(\d{1,2})\b"), "ymd"),                          # 2027-05-09
-    (re.compile(r"\b(\d{1,2})/(\d{1,2})(?:/(\d{2,4}))?\b"), "d/m"),                   # 09/05, 09/05/2027
-]
-
-
-def dates_in(text: str) -> list[tuple[int, int]]:
-    """(day, month) of every date written in the text. Numbers with units (50 mm, 30 °C,
-    8 h) are not dates."""
-    found = []
-    for pat, kind in _DATE_PATTERNS:
-        for m in pat.finditer(text or ""):
-            try:
-                if kind == "dm":
-                    d, mo = int(m.group(1)), _MONTHS.index(m.group(2).lower()[:3]) + 1
-                elif kind == "md":
-                    mo, d = _MONTHS.index(m.group(1).lower()[:3]) + 1, int(m.group(2))
-                elif kind == "ymd":
-                    mo, d = int(m.group(2)), int(m.group(3))
-                else:
-                    d, mo = int(m.group(1)), int(m.group(2))
-            except ValueError:
-                continue
-            if 1 <= d <= 31 and 1 <= mo <= 12:
-                found.append((d, mo))
-    return found
+from app.utils.date_guard import DATE_PATTERNS as _DATE_PATTERNS, dates_in  # noqa: F401  (shared guard)
 
 
 def mentions_other_date(text: str, due: date) -> bool:
