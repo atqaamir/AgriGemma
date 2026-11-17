@@ -304,7 +304,11 @@
               </div>
             </div>
           </div>
-          <div id="taskDetailDescBlock" class="bg-surface-container rounded-xl p-4 hidden">
+          <div id="taskDetailWhyBlock" class="bg-primary/5 rounded-xl p-4 hidden">
+          <p class="text-[10px] uppercase tracking-widest text-primary font-bold mb-1">Why this task</p>
+          <p id="taskDetailWhy" class="text-sm text-on-surface leading-relaxed"></p>
+        </div>
+        <div id="taskDetailDescBlock" class="bg-surface-container rounded-xl p-4 hidden">
             <span class="text-[10px] uppercase tracking-widest text-on-surface-variant block mb-2">Description</span>
             <p id="taskDetailDesc" class="text-sm text-on-surface leading-relaxed"></p>
           </div>
@@ -1003,6 +1007,7 @@
             <div class="flex-1 min-w-0">
               <h5 class="text-sm font-bold text-on-surface truncate ${task.completed ? 'line-through' : ''}">${escapeHtml(getDynTranslation(task.title) || 'Untitled Task')}</h5>
               <p class="text-[11px] text-on-surface-variant font-medium truncate">${escapeHtml(getTaskSubtitle(task))}</p>
+              ${task.ai_explanation ? `<span class="inline-flex items-center gap-0.5 mt-1 px-1.5 py-0.5 rounded-full bg-primary/10 text-primary text-[9px] font-bold uppercase tracking-wide" title="${escapeHtml(task.ai_explanation)}"><span class="material-symbols-outlined" style="font-size:11px">psychology</span>Why</span>` : ''}
             </div>
             <button onclick="markFieldDetailTask(${task.id}, ${!task.completed}, event)"
               class="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center transition-colors active:scale-90 ${task.completed ? 'hover:opacity-70' : 'border-2 border-primary text-primary hover:bg-primary hover:text-on-primary'}"
@@ -1040,6 +1045,7 @@
             <div class="flex-1 min-w-0">
               <h5 class="text-sm font-bold text-on-surface truncate">${escapeHtml(getDynTranslation(task.title) || 'Untitled Task')}</h5>
               <p class="text-[11px] text-on-surface-variant font-medium truncate">${escapeHtml(getTaskSubtitle(task))}</p>
+              ${task.ai_explanation ? `<span class="inline-flex items-center gap-0.5 mt-1 px-1.5 py-0.5 rounded-full bg-primary/10 text-primary text-[9px] font-bold uppercase tracking-wide" title="${escapeHtml(task.ai_explanation)}"><span class="material-symbols-outlined" style="font-size:11px">psychology</span>Why</span>` : ''}
             </div>
             <button onclick="markFieldTask(${task.id}, true, event)"
               class="flex-shrink-0 w-8 h-8 rounded-full border-2 border-primary flex items-center justify-center text-primary hover:bg-primary hover:text-on-primary transition-colors active:scale-90"
@@ -1427,6 +1433,8 @@
         document.getElementById('taskDetailDue').textContent = task.due_date ? String(task.due_date) : '—';
         document.getElementById('taskDetailAssigned').textContent = task.assigned_to || '—';
 
+        const whyBlock = document.getElementById('taskDetailWhyBlock');
+        if (task.ai_explanation) { document.getElementById('taskDetailWhy').textContent = task.ai_explanation; whyBlock.classList.remove('hidden'); } else { whyBlock.classList.add('hidden'); }
         const descBlock = document.getElementById('taskDetailDescBlock');
         if (task.description) {
           document.getElementById('taskDetailDesc').textContent = task.description;
@@ -1505,6 +1513,7 @@
             <div class="flex-1 min-w-0">
               <h5 class="text-sm font-bold text-on-surface truncate ${task.completed ? 'line-through' : ''}">${escapeHtml(getDynTranslation(task.title) || 'Untitled Task')}</h5>
               <p class="text-[11px] text-on-surface-variant font-medium truncate">${escapeHtml(getTaskSubtitle(task))}</p>
+              ${task.ai_explanation ? `<span class="inline-flex items-center gap-0.5 mt-1 px-1.5 py-0.5 rounded-full bg-primary/10 text-primary text-[9px] font-bold uppercase tracking-wide" title="${escapeHtml(task.ai_explanation)}"><span class="material-symbols-outlined" style="font-size:11px">psychology</span>Why</span>` : ''}
             </div>
             <div class="flex items-center gap-2 flex-shrink-0">
               <span class="text-[10px] font-bold ${task.completed ? 'text-primary' : 'text-amber-600'} uppercase">${task.completed ? t('common.done') : t('common.pending')}</span>
