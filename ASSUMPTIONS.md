@@ -204,6 +204,13 @@ The following assumptions define the current scope and operational boundaries of
   every `SIMULATOR_COOLDOWN_SECONDS` (default 30); a click inside the cooldown gets "Simulator just ran – try again in
   N s" (HTTP 429). The cooldown is kept in memory, which works because the app runs one gunicorn worker.
 - `GET /health` returns "ok" for an uptime ping that keeps the free Render instance awake.
+- **Keep-alive:** the free Render instance sleeps after 15 minutes without requests (the next request then waits for a
+  cold start, which also reseeds the demo). The GitHub Actions workflow `.github/workflows/keep-alive.yml` pings
+  `/health` every 10 minutes to keep it awake.
+  - GitHub may delay scheduled runs (often by several minutes under load), so the instance can still fall asleep now
+    and then.
+  - GitHub disables scheduled workflows after 60 days without repository activity; re-enable it under
+    Actions → Keep alive.
 - `SECRET_KEY` should be set on Render (the app has no sessions yet, so the default is not a risk today).
 
 ---
