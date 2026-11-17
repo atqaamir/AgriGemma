@@ -1069,11 +1069,17 @@
       }
 
       function updateTotalAcreage(fields) {
+        // The page no longer has a total-acreage element (removed in a UI pass); skip instead of
+        // throwing — the throw sent loadFieldsPage / deleteField into their error branch.
+        const el = document.getElementById('total-acreage');
+        if (!el) return;
         const total = fields.reduce((sum, field) => sum + (parseFloat(field.acreage) || 0), 0);
-        document.getElementById('total-acreage').textContent = total.toFixed(1);
+        el.textContent = total.toFixed(1);
       }
 
       function updateOverallStats(fields) {
+        // The overall-stats panel was removed from the page; nothing to fill.
+        if (!document.getElementById('overall-moisture-value')) return;
         if (!fields.length) {
           document.getElementById('overall-moisture-value').textContent = '0%';
           document.getElementById('overall-progress-ring').style.setProperty('--progress', 0);
@@ -1346,7 +1352,6 @@
 
       function closeEditFieldModal() {
         document.getElementById('editFieldModal').classList.add('hidden');
-        doc
       }
 
       async function submitEditField(event) {

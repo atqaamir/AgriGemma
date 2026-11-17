@@ -49,7 +49,8 @@ def get_active_fields_by_user(user_id):
 
 
 @fields_bp.route("/fields/vocabulary", methods=["GET"])
-def get_field_vocabulary():
+@fields_bp.route("/<int:user_id>/fields/vocabulary", methods=["GET"])   # used by the fields page form
+def get_field_vocabulary(user_id=None):
     return jsonify(FieldService.get_vocabulary()), 200
 
 
