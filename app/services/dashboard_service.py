@@ -7,7 +7,6 @@ from app.services.domain_service.field_service import FieldService
 from app.services.domain_service.crop_service import CropService
 from app.services.domain_service.task_service import TaskService
 from app.services.domain_service.notification_service import NotificationService
-from app.services.intelligence_service.chatbot_service.chatbot_service import ChatbotService
 from app.services.intelligence_service.task_intelligence_service import TaskIntelligenceService
 from app.services.intelligence_service.chatbot_service.context_aggregation_service import ContextAggregationService
 from app.utils import clock
@@ -179,21 +178,8 @@ class DashboardService:
 
 
     @staticmethod
-    def chat_with_advisor(user_id: int, message: str) -> str:
-        # TODO: pass user_id context once ChatbotService supports user-scoped sessions
-        return ChatbotService.get_chat_response(message)
-
-    @staticmethod
     def refresh_dashboard(user_id: int) -> dict:
         return DashboardService.build_dashboard_data(user_id)
-
-    @staticmethod
-    def generate_seasonal_plan(user_id: int) -> dict:
-        # Placeholder for future implementation
-        return {
-            "plan": "This feature is under development. It will provide a detailed seasonal plan based on your farm's data and local conditions."
-        }
-
 
     @staticmethod
     def _build_farm_overview(all_fields, active_fields, all_crops, all_tasks, pending_tasks) -> dict:
@@ -297,10 +283,3 @@ class DashboardService:
             "currently_active": plan.currently_active,
         }
 
-    @staticmethod
-    def _build_ai_insights(weather, tasks):
-        return {
-            "summary": "Irrigation demand likely to increase over next 3 days due to heat buildup."
-        }
-
-    

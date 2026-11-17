@@ -73,8 +73,6 @@ class CoordinatorAgent:
     def task_generation(self, user_id: int) -> dict:
         status = self.planning_agent.generate_daily_tasks(user_id, tag="daily_planning")
         self.dashboard_refresh(user_id)
-        # # Invalidate cached intelligence so the next request reflects new tasks
-        # self.task_intelligence_agent.invalidate_cache(user_id)
         if status == enums_.Status.SUCCESS:
             return execution_responses.ExecutionResponse.success("Task generation completed")
         return execution_responses.ExecutionResponse.failure("Task generation failed")
@@ -108,7 +106,6 @@ class CoordinatorAgent:
             result = execution_responses.ExecutionResponse.success("Risk assessment completed — no change")
 
         elif change == enums_.ChangeStatus.NO_IMPACT:
-            # self.call_intelligence(user_id, tag="critical_task_overview")
             self.send_notification(user_id, tag="weather_only")
             self.dashboard_refresh(user_id)
             result = execution_responses.ExecutionResponse.success("Daily update completed")
@@ -117,7 +114,6 @@ class CoordinatorAgent:
                 self.update_planner(user_id, tag="impact_weekly", as_of_date=as_of_date)
             elif change == enums_.ChangeStatus.IMPACT_TASKS:
                 self.update_planner(user_id, tag="impact_tasks", as_of_date=as_of_date)
-            # self.call_intelligence(user_id, tag="critical_task_overview")
             notification_tag = "weekly" if change == enums_.ChangeStatus.IMPACT_PLAN else "daily"
             self.send_change_notifications(user_id, tag=notification_tag)
             self.dashboard_refresh(user_id)
@@ -192,10 +188,6 @@ class CoordinatorAgent:
         if status == enums_.Status.SUCCESS:
             return execution_responses.ExecutionResponse.success("Dashboard refresh completed")
         return execution_responses.ExecutionResponse.failure("Dashboard refresh failed")
-
-    def call_intelligence(self, user_id: int, tag: str) -> dict:
-        self.task_intelligence_agent.generate(user_id, tag=tag)
-        return execution_responses.ExecutionResponse.success(f"{tag.replace('_', ' ').title()} generated")
 
     def send_notification(self, user_id: int, tag: str) -> dict:
         status = self.notification_agent.generate_notifications(user_id, tag=tag)

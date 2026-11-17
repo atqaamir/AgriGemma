@@ -3,15 +3,11 @@ import logging
 from datetime import datetime, timezone
 
 from app.utils import clock
-from app.services.ai_model_service import ai_model_service
 from app.services.ai_model_service.ai_model_service import fast_complete as _fast_complete
 from app.services.ai_model_service.ai_model_service import fast_complete_json as _fast_complete_json
 from app.services.intelligence_service.chatbot_service.prompts._prompt_task_intelligence import (
     TaskIntelligencePromptBuilder,
     build_task_reasoning_prompt,
-    build_task_update_reasoning_prompt,
-    build_critical_tasks_overview_prompt,
-    build_dashboard_oneliner_prompt,
 )
 
 logger = logging.getLogger(__name__)
@@ -70,92 +66,6 @@ class TaskIntelligenceService:
         return intelligence
 
     @staticmethod
-    def generate_dashboard_oneliner(context: dict, user_id: int) -> dict:
-        """
-        Lightweight one-sentence dashboard header summary.
-        Runs on Ollama (local Gemma 4) — fast, minimal context, no JSON parsing.
-        Separate from generate_intelligence() so the dashboard card doesn't need
-        to fire the full JSON intelligence prompt just to get one sentence.
-        """
-        try:
-            prompt = build_dashboard_oneliner_prompt(context)
-            raw    = _fast_complete(prompt)
-            text   = TaskIntelligenceService._clean_text(raw)
-            return {
-                "summary":      text,
-                "generated_at": datetime.now(timezone.utc).isoformat(),
-                "is_fallback":  False,
-            }
-        except Exception as exc:
-            logger.warning("Dashboard one-liner failed (user=%s): %s", user_id, exc)
-            return {
-                "summary":      TaskIntelligenceService._build_dashboard_oneliner_fallback(context),
-                "generated_at": datetime.now(timezone.utc).isoformat(),
-                "is_fallback":  True,
-            }
-
-    @staticmethod
-    def generate_task_overview(context: dict, user_id: int) -> dict:
-        try:
-            prompt = build_critical_tasks_overview_prompt(
-                context.get("tasks", {}).get("pending_list", []),
-                {
-                    "farmer_name": context.get("farmer_name"),
-                    "weather": context.get("weather", {}),
-                    "rules": context.get("rules", ""),
-                },
-            )
-            raw = _fast_complete(prompt)
-            return {
-                "summary": TaskIntelligenceService._clean_text(raw),
-                "generated_at": datetime.now(timezone.utc).isoformat(),
-                "is_fallback": False,
-            }
-        except Exception as exc:
-            logger.warning("AI task overview failed (user=%s): %s", user_id, exc)
-            return {
-                "summary": TaskIntelligenceService._build_task_overview_fallback(context),
-                "generated_at": datetime.now(timezone.utc).isoformat(),
-                "is_fallback": True,
-            }
-
-    @staticmethod
-    def generate_task_update_explanation(task, old_priority: str, context: dict, change_reason: str = "") -> str:
-        """
-        Explain to the farmer why a task's priority changed.
-
-        task         — ORM Task object
-        old_priority — priority string before the update (e.g. "medium")
-        context      — {farmer_name, weather, rules}
-        change_reason — optional free-text reason for the change
-        """
-        try:
-            prompt = build_task_update_reasoning_prompt(
-                {
-                    "title":         task.title,
-                    "description":   task.description,
-                    "priority":      task.priority,
-                    "old_priority":  old_priority,
-                    "due_date":      str(task.due_date) if task.due_date else None,
-                    "field_name":    task.field.name if task.field else None,
-                    "crop_name":     task.crop.name if task.crop else None,
-                    "is_overdue":    bool(task.due_date and task.due_date < clock.today()),
-                    "change_reason": change_reason,
-                },
-                context,
-            )
-            return TaskIntelligenceService._clean_text(_fast_complete(prompt))
-        except Exception as exc:
-            logger.warning("AI task update explanation failed for task %s: %s", getattr(task, "id", None), exc)
-            old = old_priority.capitalize() if old_priority else "Previous"
-            new = (task.priority or "updated").capitalize()
-            return (
-                f"This task was escalated from {old} to {new} priority"
-                + (f" on {task.field.name}" if task.field else "")
-                + ". Please review current field conditions and act accordingly."
-            )
-
-    @staticmethod
     def generate_task_explanation(task, context: dict) -> str:
         try:
             prompt = build_task_reasoning_prompt(
@@ -181,27 +91,6 @@ class TaskIntelligenceService:
                 task.description
                 or f"This task is important because of current farm conditions affecting {task.field.name if task.field else 'your farm'}."
             )
-
-    @staticmethod
-    def _build_dashboard_oneliner_fallback(context: dict) -> str:
-        tasks  = context.get("tasks") or {}
-        farm   = context.get("farm") or {}
-        fields = farm.get("active_fields") or 0
-        overdue  = tasks.get("overdue_count") or 0
-        critical = tasks.get("critical_count") or 0
-        pending  = tasks.get("pending_count") or 0
-        if overdue:
-            return f"{fields} active fields with {overdue} overdue task(s) requiring immediate attention."
-        if critical:
-            return f"{fields} active fields with {critical} critical task(s) — act today."
-        if pending:
-            return f"{fields} active fields, {pending} task(s) pending — farm is on track."
-        return f"{fields} active fields — no urgent tasks right now."
-
-    @staticmethod
-    def invalidate_cache(user_id: int) -> None:
-        """No-op cache invalidation retained for compatibility."""
-        return None
 
     # ── Private helpers ───────────────────────────────────────────────────────
 
@@ -263,21 +152,6 @@ class TaskIntelligenceService:
         if tasks.get("pending_count", 0) > 0:
             return "medium"
         return "low"
-
-    @staticmethod
-    def _build_task_overview_fallback(context: dict) -> str:
-        tasks = [t for t in context.get("tasks", {}).get("pending_list", []) if t.get("priority") in ("critical", "high")]
-        if not tasks:
-            return "There are no critical or high-priority tasks right now."
-
-        top = tasks[0]
-        field = top.get("field_name") or top.get("crop_name") or "your farm"
-        count = len(tasks)
-        overdue = sum(1 for t in tasks if t.get("is_overdue"))
-        overdue_phrase = f" {overdue} are overdue." if overdue else ""
-        return (
-            f"{count} urgent tasks need attention today, starting with '{top['title']}' for {field}.{overdue_phrase}"
-        )
 
     @staticmethod
     def _build_rule_based_fallback(context: dict) -> dict:

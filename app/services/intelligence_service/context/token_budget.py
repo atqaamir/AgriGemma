@@ -26,11 +26,7 @@ BUDGET_CHATBOT_CONTEXT  = 2_800   # context block inside the chatbot prompt (inc
 BUDGET_CHATBOT_HISTORY  = 1_200   # conversation history block (last ~6 messages, newest kept)
 BUDGET_DASHBOARD_PROMPT = 2_800   # full dashboard intelligence prompt
 BUDGET_TASK_EXPLAIN     = 900     # full single-task explanation prompt
-BUDGET_TASK_UPDATE      = 950     # full task-priority-change explanation prompt
-BUDGET_ALERT_EXPLAIN    = 850     # full single-alert explanation prompt
 BUDGET_ALERTS_BATCH     = 1_000   # full batch-alerts explanation prompt
-BUDGET_OVERVIEW_PROMPT  = 1_600   # tasks-page banner prompt (rich: heading + per-task explanations)
-BUDGET_WEATHER_CHANGE   = 950     # weather-triggered advisory prompt
 
 # Per-section sub-budgets inside the chatbot context block
 BUDGET_RULES_IN_CHATBOT    = 450

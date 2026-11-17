@@ -1,13 +1,12 @@
 """
 AI Prompt Test Endpoint
-GET /test/ai  — runs all 4 prompt types against real DB data and returns responses.
+GET /test/ai  — runs the 3 prompt types against real DB data and returns responses.
 
 Usage:
     curl http://localhost:5000/test/ai
     curl http://localhost:5000/test/ai?prompt=1    (chatbot only)
     curl http://localhost:5000/test/ai?prompt=2    (task intelligence only)
     curl http://localhost:5000/test/ai?prompt=3    (alert explanation only)
-    curl http://localhost:5000/test/ai?prompt=4    (weather change advisory only)
 """
 
 import time
@@ -27,7 +26,7 @@ USER_ID = 1  # Uses the seeded demo user
 @test_ai_bp.route("/", methods=["GET"])
 def test_all_prompts():
     """
-    Fire all 4 AI prompts using real farm data and return each response with timing.
+    Fire all 3 AI prompts using real farm data and return each response with timing.
     Pass ?prompt=N to run a single prompt.
     """
     only = request.args.get("prompt", type=int)
@@ -44,9 +43,6 @@ def test_all_prompts():
 
     if only is None or only == 3:
         results["3_alert_explanation"] = _test_alert_explanation()
-
-    if only is None or only == 4:
-        results["4_weather_change_advisory"] = _test_weather_change_advisory()
 
     return jsonify(results), 200
 
@@ -89,7 +85,6 @@ def _test_task_intelligence():
         from app.services.intelligence_service.chatbot_service.context_aggregation_service import ContextAggregationService
         from app.services.intelligence_service.task_intelligence_service import TaskIntelligenceService
 
-        TaskIntelligenceService.invalidate_cache(USER_ID)
         context = ContextAggregationService.build_task_context(USER_ID)
         t0 = time.monotonic()
         result = TaskIntelligenceService.generate_intelligence(context, USER_ID)
@@ -128,30 +123,6 @@ def _test_alert_explanation():
         }
     except Exception as exc:
         logger.exception("test_alert_explanation failed")
-        return {"ok": False, "error": str(exc)}
-
-
-def _test_weather_change_advisory():
-    """
-    Prompt 4: Weather-change advisory — explains why tasks changed after a weather update.
-    """
-    try:
-        from app.services.intelligence_service.chatbot_service.context_aggregation_service import ContextAggregationService
-        from app.services.intelligence_service.advisory_service import AdvisoryService
-
-        context = ContextAggregationService.build_task_context(USER_ID)
-        t0 = time.monotonic()
-        advisory = AdvisoryService.generate_weather_change_advisory(USER_ID, context)
-        return {
-            "ok": True,
-            "farmer_name": context.get("farmer_name"),
-            "pending_task_count": context.get("tasks", {}).get("pending_count", 0),
-            "rules_in_context": bool(context.get("rules")),
-            "advisory": advisory,
-            "ms": round((time.monotonic() - t0) * 1000),
-        }
-    except Exception as exc:
-        logger.exception("test_weather_change_advisory failed")
         return {"ok": False, "error": str(exc)}
 
 

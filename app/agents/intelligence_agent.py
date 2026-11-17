@@ -14,22 +14,16 @@ class TaskIntelligenceAgent:
 
 
 
-    Tasks + Critical tasks overview
+    Task intelligence (tasks page and dashboard analysis).
     """
 
     def __init__(self) -> None:
         # Agents are thin — no state beyond the services they coordinate
         pass
 
-    def generate(self, user_id: int, tag: str | None = None) -> dict:
+    def generate(self, user_id: int) -> dict:
         context = self._aggregate_context(user_id)
-        if tag == "critical_task_overview":
-            return TaskIntelligenceService.generate_task_overview(context, user_id)
         return TaskIntelligenceService.generate_intelligence(context, user_id)
-
-    def invalidate_cache(self, user_id: int) -> None:
-        """Expose cache invalidation so the coordinator can refresh after task changes."""
-        TaskIntelligenceService.invalidate_cache(user_id)
 
     # ── Private ───────────────────────────────────────────────────────────────
 

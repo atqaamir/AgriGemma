@@ -1,5 +1,5 @@
 import threading
-from flask import Blueprint, current_app, jsonify, render_template, request
+from flask import Blueprint, current_app, jsonify, render_template
 from app.services.dashboard_service import DashboardService
 
 dashboard_bp = Blueprint("dashboard", __name__)
@@ -25,16 +25,3 @@ def generate_summary(user_id):
     threading.Thread(target=_bg, daemon=False).start()
     return jsonify({"status": "generating"}), 202
 
-@dashboard_bp.route("/<int:user_id>/advisor", methods=["GET"])
-def get_advisor(user_id):
-    user_message = request.args.get("message", "")
-    if not user_message:
-        return jsonify({"error": "Message parameter is required"}), 400
-
-    response = DashboardService().chat_with_advisor(user_id=user_id, message=user_message)
-    return jsonify({"response": response}), 200
-    
-@dashboard_bp.route("/<int:user_id>/seasonal-plan", methods=["GET"])
-def get_seasonal_plan(user_id):
-    plan = DashboardService().generate_seasonal_plan(user_id=user_id)
-    return jsonify(plan), 200
