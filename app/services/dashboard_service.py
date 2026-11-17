@@ -1,3 +1,4 @@
+import math
 from datetime import datetime, timezone, date
 
 from app.extensions import db
@@ -38,7 +39,7 @@ class DashboardService:
 
         return {
             "user": DashboardService._build_user_section(user),
-            "weather": DashboardService._build_weather_section(active_fields),
+            "weather": DashboardService._build_weather_section(user_id),
             "overview": DashboardService._build_farm_overview(
                 fields,
                 active_fields,
@@ -129,37 +130,30 @@ class DashboardService:
         }
 
     @staticmethod
-    def _build_weather_section(active_fields):
-
-        if not active_fields:
-
+    def _build_weather_section(user_id: int) -> dict:
+        """Weather card from the forecast table (the forecast the weekly plan and the chatbot
+        use, demo date via the clock): today's daily average + the next 3 days. No rows → {}
+        (the card shows "--"), never made-up numbers."""
+        from app.services.weather_service.forecast_service import ForecastService
+        summary = ForecastService._summary_from_forecast_table(user_id)
+        days = summary.get("forecast") or []
+        if not days:
             return {}
 
-        return {
-            "current": {
-                "temperature_c": 32,
-                "condition": "Sunny",
-            },
+        def temp(day):
+            return math.floor(day["avg_temp_c"] + 0.5) if day.get("avg_temp_c") is not None else None   # half up
 
+        today = days[0]
+        return {
+            "current": {"temperature_c": temp(today), "condition": today["condition"], "date": today["date"]},
             "forecast": [
-                {
-                    "day": "Tue",
-                    "temperature_c": 30,
-                    "condition": "Cloudy",
-                },
-                {
-                    "day": "Wed",
-                    "temperature_c": 26,
-                    "condition": "Rainy",
-                },
-                 {
-                    "day": "Thu",
-                    "temperature_c": 28,
-                    "condition": "Rainy",
-                },
-            ]
+                {"day": date.fromisoformat(d["date"]).strftime("%a"), "date": d["date"],
+                 "temperature_c": temp(d), "condition": d["condition"], "rain_mm": d.get("rain_mm")}
+                for d in days[1:4]
+            ],
+            "source": "forecast table (daily average)",
         }
-    
+
     @staticmethod
     def _get_alerts(user_id, tasks):
         """Return unread notifications in a serializable form."""
