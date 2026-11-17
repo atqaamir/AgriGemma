@@ -115,7 +115,7 @@ QUESTIONS = [
      [[r"not (?:yet )?sown", r"no crops?\b", r"bare", r"not (?:yet )?planted", r"before sowing", r"planned"],
       [r"\bsoil\b", r"seedbed", r"prepar"]], PLANT_TERMS + STYLE, None),
     (30, "whats an emergency field inspection?", ["general", "alert"],
-     [[r"check(?:ing)? (?:the )?soil before sowing", r"soil check", r"check(?:ing)? the soil"]],
+     [[r"(?:not|isn'?t|is not) (?:on|in) your (?:task )?list", r"check(?:ing)? (?:the )?soil before sowing"]],
      PLANT_TERMS + STYLE, 29),
     (31, "what happens in it", ["general", "alert", "soil"],
      [SOIL], PLANT_TERMS + STYLE, 30),
@@ -127,7 +127,7 @@ QUESTIONS = [
     (34, "Why is Punjab Wheat Belt on alert?", ["alert", "general", "soil"],
      [[r"stubble", r"crust", r"\bsoil\b", r"seedbed"]], PLANT_TERMS + STYLE, None),
     (35, "Is The Reservoir at high risk?", ["general", "alert", "soil"],
-     [[r"\bno\b", r"\blow\b", r"not at (?:a )?high"]],
+     [[r"erosion"], [r"(?:stress|disease)[^.]{0,40}\blow\b", r"\blow\b[^.]{0,40}(?:stress|disease)"]],
      PLANT_TERMS + STYLE + [r"(?<!not )(?<!no )\bhigh\b[^.]{0,30}\b(?:stress|disease)",
                             r"\bstress\b[^.]{0,30}\bhigh\b"], None),
 ]
