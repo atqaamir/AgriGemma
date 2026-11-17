@@ -428,7 +428,9 @@ class NotificationService:
                            "level": "medium", "type": "soil"})
         health = (f.health_status or "").lower()
         if health in ("poor", "alert", "critical", "warning"):
-            alerts.append({"message": f"Field health '{f.health_status}' on {f.name}: inspect the field",
+            bare = all(not c.planting_date for c in f.crops if c.currently_active)
+            action = "check the soil before sowing (no crop in the ground yet)" if bare else "inspect the field"
+            alerts.append({"message": f"Field condition '{f.health_status}' on {f.name}: {action}",
                            "level": "high" if health == "critical" else "medium", "type": "field"})
         if (f.disease_risk or "").lower() == "high":
             alerts.append({"message": f"High disease risk on {f.name}", "level": "medium", "type": "field"})

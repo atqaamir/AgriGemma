@@ -303,10 +303,29 @@ def _active_fields_of(user_id: int) -> list:
     return [f for f in FieldRepository.get_by_user_id(user_id) if f.currently_active]
 
 
+def _crop_status(crop) -> str:
+    """'Maize: not sown yet, planned 6 May' / 'Rice: not feasible here, not sown' /
+    'Cotton: sown 7 May, Flowering stage' — so the model knows whether plants exist."""
+    from app.services.plan_override_service import PlanOverrideService
+    name = crop.name or "Crop"
+    if crop.planting_date:
+        d = crop.planting_date
+        return f"{name}: sown {d.day} {d.strftime('%b')}, {crop.growth_stage or '?'} stage"
+    p = PlanOverrideService.planned_sowing(crop)
+    if p and p["not_feasible"]:
+        return f"{name}: not feasible here, not sown"
+    if p and p["date"]:
+        d = p["date"]
+        return f"{name}: not sown yet, planned {d.day} {d.strftime('%b')}" + (" (overdue)" if p["overdue"] else "")
+    return f"{name}: not sown yet"
+
+
 def _fetch_fields(user_id: int) -> list:
-    """The user's active fields."""
-    return [
-        {
+    """The user's active fields, with the status of the crop on each."""
+    out = []
+    for f in _active_fields_of(user_id):
+        crops = [c for c in f.crops if c.currently_active]
+        out.append({
             "id":           f.id,
             "name":         f.name,
             "health_status": f.health_status,
@@ -314,9 +333,10 @@ def _fetch_fields(user_id: int) -> list:
             "heat_level":   f.heat_level,
             "stress_risk":  f.stress_risk,
             "disease_risk": f.disease_risk,
-        }
-        for f in _active_fields_of(user_id)
-    ]
+            "crop_status":  "; ".join(_crop_status(c) for c in crops) or "no crop",
+            "bare":         all(not c.planting_date for c in crops),
+        })
+    return out
 
 
 def _fetch_fields_raw(user_id: int) -> list:
@@ -338,6 +358,8 @@ def _fetch_crops(user_id: int) -> list:
             "soil_type_id":   c.field.soil_type_id if c.field else None,
             "moisture_level": c.field.moisture_level if c.field else None,
             "field_name":     c.field.name if c.field else None,
+            "status":         _crop_status(c),
+            "sown":           bool(c.planting_date),
         }
         for c in CropService.get_active_crops_by_user(user_id)
     ]

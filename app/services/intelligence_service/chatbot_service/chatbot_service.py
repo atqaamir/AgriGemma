@@ -163,7 +163,7 @@ _MARKET_WORDS = re.compile(r"\b(?:price|prices|rate|rates|cost|market|buy|sell|q
 _CROP_ALIASES = ("kapas", "makai", "makki", "chawal", "dhaan", "dhan")
 
 
-def _is_farm_question(message: str, context: dict) -> bool:
+def _is_farm_question(message: str, context: dict, history: str = "") -> bool:
     """True when the question is about this farm's own data: no web search for it.
 
     Farm words ("my", "field", "plan", "today", Roman Urdu "mera", "khet"...), one of the
@@ -171,6 +171,8 @@ def _is_farm_question(message: str, context: dict) -> bool:
     """
     if _FARM_WORDS.search(message):
         return True
+    if history.strip() and len(message.split()) <= 6:
+        return True          # short follow-up ("what happens in it") continues the farm conversation
     text = message.lower()
     fields = [f.get("name", "") for f in (context.get("fields") or [])]
     fields += [c.get("field") or "" for c in ((context.get("plan") or {}).get("crops") or [])]
@@ -183,9 +185,9 @@ def _is_farm_question(message: str, context: dict) -> bool:
     return mentions_crop and not _MARKET_WORDS.search(message)
 
 
-def _wants_web_search(intent_result: IntentResult, message: str, context: dict) -> bool:
+def _wants_web_search(intent_result: IntentResult, message: str, context: dict, history: str = "") -> bool:
     """Web search only for GENERAL questions that are not about the farm (time-limited)."""
-    return intent_result.primary == FarmIntent.GENERAL and not _is_farm_question(message, context)
+    return intent_result.primary == FarmIntent.GENERAL and not _is_farm_question(message, context, history)
 
 
 # ── Context formatting ─────────────────────────────────────────────────────────
@@ -384,8 +386,8 @@ class ChatbotService:
 
         # Stage 2b — web search (GENERAL intent only)
         web_results = []
-        farm_question = _is_farm_question(user_message, context)
-        if _wants_web_search(intent_result, user_message, context):
+        farm_question = _is_farm_question(user_message, context, history)
+        if _wants_web_search(intent_result, user_message, context, history):
             web_results = web_search_service.search(user_message)
 
         # Stage 3 — AI
@@ -635,8 +637,8 @@ class ChatbotService:
 
             # ── Stage 2b: web search (GENERAL, non-farm questions only) ─────────
             web_results = []
-            farm_question = _is_farm_question(user_message, context)
-            if _wants_web_search(intent_result, user_message, context):
+            farm_question = _is_farm_question(user_message, context, history)
+            if _wants_web_search(intent_result, user_message, context, history):
                 yield stage_sse("searching_web", "Searching the web...")
                 tw = time.time()
                 web_results = web_search_service.search(user_message)

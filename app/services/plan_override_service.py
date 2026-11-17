@@ -258,9 +258,10 @@ class PlanOverrideService:
         return rows
 
     @staticmethod
-    def planned_sowing_label(crop):
-        """Label for a crop that is not sown yet: "Planned: 9 May 2027 (weekly plan)" from the
-        effective sowing date, "Not Feasible" for an infeasible entry, None once sown."""
+    def planned_sowing(crop) -> dict | None:
+        """For a crop that is not sown yet: {"not_feasible": bool, "date": date|None,
+        "overdue": bool} from its seasonal entry (effective sowing date); None once sown or
+        without a matching entry."""
         from datetime import timedelta
         from app.utils import clock
         if crop.planting_date:
@@ -269,13 +270,25 @@ class PlanOverrideService:
         if entry is None:
             return None
         if entry.feasibility == "Not Feasible":
-            return "Not Feasible"
+            return {"not_feasible": True, "date": None, "overdue": False}
         # today + 1: also counts today's forecast decision (as-of rule: forecast overrides < as_of)
         day = PlanOverrideService.effective_dates(entry, clock.today() + timedelta(days=1))["sowing"]
-        if day is None:
+        return {"not_feasible": False, "date": day, "overdue": bool(day and day < clock.today())}
+
+    @staticmethod
+    def planned_sowing_label(crop):
+        """Label for a crop that is not sown yet: "Planned: 9 May 2027 (weekly plan)" from the
+        effective sowing date, "Not Feasible" for an infeasible entry, None once sown."""
+        p = PlanOverrideService.planned_sowing(crop)
+        if p is None:
             return None
+        if p["not_feasible"]:
+            return "Not Feasible"
+        if p["date"] is None:
+            return None
+        day = p["date"]
         label = f"Planned: {day.day} {day.strftime('%b %Y')} (weekly plan)"
-        return label + (" – overdue" if day < clock.today() else "")
+        return label + (" – overdue" if p["overdue"] else "")
 
     @staticmethod
     def _crop_for_task(task, entry):

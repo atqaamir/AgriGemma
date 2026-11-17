@@ -156,8 +156,23 @@ def weather_signals(weather: dict, fields: list, harvest_soon: bool = True) -> s
 
 # ── Fields ─────────────────────────────────────────────────────────────────────
 
+def _stress_words(v) -> str:
+    """Stress score 0–100 in words: <20 low, 20–50 moderate, >50 high."""
+    try:
+        v = float(v)
+    except (TypeError, ValueError):
+        return ""
+    return "low" if v < 20 else "moderate" if v <= 50 else "high"
+
+
+def _moisture_words(v) -> str:
+    return "dry" if v < 30 else "adequate" if v <= 60 else "wet"
+
+
 def field_block(fields: list, limit: int = 4) -> str:
-    """Compact field conditions — moisture, health, risk flags."""
+    """Field conditions in plain words, with the status of the crop on each field.
+    A bare field (nothing sown) is described by its soil, so the model does not
+    talk about leaves or stems that do not exist."""
     if not fields:
         return ""
 
@@ -167,42 +182,45 @@ def field_block(fields: list, limit: int = 4) -> str:
         moisture = f.get("moisture_level")
         health   = f.get("health_status") or "?"
         disease  = f.get("disease_risk")
-        stress   = f.get("stress_risk")
+        stress   = _stress_words(f.get("stress_risk"))
 
-        parts = [f"  {name}:"]
+        parts = []
+        if f.get("crop_status"):
+            parts.append(f.get("crop_status"))
+        if f.get("bare"):
+            parts.append("bare field, being prepared for sowing")
         if moisture is not None:
-            parts.append(f"moisture {moisture:.0f}%")
-        parts.append(f"health {health}")
-        if disease is not None and str(disease).lower() not in ("none", "low", "", "0", "0.0"):
-            parts.append(f"disease-risk {disease}")
-        if stress is not None and str(stress).lower() not in ("none", "low", "", "0", "0.0"):
-            parts.append(f"stress {stress}")
-        lines.append(" ".join(parts))
+            parts.append(f"soil moisture {moisture:.0f}% ({_moisture_words(moisture)})")
+        parts.append(f"field condition: {health}")
+        if stress:
+            parts.append(f"stress: {stress}")
+        if disease and str(disease).lower() not in ("none", "", "0", "0.0"):
+            parts.append(f"disease risk: {disease}")
+        lines.append(f"  {name}: " + "; ".join(parts))
 
-    return "[FIELDS]\n" + "\n".join(lines)
+    return ("[FIELDS] (stress and disease risk are separate measures: stress low/moderate/high, "
+            "disease risk low/medium/high)\n" + "\n".join(lines))
 
 
 # ── Crops ──────────────────────────────────────────────────────────────────────
 
 def crop_block(crops: list, limit: int = 4) -> str:
-    """Compact crop status — name, field, stage, moisture, water needs."""
+    """Crop status per field — 'not sown yet, planned 6 May' before sowing."""
     if not crops:
         return ""
 
     lines = []
     for c in crops[:limit]:
-        name      = c.get("name") or "?"
+        name     = c.get("name") or "?"
+        field_nm = c.get("field_name") or ""
+        where    = f" ({field_nm})" if field_nm else ""
+        if c.get("status") and not c.get("sown", True):
+            status = c["status"].split(": ", 1)[-1]
+            lines.append(f"  {name}{where}: {status} — no plants in the ground")
+            continue
         stage     = c.get("growth_stage") or "?"
-        field_nm  = c.get("field_name") or ""
-        moisture  = c.get("moisture_level")
         water_req = c.get("water_requirement") or ""
-
-        line = f"  {name}"
-        if field_nm:
-            line += f" ({field_nm})"
-        line += f": {stage} stage"
-        if moisture is not None:
-            line += f", soil {moisture:.0f}%"
+        line = f"  {name}{where}: {stage} stage"
         if water_req and str(water_req).lower() not in ("none", "?", ""):
             line += f", water-need {water_req}"
         lines.append(line)

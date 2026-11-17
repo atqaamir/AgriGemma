@@ -37,7 +37,7 @@ BUDGET_RULES_IN_CHATBOT    = 450
 BUDGET_RULES_IN_DASHBOARD  = 450
 BUDGET_RULES_IN_TASK       = 260
 BUDGET_RULES_IN_ALERT      = 220
-BUDGET_TASK_DESC           = 80   # individual task description truncation
+BUDGET_TASK_DESC           = 160  # individual task description truncation (keeps what a task is about)
 
 
 # ── Core utilities ─────────────────────────────────────────────────────────────
