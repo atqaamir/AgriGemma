@@ -74,6 +74,9 @@ def run():
     # soil_type_id: 1=Sandy  2=Loamy  3=Clay
     # water_source_id: 1=Canal/River  2=Groundwater  3=Recycled
     
+    # User 1's fields are bare on the demo date (before sowing): health status, stress
+    # (0–100: <20 low, 20–50 moderate, >50 high) and disease risk describe the soil/field,
+    # not a crop. Punjab Wheat Belt is on alert because of wheat stubble and a hard crust.
     sample_fields = [
         Field(                                      # 0 – North Field Alpha
             name="North Field Alpha",
@@ -101,8 +104,8 @@ def run():
             health_percentage=82.0,
             moisture_level=55.0,  # 55% → band "30-60"; >60 would block Cotton sowing every day
             heat_level=30.0,
-            stress_risk=8.0,
-            disease_risk="high",
+            stress_risk=12.0,      # low (bare field being prepared for cotton)
+            disease_risk="low",    # no crop in the ground yet
             water_source_id=3,
             soil_type_id=2,
             location="Punjab, Pakistan",
@@ -118,8 +121,8 @@ def run():
             health_percentage=75.0,
             moisture_level=55.0,
             heat_level=32.0,
-            stress_risk=28.0,
-            disease_risk="medium",
+            stress_risk=28.0,      # moderate: wheat stubble and a hard surface crust
+            disease_risk="low",    # no crop in the ground yet
             water_source_id=2,
             soil_type_id=2,
             location="Punjab, Pakistan",
@@ -283,12 +286,13 @@ def run():
             crop_id=None, field_id=sample_fields[1].id, user_id=user[0].id,
         ),
         Task(
-            title="Emergency Field Inspection — Punjab Wheat Belt",
-            priority="critical", completed=False,
+            title="Check soil before sowing — Punjab Wheat Belt",
+            priority="high", completed=False,
             created_at=datetime.utcnow(), due_date=today,
-            task_type="inspection", task_category="general",
-            description="Urgent inspection of Punjab Wheat Belt for signs of crop stress, disease, and soil damage.",
-            notes="Check leaf colour, soil surface, and drainage channels. Report findings immediately.",
+            task_type="inspection", task_category="field",
+            description="The field is bare after the wheat harvest: check seedbed depth, soil moisture at 5 cm, "
+                        "wheat stubble and the hard surface crust before the maize is sown tomorrow.",
+            notes="Break the crust and clear stubble where it would block the seed drill.",
             crop_id=None, field_id=sample_fields[2].id, user_id=user[0].id,
         ),
         Task(
