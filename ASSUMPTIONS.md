@@ -142,7 +142,8 @@ The following assumptions define the current scope and operational boundaries of
   not choose. **One notification per crop** (decision needed or overdue, whichever comes first) is sent **on the day it
   happens**, also on days without a plan impact.
 - **The daily update always applies the forecast to the weekly plan** (sowing window, actual dates) and then syncs the
-  plan tasks (below). These steps make no AI calls; their only notification is the sowing decision above. Other
+  plan tasks (below). Their only AI call is one batched explanation call when plan tasks were created, moved or
+  reactivated (0 calls when nothing changed); their only notification is the sowing decision above. Other
   notifications, weather-rule task updates and AI summaries only follow on days with a plan impact (plus the existing
   weather-only notification on "change without impact" days).
 - A same-day rebuild without the forecast (weekly job, app restart) shows that day's plan without its forecast
@@ -170,7 +171,17 @@ The following assumptions define the current scope and operational boundaries of
 ## Tasks from the Weekly Plan
 
 - **Plan tasks** (`task_category = "plan"`) are created from the weekly plan's events: sowing, irrigation,
-  fertilization and harvesting, e.g. "Sow Cotton – The Reservoir". No AI call.
+  fertilization and harvesting, e.g. "Sow Cotton – The Reservoir".
+- **The rules decide the task and its date; the AI only explains it.**
+  - The description is deterministic: the plan event plus the rule behind it (sowing window text, "Extra session:
+    Dry week: rainfall <50 mm forecast", "Moved from 1 Jun: …" for a rule-shifted fertilization or harvest).
+  - The "Why this task" explanation (`ai_explanation`) is written by the AI from the rule facts only (event, crop,
+    field, due date, rule text, extra/regular session, the forecast for that day): 1–2 sentences, no other date than
+    the due date, no new advice. An explanation that names another date is dropped and logged.
+  - When: only for plan tasks that were created, moved or reactivated, in **one batched call per user and run**
+    (fast provider, minimal thinking), limited to 8 s. On a failure or timeout the explanation stays empty and the
+    task is created as usual; the next run fills it in (pending plan tasks without an explanation, max 10 per
+    batch). Without a model (placeholder AI) a fixed text from the rule facts is used.
   - The 7 PM job creates tomorrow's tasks; every daily update (and the Weather Change Simulator) also creates any
     missing tasks for today and tomorrow.
   - A task is linked to its seasonal plan entry, and to a crop + field only when exactly one active crop on an active
