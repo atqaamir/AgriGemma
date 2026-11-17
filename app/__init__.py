@@ -84,6 +84,10 @@ def create_app():
         return {"demo_admin_enabled": demo_flags.admin_enabled()}
 
     @app.context_processor
+    def inject_chat_provider():
+        return {"chat_provider": _chat_provider_kind()}
+
+    @app.context_processor
     def inject_app_today():
         demo = clock.demo_today()
         return {"app_today": clock.today().isoformat(), "demo_today": demo,
@@ -96,6 +100,20 @@ def create_app():
     start_scheduler(app)
 
     return app
+
+
+def _chat_provider_kind() -> str:
+    """Which provider answers the chat, in the same order as _register_ai_provider():
+    "placeholder", "local" (LiteRT or Ollama on the device) or "google"."""
+    import os
+    flag = lambda name, default="false": os.getenv(name, default).lower() == "true"
+    if flag("USE_PLACEHOLDER_AI"):
+        return "placeholder"
+    if flag("USE_LITERT"):
+        return "local"
+    if flag("USE_GOOGLE_AI"):
+        return "google"          # the chatbot always uses Google AI in this mode
+    return "local"               # default: Ollama
 
 
 def _register_ai_provider() -> None:

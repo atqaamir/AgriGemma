@@ -263,8 +263,8 @@
           </button>
         </div>
         <p class="text-[11px] text-on-surface-variant/50 dark:text-[#9e9e8e]/50 text-center mt-2"
-           data-i18n="chat.powered_by">
-          Powered by Gemma 4 · Runs locally on-device
+           data-i18n="chat.powered_by.{{ chat_provider }}">
+          {% if chat_provider == 'google' %}Powered by Gemma 4 via Google AI{% elif chat_provider == 'placeholder' %}Test mode · placeholder AI, no model{% else %}Powered by Gemma 4 · Runs locally on-device (Ollama){% endif %}
         </p>
       </div>
     </div>
