@@ -763,7 +763,8 @@ class RuleEngine:
 
     @staticmethod
     def _apply_action(action: dict, events: list, factor_label: str, *,
-                      window_start: date, window_end: date, irrigation_period=None):
+                      window_start: date, window_end: date, irrigation_period=None,
+                      rule_note: str = ""):
         """Apply one action rule to the events list in-place. Returns description text or None.
 
         window_start / window_end bound where new events may be placed (extra
@@ -801,7 +802,10 @@ class RuleEngine:
                 day = window_start
                 while day <= window_end and len(added) < delta:
                     if day not in irr_days:
-                        events.append({"event_type": "irrigation", "date": day.isoformat()})
+                        # Tagged as an extra session, with the rule behind it (used by plan tasks).
+                        prefix = RuleEngine._DRY_PREFIX.get(factor_label, f"{factor_label.capitalize()} rule")
+                        events.append({"event_type": "irrigation", "date": day.isoformat(), "extra": True,
+                                       "reason": f"{prefix}: {rule_note} forecast" if rule_note else prefix})
                         added.append(day)
                     day += timedelta(days=1)
 
@@ -978,6 +982,7 @@ class RuleEngine:
                         action, events, factor_label,
                         window_start=week_start_date, window_end=week_end,
                         irrigation_period=RuleEngine._irrigation_period(entry, sowing_plan),
+                        rule_note=RuleEngine._band_text(factor, band),
                     )
                     if text:
                         texts.append(text)
@@ -1125,6 +1130,7 @@ class RuleEngine:
                         action, events, factor_label,
                         window_start=max(as_of_date, week_start_date), window_end=week_end,
                         irrigation_period=RuleEngine._irrigation_period(entry, sowing_plan),
+                        rule_note=RuleEngine._band_text(factor, band),
                     )
                     if text:
                         texts.append(text)

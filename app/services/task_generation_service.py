@@ -36,6 +36,26 @@ EVENT_LABEL = {"planting": "Sowing", "fertilization": "Fertilization",
                "harvesting": "Harvest", "irrigation": "Irrigation"}
 
 
+def rule_shift_reason(entry, etype: str, day: date) -> str | None:
+    """'Moved from 1 Jun: <reason>' when a rule/override put a fertilization or harvest on
+    `day` instead of its seasonal date; None when the seasonal date is kept."""
+    from datetime import datetime as _dt
+    from app.repositories.plan_event_override_repository import PlanEventOverrideRepository
+    from app.services.plan_override_service import SEASONAL_COLUMNS
+    if entry is None or etype not in SEASONAL_COLUMNS:
+        return None
+    raw = getattr(entry, SEASONAL_COLUMNS[etype], None)
+    seasonal = _dt.strptime(raw, "%m/%d/%Y").date() if raw else None
+    if seasonal == day:
+        return None
+    rows = [r for r in PlanEventOverrideRepository.get_applicable(entry.id, clock.today() + timedelta(days=1))
+            if r.event_type == etype and r.actual_date == day]
+    if not rows:
+        return None
+    r = rows[-1]
+    return f"Moved from {r.original_date.day} {r.original_date.strftime('%b')}: {r.reason}"
+
+
 class TaskGenerationService:
     def __init__(self):
         pass
@@ -51,6 +71,8 @@ class TaskGenerationService:
             for_date = clock.today() + timedelta(days=1)
 
         plan_result = self.generate_plan_tasks(user_id, for_date)
+        from app.services import plan_task_explanation_service as explanations
+        explained = explanations.explain(user_id, plan_result["created"])
         field_tasks = self._generate_field_tasks(user_id)
 
         created = plan_result["created"] + field_tasks
@@ -60,6 +82,7 @@ class TaskGenerationService:
             "plan_tasks": len(plan_result["created"]),
             "plan_skipped": plan_result["skipped"],
             "field_tasks": len(field_tasks),
+            "plan_explanations": explained,
             "for_date": for_date.isoformat(),
         }
 
@@ -125,7 +148,8 @@ class TaskGenerationService:
                     "task_category":          PLAN_TASK_CATEGORY,
                     "due_date":               for_date,
                     "description":            TaskGenerationService._plan_description(
-                                                  wentry, etype, crop_name, field, for_date),
+                                                  wentry, etype, crop_name, field, for_date,
+                                                  event=event, entry=entry),
                     "crop_id":                crop.id if crop else None,
                     "field_id":               field.id if field else None,
                     "user_id":                user_id,
@@ -173,10 +197,13 @@ class TaskGenerationService:
           never moved. A task whose date is back in the plan is reactivated.
         Then missing tasks for today and tomorrow are created (generate_plan_tasks).
         Every change is recorded in the task's history (TaskService.record_changes).
+        Created, moved and reactivated tasks get a new AI explanation in one batched call
+        (plan_task_explanation_service); unchanged syncs make no AI call.
         """
         as_of = as_of or clock.today()
         window_end = as_of + timedelta(days=6)
         summary = {"moved": [], "deactivated": [], "reactivated": [], "created": []}
+        changed = []                            # created / moved / reactivated → explained
         plan = WeeklyPlanRepository.get_active_by_user_id(user_id)
         if not plan:
             logger.warning("Plan task sync: user=%s has no active weekly plan", user_id)
@@ -235,8 +262,11 @@ class TaskGenerationService:
                         if wentry is not None:
                             crop_name = t.title.split(" – ")[0].split(" ", 1)[-1]
                             updates["description"] = TaskGenerationService._plan_description(
-                                wentry, PLAN_EVENT_TASKS_BY_TYPE[ttype], crop_name, t.field, d)
+                                wentry, PLAN_EVENT_TASKS_BY_TYPE[ttype], crop_name, t.field, d,
+                                entry=SeasonalPlanEntry.query.get(entry_id))
+                        updates["ai_explanation"] = None        # explained again for the new date
                         TaskService.record_changes(t, changes, updates)
+                        changed.append(t)
                         summary["reactivated" if "is_active" in updates else "moved"].append(
                             f"#{t.id} {t.title} -> {d}")
                 else:
@@ -262,17 +292,24 @@ class TaskGenerationService:
                     elif not t.is_active and in_plan:
                         TaskService.record_changes(t, [change(
                             "is_active", False, True,
-                            f"{label} on {fmt(t.due_date)} back in the weekly plan")], {"is_active": True})
+                            f"{label} on {fmt(t.due_date)} back in the weekly plan")],
+                            {"is_active": True, "ai_explanation": None})
                         summary["reactivated"].append(f"#{t.id} {t.title} ({t.due_date})")
+                        changed.append(t)
 
         for day in (as_of, as_of + timedelta(days=1)):
-            summary["created"] += [f"#{t.id} {t.title} ({t.due_date})"
-                                   for t in TaskGenerationService.generate_plan_tasks(user_id, day)["created"]]
+            new = TaskGenerationService.generate_plan_tasks(user_id, day)["created"]
+            summary["created"] += [f"#{t.id} {t.title} ({t.due_date})" for t in new]
+            changed += new
+        from app.services import plan_task_explanation_service as explanations
+        summary["explanations"] = explanations.explain(user_id, changed)
         logger.info("Plan task sync for user=%s as_of=%s: %s", user_id, as_of, summary)
         return summary
 
     @staticmethod
-    def _plan_description(wentry, etype, crop_name, field, day) -> str:
+    def _plan_description(wentry, etype, crop_name, field, day, event=None, entry=None) -> str:
+        """Deterministic description: the plan event plus the rule behind it (sowing window,
+        extra irrigation session, rule-shifted fertilization/harvest)."""
         where = f" on {field.name}" if field else ""
         text = f"From the weekly plan: {etype} of {crop_name}{where} on {day.day} {day.strftime('%b %Y')}."
         if etype == "sowing":
@@ -280,6 +317,12 @@ class TaskGenerationService:
             window = next((a for a in adjustments if a.get("factor") == "sowing_window"), None)
             if window and window.get("adjustment"):
                 text += f" {window['adjustment']}."
+        elif etype == "irrigation" and event and event.get("extra"):
+            text += f" Extra session: {event.get('reason') or 'added by a weather rule'}."
+        elif etype in ("fertilization", "harvesting"):
+            shift = rule_shift_reason(entry, etype, day)
+            if shift:
+                text += f" {shift}."
         return text
 
     # ------------------------------------------------------------------ #
