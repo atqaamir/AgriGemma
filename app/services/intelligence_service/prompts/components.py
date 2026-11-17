@@ -192,10 +192,8 @@ def field_block(fields: list, limit: int = 4) -> str:
         if moisture is not None:
             parts.append(f"soil moisture {moisture:.0f}% ({_moisture_words(moisture)})")
         parts.append(f"field condition: {health}")
-        if stress:
-            parts.append(f"stress: {stress}")
-        if disease and str(disease).lower() not in ("none", "", "0", "0.0"):
-            parts.append(f"disease risk: {disease}")
+        disease_txt = str(disease).lower() if disease and str(disease).lower() not in ("none", "", "0", "0.0") else "unknown"
+        parts.append(f"stress: {stress or 'unknown'}, disease risk: {disease_txt}")
         lines.append(f"  {name}: " + "; ".join(parts))
 
     return ("[FIELDS] (stress and disease risk are separate measures: stress low/moderate/high, "

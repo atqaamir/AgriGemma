@@ -24,12 +24,14 @@ CHATBOT_SYSTEM = (
     "7. A field whose crop is not sown yet is bare soil: talk about soil, seedbed, moisture and preparation, "
     "never about leaves, stems, wilting or plant health there.\n"
     "8. Describe scores in plain words (low / moderate / high, dry / adequate / wet) instead of raw numbers, "
-    "and do not repeat the same number in every reply."
+    "and do not repeat the same number in every reply.\n"
+    "9. If the farmer mentions a task that is not in their task list, say it is not on their list and name "
+    "the closest matching task from the list."
 )
 
 # Appended to CHATBOT_SYSTEM when the UI language is Urdu
 _URDU_ADDENDUM = (
-    "\n9. The farmer is using the Urdu interface. YOU MUST reply ENTIRELY in Urdu (اردو). "
+    "\n10. The farmer is using the Urdu interface. YOU MUST reply ENTIRELY in Urdu (اردو). "
     "Use plain, simple Urdu suitable for a Pakistani farmer. Field names, crop names, and "
     "numerical values may remain as given in the farm data, but every explanation, suggestion, "
     "and sentence MUST be written in Urdu script. Do not mix in English sentences."
