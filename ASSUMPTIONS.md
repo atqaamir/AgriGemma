@@ -152,6 +152,21 @@ The following assumptions define the current scope and operational boundaries of
 
 ---
 
+## Season Lifecycle (next step)
+
+- A seasonal plan covers **one growing cycle**: from its first sowing to its last harvest.
+- **Today** a seasonal plan is generated only at app start (seed data) and has no end: it stays active after its last
+  harvest, and nothing prepares the next season.
+- **Planned next:**
+  - each seasonal plan gets a season name with a start and end (e.g. "Kharif 2027", first sowing → last harvest);
+  - the plan completes automatically after the last **effective** harvest (actual dates, incl. farmer completions);
+  - 4–6 weeks before the next sowing window, a notification asks the farmer which crops to plan for that season.
+  - This needs **Rabi crops** (wheat, chickpea) in the rule base first; today it covers Kharif crops only.
+- Season months (`SEASON_MONTHS`): Summer Apr–Jun, Rainy Jul–Sep, Fall Oct–Nov (Rabi sowing; the rule base scores
+  Rabi best in Fall), Winter Dec–Mar. Every month belongs to exactly one season (`Test_Runs/test_season_months.py`).
+
+---
+
 ## Tasks from the Weekly Plan
 
 - **Plan tasks** (`task_category = "plan"`) are created from the weekly plan's events: sowing, irrigation,
