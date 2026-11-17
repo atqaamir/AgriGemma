@@ -58,12 +58,14 @@ CROP_TYPE_MAP = {
 # Keys are Season vocab IDs (1=Rainy, 2=Winter, 3=Summer, 4=Fall).
 # end < start means the season wraps the calendar year.
 #   1 rainy  (Kharif/Monsoon)  : Jul – Sep  (07–09)
-#   2 winter (Rabi)            : Nov – Mar  (11–03, wraps year)
+#   2 winter (Rabi growing)    : Dec – Mar  (12–03, wraps year)
 #   3 summer (pre-monsoon hot) : Apr – Jun  (04–06)
-#   4 fall   (post-monsoon)    : Oct – Nov  (10–11)
+#   4 fall   (post-monsoon)    : Oct – Nov  (10–11)  — Rabi sowing (wheat peaks in November);
+#                                the rule base scores Rabi best in Fall (crop_type_season_suitability)
+# Every month belongs to exactly one season (Test_Runs/test_season_months.py).
 SEASON_MONTHS = {
     1: {"start": 7,  "end": 9},
-    2: {"start": 11, "end": 3},
+    2: {"start": 12, "end": 3},
     3: {"start": 4,  "end": 6},
     4: {"start": 10, "end": 11},
 }
