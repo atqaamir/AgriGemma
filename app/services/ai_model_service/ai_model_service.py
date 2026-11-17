@@ -85,6 +85,15 @@ def fast_complete_json(prompt: str) -> str:
     return provider.complete(prompt)
 
 
+def fast_complete_direct(prompt: str) -> str:
+    """Short direct answer from the fast provider without long hidden reasoning (Google AI:
+    thinking level minimal). Falls back to fast_complete_json() for other providers."""
+    provider = _fast_provider if _fast_provider is not None else get_provider()
+    if hasattr(provider, "complete_direct"):
+        return provider.complete_direct(prompt)
+    return fast_complete_json(prompt)
+
+
 def fast_stream_complete(prompt: str):
     """Stream from the fast provider. Falls back to main provider."""
     provider = _fast_provider if _fast_provider is not None else get_provider()

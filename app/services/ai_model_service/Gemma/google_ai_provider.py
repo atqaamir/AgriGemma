@@ -331,6 +331,40 @@ class GoogleAIProvider(AIModelProvider):
             payload["systemInstruction"] = {"parts": [{"text": system_text}]}
         return json.dumps(payload).encode("utf-8")
 
+    def complete_direct(self, prompt: str, *, max_tokens: int = 800, timeout: float = 8.0) -> str:
+        """Short, direct answer: thinking level "minimal" (Gemma 4 otherwise spends 300–600
+        hidden thought tokens, 8–26 s), no chat few-shot examples, one retry on a 503/429.
+        Raises on failure (the caller decides what to do)."""
+        import time
+        if not self._api_key:
+            raise RuntimeError("GOOGLE_API_KEY not set")
+        if _SYSTEM_SEP in prompt:
+            system_text, user_text = (p.strip() for p in prompt.split(_SYSTEM_SEP, 1))
+        else:
+            system_text, user_text = None, prompt
+        payload = {
+            "contents": [{"role": "user", "parts": [{"text": user_text}]}],
+            "generationConfig": {"temperature": 0.3, "maxOutputTokens": max_tokens,
+                                 "thinkingConfig": {"thinkingLevel": "minimal"}},
+        }
+        if system_text:
+            payload["systemInstruction"] = {"parts": [{"text": system_text}]}
+        url = f"{_BASE}/models/{self._model}:generateContent?key={self._api_key}"
+        for attempt in (1, 2):
+            req = urllib.request.Request(url, data=json.dumps(payload).encode("utf-8"),
+                                         headers={"Content-Type": "application/json"}, method="POST")
+            try:
+                with urllib.request.urlopen(req, timeout=timeout) as resp:
+                    data = json.loads(resp.read())
+                parts = data["candidates"][0]["content"]["parts"]
+                return "".join(p.get("text", "") for p in parts if not p.get("thought")).strip()
+            except urllib.error.HTTPError as exc:
+                if attempt == 1 and exc.code in (429, 503):
+                    logger.warning("Google AI direct: HTTP %s — retrying once in 1 s", exc.code)
+                    time.sleep(1)
+                    continue
+                raise
+
     def _call_api_json(self, prompt: str) -> str:
         url = f"{_BASE}/models/{self._model}:generateContent?key={self._api_key}"
         req = urllib.request.Request(
