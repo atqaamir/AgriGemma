@@ -93,6 +93,49 @@ def generate_and_store_intelligence():
     return jsonify({"status": "generating"}), 202
 
 
+# ── Task insights (one AI call on the "Task insights" button) ──────────────────
+
+_insights_running: set[int] = set()
+_insights_lock = threading.Lock()
+
+
+@tasks_bp.route("/insights", methods=["GET"])
+def get_task_insights():
+    """Latest stored task insights + whether the farm changed since. No AI call."""
+    from app.services import insight_report_service as reports
+    user_id = request.args.get("user_id", USER_ID, type=int)
+    data = reports.payload(user_id, "task_insights")
+    with _insights_lock:
+        running = user_id in _insights_running
+    return jsonify({"report": data, "generating": running}), 200
+
+
+@tasks_bp.route("/insights/generate", methods=["POST"])
+def generate_task_insights():
+    """Run the one AI call in the background (navigation doesn't cancel it); poll GET /insights."""
+    from app.services import task_insights_service
+    user_id = request.args.get("user_id", USER_ID, type=int)
+    with _insights_lock:
+        if user_id in _insights_running:
+            return jsonify({"status": "already generating"}), 202
+        _insights_running.add(user_id)
+    app = current_app._get_current_object()
+
+    def _bg():
+        try:
+            with app.app_context():
+                task_insights_service.generate(user_id)
+        except Exception:
+            current_logger = app.logger
+            current_logger.exception("Task insights generation failed for user %s", user_id)
+        finally:
+            with _insights_lock:
+                _insights_running.discard(user_id)
+
+    threading.Thread(target=_bg, daemon=False).start()
+    return jsonify({"status": "generating"}), 202
+
+
 # ── Task collection ───────────────────────────────────────────────────────────
 
 @tasks_bp.route("/<int:user_id>/tasks", methods=["GET"])
