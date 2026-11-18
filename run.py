@@ -76,8 +76,26 @@ def bootstrap():
         seed_data_run()
         populate_seasonal_plan_run()
         populate_weekly_plan_run()
+        apply_startup_forecast()
 
     return app
+
+
+def apply_startup_forecast():
+    """Apply the forecast to every user's plan right after seeding (plan roll + forecast +
+    plan task sync; no AI calls, no notifications), so a fresh start already shows the
+    forecast-adjusted dates instead of waiting for the first simulator click / 5 AM job."""
+    from app.agents.coordinator_agent import CoordinatorAgent
+    from app.models.user import User
+    coordinator = CoordinatorAgent()
+    for user in User.query.order_by(User.id).all():
+        try:
+            result = coordinator.startup_forecast(user.id)
+            logger.info("Startup forecast for user %s: %s", user.id,
+                        {k: v.get("status") for k, v in result.items()})
+        except Exception:
+            db.session.rollback()
+            logger.exception("Startup forecast failed for user %s — app starts with the seeded plan", user.id)
 
 
 # IMPORTANT: global app variable for gunicorn

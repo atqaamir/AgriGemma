@@ -183,7 +183,7 @@ class TaskGenerationService:
     # ------------------------------------------------------------------ #
 
     @staticmethod
-    def sync_plan_tasks(user_id: int, as_of: date = None) -> dict:
+    def sync_plan_tasks(user_id: int, as_of: date = None, explain: bool = True) -> dict:
         """After every re-plan (daily update, simulator): make the plan tasks match the
         active weekly plan (as_of..as_of+6). Fixed texts, no AI call.
 
@@ -301,8 +301,11 @@ class TaskGenerationService:
             new = TaskGenerationService.generate_plan_tasks(user_id, day)["created"]
             summary["created"] += [f"#{t.id} {t.title} ({t.due_date})" for t in new]
             changed += new
-        from app.services import plan_task_explanation_service as explanations
-        summary["explanations"] = explanations.explain(user_id, changed)
+        if explain:
+            from app.services import plan_task_explanation_service as explanations
+            summary["explanations"] = explanations.explain(user_id, changed)
+        else:   # app startup: no AI call; the next run explains pending tasks without one
+            summary["explanations"] = {"called": False, "skipped": "no AI at startup"}
         logger.info("Plan task sync for user=%s as_of=%s: %s", user_id, as_of, summary)
         return summary
 

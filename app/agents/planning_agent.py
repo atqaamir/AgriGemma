@@ -22,9 +22,9 @@ class PlanningAgent:
         return enums_.Status.SUCCESS if plan else enums_.Status.FAILED
 
     @staticmethod
-    def apply_forecast(user_id: int, as_of_date=None) -> str:
+    def apply_forecast(user_id: int, as_of_date=None, notify: bool = True) -> str:
         """Forecast re-plan of the active weekly plan (runs on every daily update)."""
-        result = WeeklyPlannerService.update_plan(user_id, as_of_date)
+        result = WeeklyPlannerService.update_plan(user_id, as_of_date, notify=notify)
         return enums_.Status.SUCCESS if result == enums_.Status.SUCCESS else enums_.Status.FAILED
 
     @staticmethod

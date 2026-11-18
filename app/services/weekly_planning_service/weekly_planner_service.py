@@ -227,14 +227,14 @@ class WeeklyPlannerService:
     # ------------------------------------------------------------------ #
 
     @staticmethod
-    def update_plan(user_id: int, as_of_date=None) -> str:
+    def update_plan(user_id: int, as_of_date=None, notify: bool = True) -> str:
         """Update the active weekly plan using forecast weather from as_of_date onwards.
 
         Loads original events from DB, re-applies adjustments using forecast weather
         (incl. the sowing window), persists week_events and climate_adjustments, and
         records one-time event shifts as overrides. No AI calls. The only notification
         is the sowing decision (once per crop, on the day it happens — also on days
-        without a plan impact).
+        without a plan impact); notify=False (app startup) sends none.
         """
         from app.models.field import Field
         from app.services.domain_service.user_service import UserService
@@ -300,7 +300,7 @@ class WeeklyPlannerService:
         # ask the farmer (on the day it happens). A "decision needed" that the
         # forecast reverses gets one short follow-up.
         for item in updated_plan:
-            if item.get("seasonal_entry_id"):
+            if notify and item.get("seasonal_entry_id"):
                 WeeklyPlannerService._notify_sowing_decision(user_id, item)
 
         return Status.SUCCESS

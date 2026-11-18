@@ -105,11 +105,25 @@ class CoordinatorAgent:
             result["message"] += f" (forecast plan update failed: {plan_update['error']})"
         return result
 
-    def _sync_plan_tasks(self, user_id: int, as_of_date: date) -> dict:
+    def startup_forecast(self, user_id: int, as_of_date: date = None) -> dict:
+        """The forecast part of the daily update, for app startup: roll the weekly plan,
+        apply the forecast (sowing window, overrides) and sync the plan tasks – no AI calls,
+        no notifications, no risk check (the first simulator click / 5 AM job still detects
+        the change and notifies). Without it a restart shows the seeded dates (cotton 7 May)
+        until the first daily update, although the forecast already moved them."""
+        if as_of_date is None:
+            as_of_date = clock.today()
+        return {
+            "plan_roll": self._roll_weekly_plan(user_id, as_of_date),
+            "plan_update": self._apply_forecast_to_plan(user_id, as_of_date, notify=False),
+            "plan_tasks": self._sync_plan_tasks(user_id, as_of_date, explain=False),
+        }
+
+    def _sync_plan_tasks(self, user_id: int, as_of_date: date, explain: bool = True) -> dict:
         """Sync plan tasks with the weekly plan (no AI calls). Never raises."""
         try:
             from app.services.task_generation_service import TaskGenerationService
-            summary = TaskGenerationService.sync_plan_tasks(user_id, as_of_date)
+            summary = TaskGenerationService.sync_plan_tasks(user_id, as_of_date, explain=explain)
             return {"status": "success", **summary}
         except Exception as exc:
             from app.extensions import db
@@ -117,10 +131,10 @@ class CoordinatorAgent:
             logger.exception("Daily update: plan task sync FAILED for user=%s as_of_date=%s", user_id, as_of_date)
             return {"status": "failed", "error": f"{type(exc).__name__}: {exc}"}
 
-    def _apply_forecast_to_plan(self, user_id: int, as_of_date: date) -> dict:
+    def _apply_forecast_to_plan(self, user_id: int, as_of_date: date, notify: bool = True) -> dict:
         """Run the forecast re-plan (update_plan) on every daily update. Never raises."""
         try:
-            status = self.planning_agent.apply_forecast(user_id, as_of_date)
+            status = self.planning_agent.apply_forecast(user_id, as_of_date, notify=notify)
             if status == enums_.Status.SUCCESS:
                 return {"status": "success"}
             error = "update_plan failed (no active weekly plan?)"
