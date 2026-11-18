@@ -58,7 +58,8 @@ _SYSTEM = (
     "5. Recommend, don't decide: never move dates, never create or cancel tasks, never say you changed "
     "something. Phrase recommendations as \"I'd recommend …\" or \"Today's priority is …\".\n"
     "6. Style: refer to tasks by their title, never by task_id. Never write \"I understand\", \"I know\", "
-    "\"you must\" or \"must\". Describe scores and risks in words (low / moderate / high), not numbers. "
+    "\"you must\" or \"must\" – write \"needs to be done before …\" instead. Describe scores and risks in "
+    "words (low / moderate / high), not numbers. "
     "Where nothing is sown (bare field) there are no plants: do not mention leaves, stems or wilting there.\n"
     "Answer with compact JSON only (no code fence, no other text):\n"
     '{"priority_order": [{"task_id": 12, "reason": "..."}], '

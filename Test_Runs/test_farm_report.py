@@ -82,7 +82,7 @@ with app.app_context():
     answer = {
         "headline": "Showers on 7–8 May come before the cotton sowing on 9 May.",
         "sections": {"farm_status": "All three fields are bare.", "season_progress": "Maize is sown on 1 May.",
-                     "what_changed": "You must regenerate.", "next_7_days": "Showers on 7–8 May."},
+                     "what_changed": "The seedbed must be ready.", "next_7_days": "Showers on 7–8 May."},
         "insights": [
             {"title": "Rice not feasible", "explanation": "Rice cannot grow on North Field Alpha this season.",
              "evidence": [nf], "recommendation": "I'd recommend choosing a different crop for this field."},
@@ -98,7 +98,7 @@ with app.app_context():
     check(d["headline"] == answer["headline"], "valid headline kept")
     check(src["season_progress"] == "rule" and src["what_changed"] == "rule"
           and src["farm_status"] == "ai" and src["next_7_days"] == "ai",
-          f"sections with a date not in the data / 'you must' → rule text ({src})")
+          f"sections with a date not in the data / 'must' → rule text ({src})")
     check([i["title"] for i in d["insights"]] == ["Rice not feasible"], "only the valid insight is shown")
     reasons = {x["item"].get("title"): x["reason"] for x in d["dropped"] if isinstance(x["item"], dict)}
     check(reasons.get("Bad id", "").startswith("unknown evidence") and

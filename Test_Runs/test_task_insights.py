@@ -75,6 +75,8 @@ with app.app_context():
             {"title": "Wrong date", "explanation": "Showers on 7–8 May, so sow cotton on 12 May.",
              "evidence": [rain], "recommendation": "x"},
             {"title": "Bossy", "explanation": "You must finish the seedbed.", "evidence": [dl], "recommendation": ""},
+            {"title": "Must", "explanation": "The seedbed must be ready before the maize sowing.", "evidence": [dl],
+             "recommendation": ""},
             {"title": "Decides", "explanation": "I've moved the sowing.", "evidence": [dl], "recommendation": ""},
             {"title": "Plants on bare field", "explanation": "The maize leaves will wilt.", "evidence": [dl],
              "recommendation": ""},
@@ -92,6 +94,7 @@ with app.app_context():
     check(reasons.get("Unknown id", "").startswith("unknown evidence S99"), "unknown evidence id → dropped")
     check(reasons.get("Wrong date", "").startswith("date not in its evidence: 12/5"), "date not in evidence → dropped")
     check("you must" in reasons.get("Bossy", ""), "'you must' → dropped")
+    check('"must"' in reasons.get("Must", ""), f"'must' → dropped ({reasons.get('Must')})")
     check("decides" in reasons.get("Decides", ""), "'I've moved…' → dropped")
     check("bare field" in reasons.get("Plants on bare field", ""), "leaves/wilt on a bare field → dropped")
     check([w["text"] for w in d["watch"]] == ["Showers on 7–8 May."], "watch without evidence dropped")

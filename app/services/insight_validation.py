@@ -3,7 +3,7 @@
 An insight is dropped (with a logged reason) when it:
   - cites no evidence, or a signal id that does not exist;
   - names a date that is not in the dates of the signals it cites (shared date guard);
-  - breaks the style rules: "I understand" / "I know", "you must", or claims to have changed
+  - breaks the style rules: "I understand" / "I know", "must" / "you must", or claims to have changed
     the plan itself ("I've moved…", "I have created…") – the AI recommends, it never decides;
   - talks about leaves / stems / wilting on a bare field (nothing sown there).
 """
@@ -17,6 +17,7 @@ from app.utils.date_guard import dates_outside
 _STYLE = [
     (re.compile(r"\bI (?:understand|know)\b", re.I), '"I understand / I know"'),
     (re.compile(r"\byou must\b", re.I), '"you must"'),
+    (re.compile(r"\bmust\b", re.I), '"must" (say "needs to be done before …")'),
     (re.compile(r"\bI(?:'ve| have)? (?:moved|changed|rescheduled|postponed|created|added|deleted|cancelled|"
                 r"removed)\b", re.I), "decides instead of recommending"),
 ]
