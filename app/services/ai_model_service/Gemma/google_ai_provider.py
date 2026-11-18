@@ -331,7 +331,8 @@ class GoogleAIProvider(AIModelProvider):
             payload["systemInstruction"] = {"parts": [{"text": system_text}]}
         return json.dumps(payload).encode("utf-8")
 
-    def complete_direct(self, prompt: str, *, max_tokens: int = 800, timeout: float = 8.0) -> str:
+    def complete_direct(self, prompt: str, *, max_tokens: int = 800, timeout: float = 8.0,
+                        temperature: float = 0.3) -> str:
         """Short, direct answer: thinking level "minimal" (Gemma 4 otherwise spends 300–600
         hidden thought tokens, 8–26 s), no chat few-shot examples, one retry on a 503/429.
         Raises on failure (the caller decides what to do)."""
@@ -344,7 +345,7 @@ class GoogleAIProvider(AIModelProvider):
             system_text, user_text = None, prompt
         payload = {
             "contents": [{"role": "user", "parts": [{"text": user_text}]}],
-            "generationConfig": {"temperature": 0.3, "maxOutputTokens": max_tokens,
+            "generationConfig": {"temperature": temperature, "maxOutputTokens": max_tokens,
                                  "thinkingConfig": {"thinkingLevel": "minimal"}},
         }
         if system_text:

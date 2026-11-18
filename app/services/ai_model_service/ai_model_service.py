@@ -87,7 +87,7 @@ def fast_complete_json(prompt: str) -> str:
 
 def fast_complete_direct(prompt: str, **limits) -> str:
     """Short direct answer from the fast provider without long hidden reasoning (Google AI:
-    thinking level minimal). `limits` (max_tokens, timeout) go to the provider's
+    thinking level minimal). `limits` (max_tokens, timeout, temperature) go to the provider's
     complete_direct. Falls back to fast_complete_json() for other providers."""
     provider = _fast_provider if _fast_provider is not None else get_provider()
     if hasattr(provider, "complete_direct"):

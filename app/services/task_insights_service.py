@@ -32,6 +32,7 @@ KIND = "task_insights"
 MAX_INSIGHTS, MAX_WATCH = 4, 2
 TIMEOUT_S = 25.0          # whole call incl. one provider retry
 MAX_TOKENS = 1500
+TEMPERATURE = 0.1        # low: repeated runs on the same data stay consistent
 _PRIORITY_RANK = {"critical": 0, "high": 1, "medium": 2, "low": 3}
 INSIGHT_KINDS = ("deadline", "dependency", "weather", "load", "plan_change")
 
@@ -107,7 +108,8 @@ def _call_ai(prompt: str, signals: list, cands: list) -> str:
     from app.services.ai_model_service import ai_model_service
     if ai_model_service.fast_provider_name().startswith("Placeholder"):
         return _placeholder_answer(signals, cands)
-    return ai_model_service.fast_complete_direct(prompt, max_tokens=MAX_TOKENS, timeout=TIMEOUT_S - 5)
+    return ai_model_service.fast_complete_direct(prompt, max_tokens=MAX_TOKENS, timeout=TIMEOUT_S - 5,
+                                                temperature=TEMPERATURE)
 
 
 def _call_with_limit(prompt: str, signals: list, cands: list) -> tuple[str | None, str | None]:
