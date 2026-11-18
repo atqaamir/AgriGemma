@@ -20,6 +20,7 @@ Kaggle Gemma 4 Good Hackathon — available Google AI Studio model IDs:
 import json
 import logging
 import os
+import threading
 import urllib.error
 import urllib.request
 from typing import Iterator
@@ -102,9 +103,14 @@ def _extract_clean_response(text: str) -> str:
 class GoogleAIProvider(AIModelProvider):
     """Gemma via Google AI Studio REST API. No extra dependencies required."""
 
-    def __init__(self, api_key: str | None = None, model: str | None = None) -> None:
+    def __init__(self, api_key: str | None = None, model: str | None = None,
+                 fallback_model: str | None = None) -> None:
         self._api_key = api_key or os.getenv("GOOGLE_API_KEY", "")
         self._model   = model  or os.getenv("GOOGLE_AI_MODEL", _DEFAULT_MODEL)
+        # Optional second model: a 503/429/timeout on the primary is retried once on this one.
+        fb = (fallback_model if fallback_model is not None else os.getenv("GOOGLE_AI_FALLBACK_MODEL", "")).strip()
+        self._fallback = fb or None
+        self._tl = threading.local()          # which model answered the last call (per thread)
         if not self._api_key:
             logger.warning(
                 "GoogleAIProvider: GOOGLE_API_KEY is not set. "
@@ -115,7 +121,42 @@ class GoogleAIProvider(AIModelProvider):
                 self._model = self._resolve_model(self._model)
             except Exception as exc:
                 logger.warning("Google AI startup check failed: %s", exc)
-            logger.info("Google AI provider ready — model: %s", self._model)
+            if self._fallback == self._model:
+                self._fallback = None
+            logger.info("Google AI provider ready — model: %s, fallback: %s", self._model, self._fallback or "none")
+
+    # ── Fallback model ─────────────────────────────────────────────────────
+
+    @property
+    def fallback_model(self) -> str | None:
+        return self._fallback
+
+    def answered_model(self) -> str | None:
+        """The model that answered this thread's last call (None if it failed / none yet)."""
+        return getattr(self._tl, "model", None)
+
+    def _answered(self, model: str | None, label: str) -> None:
+        self._tl.model = model
+        if model and model == self._fallback:
+            logger.warning("Google AI %s answered by FALLBACK model %s (primary %s unavailable)",
+                           label, model, self._model)
+        elif model:
+            logger.info("Google AI %s answered by %s", label, model)
+
+    def _fallback_for(self, exc: Exception) -> str | None:
+        """The fallback model if `exc` means 'primary unavailable' (HTTP 503/429 or a timeout)."""
+        if not self._fallback:
+            return None
+        if isinstance(exc, urllib.error.HTTPError):
+            return self._fallback if exc.code in (429, 503) else None
+        if isinstance(exc, TimeoutError) or (isinstance(exc, urllib.error.URLError)
+                                             and isinstance(exc.reason, TimeoutError)):
+            return self._fallback
+        return None
+
+    def _log_fallback(self, label: str, exc: Exception, fallback: str) -> None:
+        what = f"HTTP {exc.code}" if isinstance(exc, urllib.error.HTTPError) else f"timeout ({exc})"
+        logger.warning("Google AI %s: %s on %s — trying fallback model %s once", label, what, self._model, fallback)
 
     def _resolve_model(self, requested: str) -> str:
         """Return `requested` if available, otherwise pick the best available Gemma model."""
@@ -199,8 +240,20 @@ class GoogleAIProvider(AIModelProvider):
             logger.error("Google AI: GOOGLE_API_KEY not set — get one at https://aistudio.google.com/apikey")
             return "{}"
         logger.debug("Google AI complete_json: %d chars", len(prompt))
+        self._tl.model = None
         try:
-            return self._call_api_json(prompt)
+            try:
+                text = self._call_api_json(prompt)
+                self._answered(self._model, "complete_json")
+                return text
+            except Exception as exc:
+                fallback = self._fallback_for(exc)
+                if not fallback:
+                    raise
+                self._log_fallback("complete_json", exc, fallback)
+                text = self._call_api_json(prompt, model=fallback)
+                self._answered(fallback, "complete_json")
+                return text
         except urllib.error.HTTPError as exc:
             body = exc.read().decode("utf-8", errors="replace")
             logger.error("Google AI JSON %s — model=%s — %s", exc, self._model, body)
@@ -214,8 +267,9 @@ class GoogleAIProvider(AIModelProvider):
             logger.error("Google AI: GOOGLE_API_KEY not set — get one at https://aistudio.google.com/apikey")
             return self._placeholder(prompt)
         logger.debug("Google AI complete: %d chars", len(prompt))
+        self._tl.model = None
         try:
-            return self._call_api_retry(prompt)
+            return self._call_api_retry(prompt, label="complete")
         except urllib.error.HTTPError as exc:
             body = exc.read().decode("utf-8", errors="replace")
             logger.error("Google AI %s — model=%s — %s", exc, self._model, body)
@@ -230,13 +284,24 @@ class GoogleAIProvider(AIModelProvider):
             yield self._placeholder(prompt)
             return
         logger.debug("Google AI stream: %d chars", len(prompt))
+        self._tl.model = None
         try:
-            yield from self._stream_api(prompt)
+            try:
+                yield from self._stream_api(prompt)
+                self._answered(self._model, "stream")
+            except Exception as exc:
+                # Fallback model only if nothing was streamed yet (the error came on connect).
+                fallback = self._fallback_for(exc)
+                if not fallback or getattr(self._tl, "streamed", False):
+                    raise
+                self._log_fallback("stream", exc, fallback)
+                yield from self._stream_api(prompt, model=fallback)
+                self._answered(fallback, "stream")
         except urllib.error.HTTPError as exc:
             body = exc.read().decode("utf-8", errors="replace")
             logger.warning("Google AI streaming failed (HTTP %s) — body: %s", exc.code, body[:300])
             try:
-                yield self._call_api_retry(prompt)
+                yield self._call_api_retry(prompt, label="stream→complete")
             except urllib.error.HTTPError as exc2:
                 body2 = exc2.read().decode("utf-8", errors="replace")
                 logger.error("Google AI non-streaming fallback failed: HTTP %s — body: %s", exc2.code, body2[:300])
@@ -247,7 +312,7 @@ class GoogleAIProvider(AIModelProvider):
         except Exception as exc:
             logger.warning("Google AI streaming failed (%s) — falling back to non-streaming", exc)
             try:
-                yield self._call_api_retry(prompt)
+                yield self._call_api_retry(prompt, label="stream→complete")
             except Exception as exc2:
                 logger.error("Google AI non-streaming fallback failed: %s", exc2)
                 yield self._placeholder(prompt)
@@ -350,24 +415,37 @@ class GoogleAIProvider(AIModelProvider):
         }
         if system_text:
             payload["systemInstruction"] = {"parts": [{"text": system_text}]}
-        url = f"{_BASE}/models/{self._model}:generateContent?key={self._api_key}"
-        for attempt in (1, 2):
-            req = urllib.request.Request(url, data=json.dumps(payload).encode("utf-8"),
-                                         headers={"Content-Type": "application/json"}, method="POST")
-            try:
-                with urllib.request.urlopen(req, timeout=timeout) as resp:
-                    data = json.loads(resp.read())
-                parts = data["candidates"][0]["content"]["parts"]
-                return "".join(p.get("text", "") for p in parts if not p.get("thought")).strip()
-            except urllib.error.HTTPError as exc:
-                if attempt == 1 and exc.code in (429, 503):
-                    logger.warning("Google AI direct: HTTP %s — retrying once in 1 s", exc.code)
-                    time.sleep(1)
-                    continue
-                raise
+        body = json.dumps(payload).encode("utf-8")
+        self._tl.model = None
 
-    def _call_api_json(self, prompt: str) -> str:
-        url = f"{_BASE}/models/{self._model}:generateContent?key={self._api_key}"
+        def once(model: str) -> str:
+            url = f"{_BASE}/models/{model}:generateContent?key={self._api_key}"
+            req = urllib.request.Request(url, data=body, headers={"Content-Type": "application/json"}, method="POST")
+            with urllib.request.urlopen(req, timeout=timeout) as resp:
+                data = json.loads(resp.read())
+            parts = data["candidates"][0]["content"]["parts"]
+            return "".join(p.get("text", "") for p in parts if not p.get("thought")).strip()
+
+        try:
+            text = once(self._model)
+        except Exception as exc:
+            fallback = self._fallback_for(exc)
+            if fallback:                       # primary unavailable → one try on the fallback model
+                self._log_fallback("direct", exc, fallback)
+                text = once(fallback)
+                self._answered(fallback, "direct")
+                return text
+            if isinstance(exc, urllib.error.HTTPError) and exc.code in (429, 503):
+                logger.warning("Google AI direct: HTTP %s — retrying once in 1 s", exc.code)   # no fallback set
+                time.sleep(1)
+                text = once(self._model)
+            else:
+                raise
+        self._answered(self._model, "direct")
+        return text
+
+    def _call_api_json(self, prompt: str, *, model: str | None = None) -> str:
+        url = f"{_BASE}/models/{model or self._model}:generateContent?key={self._api_key}"
         req = urllib.request.Request(
             url, data=self._json_payload(prompt),
             headers={"Content-Type": "application/json"}, method="POST",
@@ -377,19 +455,33 @@ class GoogleAIProvider(AIModelProvider):
         parts = data["candidates"][0]["content"]["parts"]
         return "".join(p.get("text", "") for p in parts if not p.get("thought")).strip()
 
-    def _call_api_retry(self, prompt: str) -> str:
-        """_call_api, retried once after 2 s on a rate limit, server error or network error."""
+    def _call_api_retry(self, prompt: str, label: str = "complete") -> str:
+        """_call_api with one second chance: a 503/429/timeout goes to the fallback model if one is
+        set; otherwise (or for other 5xx / network errors) one retry on the same model after 2 s."""
         import time
         try:
-            return self._call_api(prompt)
-        except urllib.error.HTTPError as exc:
-            if exc.code not in (429, 500, 502, 503, 504):
+            text = self._call_api(prompt)
+            self._answered(self._model, label)
+            return text
+        except Exception as exc:
+            fallback = self._fallback_for(exc)
+            if fallback:
+                self._log_fallback(label, exc, fallback)
+                text = self._call_api(prompt, model=fallback)
+                self._answered(fallback, label)
+                return text
+            if isinstance(exc, urllib.error.HTTPError):
+                if exc.code not in (429, 500, 502, 503, 504):
+                    raise
+                logger.warning("Google AI HTTP %s — retrying once in 2 s", exc.code)
+            elif isinstance(exc, (urllib.error.URLError, TimeoutError)):
+                logger.warning("Google AI network error (%s) — retrying once in 2 s", exc)
+            else:
                 raise
-            logger.warning("Google AI HTTP %s — retrying once in 2 s", exc.code)
-        except urllib.error.URLError as exc:
-            logger.warning("Google AI network error (%s) — retrying once in 2 s", exc)
         time.sleep(2)
-        return self._call_api(prompt)
+        text = self._call_api(prompt)
+        self._answered(self._model, label)
+        return text
 
     def _call_api(self, prompt: str, *, model: str | None = None) -> str:
         m = model or self._model
@@ -419,6 +511,7 @@ class GoogleAIProvider(AIModelProvider):
         )
         thought_buf = []
         has_response = False
+        self._tl.streamed = False                 # set once a token went out (no fallback after that)
 
         with urllib.request.urlopen(req, timeout=120) as resp:
             for raw_line in resp:
@@ -438,6 +531,7 @@ class GoogleAIProvider(AIModelProvider):
                         thought_buf.append(token)
                     else:
                         has_response = True
+                        self._tl.streamed = True
                         yield token  # emit each token immediately as it arrives
                 except (KeyError, IndexError, json.JSONDecodeError):
                     continue

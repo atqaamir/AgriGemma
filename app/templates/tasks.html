@@ -1877,7 +1877,7 @@
       }
     }
 
-    async function pollInsights(beforeId, attempts = 30, interval = 1500) {
+    async function pollInsights(beforeId, attempts = 40, interval = 1500) {
       for (let i = 0; i < attempts; i++) {
         await new Promise(r => setTimeout(r, interval));
         try {

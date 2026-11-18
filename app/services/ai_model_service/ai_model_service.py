@@ -95,6 +95,14 @@ def fast_complete_direct(prompt: str, **limits) -> str:
     return fast_complete_json(prompt)
 
 
+def answered_model() -> str | None:
+    """The model that answered the fast provider's last call in this thread (Google AI: the
+    primary or the fallback model); None for providers that don't record it."""
+    provider = _fast_provider if _fast_provider is not None else get_provider()
+    fn = getattr(provider, "answered_model", None)
+    return fn() if callable(fn) else None
+
+
 def fast_provider_name() -> str:
     provider = _fast_provider if _fast_provider is not None else get_provider()
     return provider.name

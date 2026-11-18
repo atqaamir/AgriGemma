@@ -242,7 +242,13 @@ The following assumptions define the current scope and operational boundaries of
   change the page says "Your farm changed since this report – regenerate?" – no automatic AI call. "What changed" in
   the farm report is a diff of the stored signals, computed in code.
 - **Limits:** the validator is strict – an insight that names a date from a signal it did not cite is dropped even if
-  the date is right. Google AI sometimes answers HTTP 503 or very slowly; the page then shows the basic summary.
+  the date is right. Google AI sometimes answers HTTP 503 ("high demand") or very slowly; without an answer the page
+  shows the basic summary.
+- **Fallback model (optional):** `GOOGLE_AI_FALLBACK_MODEL` (e.g. `gemini-3.1-flash-lite`). When the main Gemma model
+  answers HTTP 503/429 or times out, the same request is sent once to the fallback model (direct, chat, JSON and
+  streaming calls) before giving up; with a fallback set, a 503 goes straight to it instead of retrying the busy model.
+  The log says which model answered, and stored insights / reports record it ("… (fallback)"). The fallback is not a
+  Gemma model, so answers can differ in style; it is only used when Gemma is unavailable. Empty = no fallback.
 - Evaluation: `Test_Runs/insights_eval.py` (real AI, demo date: 3× task insights, 1× farm report, the four expected
   links, dropped items, "must not say" checks, latency); placeholder tests `Test_Runs/test_insight_signals.py`,
   `test_insight_reports.py`, `test_task_insights.py`, `test_farm_report.py`.

@@ -33,7 +33,8 @@ logger = logging.getLogger(__name__)
 
 KIND = "farm_report"
 MAX_INSIGHTS = 3
-TIMEOUT_S = 35.0          # bigger prompt/answer than task insights: 30 s HTTP read + retry margin
+CALL_TIMEOUT_S = 25.0     # per model request: bigger prompt/answer than task insights
+TIMEOUT_S = 55.0          # whole call: primary + fallback
 MAX_TOKENS = 1500
 TEMPERATURE = 0.1
 SECTIONS = ("farm_status", "season_progress", "what_changed", "next_7_days")
@@ -244,21 +245,29 @@ def _call_ai(prompt: str, signals: list, season: list, changes: list) -> str:
     from app.services.ai_model_service import ai_model_service
     if ai_model_service.fast_provider_name().startswith("Placeholder"):
         return _placeholder_answer(signals, season, changes)
-    return ai_model_service.fast_complete_direct(prompt, max_tokens=MAX_TOKENS, timeout=TIMEOUT_S - 5,
+    return ai_model_service.fast_complete_direct(prompt, max_tokens=MAX_TOKENS, timeout=CALL_TIMEOUT_S,
                                                 temperature=TEMPERATURE)
 
 
-def _call_with_limit(*args) -> tuple[str | None, str | None]:
+def _call_and_model(*args):
+    """_call_ai plus the model that answered (read in the same thread as the call)."""
+    from app.services.ai_model_service import ai_model_service
+    text = _call_ai(*args)
+    return text, ai_model_service.answered_model()
+
+
+def _call_with_limit(*args) -> tuple[str | None, str | None, str | None]:
     pool = ThreadPoolExecutor(max_workers=1)
-    future = pool.submit(_call_ai, *args)
+    future = pool.submit(_call_and_model, *args)
     try:
-        return future.result(timeout=TIMEOUT_S), None
+        raw, answered = future.result(timeout=TIMEOUT_S)
+        return raw, None, answered
     except _Timeout as exc:
         if future.done():   # the provider's own HTTP timeout (also a TimeoutError), not our limit
-            return None, f"AI provider timed out ({exc or 'no response'})"
-        return None, f"no answer within {TIMEOUT_S:.0f} s"
+            return None, f"AI provider timed out ({exc or 'no response'})", None
+        return None, f"no answer within {TIMEOUT_S:.0f} s", None
     except Exception as exc:
-        return None, f"AI call failed: {exc}"
+        return None, f"AI call failed: {exc}", None
     finally:
         pool.shutdown(wait=False)
 
@@ -280,7 +289,7 @@ def generate(user_id: int) -> dict:
 
     prompt = build_prompt(signals, season, changes, today)
     t0 = time.monotonic()
-    raw, error = _call_with_limit(prompt, signals, season, changes)
+    raw, error, answered = _call_with_limit(prompt, signals, season, changes)
     latency_ms = round((time.monotonic() - t0) * 1000)
     answer = parse_json_object(raw) if raw else None
     if raw and answer is None:
@@ -297,6 +306,8 @@ def generate(user_id: int) -> dict:
                  "error": error, "raw_answer": (raw or "")[:4000], "prompt_chars": len(prompt)})
     try:
         model = ai_model_service.fast_provider_name()
+        if answered and answered not in model:          # the fallback model answered
+            model = f"{model.split('/')[0]}/{answered} (fallback)"
     except Exception:
         model = None
     reports.save(user_id, KIND, data, signals, is_fallback=is_fallback, latency_ms=latency_ms, model=model,
