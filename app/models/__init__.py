@@ -8,3 +8,4 @@ from .alert import Alert
 from .weather import Weather
 from .dashboard_summary import DashboardSummary
 from .task_intelligence_summary import TaskIntelligenceSummary
+from .ai_insight_report import AiInsightReport

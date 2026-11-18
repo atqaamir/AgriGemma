@@ -17,6 +17,7 @@ from app.models.plan_event_override import PlanEventOverride
 from app.models.chat import Conversation, ChatMessage
 from app.models.dashboard_summary import DashboardSummary
 from app.models.task_intelligence_summary import TaskIntelligenceSummary
+from app.models.ai_insight_report import AiInsightReport
 from sqlalchemy import text
 
 from app.utils import clock
@@ -31,6 +32,7 @@ DEMO_TABLES_CHILD_FIRST = [
     Alert, Notification,               # → user
     ChatMessage, Conversation,         # → conversation, user
     DashboardSummary, TaskIntelligenceSummary,   # → user
+    AiInsightReport,                   # → user
     WeeklyPlanEntry, WeeklyPlan,       # → weekly_plan, user
     SeasonalPlanEntry, SeasonalPlan,   # → seasonal_plan, user
     Crop,                              # → field, user
