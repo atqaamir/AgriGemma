@@ -276,6 +276,30 @@ class PlanOverrideService:
         return {"not_feasible": False, "date": day, "overdue": bool(day and day < clock.today())}
 
     @staticmethod
+    def upcoming_harvests(user_id: int, today: date | None = None) -> list[dict]:
+        """Effective harvest date (overrides applied) of each feasible crop in the user's active
+        seasonal plan that is still ahead, earliest first: {crop, field, harvest, planned, moved}."""
+        from datetime import timedelta
+        from app.models.seasonal_plan import SeasonalPlan
+        from app.utils import clock
+        today = today or clock.today()
+        plan = SeasonalPlan.query.filter_by(user_id=user_id, currently_active=True).first()
+        out = []
+        for entry in (plan.entries if plan else []):
+            if entry.feasibility == "Not Feasible":
+                continue
+            eff = PlanOverrideService.effective_dates(entry, today + timedelta(days=1))   # as-of rule
+            harvest, planned = eff.get("harvesting"), _parse(entry.harvesting)
+            if not harvest or harvest < today:
+                continue
+            crop = PlanOverrideService.active_crop_for_entry(entry, user_id)
+            out.append({"crop": entry.crop_name_rel.name if entry.crop_name_rel else f"Crop {entry.crop_name_id}",
+                        "field": crop.field.name if crop and crop.field else None,
+                        "harvest": harvest.isoformat(), "planned": planned.isoformat() if planned else None,
+                        "moved": bool(planned and planned != harvest)})
+        return sorted(out, key=lambda x: x["harvest"])
+
+    @staticmethod
     def planned_sowing_label(crop):
         """Label for a crop that is not sown yet: "Planned: 9 May 2027 (weekly plan)" from the
         effective sowing date, "Not Feasible" for an infeasible entry, None once sown."""

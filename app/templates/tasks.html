@@ -219,13 +219,15 @@
 
       <!--UpComing Events Section-->
       <section class="grid grid-cols-1 md:grid-cols-2 gap-8">
-        <div class="bg-[#e5e2da] rounded-xl p-8 flex flex-col justify-between group overflow-hidden relative">
+        <!-- Upcoming Harvest: effective harvest dates from the plan; hidden when there are none -->
+        <div id="harvest-card" style="display:none" class="bg-[#e5e2da] rounded-xl p-8 flex flex-col justify-between group overflow-hidden relative">
           <div class="relative z-10 space-y-4">
             <h3 class="text-xl font-bold text-on-surface">Upcoming Harvest</h3>
-            <p class="text-sm text-on-surface-variant font-medium">Predicted window: Oct 12 - Oct 15</p>
-            <button class="mt-4 text-primary font-bold inline-flex items-center gap-2 group-hover:translate-x-1 transition-transform">
+            <p id="harvest-window" class="text-sm text-on-surface-variant font-medium"></p>
+            <ul id="harvest-crops" class="text-sm text-on-surface space-y-1"></ul>
+            <a href="/{{ current_user_id }}/seasonal-plan-page" id="harvest-schedule-link" class="mt-4 text-primary font-bold inline-flex items-center gap-2 group-hover:translate-x-1 transition-transform">
               Detailed Schedule <span class="material-symbols-outlined">chevron_right</span>
-            </button>
+            </a>
           </div>
             <div class="absolute -right-4 -bottom-4 opacity-10 group-hover:scale-110 transition-transform">
             <span class="material-symbols-outlined text-[120px]">eco</span>
@@ -758,6 +760,7 @@
       loadTaskLookup();
       loadCropsAndFields();
       loadInsights();
+      loadUpcomingHarvest();
     });
 
     // Auto-refresh when daily_update completes (notification_ui fires this event)
@@ -765,6 +768,7 @@
       loadPendingTasks();
       loadCriticalQueue();
       loadInsights();
+      loadUpcomingHarvest();
     });
 
     // ── Task Lookup (category → types) ────────────────────────────────────────
@@ -1839,6 +1843,32 @@
 
     function escapeHtml(s) {
       return String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#039;');
+    }
+
+    // ── Upcoming Harvest (effective harvest dates from the plan) ─────────────────
+    async function loadUpcomingHarvest() {
+      const card = document.getElementById('harvest-card');
+      try {
+        const res = await fetch(`${TASKS_BASE}/${USER_ID}/upcoming-harvest`);
+        if (!res.ok) throw new Error(res.status);
+        const data = await res.json();
+        const crops = data.crops || [];
+        if (!crops.length) { card.style.display = 'none'; return; }
+        const fmt = iso => new Date(iso + 'T00:00').toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
+        const a = new Date(data.earliest + 'T00:00'), b = new Date(data.latest + 'T00:00');
+        let window_;
+        if (data.earliest === data.latest) window_ = fmt(data.earliest);
+        else if (a.getMonth() === b.getMonth()) window_ = `${a.getDate()}–${fmt(data.latest)}`;
+        else window_ = `${fmt(data.earliest)} – ${fmt(data.latest)}`;
+        document.getElementById('harvest-window').textContent = `Planned window: ${window_}`;
+        document.getElementById('harvest-crops').innerHTML = crops.map(c => `
+          <li><span class="font-semibold">${escapeHtml(c.crop)}</span> ${escapeHtml(fmt(c.harvest))}${c.field ? ` <span class="text-on-surface-variant">· ${escapeHtml(c.field)}</span>` : ''}${c.moved && c.planned ? ` <span class="text-on-surface-variant text-xs">(moved from ${escapeHtml(fmt(c.planned))})</span>` : ''}</li>`).join('');
+        document.getElementById('harvest-schedule-link').href = `/${USER_ID}/seasonal-plan-page`;
+        card.style.display = '';
+      } catch (e) {
+        console.warn('Upcoming harvest load failed:', e);
+        card.style.display = 'none';
+      }
     }
 
     // ── Task insights (one AI call on the button; reading the stored result is free) ──

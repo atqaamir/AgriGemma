@@ -81,6 +81,16 @@ def generate_task_insights():
     return jsonify({"status": "generating"}), 202
 
 
+@tasks_bp.route("/<int:user_id>/upcoming-harvest", methods=["GET"])
+def get_upcoming_harvest(user_id):
+    """Effective harvest dates from the plan (Upcoming Harvest card). Empty list → card hidden."""
+    from app.services.plan_override_service import PlanOverrideService
+    crops = PlanOverrideService.upcoming_harvests(user_id)
+    return jsonify({"crops": crops,
+                    "earliest": crops[0]["harvest"] if crops else None,
+                    "latest": crops[-1]["harvest"] if crops else None}), 200
+
+
 # ── Task collection ───────────────────────────────────────────────────────────
 
 @tasks_bp.route("/<int:user_id>/tasks", methods=["GET"])
