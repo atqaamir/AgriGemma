@@ -176,8 +176,8 @@
   </main>
 
   <!-- Crop Details Modal -->
-  <div id="cropDetailsModal" class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 hidden" onclick="closeCropDetailsModal()">
-    <div class="bg-surface rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-2xl" onclick="event.stopPropagation()">
+  <div id="cropDetailsModal" class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center pt-4 px-4 pb-24 hidden" onclick="closeCropDetailsModal()">
+    <div class="bg-surface rounded-2xl w-full max-w-2xl max-h-[calc(100vh-120px)] overflow-y-auto shadow-2xl" onclick="event.stopPropagation()">
 
       <div class="sticky top-0 flex items-center justify-between p-6 border-b border-surface-variant bg-surface">
         <h2 id="cropDetailsModalTitle" class="text-2xl font-bold text-primary">Crop Details</h2>
@@ -263,8 +263,8 @@
   </div>
 
   <!-- Task Detail Modal -->
-  <div id="taskDetailModal" class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 hidden" onclick="closeTaskDetailModal()">
-    <div class="bg-surface rounded-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto shadow-2xl" onclick="event.stopPropagation()">
+  <div id="taskDetailModal" class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center pt-4 px-4 pb-24 hidden" onclick="closeTaskDetailModal()">
+    <div class="bg-surface rounded-2xl w-full max-w-lg max-h-[calc(100vh-120px)] overflow-y-auto shadow-2xl" onclick="event.stopPropagation()">
       <div class="sticky top-0 flex items-center justify-between p-6 border-b border-surface-variant bg-surface">
         <h2 id="taskDetailTitle" class="text-xl font-bold text-primary truncate pr-4">Task Details</h2>
         <button onclick="closeTaskDetailModal()" class="flex-shrink-0 p-2 hover:bg-surface-container rounded-full transition-colors">
@@ -311,8 +311,8 @@
 
 
   <!-- Create Crop Modal -->
-  <div id="createCropModal" class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 hidden" onclick="closeCreateCropModal()">
-    <div class="bg-surface rounded-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto shadow-2xl" onclick="event.stopPropagation()">
+  <div id="createCropModal" class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center pt-4 px-4 pb-24 hidden" onclick="closeCreateCropModal()">
+    <div class="bg-surface rounded-2xl w-full max-w-lg max-h-[calc(100vh-120px)] overflow-y-auto shadow-2xl" onclick="event.stopPropagation()">
       <div class="sticky top-0 flex items-center justify-between p-6 border-b border-surface-variant bg-surface">
         <h2 class="text-xl font-bold text-primary">New Crop</h2>
         <button onclick="closeCreateCropModal()" class="p-2 hover:bg-surface-container rounded-full transition-colors">
@@ -363,8 +363,8 @@
   </div>
 
   <!-- Edit Crop Modal -->
-  <div id="editCropModal" class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 hidden" onclick="closeEditCropModal()">
-    <div class="bg-surface rounded-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto shadow-2xl" onclick="event.stopPropagation()">
+  <div id="editCropModal" class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center pt-4 px-4 pb-24 hidden" onclick="closeEditCropModal()">
+    <div class="bg-surface rounded-2xl w-full max-w-lg max-h-[calc(100vh-120px)] overflow-y-auto shadow-2xl" onclick="event.stopPropagation()">
       <div class="sticky top-0 flex items-center justify-between p-6 border-b border-surface-variant bg-surface">
         <h2 class="text-xl font-bold text-primary">Edit Crop</h2>
         <button onclick="closeEditCropModal()" class="p-2 hover:bg-surface-container rounded-full transition-colors">
@@ -426,8 +426,8 @@
   </div>
 
   <!-- Filter Modal -->
-  <div id="filterModal" class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 hidden" onclick="closeFilterModal()">
-    <div class="bg-surface rounded-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto shadow-2xl" onclick="event.stopPropagation()">
+  <div id="filterModal" class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center pt-4 px-4 pb-24 hidden" onclick="closeFilterModal()">
+    <div class="bg-surface rounded-2xl w-full max-w-lg max-h-[calc(100vh-120px)] overflow-y-auto shadow-2xl" onclick="event.stopPropagation()">
       <div class="sticky top-0 flex items-center justify-between p-6 border-b border-surface-variant bg-surface">
         <h2 class="text-xl font-bold text-primary">Filter Crops</h2>
         <button onclick="closeFilterModal()" class="p-2 hover:bg-surface-container rounded-full transition-colors">
@@ -462,8 +462,8 @@
   </div>
 
   <!-- Search Modal -->
-  <div id="searchModal" class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 hidden" onclick="closeSearchModal()">
-    <div class="bg-surface rounded-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto shadow-2xl" onclick="event.stopPropagation()">
+  <div id="searchModal" class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center pt-4 px-4 pb-24 hidden" onclick="closeSearchModal()">
+    <div class="bg-surface rounded-2xl w-full max-w-lg max-h-[calc(100vh-120px)] overflow-y-auto shadow-2xl" onclick="event.stopPropagation()">
       <div class="sticky top-0 flex items-center justify-between p-6 border-b border-surface-variant bg-surface">
         <h2 class="text-xl font-bold text-primary">Search Crops</h2>
         <button onclick="closeSearchModal()" class="p-2 hover:bg-surface-container rounded-full transition-colors">
@@ -489,8 +489,8 @@
   </div>
 
   <!-- Sort Modal -->
-  <div id="sortModal" class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 hidden" onclick="closeSortModal()">
-    <div class="bg-surface rounded-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto shadow-2xl" onclick="event.stopPropagation()">
+  <div id="sortModal" class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center pt-4 px-4 pb-24 hidden" onclick="closeSortModal()">
+    <div class="bg-surface rounded-2xl w-full max-w-lg max-h-[calc(100vh-120px)] overflow-y-auto shadow-2xl" onclick="event.stopPropagation()">
       <div class="sticky top-0 flex items-center justify-between p-6 border-b border-surface-variant bg-surface">
         <h2 class="text-xl font-bold text-primary">Sort Crops</h2>
         <button onclick="closeSortModal()" class="p-2 hover:bg-surface-container rounded-full transition-colors">
