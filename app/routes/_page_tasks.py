@@ -1,13 +1,9 @@
-import json
 import threading
-from datetime import datetime, timezone, date
 
 from flask import Blueprint, request, jsonify, render_template, current_app
 from marshmallow import ValidationError
 
 from app.agents.coordinator_agent import CoordinatorAgent
-from app.extensions import db
-from app.models.task_intelligence_summary import TaskIntelligenceSummary
 from app.services.domain_service.task_service import TaskService
 from app.schemas.task_schema import (
     TaskCardSchema,
@@ -15,7 +11,6 @@ from app.schemas.task_schema import (
     CreateTaskSchema,
     UpdateTaskSchema,
 )
-from app.schemas.intelligence_schema import TaskIntelligenceSchema
 from app.utils import clock
 
 tasks_bp = Blueprint("tasks_bp", __name__)
@@ -24,7 +19,6 @@ task_card_schema = TaskCardSchema(many=True)
 task_detail_schema = TaskDetailSchema()
 task_create_schema = CreateTaskSchema()
 task_update_schema = UpdateTaskSchema()
-intelligence_schema = TaskIntelligenceSchema()
 
 _coordinator = CoordinatorAgent()
 
@@ -42,55 +36,6 @@ def tasks_page():
 def get_task_lookup():
     from app.models.Lookup.task_lookup import TASK_TYPE_BY_CATEGORY
     return jsonify(TASK_TYPE_BY_CATEGORY), 200
-
-
-# ── AI Intelligence ───────────────────────────────────────────────────────────
-
-@tasks_bp.route("/intelligence", methods=["GET"])
-def get_task_intelligence():
-    user_id = request.args.get("user_id", USER_ID, type=int)
-    result = _coordinator.generate_task_intelligence(user_id)
-    return jsonify(intelligence_schema.dump(result)), 200
-
-
-@tasks_bp.route("/intelligence/stored", methods=["GET"])
-def get_stored_intelligence():
-    """Return the latest DB-cached intelligence — no AI call, instant."""
-    user_id = request.args.get("user_id", USER_ID, type=int)
-    row = (
-        TaskIntelligenceSummary.query
-        .filter_by(user_id=user_id)
-        .order_by(TaskIntelligenceSummary.generated_at.desc())
-        .first()
-    )
-    if not row:
-        return jsonify(None), 200
-    data = json.loads(row.data)
-    data["generated_at"] = row.generated_at.isoformat()
-    data["is_fallback"]  = row.is_fallback
-    return jsonify(data), 200
-
-
-@tasks_bp.route("/intelligence/generate", methods=["POST"])
-def generate_and_store_intelligence():
-    """Fire AI generation in background — returns immediately so navigation doesn't cancel it."""
-    user_id = request.args.get("user_id", USER_ID, type=int)
-    app = current_app._get_current_object()
-
-    def _bg():
-        with app.app_context():
-            result = _coordinator.generate_task_intelligence(user_id)
-            row = TaskIntelligenceSummary(
-                user_id      = user_id,
-                data         = json.dumps(intelligence_schema.dump(result)),
-                is_fallback  = result.get("is_fallback", False),
-                generated_at = datetime.now(timezone.utc),
-            )
-            db.session.add(row)
-            db.session.commit()
-
-    threading.Thread(target=_bg, daemon=False).start()
-    return jsonify({"status": "generating"}), 202
 
 
 # ── Task insights (one AI call on the "Task insights" button) ──────────────────

@@ -5,7 +5,6 @@ from app.agents.dashboard_agent import DashboardAgent
 from app.agents.risk_agent import RiskAgent
 from app.agents.planning_agent import PlanningAgent
 from app.agents.notification_agent import  NotificationAgent
-from app.agents.intelligence_agent import TaskIntelligenceAgent
 from app.utils import enums_
 from app.utils import execution_responses
 from app.utils import clock
@@ -25,29 +24,6 @@ class CoordinatorAgent:
         self.risk_agent = RiskAgent()
         self.notification_agent = NotificationAgent()
         self.dashboard_agent = DashboardAgent()
-        self.task_intelligence_agent = TaskIntelligenceAgent()
-
-    # ── Task Intelligence ─────────────────────────────────────────────────────
-
-    def generate_task_intelligence(self, user_id: int) -> dict:
-        """
-        Orchestrate AI task intelligence generation for tasks and dashboard summaries.
-        Always returns a valid intelligence dict (fallback on failure).
-        """
-        try:
-            return self.task_intelligence_agent.generate(user_id)
-        except Exception as exc:
-            logger.error("CoordinatorAgent: task intelligence failed (user=%s) — %s", user_id, exc)
-            return {
-                "summary": "Intelligence overview temporarily unavailable.",
-                "priority_level": "medium",
-                "recommendations": ["Review pending tasks manually."],
-                "urgent_actions": [],
-                "risks": [],
-                "insights": [],
-                "generated_at": "",
-                "is_fallback": True,
-            }
 
     # ── Planning workflows ────────────────────────────────────────────────────
 

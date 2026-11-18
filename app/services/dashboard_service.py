@@ -1,15 +1,12 @@
+import logging
 import math
-from datetime import datetime, timezone, date
+from datetime import date
 
-from app.extensions import db
-from app.models.dashboard_summary import DashboardSummary
 from app.services.domain_service.user_service import UserService
 from app.services.domain_service.field_service import FieldService
 from app.services.domain_service.crop_service import CropService
 from app.services.domain_service.task_service import TaskService
 from app.services.domain_service.notification_service import NotificationService
-from app.services.intelligence_service.task_intelligence_service import TaskIntelligenceService
-from app.services.intelligence_service.chatbot_service.context_aggregation_service import ContextAggregationService
 from app.utils import clock
 
 
@@ -34,9 +31,6 @@ class DashboardService:
         tasks = [t for t in TaskService.get_tasks_by_user(user_id) if t.is_active]
         pending_tasks = [t for t in tasks if not t.completed]
 
-        stored = DashboardService._fetch_stored_summary(user_id) \
-                 or DashboardService._build_default_summary(pending_tasks, active_fields, crops)
-
         return {
             "user": DashboardService._build_user_section(user),
             "weather": DashboardService._build_weather_section(user_id),
@@ -52,76 +46,20 @@ class DashboardService:
             "field_condition": DashboardService._build_field_condition(fields, active_fields),
             "crop_condition": DashboardService._build_crop_condition(crops),
             "alerts": DashboardService._get_alerts(user_id, pending_tasks),
-            "dashboard_summary": stored,
+            # Latest stored farm report + whether the farm changed since (no AI call here).
+            "farm_report": DashboardService._farm_report(user_id),
             "seasonal_plan": DashboardService._build_plan_summary(user_id),
         }
 
     @staticmethod
-    def _fetch_stored_summary(user_id: int) -> dict | None:
-        row = (
-            DashboardSummary.query
-            .filter_by(user_id=user_id)
-            .order_by(DashboardSummary.generated_at.desc())
-            .first()
-        )
-        if not row:
+    def _farm_report(user_id: int) -> dict | None:
+        from app.services import insight_report_service as reports
+        try:
+            return reports.payload(user_id, "farm_report")
+        except Exception:            # the dashboard must load even if the report can't be read
+            logging.getLogger(__name__).exception("Farm report payload failed for user %s", user_id)
             return None
-        return {
-            "summary":      row.summary,
-            "is_fallback":  row.is_fallback,
-            "generated_at": row.generated_at.isoformat(),
-        }
 
-    @staticmethod
-    def _build_default_summary(pending_tasks, active_fields, crops) -> dict:
-        today    = clock.today()
-        overdue  = sum(1 for t in pending_tasks if t.due_date and t.due_date < today)
-        critical = sum(1 for t in pending_tasks if t.priority == "critical")
-        high     = sum(1 for t in pending_tasks if t.priority == "high")
-        nf       = len(active_fields)
-        nc       = len(crops)
-
-        _w = ["zero","one","two","three","four","five","six","seven","eight","nine","ten"]
-        def w(n): return _w[n] if n < len(_w) else str(n)
-        def tasks(n): return f"{w(n)} task" if n == 1 else f"{w(n)} tasks"
-        def fields(n): return f"{w(n)} field" if n == 1 else f"{w(n)} fields"
-        def crops(n): return f"{w(n)} crop" if n == 1 else f"{w(n)} crops"
-
-        if overdue and critical:
-            summary = f"A few things need your attention today — {tasks(critical)} are critical and {w(overdue)} are past due."
-        elif critical:
-            summary = f"You've got {tasks(critical)} that can't wait. Good time to get those sorted first."
-        elif overdue:
-            summary = f"{w(overdue).capitalize()} {'task' if overdue == 1 else 'tasks'} slipped past their deadline. Worth getting those off the list today."
-        elif high:
-            summary = f"Nothing urgent, but {tasks(high)} are coming up. A good day to stay ahead."
-        elif pending_tasks:
-            summary = f"Farm's looking steady. {tasks(len(pending_tasks))} in the queue — nothing alarming right now."
-        else:
-            summary = f"All quiet on the farm today. {fields(nf)}, {crops(nc)}, and nothing urgent on your plate."
-
-        return {"summary": summary, "is_fallback": True, "generated_at": None}
-
-    @staticmethod
-    def generate_and_store_summary(user_id: int) -> dict:
-        context     = ContextAggregationService.build_task_context(user_id)
-        ai_insights = TaskIntelligenceService.generate_intelligence(context, user_id)
-
-        row = DashboardSummary(
-            user_id     = user_id,
-            summary     = ai_insights.get("summary", ""),
-            is_fallback = ai_insights.get("is_fallback", False),
-            generated_at= datetime.now(timezone.utc),
-        )
-        db.session.add(row)
-        db.session.commit()
-
-        return {
-            "summary":      row.summary,
-            "is_fallback":  row.is_fallback,
-            "generated_at": row.generated_at.isoformat(),
-        }
-    
     @staticmethod
     def _build_user_section(user):
         return {

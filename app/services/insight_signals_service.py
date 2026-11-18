@@ -111,7 +111,9 @@ def collect(user_id: int, today: date | None = None) -> dict:
              "field_id": field.id if field else None, "field": field.name if field else None,
              "feasibility": entry.feasibility, "not_feasible_reason": None,
              "sowing_status": None, "sowing_note": None, "dry_note": None,
-             "moved": [], "sowing_done_on": None}
+             "moved": [], "sowing_done_on": None,
+             "planned": {t: _parse(getattr(entry, col)) for t, col in SEASONAL_COLUMNS.items()},
+             "effective": {}}
         if entry.feasibility == "Not Feasible":
             try:
                 e["not_feasible_reason"] = "; ".join(json.loads(entry.adjustments_to_make or "[]"))
@@ -121,6 +123,7 @@ def collect(user_id: int, today: date | None = None) -> dict:
             # today + 1: today's forecast decisions count too (as-of rule, same as the chatbot)
             eff = PlanOverrideService.effective_dates(entry, today + timedelta(days=1))
             e["sowing_done_on"] = eff["sowing_done_on"]
+            e["effective"] = {t: eff.get(t) for t in SEASONAL_COLUMNS}
             reasons = {}
             for o in PlanEventOverrideRepository.get_applicable(entry.id, today + timedelta(days=1)):
                 reasons[o.event_type] = (o.source, o.reason)

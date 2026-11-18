@@ -5,7 +5,7 @@ GET /test/ai  — runs the 3 prompt types against real DB data and returns respo
 Usage:
     curl http://localhost:5000/test/ai
     curl http://localhost:5000/test/ai?prompt=1    (chatbot only)
-    curl http://localhost:5000/test/ai?prompt=2    (task intelligence only)
+    curl http://localhost:5000/test/ai?prompt=2    (task insights only — stores a report)
     curl http://localhost:5000/test/ai?prompt=3    (alert explanation only)
 """
 
@@ -39,7 +39,7 @@ def test_all_prompts():
         results["1_chatbot"] = _test_chatbot()
 
     if only is None or only == 2:
-        results["2_task_intelligence"] = _test_task_intelligence()
+        results["2_task_insights"] = _test_task_insights()
 
     if only is None or only == 3:
         results["3_alert_explanation"] = _test_alert_explanation()
@@ -77,28 +77,28 @@ def _test_chatbot():
         return {"ok": False, "error": str(exc)}
 
 
-def _test_task_intelligence():
+def _test_task_insights():
     """
-    Prompt 2: Dashboard AI overview — summarises tasks/risks/insights using rules.
+    Prompt 2: Task insights — signals → one AI call → validated priority order and insights.
     """
     try:
-        from app.services.intelligence_service.chatbot_service.context_aggregation_service import ContextAggregationService
-        from app.services.intelligence_service.task_intelligence_service import TaskIntelligenceService
+        from app.services import task_insights_service
 
-        context = ContextAggregationService.build_task_context(USER_ID)
         t0 = time.monotonic()
-        result = TaskIntelligenceService.generate_intelligence(context, USER_ID)
+        result = task_insights_service.generate(USER_ID)
+        data = result["data"]
         return {
             "ok": True,
-            "summary": result.get("summary"),
-            "priority_level": result.get("priority_level"),
-            "recommendations": result.get("recommendations", []),
-            "is_fallback": result.get("is_fallback"),
-            "rules_in_context": bool(context.get("rules")),
+            "basic_summary": data.get("basic_summary"),
+            "error": data.get("error"),
+            "priority_order": [f"{x['title']} – {x['reason']}" for x in data.get("priority_order", [])],
+            "insights": [f"{x['title']}: {x['explanation']} ({', '.join(x['evidence'])})"
+                         for x in data.get("insights", [])],
+            "dropped": len(data.get("dropped", [])),
             "ms": round((time.monotonic() - t0) * 1000),
         }
     except Exception as exc:
-        logger.exception("test_task_intelligence failed")
+        logger.exception("test_task_insights failed")
         return {"ok": False, "error": str(exc)}
 
 

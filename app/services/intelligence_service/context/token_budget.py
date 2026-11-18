@@ -24,13 +24,11 @@ T = TypeVar("T")
 
 BUDGET_CHATBOT_CONTEXT  = 2_800   # context block inside the chatbot prompt (incl. the plan block)
 BUDGET_CHATBOT_HISTORY  = 1_200   # conversation history block (last ~6 messages, newest kept)
-BUDGET_DASHBOARD_PROMPT = 2_800   # full dashboard intelligence prompt
 BUDGET_TASK_EXPLAIN     = 900     # full single-task explanation prompt
 BUDGET_ALERTS_BATCH     = 1_000   # full batch-alerts explanation prompt
 
 # Per-section sub-budgets inside the chatbot context block
 BUDGET_RULES_IN_CHATBOT    = 450
-BUDGET_RULES_IN_DASHBOARD  = 450
 BUDGET_RULES_IN_TASK       = 260
 BUDGET_RULES_IN_ALERT      = 220
 BUDGET_TASK_DESC           = 160  # individual task description truncation (keeps what a task is about)

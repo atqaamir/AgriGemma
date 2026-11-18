@@ -106,17 +106,25 @@
           <h1 id="welcome-name" class="text-4xl md:text-5xl font-medium tracking-tight mb-2">Welcome back!</h1>
           <div class="flex items-start gap-2 max-w-md">
             <p id="hero-subtitle" class="text-on-primary-container/80 text-lg flex-1"></p>
-            <button id="refresh-summary-btn" onclick="refreshSummary()"
-              title="Generate AI summary"
+            <button id="refresh-summary-btn" onclick="generateFarmReport()"
+              title="Generate a fresh farm report (one AI call)"
               class="mt-1 shrink-0 text-on-primary-container/60 hover:text-on-primary-container transition-colors">
               <span id="refresh-summary-icon" class="material-symbols-outlined text-xl">auto_awesome</span>
             </button>
           </div>
-          <button onclick="openAnalysisModal()"
-            class="mt-3 inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/15 hover:bg-white/25 border border-white/20 text-sm font-semibold text-on-primary-container transition-all backdrop-blur-sm">
-            <span class="material-symbols-outlined text-base">analytics</span>
-            Farmer Report
+          <!-- Farm changed since the stored report: regenerate only on click (no automatic AI call) -->
+          <button id="report-stale-banner" onclick="generateFarmReport()" style="display:none"
+            class="mt-2 inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-amber-100 text-amber-900 text-xs font-semibold hover:bg-amber-200 transition-colors">
+            <span class="material-symbols-outlined text-sm">sync_problem</span>
+            <span>Your farm changed since this report – regenerate?</span>
           </button>
+          <div>
+            <button id="farm-report-btn" onclick="openReportModal()"
+              class="mt-3 inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/15 hover:bg-white/25 border border-white/20 text-sm font-semibold text-on-primary-container transition-all backdrop-blur-sm">
+              <span class="material-symbols-outlined text-base">analytics</span>
+              <span id="farm-report-label">Farm report</span>
+            </button>
+          </div>
         </div>
         <div class="bg-white/10 backdrop-blur-xl rounded-3xl p-4 border border-white/10 flex items-center justify-between">
           <div class="flex items-center gap-4">
@@ -284,27 +292,32 @@
 
   </main>
 
-  <!-- Analysis Modal -->
-  <div id="analysisModal" class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center pt-4 px-4 pb-24 hidden" onclick="closeAnalysisModal()">
+  <!-- Farm report modal: headline, four short sections, up to 3 insights with their evidence -->
+  <div id="reportModal" class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center pt-4 px-4 pb-24 hidden" onclick="closeReportModal()">
     <div class="bg-surface rounded-2xl w-full max-w-lg max-h-[calc(100vh-120px)] overflow-y-auto shadow-2xl" onclick="event.stopPropagation()">
-      <div class="sticky top-0 flex items-center justify-between p-6 border-b border-surface-variant bg-surface">
+      <div class="sticky top-0 flex items-center justify-between p-6 border-b border-surface-variant bg-surface z-10">
         <div class="flex items-center gap-3">
-          <span class="material-symbols-outlined text-primary" style="font-variation-settings:'FILL' 1;">insights</span>
-          <h2 class="text-xl font-bold text-primary">Farm Intelligence</h2>
+          <span class="material-symbols-outlined text-primary" style="font-variation-settings:'FILL' 1;">analytics</span>
+          <div>
+            <h2 class="text-xl font-bold text-primary leading-tight">Farm report</h2>
+            <p id="report-modal-subtitle" class="text-[11px] text-on-surface-variant mt-0.5"></p>
+          </div>
         </div>
         <div class="flex items-center gap-1">
-          <button id="regen-intel-btn" onclick="regenerateIntelligence()" title="Regenerate AI analysis"
+          <button onclick="generateFarmReport()" title="Generate a fresh report (one AI call)"
             class="p-2 hover:bg-surface-container rounded-full transition-colors text-on-surface-variant hover:text-primary">
-            <span id="regen-intel-icon" class="material-symbols-outlined text-lg">auto_awesome</span>
+            <span id="regen-report-icon" class="material-symbols-outlined text-lg">auto_awesome</span>
           </button>
-          <button onclick="closeAnalysisModal()" class="p-2 hover:bg-surface-container rounded-full transition-colors">
+          <button onclick="printFarmReport()" title="Print / save as PDF"
+            class="p-2 hover:bg-surface-container rounded-full transition-colors text-on-surface-variant hover:text-primary">
+            <span class="material-symbols-outlined text-lg">download</span>
+          </button>
+          <button onclick="closeReportModal()" class="p-2 hover:bg-surface-container rounded-full transition-colors">
             <span class="material-symbols-outlined">close</span>
           </button>
         </div>
       </div>
-      <div id="analysis-modal-body" class="p-6 space-y-5 pb-8">
-        <p class="text-sm text-on-surface-variant text-center py-8">Loading analysis...</p>
-      </div>
+      <div id="report-modal-body" class="p-6 space-y-5 pb-8"></div>
     </div>
   </div>
 
@@ -394,7 +407,8 @@
     function renderHero(data) {
       const name = data.user?.name || 'Farmer';
       setText('welcome-name', `${t('dashboard.welcome_prefix')} ${name}!`);
-      setText('hero-subtitle', data.dashboard_summary?.summary || '');
+      farmReport = data.farm_report || null;
+      renderReportHero();
 
       const current = data.weather?.current || {};
       setText('weather-temp', `${current.temperature_c ?? '--'}°C`);
@@ -411,367 +425,154 @@
       `).join('');
     }
 
-    // ── AI Summary refresh ────────────────────────────────────────────────────
-    async function refreshSummary() {
-      const icon = document.getElementById('refresh-summary-icon');
-      icon.textContent = 'progress_activity';
-      icon.style.animation = 'spin 1s linear infinite';
+    // ── Farm report (one AI call on "Generate report"; reading the stored report is free) ──
+    var farmReport = null;           // latest stored farm report (from /dashboard or /farm-report)
+    var reportGenerating = false;
+
+    function renderReportHero() {
+      const r = farmReport;
+      if (r && r.data && r.data.headline) {
+        setText('hero-subtitle', (r.is_fallback ? 'Basic summary: ' : '') + r.data.headline);
+      } else {
+        setText('hero-subtitle', 'Tap the sparkle for this week\'s farm report – status, season progress, what changed and the next 7 days.');
+      }
+      document.getElementById('report-stale-banner').style.display = (r && r.stale && !reportGenerating) ? 'inline-flex' : 'none';
+    }
+
+    async function generateFarmReport() {
+      if (reportGenerating) return;
+      const before = farmReport ? farmReport.id : null;
+      setReportBusy(true);
       try {
-        await fetch(`/${USER_ID}/dashboard/generate-summary`, { method: 'POST' });
-        // Generation runs in background — poll until a new summary appears
-        await _pollForSummary();
+        await fetch(`/${USER_ID}/farm-report/generate`, { method: 'POST' });
+        await pollFarmReport(before);
       } catch (e) {
-        console.error('Summary refresh failed:', e);
+        console.warn('Farm report generation failed:', e);
       } finally {
-        icon.style.animation = '';
-        icon.textContent = 'auto_awesome';
+        setReportBusy(false);
       }
     }
 
-    async function _pollForSummary(attempts = 20, interval = 2000) {
-      const before = document.getElementById('hero-subtitle')?.textContent || '';
+    async function pollFarmReport(beforeId, attempts = 30, interval = 1500) {
       for (let i = 0; i < attempts; i++) {
         await new Promise(r => setTimeout(r, interval));
         try {
-          const res = await fetch(`/${USER_ID}/dashboard`);
+          const res = await fetch(`/${USER_ID}/farm-report`);
           if (!res.ok) continue;
           const data = await res.json();
-          const summary = data.summary || '';
-          if (summary && summary !== before) { setText('hero-subtitle', summary); return; }
+          if (data.report && data.report.id !== beforeId) {
+            farmReport = data.report;
+            renderReportHero();
+            if (!document.getElementById('reportModal').classList.contains('hidden')) renderReportModal();
+            return true;
+          }
+          if (!data.generating && i > 1) break;
         } catch { /* network blip — keep polling */ }
       }
+      return false;
     }
 
-    // ── Analysis Modal ─────────────────────────────────────────────────────────
-    async function openAnalysisModal() {
-      document.getElementById('analysisModal').classList.remove('hidden');
-      const body = document.getElementById('analysis-modal-body');
-      body.innerHTML = `<p class="text-sm text-on-surface-variant text-center py-8">Loading analysis...</p>`;
-      try {
-        const res = await fetch('/mytasks/intelligence/stored?user_id=1');
-        if (!res.ok) throw new Error(res.status);
-        const intel = await res.json();
-        if (!intel) throw new Error('empty');
-        renderAnalysisModal(intel, body);
-      } catch (_) {
-        body.innerHTML = `
-          <div class="text-center py-10 space-y-3">
-            <span class="material-symbols-outlined text-on-surface-variant text-4xl">auto_awesome</span>
-            <p class="text-sm text-on-surface-variant">No analysis yet.</p>
-            <p class="text-xs text-outline">Go to the Tasks page and press ✨ to generate one, or tap the sparkle above.</p>
-          </div>`;
+    function setReportBusy(busy) {
+      reportGenerating = busy;
+      ['refresh-summary-icon', 'regen-report-icon'].forEach(id => {
+        const icon = document.getElementById(id);
+        if (!icon) return;
+        icon.textContent = busy ? 'progress_activity' : 'auto_awesome';
+        icon.style.animation = busy ? 'spin 1s linear infinite' : '';
+      });
+      setText('farm-report-label', busy ? 'Generating…' : 'Farm report');
+      renderReportHero();
+      if (!document.getElementById('reportModal').classList.contains('hidden')) renderReportModal();
+    }
+
+    async function openReportModal() {
+      document.getElementById('reportModal').classList.remove('hidden');
+      renderReportModal();
+      if (!farmReport && !reportGenerating) await generateFarmReport();
+    }
+
+    function closeReportModal() {
+      document.getElementById('reportModal').classList.add('hidden');
+    }
+
+    function renderReportModal() {
+      const body = document.getElementById('report-modal-body');
+      const sub = document.getElementById('report-modal-subtitle');
+      const r = farmReport;
+      if (!r) {
+        sub.textContent = '';
+        body.innerHTML = reportGenerating
+          ? `<p class="text-sm text-on-surface-variant text-center py-8">Reading your plan, tasks, fields and forecast…</p>`
+          : `<p class="text-sm text-on-surface-variant text-center py-8">No farm report yet.</p>`;
+        return;
       }
-    }
+      const d = r.data || {};
+      const farmDay = r.as_of_date ? new Date(r.as_of_date + 'T00:00').toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : '';
+      const time = r.generated_at ? new Date(r.generated_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '';
+      sub.textContent = `${r.is_fallback ? 'Basic summary (rules, no AI)' : 'AI'} · your farm on ${farmDay} · generated ${time}`;
 
-    function closeAnalysisModal() {
-      document.getElementById('analysisModal').classList.add('hidden');
-    }
-
-    async function regenerateIntelligence() {
-      const body = document.getElementById('analysis-modal-body');
-      const icon = document.getElementById('regen-intel-icon');
-      icon.textContent = 'progress_activity';
-      icon.style.animation = 'spin 1s linear infinite';
-      body.innerHTML = `<p class="text-sm text-on-surface-variant text-center py-8">Generating AI analysis…</p>`;
-      try {
-        const res = await fetch('/mytasks/intelligence/generate?user_id=1', { method: 'POST' });
-        if (!res.ok) throw new Error(res.status);
-        const intel = await res.json();
-        renderAnalysisModal(intel, body);
-      } catch (e) {
-        body.innerHTML = `<p class="text-sm text-error text-center py-8">Generation failed. Please try again.</p>`;
-      } finally {
-        icon.style.animation = '';
-        icon.textContent = 'auto_awesome';
+      const parts = [];
+      if (reportGenerating) {
+        parts.push(`<p class="text-xs text-on-surface-variant italic">Generating a fresh report…</p>`);
+      } else if (r.stale) {
+        parts.push(`
+          <button onclick="generateFarmReport()" class="w-full flex items-center gap-2 px-4 py-3 rounded-xl bg-amber-100 text-amber-900 text-sm font-semibold text-left hover:bg-amber-200">
+            <span class="material-symbols-outlined text-base">sync_problem</span>
+            Your farm changed since this report – regenerate?
+          </button>`);
       }
-    }
+      if (r.is_fallback) {
+        parts.push(`
+          <div class="rounded-xl bg-surface-container px-4 py-3 text-xs text-on-surface-variant">
+            <span class="font-bold">Basic summary</span> – the AI answer was not available${d.error ? ` (${escapeHtml(d.error)})` : ''}.
+            This report is built from the rules and the farm's signals.
+          </div>`);
+      }
+      parts.push(`<p class="text-lg font-bold text-on-surface leading-snug">${escapeHtml(d.headline || '')}</p>`);
 
-    function renderAnalysisModal(intel, body) {
-      window._currentIntel = intel;
-      const alerts = (_dashData?.alerts || []).slice(0, 3);
-
-      const priorityConfig = {
-        critical: { bg: 'bg-error/10',                  text: 'text-error',              icon: 'crisis_alert',  label: 'Critical Attention Needed' },
-        high:     { bg: 'bg-amber-600/10',              text: 'text-amber-700',          icon: 'warning',       label: 'High Priority'             },
-        medium:   { bg: 'bg-primary/10',                text: 'text-primary',            icon: 'info',          label: 'Needs Attention'            },
-        low:      { bg: 'bg-surface-container-highest', text: 'text-on-surface-variant', icon: 'check_circle',  label: 'Farm Doing Well'            },
-      };
-      const pc = priorityConfig[intel.priority_level] || priorityConfig.medium;
-      const sections = [];
-
-      // ── Status header ────────────────────────────────────────────────────────
-      const genTime = intel.generated_at ? new Date(intel.generated_at).toLocaleString() : null;
-      sections.push(`
-        <div class="${pc.bg} rounded-2xl p-4 flex items-center justify-between">
-          <div class="flex items-center gap-3">
-            <span class="material-symbols-outlined ${pc.text} text-3xl" style="font-variation-settings:'FILL' 1;">${pc.icon}</span>
-            <div>
-              <p class="text-[10px] uppercase tracking-widest text-on-surface-variant">Intelligence Report</p>
-              <h3 class="text-xl font-bold ${pc.text}">${pc.label}</h3>
-            </div>
+      const TITLES = { farm_status: 'Farm status', season_progress: 'Season progress', what_changed: 'What changed', next_7_days: 'Next 7 days' };
+      const ICONS = { farm_status: 'landscape', season_progress: 'calendar_month', what_changed: 'published_with_changes', next_7_days: 'event_upcoming' };
+      const sections = d.sections || {};
+      parts.push(`<div class="space-y-3">${Object.keys(TITLES).filter(k => sections[k]).map(k => `
+        <div class="flex gap-3">
+          <span class="material-symbols-outlined text-primary text-xl mt-0.5">${ICONS[k]}</span>
+          <div>
+            <p class="text-[10px] uppercase tracking-widest text-on-surface-variant font-bold">${TITLES[k]}</p>
+            <p class="text-sm text-on-surface leading-relaxed">${escapeHtml(sections[k])}</p>
           </div>
-          <div class="text-right space-y-0.5">
-            ${genTime ? `<p class="text-[10px] text-on-surface-variant">${genTime}</p>` : ''}
-            ${intel.is_fallback
-              ? `<span class="text-[10px] text-outline italic">rule-based analysis</span>`
-              : `<span class="text-[10px] text-primary font-semibold">✦ AI generated</span>`}
-          </div>
-        </div>`);
+        </div>`).join('')}</div>`);
 
-      // ── Agronomist Summary ───────────────────────────────────────────────────
-      if (intel.summary) {
-        sections.push(`
-          <div class="space-y-2">
-            <p class="text-[10px] uppercase tracking-widest text-on-surface-variant font-bold flex items-center gap-1.5">
-              <span class="material-symbols-outlined text-sm" style="font-variation-settings:'FILL' 1;">auto_awesome</span>
-              Agronomist Summary
-            </p>
-            <div class="bg-primary/10 border-l-4 border-primary rounded-r-xl px-4 py-3">
-              <p class="text-sm text-on-surface leading-relaxed italic">${escapeHtml(intel.summary)}</p>
-            </div>
-          </div>`);
+      const insights = d.insights || [];
+      if (insights.length) {
+        parts.push(`
+          <section class="space-y-3">
+            <p class="text-[10px] uppercase tracking-widest text-on-surface-variant font-bold">Insights</p>
+            ${insights.map(x => `
+              <div class="rounded-2xl border border-outline-variant/40 p-4">
+                <p class="text-sm font-bold text-on-surface">${escapeHtml(x.title)}</p>
+                <p class="text-sm text-on-surface-variant mt-1 leading-relaxed">${escapeHtml(x.explanation)}</p>
+                ${x.recommendation ? `<p class="text-sm text-primary mt-2 flex gap-1.5"><span class="material-symbols-outlined text-base">lightbulb</span><span>${escapeHtml(x.recommendation)}</span></p>` : ''}
+                ${(x.based_on && x.based_on.length) ? `<p class="text-[11px] text-on-surface-variant mt-2"><span class="font-semibold">Based on:</span> ${x.based_on.map(escapeHtml).join(' · ')}</p>` : ''}
+              </div>`).join('')}
+          </section>`);
       }
-
-      // ── Action Plan (urgent + recommendations combined) ──────────────────────
-      const urgentItems = intel.urgent_actions || [];
-      const recItems    = intel.recommendations || [];
-      const allActions  = [
-        ...urgentItems.map(a => ({ text: a, urgent: true  })),
-        ...recItems.map(r    => ({ text: r, urgent: false })),
-      ];
-      if (allActions.length) {
-        const urgentCount = urgentItems.length;
-        const totalCount  = allActions.length;
-        sections.push(`
-          <div class="space-y-3">
-            <div class="flex items-center justify-between">
-              <div class="flex items-center gap-2">
-                <span class="material-symbols-outlined text-primary" style="font-size:18px; font-variation-settings:'FILL' 1;">checklist</span>
-                <h3 class="text-xs font-bold uppercase tracking-widest text-on-surface-variant">Action Plan</h3>
-              </div>
-              <div class="flex items-center gap-2">
-                ${urgentCount ? `<span class="text-[10px] font-bold text-error bg-error/10 px-2 py-0.5 rounded-full">${urgentCount} urgent</span>` : ''}
-                <span class="text-[10px] text-outline">${totalCount} total</span>
-              </div>
-            </div>
-            <div class="space-y-2">
-              ${allActions.map((item, i) => `
-                <div class="flex gap-3 ${item.urgent
-                    ? 'bg-error/5 border border-error/20'
-                    : 'bg-surface-container'} rounded-xl p-3 items-start">
-                  <div class="flex-shrink-0 mt-0.5">
-                    ${item.urgent
-                      ? `<span class="material-symbols-outlined text-error text-base" style="font-variation-settings:'FILL' 1;">error</span>`
-                      : `<div class="w-5 h-5 rounded-full bg-primary flex items-center justify-center">
-                           <span class="text-on-primary font-bold" style="font-size:10px">${i + 1}</span>
-                         </div>`}
-                  </div>
-                  <div class="flex-1 min-w-0">
-                    ${item.urgent ? `<p class="text-[10px] font-bold text-error uppercase tracking-wide mb-1">Act immediately</p>` : ''}
-                    <p class="text-sm text-on-surface leading-relaxed">${escapeHtml(item.text)}</p>
-                  </div>
-                </div>`).join('')}
-            </div>
-          </div>`);
-      }
-
-      // ── Risk Register ────────────────────────────────────────────────────────
-      if (intel.risks?.length) {
-        const riskBorder = { high: 'border-l-2 border-error', medium: 'border-l-2 border-amber-500', low: 'border-l-2 border-primary' };
-        const riskBadge  = { high: 'text-error bg-error/10', medium: 'text-amber-700 bg-amber-600/10', low: 'text-primary bg-primary/10' };
-        sections.push(`
-          <div class="space-y-3">
-            <div class="flex items-center justify-between">
-              <div class="flex items-center gap-2">
-                <span class="material-symbols-outlined text-amber-600" style="font-size:18px; font-variation-settings:'FILL' 1;">warning</span>
-                <h3 class="text-xs font-bold uppercase tracking-widest text-on-surface-variant">Risk Register</h3>
-              </div>
-              <span class="text-[10px] text-outline">${intel.risks.length} identified</span>
-            </div>
-            <div class="space-y-2">
-              ${intel.risks.map(r => {
-                const sev = r.severity || 'medium';
-                return `
-                  <div class="bg-surface-container rounded-xl p-3 space-y-2 ${riskBorder[sev] || riskBorder.medium}">
-                    <div class="flex items-start justify-between gap-2">
-                      <p class="text-sm font-semibold text-on-surface leading-snug">${escapeHtml(r.risk || '')}</p>
-                      <span class="text-[10px] font-bold px-2 py-0.5 rounded-full whitespace-nowrap flex-shrink-0 ${riskBadge[sev] || riskBadge.medium}">
-                        ${capitalize(sev)} risk
-                      </span>
-                    </div>
-                    ${r.mitigation ? `
-                      <div class="flex gap-2 items-start pt-1.5 border-t border-surface-variant">
-                        <span class="material-symbols-outlined text-primary text-sm mt-0.5 flex-shrink-0">arrow_forward</span>
-                        <p class="text-xs text-on-surface-variant">${escapeHtml(r.mitigation)}</p>
-                      </div>` : ''}
-                  </div>`;
-              }).join('')}
-            </div>
-          </div>`);
-      }
-
-      // ── Field & Crop Intelligence ────────────────────────────────────────────
-      if (intel.insights?.length) {
-        const catIcon  = { weather: 'cloud', irrigation: 'water_drop', disease: 'bug_report', harvest: 'agriculture', labor: 'person', resource: 'inventory_2', anomaly: 'warning' };
-        const catLabel = { weather: 'Weather', irrigation: 'Irrigation', disease: 'Disease / Pest', harvest: 'Harvest', labor: 'Labor', resource: 'Resource', anomaly: 'Anomaly' };
-        sections.push(`
-          <div class="space-y-3">
-            <div class="flex items-center justify-between">
-              <div class="flex items-center gap-2">
-                <span class="material-symbols-outlined text-on-surface-variant" style="font-size:18px; font-variation-settings:'FILL' 1;">insights</span>
-                <h3 class="text-xs font-bold uppercase tracking-widest text-on-surface-variant">Field & Crop Intelligence</h3>
-              </div>
-              <span class="text-[10px] text-outline">${intel.insights.length} observation${intel.insights.length !== 1 ? 's' : ''}</span>
-            </div>
-            <div class="divide-y divide-surface-variant rounded-xl overflow-hidden border border-surface-variant">
-              ${intel.insights.map(item => `
-                <div class="flex gap-3 bg-surface-container-low p-3 items-start">
-                  <div class="flex-shrink-0 mt-0.5 w-7 text-center">
-                    <span class="material-symbols-outlined text-on-surface-variant text-base" style="font-variation-settings:'FILL' 1;">${catIcon[item.category] || 'insights'}</span>
-                    <p class="text-[8px] text-outline uppercase tracking-tight leading-none mt-0.5">${(catLabel[item.category] || item.category || '').split(' ')[0]}</p>
-                  </div>
-                  <p class="text-sm text-on-surface leading-relaxed">${escapeHtml(item.insight || '')}</p>
-                </div>`).join('')}
-            </div>
-          </div>`);
-      }
-
-      // ── Unread Farm Alerts ───────────────────────────────────────────────────
-      if (alerts.length) {
-        const aIcon = { weather: 'cloud', disease: 'bug_report', irrigation: 'water_drop', pest: 'pest_control', harvest: 'agriculture', task: 'assignment' };
-        sections.push(`
-          <div class="space-y-3">
-            <div class="flex items-center gap-2">
-              <span class="material-symbols-outlined text-amber-600" style="font-size:18px; font-variation-settings:'FILL' 1;">notifications_active</span>
-              <h3 class="text-xs font-bold uppercase tracking-widest text-on-surface-variant">Unread Farm Alerts</h3>
-            </div>
-            <div class="space-y-2">
-              ${alerts.map(a => `
-                <div class="flex gap-3 bg-surface-container rounded-xl p-3 items-start">
-                  <span class="material-symbols-outlined text-amber-600 text-base mt-0.5 flex-shrink-0" style="font-variation-settings:'FILL' 1;">${aIcon[a.notification_type] || 'notifications'}</span>
-                  <div class="flex-1 min-w-0">
-                    <p class="text-sm font-semibold text-on-surface">${escapeHtml(a.title || '')}</p>
-                    <p class="text-xs text-on-surface-variant leading-relaxed mt-0.5">${escapeHtml(a.detail || a.message || '')}</p>
-                    ${a.created_at ? `<p class="text-[10px] text-outline mt-1">${new Date(a.created_at).toLocaleString()}</p>` : ''}
-                  </div>
-                </div>`).join('')}
-            </div>
-          </div>`);
-      }
-
-      // ── Download button ──────────────────────────────────────────────────────
-      sections.push(`
-        <button onclick="downloadIntelligenceReport()"
-          class="w-full flex items-center justify-center gap-2 py-3 rounded-xl border border-surface-variant hover:bg-surface-container transition-colors text-sm font-medium text-on-surface-variant hover:text-on-surface">
-          <span class="material-symbols-outlined text-base">download</span>
-          Download as PDF
-        </button>`);
-
-      body.innerHTML = sections.join('') || `<p class="text-sm text-on-surface-variant text-center py-8">No analysis available.</p>`;
+      body.innerHTML = parts.join('');
     }
 
-    function downloadIntelligenceReport() {
-      const intel = window._currentIntel;
-      if (!intel) return;
-
-      const farmName   = _dashData?.user?.name ? _dashData.user.name + "'s Farm" : 'Smart Farm';
-      const reportDate = intel.generated_at
-        ? new Date(intel.generated_at).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })
-        : new Date(window.APP_TODAY + 'T00:00').toLocaleDateString();
-      const reportTime = intel.generated_at
-        ? new Date(intel.generated_at).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
-        : '';
-      const priorityLabel = { critical: 'CRITICAL', high: 'HIGH PRIORITY', medium: 'NEEDS ATTENTION', low: 'ALL CLEAR' }[intel.priority_level] || 'FARM REPORT';
-      const priorityColor = { critical: '#ba1a1a', high: '#d97706', medium: '#47573b', low: '#536344' }[intel.priority_level] || '#47573b';
-      const esc = s => String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-
-      let body = '';
-
-      if (intel.summary) {
-        body += `<div class="section"><h2>Agronomist Summary</h2><p class="summary-text">${esc(intel.summary)}</p></div>`;
-      }
-
-      const urgent = intel.urgent_actions || [];
-      const recs   = intel.recommendations || [];
-      if (urgent.length || recs.length) {
-        const items = [
-          ...urgent.map(a => `<li class="urgent"><span class="badge-urgent">URGENT</span> ${esc(a)}</li>`),
-          ...recs.map((r, i) => `<li><span class="step">${urgent.length + i + 1}</span> ${esc(r)}</li>`),
-        ].join('');
-        body += `<div class="section"><h2>Action Plan <span class="count">${urgent.length + recs.length} items</span></h2><ul class="action-list">${items}</ul></div>`;
-      }
-
-      if (intel.risks?.length) {
-        const rows = intel.risks.map(r => `
-          <div class="risk risk-${r.severity || 'medium'}">
-            <div class="risk-head"><span class="risk-title">${esc(r.risk || '')}</span><span class="risk-sev">${(r.severity || 'medium').toUpperCase()} RISK</span></div>
-            ${r.mitigation ? `<p class="risk-fix">→ ${esc(r.mitigation)}</p>` : ''}
-          </div>`).join('');
-        body += `<div class="section"><h2>Risk Register <span class="count">${intel.risks.length} identified</span></h2>${rows}</div>`;
-      }
-
-      if (intel.insights?.length) {
-        const catLabel = { weather: 'Weather', irrigation: 'Irrigation', disease: 'Disease/Pest', harvest: 'Harvest', labor: 'Labor', resource: 'Resource', anomaly: 'Anomaly' };
-        const rows = intel.insights.map(item => `
-          <div class="insight">
-            <span class="insight-cat">${esc(catLabel[item.category] || item.category || 'General').toUpperCase()}</span>
-            <p>${esc(item.insight || '')}</p>
-          </div>`).join('');
-        body += `<div class="section"><h2>Field & Crop Intelligence <span class="count">${intel.insights.length} observations</span></h2>${rows}</div>`;
-      }
-
-      const html = `<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8">
-<title>Farm Intelligence Report — ${esc(farmName)}</title>
-<style>
-  *{margin:0;padding:0;box-sizing:border-box}
-  body{font-family:Georgia,'Times New Roman',serif;font-size:11.5pt;color:#1c1c17;background:#fff;padding:44px 48px}
-  .report-header{border-bottom:3px solid ${priorityColor};padding-bottom:18px;margin-bottom:28px}
-  .farm-name{font-size:22pt;font-weight:bold;color:${priorityColor};letter-spacing:-0.5px}
-  .report-sub{font-size:9pt;text-transform:uppercase;letter-spacing:2px;color:#75786f;margin-top:3px}
-  .meta{display:flex;justify-content:space-between;margin-top:10px;font-size:9pt;color:#75786f}
-  .priority{font-weight:bold;color:${priorityColor}}
-  .section{margin-bottom:26px}
-  h2{font-size:9pt;font-family:Arial,sans-serif;text-transform:uppercase;letter-spacing:1.5px;color:#75786f;border-bottom:1px solid #e5e2da;padding-bottom:5px;margin-bottom:12px}
-  .count{font-size:8.5pt;font-weight:normal;color:#75786f}
-  .summary-text{font-size:11.5pt;line-height:1.75;font-style:italic;padding:14px 18px;background:#f7f3ea;border-left:4px solid ${priorityColor}}
-  .action-list{list-style:none}
-  .action-list li{display:flex;align-items:flex-start;gap:10px;padding:9px 12px;margin-bottom:7px;border-radius:5px;background:#f7f3ea;line-height:1.55;font-size:11pt}
-  .action-list li.urgent{background:#fff1f0;border-left:3px solid #ba1a1a}
-  .badge-urgent{font-size:7.5pt;font-weight:bold;padding:2px 7px;border-radius:10px;background:#ffdad6;color:#ba1a1a;white-space:nowrap;flex-shrink:0}
-  .step{display:inline-flex;width:20px;height:20px;border-radius:50%;background:${priorityColor};color:#fff;align-items:center;justify-content:center;font-size:8.5pt;font-weight:bold;flex-shrink:0;margin-top:1px}
-  .risk{padding:10px 13px;margin-bottom:7px;border-radius:5px;background:#f7f3ea;border-left:3px solid #d97706}
-  .risk.risk-high{border-left-color:#ba1a1a;background:#fff8f7}
-  .risk.risk-low{border-left-color:#47573b}
-  .risk-head{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;margin-bottom:5px}
-  .risk-title{font-weight:bold;font-size:11pt;line-height:1.4}
-  .risk-sev{font-size:7.5pt;font-weight:bold;color:#75786f;white-space:nowrap;flex-shrink:0}
-  .risk-fix{font-size:10.5pt;color:#444840;line-height:1.5}
-  .insight{display:grid;grid-template-columns:90px 1fr;gap:10px;padding:9px 0;border-bottom:1px solid #e5e2da;font-size:11pt;line-height:1.55}
-  .insight:last-child{border-bottom:none}
-  .insight-cat{font-size:7.5pt;font-weight:bold;letter-spacing:1px;color:#75786f;padding-top:2px}
-  .report-footer{margin-top:36px;border-top:1px solid #e5e2da;padding-top:12px;font-size:8.5pt;color:#75786f;display:flex;justify-content:space-between}
-  @media print{body{padding:18px 22px}@page{margin:12mm 18mm}}
-</style></head><body>
-<div class="report-header">
-  <div class="farm-name">${esc(farmName)}</div>
-  <div class="report-sub">Farm Intelligence Report</div>
-  <div class="meta">
-    <span>${esc(reportDate)}${reportTime ? ' · ' + esc(reportTime) : ''}</span>
-    <span class="priority">● ${esc(priorityLabel)}</span>
-  </div>
-</div>
-${body}
-<div class="report-footer">
-  <span>Generated by Smart Farm AI${intel.is_fallback ? ' (rule-based fallback)' : ''}</span>
-  <span>${esc(reportDate)}</span>
-</div>
-</body></html>`;
-
-      const w = window.open('', '_blank', 'width=860,height=700');
-      if (!w) { alert('Please allow pop-ups to download the report.'); return; }
-      w.document.write(html);
+    function printFarmReport() {
+      const body = document.getElementById('report-modal-body').cloneNode(true);
+      body.querySelectorAll('.material-symbols-outlined, button').forEach(el => el.remove());
+      const sub = document.getElementById('report-modal-subtitle').textContent;
+      const w = window.open('', '_blank');
+      if (!w) return;
+      w.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>Farm report</title>
+        <style>body{font-family:system-ui,sans-serif;margin:32px;color:#1c1c17;line-height:1.45}
+        h1{font-size:20px;margin:0 0 4px} .sub{color:#555;font-size:12px;margin-bottom:20px}
+        p{margin:4px 0} section,div{margin:8px 0}</style></head>
+        <body><h1>Farm report</h1><div class="sub">${escapeHtml(sub)}</div>${body.innerHTML}</body></html>`);
       w.document.close();
-      setTimeout(() => { w.focus(); w.print(); }, 400);
+      w.focus();
+      w.print();
     }
 
     // ── Farm Overview ──────────────────────────────────────────────────────────
@@ -1017,8 +818,8 @@ ${body}
       return t('dashboard.heat_warm');
     }
 
-    document.getElementById('analysisModal').addEventListener('click', function(e) {
-      if (e.target === this) closeAnalysisModal();
+    document.getElementById('reportModal').addEventListener('click', function(e) {
+      if (e.target === this) closeReportModal();
     });
   </script>
 
