@@ -221,6 +221,34 @@ The following assumptions define the current scope and operational boundaries of
 
 ---
 
+## Task insights and farm report (grounded AI)
+
+- **Signals first, no AI:** `insight_signals_service` turns the farm's data into evidence-backed signals, each with
+  an id (S1…) and its sources (task ids, plan events, forecast days, fields): deadlines (an event in 1–2 days + the
+  tasks due before it), dependencies (a critical/high field task + a sowing or first irrigation on that field in 3–6
+  days), weather windows (rain ≥ 2 mm, average ≥ 36 °C – the thresholds the forecast summary already uses; a dry week
+  only when the plan's rainfall rule says so), plan changes (planned vs effective date with the reason and what moved
+  with it, sown, decision needed / overdue, Not Feasible), load (high/critical tasks per day, overdue) and field status
+  (bare vs sown, scores in words). No new agronomic thresholds.
+- **One AI call per button:** "Task insights" (tasks page) and the farm report (dashboard sparkle / "Farm report").
+  Opening a stored result never calls the AI. Gemma via Google AI with minimal thinking and temperature 0.1.
+- **The AI connects, it does not decide:** it may only connect the given signals, every insight cites signal ids,
+  it recommends ("I'd recommend…") and never moves dates or creates tasks.
+- **Validation in code** drops an insight with no or unknown evidence, a date not in the signals it cites, "I
+  understand / I know / you must", first-person changes ("I've moved…") or leaves/stems on a bare field. The priority
+  order is limited to real tasks due today/tomorrow; a farm-report section with a date not in the data falls back to
+  its rule text. If the AI fails, times out or returns no JSON, a rule-based **basic summary** is shown (labelled).
+- **Staleness:** each result stores the signals and a fingerprint of the demo date, the tasks and the plan. When they
+  change the page says "Your farm changed since this report – regenerate?" – no automatic AI call. "What changed" in
+  the farm report is a diff of the stored signals, computed in code.
+- **Limits:** the validator is strict – an insight that names a date from a signal it did not cite is dropped even if
+  the date is right. Google AI sometimes answers HTTP 503 or very slowly; the page then shows the basic summary.
+- Evaluation: `Test_Runs/insights_eval.py` (real AI, demo date: 3× task insights, 1× farm report, the four expected
+  links, dropped items, "must not say" checks, latency); placeholder tests `Test_Runs/test_insight_signals.py`,
+  `test_insight_reports.py`, `test_task_insights.py`, `test_farm_report.py`.
+
+---
+
 ## Live Demo (Render)
 
 - There is no login. To keep the public demo safe, the admin tools are **off unless `DEMO_ADMIN_ENABLED=true`**

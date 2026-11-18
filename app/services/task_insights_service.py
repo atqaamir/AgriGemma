@@ -50,7 +50,8 @@ _SYSTEM = (
     "weather windows, deadlines, overload. The signals are listed most urgent first. Give EVERY deadline "
     "signal and EVERY dependency signal its own insight (one each, citing it), then weather windows; use "
     "load or plan-change signals only if there is room. Each insight cites at least one signal id in "
-    "evidence and mentions only dates that appear in the signals it cites.\n"
+    "evidence and mentions only dates that appear in the signals it cites. If an insight names a date "
+    "or a task from another signal, add that signal to its evidence too.\n"
     "4. watch: at most 2 things to keep an eye on in the coming days that are NOT already an insight, "
     "each with evidence.\n"
     "5. Recommend, don't decide: never move dates, never create or cancel tasks, never say you changed "
@@ -117,7 +118,9 @@ def _call_with_limit(prompt: str, signals: list, cands: list) -> tuple[str | Non
     future = pool.submit(_call_ai, prompt, signals, cands)
     try:
         return future.result(timeout=TIMEOUT_S), None
-    except _Timeout:
+    except _Timeout as exc:
+        if future.done():   # the provider's own HTTP timeout (also a TimeoutError), not our limit
+            return None, f"AI provider timed out ({exc or 'no response'})"
         return None, f"no answer within {TIMEOUT_S:.0f} s"
     except Exception as exc:
         return None, f"AI call failed: {exc}"

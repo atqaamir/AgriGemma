@@ -33,7 +33,7 @@ logger = logging.getLogger(__name__)
 
 KIND = "farm_report"
 MAX_INSIGHTS = 3
-TIMEOUT_S = 25.0
+TIMEOUT_S = 35.0          # bigger prompt/answer than task insights: 30 s HTTP read + retry margin
 MAX_TOKENS = 1500
 TEMPERATURE = 0.1
 SECTIONS = ("farm_status", "season_progress", "what_changed", "next_7_days")
@@ -57,7 +57,8 @@ _SYSTEM = (
     "4. insights: at most 3, farm-level. If a crop is Not Feasible this season, one insight covers it "
     "(what it means for that field). The others cover the most urgent risks of the next 7 days "
     "(deadlines, dependencies, weather windows). Each cites at least one signal id in evidence and "
-    "mentions only dates that appear in the signals it cites.\n"
+    "mentions only dates that appear in the signals it cites. If an insight names a date or a task from "
+    "another signal, add that signal to its evidence too.\n"
     "5. Recommend, don't decide: never move dates, never create or cancel tasks, never say you changed "
     "something. Phrase recommendations as \"I'd recommend …\".\n"
     "6. Style: refer to tasks by their title. Never write \"I understand\", \"I know\", \"you must\" or "
@@ -252,7 +253,9 @@ def _call_with_limit(*args) -> tuple[str | None, str | None]:
     future = pool.submit(_call_ai, *args)
     try:
         return future.result(timeout=TIMEOUT_S), None
-    except _Timeout:
+    except _Timeout as exc:
+        if future.done():   # the provider's own HTTP timeout (also a TimeoutError), not our limit
+            return None, f"AI provider timed out ({exc or 'no response'})"
         return None, f"no answer within {TIMEOUT_S:.0f} s"
     except Exception as exc:
         return None, f"AI call failed: {exc}"
