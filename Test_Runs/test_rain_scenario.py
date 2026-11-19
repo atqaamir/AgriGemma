@@ -147,13 +147,14 @@ with app.app_context():
     check("Waterlogged seed-beds" in text and "Sow Maize – Punjab Wheat Belt: moved from 2027-05-06 to 2027-05-10"
           in text, "chatbot block: rule reasons + task move")
     check("on record" not in text.lower(), "no invented claims from seed notes in the block")
-    check("Unsuitable on 6–9 May because: soil moisture >60 % (seed bed after ≥20 mm rain)" in text,
-          "label 'Unsuitable on 6–9 May because:' (maize)")
+    check("Unsuitable on 6–9 May because: seed bed waterlogged after the heavy rain on 6–8 May (soil moisture >60 %)"
+          in text, "label: unsuitable 6–9 May, heavy rain on 6–8 May (rain days apart from the drying day)")
     doubt = next((l for l in text.splitlines() if l.startswith("- If the farmer doubts")), "")
     check(all(x in doubt for x in ("unusual for May", "forecast for their area", "app's normal for May",
                                    "forecasts can be wrong", "re-checks the forecast every morning",
                                    "moves sowing back earlier if the rain does not come", "seed rot",
-                                   "the decision is the farmer's"))
+                                   "the decision is yours"))
+          and doubt.rstrip(".')").endswith("the decision is yours")
           and doubt.index("forecasts can be wrong") < doubt.index("unusual for May"),
           f"doubt guidance in the block, 'forecasts can be wrong' first: {doubt[:90]}…")
     check(text.rstrip().endswith("the decision stays with the farmer."), "closing line")

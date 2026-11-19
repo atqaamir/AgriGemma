@@ -145,9 +145,17 @@ def _sowing_rules(entry, field, first, new_date) -> list:
                                                              else "")
                 if key not in seen:
                     rule = lookups[f](entry.crop_name_id, stage, bands[f])
-                    seen[key] = {"rule": label, "reasoning": getattr(rule, "reasoning", "") or "", "days": []}
+                    seen[key] = {"rule": label, "reasoning": getattr(rule, "reasoning", "") or "", "days": [],
+                                 "rain_days": []}
                     rules.append(seen[key])
                 seen[key]["days"].append(day.isoformat())
+                if wet and f == "soil_moisture":   # the heavy-rain days behind the wet seed bed (not the drying day)
+                    for back in range(RuleEngine.SEEDBED_DRYING_DAYS + 1):
+                        rd = day - timedelta(days=back)
+                        w = lookup(location, rd)
+                        if w and (w.get("rainfall_mm") or 0) >= RuleEngine.SEEDBED_RAIN_MM \
+                                and rd.isoformat() not in seen[key]["rain_days"]:
+                            seen[key]["rain_days"].append(rd.isoformat())
         day += timedelta(days=1)
     return rules
 
@@ -231,7 +239,11 @@ def block(data: dict | None) -> str:
         for p in items:
             for r in p["rules"]:
                 waterlogged = waterlogged or r["rule"].startswith("soil moisture >60")
-                lines.append(f"  Unsuitable on {_day_range(r['days'])} because: {r['rule']} – {r['reasoning']}")
+                why = r["rule"]
+                if r.get("rain_days"):   # rain days and the drying day kept apart
+                    why = (f"seed bed waterlogged after the heavy rain on {_day_range(r['rain_days'])} "
+                           f"(soil moisture >60 %)")
+                lines.append(f"  Unsuitable on {_day_range(r['days'])} because: {why} – {r['reasoning']}")
     for t in data["task_changes"]:
         lines.append(f"- Task: {t}")
     if unusual:
@@ -240,6 +252,7 @@ def block(data: dict | None) -> str:
         lines.append(f"- If the farmer doubts the forecast: first say that forecasts can be wrong: the plan re-checks "
                      f"the forecast every morning and moves sowing back earlier if the rain does not come; then "
                      f"acknowledge that it is unusual for {data['month']}; explain that it is the forecast for their "
-                     f"area compared with the app's normal for {data['month']}; {risk}; the decision is the farmer's.")
+                     f"area compared with the app's normal for {data['month']}; {risk}; last, say that the decision is "
+                     f"theirs ('the decision is yours').")
     lines.append("- The plan re-checks the forecast every morning; the decision stays with the farmer.")
     return "\n".join(lines)
