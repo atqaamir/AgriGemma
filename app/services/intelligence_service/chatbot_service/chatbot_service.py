@@ -122,14 +122,24 @@ def _is_unusable(answer: str, question: str) -> bool:
     return a.startswith(_UNAVAILABLE)
 
 
-def _answer_with_retry(raw_llm: str, full_prompt: str, user_message: str) -> tuple[dict, bool]:
-    """Parse the answer; if it is unusable, ask once more (non-streaming).
+CHAT_BUDGET_S = 15.0        # a chat answer (AI part) never takes longer; then the rule-based answer
+_MIN_RETRY_S = 4.0          # the "unusable answer" retry only runs with at least this much time left
+
+
+def _answer_with_retry(raw_llm: str, full_prompt: str, user_message: str,
+                       time_left: float = CHAT_BUDGET_S) -> tuple[dict, bool]:
+    """Parse the answer; if it is unusable, ask once more (one quick non-streaming call, only
+    if at least _MIN_RETRY_S of the chat budget is left).
     Returns (parsed, ok); ok=False means the caller should use the rule-based fallback."""
     parsed = _parse_llm_response(raw_llm)
     if not _is_unusable(parsed["response"], user_message):
         return parsed, True
-    logger.warning("[CHATBOT] unusable answer %r — one non-streaming retry", parsed["response"][:80])
-    parsed = _parse_llm_response(ai_model_service.complete(full_prompt))
+    if time_left < _MIN_RETRY_S:
+        logger.warning("[CHATBOT] unusable answer %r — no time left for a retry (%.1f s)",
+                       parsed["response"][:80], time_left)
+        return parsed, False
+    logger.warning("[CHATBOT] unusable answer %r — one quick non-streaming retry", parsed["response"][:80])
+    parsed = _parse_llm_response(ai_model_service.chat_complete(full_prompt, timeout=time_left))
     return parsed, not _is_unusable(parsed["response"], user_message)
 
 
@@ -412,9 +422,10 @@ class ChatbotService:
         parsed   = {}
         is_fallback = False
         try:
-            raw_llm = ai_model_service.complete(full_prompt)
+            raw_llm = "".join(ai_model_service.chat_stream_complete(full_prompt))
             logger.info("[CHATBOT] ③ LLM raw output:\n%s", raw_llm)
-            parsed, ok  = _answer_with_retry(raw_llm, full_prompt, user_message)
+            parsed, ok  = _answer_with_retry(raw_llm, full_prompt, user_message,
+                                             time_left=CHAT_BUDGET_S - (time.time() - t3))
             if not ok:
                 raise ValueError("unusable AI answer after retry")
             bot_response = parsed["response"]
@@ -677,7 +688,7 @@ class ChatbotService:
                 streamer    = _ResponseStreamer()
                 raw_tokens  = []
                 accumulated = ""
-                for token in ai_model_service.stream_complete(full_prompt):
+                for token in ai_model_service.chat_stream_complete(full_prompt):
                     raw_tokens.append(token)
                     chunk = streamer.feed(token)
                     if chunk:
@@ -685,7 +696,8 @@ class ChatbotService:
                         yield sse("token", {"text": accumulated})
                 raw_llm = "".join(raw_tokens)
                 logger.info("[CHATBOT-STREAM] ③ LLM raw output:\n%s", raw_llm)
-                parsed, ok   = _answer_with_retry(raw_llm, full_prompt, user_message)
+                parsed, ok   = _answer_with_retry(raw_llm, full_prompt, user_message,
+                                                  time_left=CHAT_BUDGET_S - (time.time() - t3))
                 if not ok:
                     raise ValueError("unusable AI answer after retry")
                 bot_response = parsed["response"]

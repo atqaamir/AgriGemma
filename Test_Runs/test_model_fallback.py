@@ -61,6 +61,9 @@ def fake_urlopen(req, timeout=None):
     if mode == "503":
         raise urllib.error.HTTPError(url, 503, "Service Unavailable", None,
                                      io.BytesIO(b'{"error": {"code": 503, "message": "high demand"}}'))
+    if mode == "429":
+        raise urllib.error.HTTPError(url, 429, "Too Many Requests", None,
+                                     io.BytesIO(b'{"error": {"code": 429, "message": "quota"}}'))
     if mode == "400":
         raise urllib.error.HTTPError(url, 400, "Bad Request", None, io.BytesIO(b'{"error": {"code": 400}}'))
     if mode == "timeout":
@@ -118,6 +121,33 @@ try:
     streamed = "".join(p.stream_complete("hi")).strip()
     check(streamed == "streamed from fallback" and p.answered_model() == FALLBACK and FAKE["calls"] == [PRIMARY, FALLBACK],
           f"stream: 503 on connect → streamed by the fallback ({streamed!r})")
+
+    print("\n-- chat fast path: one primary attempt, then straight to the fallback, no retries")
+    for mode in ("503", "429", "timeout", "400"):
+        reset(mode, text="chat from fallback")
+        out = "".join(p.stream_complete_chat("hi")).strip()
+        att = p.chat_attempts()
+        check(out == "chat from fallback" and FAKE["calls"] == [PRIMARY, FALLBACK] and p.answered_model() == FALLBACK
+              and [a["model"] for a in att] == [PRIMARY, FALLBACK] and att[1]["outcome"] == "ok",
+              f"chat: {mode} on the primary → fallback at once ({[(a['model'], a['outcome']) for a in att]})")
+    reset(None)
+    check("".join(p.stream_complete_chat("hi")).strip() == "primary answer" and FAKE["calls"] == [PRIMARY]
+          and p.answered_model() == PRIMARY, "chat: primary fine → primary answers, fallback not called")
+    reset("503", fallback="503")
+    out = "".join(p.stream_complete_chat("hi"))
+    check(out.startswith("The AI advisor is not available") and FAKE["calls"] == [PRIMARY, FALLBACK],
+          "chat: both unavailable → 'not available' after 2 calls (→ rule-based answer), no retries")
+    p.CHAT_PRIMARY_S = -1.0                      # deadline already passed before the first answer token
+    reset(None, text="chat from fallback")
+    out = "".join(p.stream_complete_chat("hi")).strip()
+    check(out == "chat from fallback" and p.chat_attempts()[0]["outcome"] == "timeout",
+          f"chat: no answer token before the primary's deadline → fallback ({p.chat_attempts()})")
+    del p.CHAT_PRIMARY_S
+    check(GoogleAIProvider.CHAT_PRIMARY_S + GoogleAIProvider.CHAT_FALLBACK_S <= 15,
+          "chat limits: primary + fallback ≤ 15 s")
+    reset("503", text="retry answer")
+    check(p.complete_chat("hi", timeout=4) == "retry answer" and FAKE["calls"] == [FALLBACK],
+          "chat retry (unusable answer): one non-streaming call on the fallback model")
 
     print("\n-- provider without a fallback (old behaviour)")
     p0 = GoogleAIProvider(api_key="test-key", model=PRIMARY, fallback_model="")

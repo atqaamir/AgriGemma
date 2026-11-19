@@ -58,6 +58,27 @@ def stream_complete(prompt: str):
     return get_provider().stream_complete(prompt)
 
 
+def chat_stream_complete(prompt: str):
+    """Chat answers: the provider's fast path if it has one (Google AI: one Gemma attempt within
+    ~8 s, then the fallback model, ~15 s at most), else the normal stream."""
+    provider = get_provider()
+    fn = getattr(provider, "stream_complete_chat", None)
+    return fn(prompt) if callable(fn) else provider.stream_complete(prompt)
+
+
+def chat_complete(prompt: str, timeout: float) -> str:
+    """One quick non-streaming chat retry (Google AI: the fallback model), else complete()."""
+    provider = get_provider()
+    fn = getattr(provider, "complete_chat", None)
+    return fn(prompt, timeout) if callable(fn) else provider.complete(prompt)
+
+
+def chat_attempts() -> list:
+    """Attempts of the last chat call in this thread (model, mode, outcome, ms); [] if not recorded."""
+    fn = getattr(get_provider(), "chat_attempts", None)
+    return fn() if callable(fn) else []
+
+
 def fast_complete(prompt: str) -> str:
     """Route a prompt through the fast provider (summaries/alerts/intent).
     Falls back to main provider if no fast provider is registered."""

@@ -317,6 +317,75 @@ class GoogleAIProvider(AIModelProvider):
                 logger.error("Google AI non-streaming fallback failed: %s", exc2)
                 yield self._placeholder(prompt)
 
+    # ── Chat fast path (chat only; background calls keep their own limits) ──
+    # One Gemma attempt that must start answering within CHAT_PRIMARY_S, then straight to the
+    # fallback model (CHAT_FALLBACK_S) – no second Gemma attempt, no 30–120 s timeouts – so a
+    # chat answer takes at most ~15 s before the rule-based answer.
+    CHAT_PRIMARY_S = 8.0
+    CHAT_FALLBACK_S = 7.0
+
+    def chat_attempts(self) -> list:
+        """This thread's attempts in the last chat call: model, mode, outcome, ms."""
+        return list(getattr(self._tl, "attempts", []) or [])
+
+    def _record_attempt(self, model: str, mode: str, t0: float, outcome: str) -> None:
+        import time
+        self._tl.attempts.append({"model": model, "mode": mode, "outcome": outcome,
+                                  "ms": round((time.monotonic() - t0) * 1000)})
+
+    @staticmethod
+    def _outcome(exc: Exception) -> str:
+        if isinstance(exc, urllib.error.HTTPError):
+            return f"HTTP {exc.code}"
+        if isinstance(exc, TimeoutError) or (isinstance(exc, urllib.error.URLError)
+                                             and isinstance(exc.reason, TimeoutError)):
+            return "timeout"
+        return f"{type(exc).__name__}: {exc}"[:120]
+
+    def stream_complete_chat(self, prompt: str) -> Iterator[str]:
+        import time
+        self._tl.model = None
+        self._tl.attempts = []
+        if not self._api_key:
+            yield self._placeholder(prompt)
+            return
+        plan = [(self._model, self.CHAT_PRIMARY_S)]
+        if self._fallback:
+            plan.append((self._fallback, self.CHAT_FALLBACK_S))
+        for model, limit in plan:
+            t0 = time.monotonic()
+            try:
+                yield from self._stream_api(prompt, model=model, timeout=limit, deadline=t0 + limit)
+                self._record_attempt(model, "stream", t0, "ok")
+                self._answered(model, "chat")
+                return
+            except Exception as exc:
+                outcome = self._outcome(exc)
+                self._record_attempt(model, "stream", t0, outcome)
+                if getattr(self._tl, "streamed", False):     # failed mid-answer: keep what was streamed
+                    self._answered(model, "chat (cut off)")
+                    return
+                logger.warning("Google AI chat: %s on %s after %.1f s%s", outcome, model, time.monotonic() - t0,
+                               " — switching to the fallback model" if model == self._model and self._fallback else "")
+        yield self._placeholder(prompt)
+
+    def complete_chat(self, prompt: str, timeout: float) -> str:
+        """One non-streaming attempt for the chat's 'unusable answer' retry: the fallback model if
+        set (the primary just gave an unusable answer), else the primary; no further retries."""
+        import time
+        if not hasattr(self._tl, "attempts") or self._tl.attempts is None:
+            self._tl.attempts = []
+        model = self._fallback or self._model
+        t0 = time.monotonic()
+        try:
+            text = self._call_api(prompt, model=model, timeout=timeout)
+            self._record_attempt(model, "retry (non-streaming)", t0, "ok")
+            self._answered(model, "chat retry")
+            return text
+        except Exception as exc:
+            self._record_attempt(model, "retry (non-streaming)", t0, self._outcome(exc))
+            return self._placeholder(prompt)
+
     # ── Private helpers ────────────────────────────────────────────────────
 
     _FEW_SHOT = [
@@ -483,14 +552,14 @@ class GoogleAIProvider(AIModelProvider):
         self._answered(self._model, label)
         return text
 
-    def _call_api(self, prompt: str, *, model: str | None = None) -> str:
+    def _call_api(self, prompt: str, *, model: str | None = None, timeout: float = 30) -> str:
         m = model or self._model
         url = f"{_BASE}/models/{m}:generateContent?key={self._api_key}"
         req = urllib.request.Request(
             url, data=self._payload(prompt),
             headers={"Content-Type": "application/json"}, method="POST",
         )
-        with urllib.request.urlopen(req, timeout=30) as resp:
+        with urllib.request.urlopen(req, timeout=timeout) as resp:
             data = json.loads(resp.read())
         parts = data["candidates"][0]["content"]["parts"]
         text = "".join(p.get("text", "") for p in parts if not p.get("thought"))
@@ -499,7 +568,11 @@ class GoogleAIProvider(AIModelProvider):
         text = text.strip()
         return _strip_preamble(text)
 
-    def _stream_api(self, prompt: str, *, model: str | None = None) -> Iterator[str]:
+    def _stream_api(self, prompt: str, *, model: str | None = None, timeout: float = 120,
+                    deadline: float | None = None) -> Iterator[str]:
+        """deadline (time.monotonic()): raise TimeoutError if no answer token came by then
+        (thought tokens alone keep the socket busy, so the socket timeout does not catch that)."""
+        import time
         m = model or self._model
         url = (
             f"{_BASE}/models/{m}:streamGenerateContent"
@@ -513,8 +586,10 @@ class GoogleAIProvider(AIModelProvider):
         has_response = False
         self._tl.streamed = False                 # set once a token went out (no fallback after that)
 
-        with urllib.request.urlopen(req, timeout=120) as resp:
+        with urllib.request.urlopen(req, timeout=timeout) as resp:
             for raw_line in resp:
+                if deadline is not None and not has_response and time.monotonic() > deadline:
+                    raise TimeoutError(f"no answer token within the chat limit ({m})")
                 line = raw_line.decode("utf-8").strip()
                 if not line.startswith("data:"):
                     continue
