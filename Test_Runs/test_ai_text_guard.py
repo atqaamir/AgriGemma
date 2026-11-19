@@ -93,6 +93,21 @@ with app.app_context():
 
     today = clock.today()
 
+    print("\n-- seeded notifications (calm, pre-sowing 5 May)")
+    import re
+    from app.models.field import Field
+    from app.utils import ai_text_guard
+    seeded = Notification.query.order_by(Notification.id).all()
+    stages = re.compile(r"flowering|vegetative|seedling|tiller|boll|stress|drainage|harvest", re.I)
+    other_fields = [f.name for f in Field.query.filter(Field.user_id != 1).all()]
+    for n in seeded:
+        text = " ".join(x for x in (n.title, n.message, n.detail) if x)
+        check(n.user_id == 1, f"#{n.id} {n.title!r}: user 1 only")
+        check(not ai_text_guard.check_for_user(text, 1, "seeded notification"), f"#{n.id}: only the user's crops")
+        check(not stages.search(text) and n.notification_type == "info", f"#{n.id}: info, no crop stage / stress")
+        check(not any(f.lower() in text.lower() for f in other_fields), f"#{n.id}: no other user's field")
+    check(Notification.query.filter(Notification.user_id.in_((2, 3))).count() == 0, "users 2 and 3: none")
+
     def run(scenario, ai_answer):
         reset_demo()
         cnt._call_ai = lambda prompt: ai_answer

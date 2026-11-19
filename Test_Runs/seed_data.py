@@ -404,41 +404,19 @@ def run():
     # db.session.commit()
 
     # ---- NOTIFICATIONS ----
+    # Only notifications that fit the demo's starting state: early May, nothing sown yet,
+    # calm forecast. No crop stages, no crops or fields the user doesn't have, no dates (a
+    # weather scenario moves the sowing days; the plan and the change notification say when).
+    # Users 2 and 3 get none.
     sample_notifications = [
-    #     Notification(user_id=user[0].id, title="Irrigation recommended for rice",
-    #                  message="Your rice crop in North Field Alpha needs irrigation during the vegetative stage.",
-    #                  detail="Adequate irrigation at this stage helps ensure strong tiller development and prevents early stress.",
-    #                  notification_type="recommendation", is_read=False, created_at=datetime.utcnow()),
-    #     Notification(user_id=user[0].id, title="Fungal risk warning for cotton",
-    #                  message="High humidity conditions increase fungal risk in your East Creek Basin field.",
-    #                  detail="Flowering cotton is especially sensitive to prolonged moisture. Preventive spraying can reduce future losses.",
-    #                  notification_type="warning", is_read=False, created_at=datetime.utcnow()),
-        Notification(user_id=user[0].id, title="Drainage issue detected",
-                     message="Water drainage problems may impact maize health at South Hill Slope.",
-                     detail="Poor drainage can result in root stress and nutrient imbalance. Clearing channels is advised as soon as possible.",
-                     notification_type="critical", is_read=False, created_at=datetime.utcnow()),
+        Notification(user_id=user[0].id, title="Sowing week ahead",
+                     message="Maize and cotton are planned for sowing this week. Open the weekly plan for the days.",
+                     detail="The plan checks the forecast every morning and moves a sowing day if the weather on "
+                            "that day is unsuitable.",
+                     notification_type="info", is_read=False, created_at=datetime.utcnow()),
         Notification(user_id=user[0].id, title="Routine equipment check",
                      message="This is a reminder to check irrigation and field equipment near the reservoir plot.",
                      detail=None, notification_type="info", is_read=False, created_at=datetime.utcnow()),
-    #     Notification(user_id=user[0].id, title="Wheat flowering stage alert",
-    #                  message="Your crop has entered the flowering stage and requires close monitoring.",
-    #                  detail="Strong winds during flowering can affect yield. Regular inspection can help detect issues early.",
-    #                  notification_type="warning", is_read=False, created_at=datetime.utcnow()),
-    #     Notification(user_id=user[0].id, title="Fertilization recommended for cotton",
-    #                  message="Cotton at the vegetative stage may benefit from balanced fertilization.",
-    #                  detail="Timely nutrient application supports healthy canopy development and prepares the crop for flowering.",
-    #                  notification_type="recommendation", is_read=False, created_at=datetime.utcnow()),
-    #     Notification(user_id=user[0].id, title="Cold stress risk for wheat seedlings",
-    #                  message="Seedlings may experience stress due to dropping night temperatures.",
-    #                  detail="Early-stage wheat is sensitive to cold spells. Monitoring weather forecasts is strongly advised.",
-    #                  notification_type="warning", is_read=False, created_at=datetime.utcnow()),
-        Notification(user_id=user[0].id, title="High stress alert for rice crop",
-                     message="Your rice crop is experiencing high environmental stress during flowering.",
-                     detail="Combined heat and nutrient stress at this stage can significantly reduce yield. Immediate attention is required.",
-                     notification_type="critical", is_read=False, created_at=datetime.utcnow()),
-    #     Notification(user_id=user[0].id, title="Maize crop status update",
-    #                  message="Your maize crop is healthy and progressing well in the vegetative stage.",
-    #                  detail=None, notification_type="info", is_read=False, created_at=datetime.utcnow()),
     ]
 
     db.session.add_all(sample_notifications)
