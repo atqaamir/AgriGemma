@@ -243,7 +243,9 @@ def reset_demo(user_id):
         resp.headers["Retry-After"] = str(wait)
         return resp, 429
     try:
+        from app.services import deferred_ai_service as deferred
         from app.services.demo_reset_service import reset_demo as _reset
+        deferred.invalidate_all()          # background AI work of earlier runs is dropped
         _reset()
         d = clock.today()
         return jsonify({"message": f"Demo reset to the starting state ({d.day} {d:%B}, no forecast change)."}), 200
@@ -280,8 +282,16 @@ def run_weather_simulator(user_id):
 
         # The scenario writes the 7-day forecast (baseline + its days); the full daily
         # update (rolls the plan to today..today+6) then reacts to it through the rules.
-        scenarios.apply(user_id, key)
-        result = _coordinator.daily_update(user_id=user_id, as_of_date=today)
+        # The response does not wait for the AI: notifications get their rule-based text,
+        # the AI texts follow in the background (a newer run makes them stale).
+        from app.models.notification import Notification
+        from app.services import deferred_ai_service as deferred
+        last = Notification.query.order_by(Notification.id.desc()).first()
+        first_id = (last.id + 1) if last else 1
+        with deferred.foreground(user_id) as run:
+            scenarios.apply(user_id, key)
+            result = _coordinator.daily_update(user_id=user_id, as_of_date=today, defer_ai=True)
+        deferred.start(current_app._get_current_object(), user_id, run, first_id)
 
         return jsonify({
             "message": f"Simulation complete — {result.get('message', 'done')}",

@@ -304,8 +304,8 @@ class TaskGenerationService:
         if explain:
             from app.services import plan_task_explanation_service as explanations
             summary["explanations"] = explanations.explain(user_id, changed)
-        else:   # app startup: no AI call; the next run explains pending tasks without one
-            summary["explanations"] = {"called": False, "skipped": "no AI at startup"}
+        else:   # app startup / simulator (explained in the background): no AI call here
+            summary["explanations"] = {"called": False, "skipped": "no AI in this step"}
         logger.info("Plan task sync for user=%s as_of=%s: %s", user_id, as_of, summary)
         return summary
 

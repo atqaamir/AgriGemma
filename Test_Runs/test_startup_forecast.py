@@ -89,6 +89,8 @@ with app.app_context():
 
     print("\n-- scenario 1 'typical early-May weather' (simulator route, full daily update)")
     r = app.test_client().post("/mytasks/1/run-weather-simulator", json={"scenario": "typical"})
+    from app.services import deferred_ai_service as deferred
+    deferred.wait(1, 30)                   # the AI texts follow the response in the background
     body = r.get_json() or {}
     check(r.status_code == 200 and body.get("scenario") == "typical" and body.get("banner") is None,
           f"simulator ran scenario 1, no banner ({r.status_code})")

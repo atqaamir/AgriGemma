@@ -238,7 +238,7 @@ class NotificationService:
             logger.error("NotificationService.generate_notifications failed (tag=%s): %s", tag, exc)
             return Status.FAILED
 
-    def generate_change_notifications(self, user_id: int, tag: str) -> Status:
+    def generate_change_notifications(self, user_id: int, tag: str, with_ai: bool = True) -> Status:
         """
         Collects change data first (DB only), then makes ONE Ollama call whose
         output is shared between the alert notification (daily/weekly) and the
@@ -267,7 +267,10 @@ class NotificationService:
             farmer  = context.get("farmer_name", "Farmer")
             current = weather.get("current", {})
             facts = cnt.facts(user_id, task_summaries, farmer)
-            ai_summary, source = cnt.ai_text(user_id, facts)
+            if with_ai:
+                ai_summary, source = cnt.ai_text(user_id, facts)
+            else:                       # simulator: the AI text follows in the background
+                ai_summary, source = cnt.rule_text(facts), "rules (AI deferred)"
             print(f"[change_notifications] summary from {source} — {len(ai_summary)} chars")
 
             # 4. Create alert notification (daily → ALERT, weekly → WARNING)
@@ -305,6 +308,7 @@ class NotificationService:
                 "tasks":      task_summaries,
                 "plan":       [adj for p in plan_summaries for adj in p["adjustments"]],
                 "ai_summary": ai_summary,
+                "ai_summary_source": "ai" if source == "ai" else "rules",
             }
 
             notif = self.create_if_not_duplicate(

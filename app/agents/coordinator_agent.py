@@ -56,7 +56,10 @@ class CoordinatorAgent:
     # ── Daily update workflow ─────────────────────────────────────────────────
 
     """ 5am daily update workflow — rolls the weekly plan forward, runs risk assessment, then triggers downstream workflows based on risk level changes. Always refreshes dashboard at the end. """
-    def daily_update(self, user_id: int, as_of_date: date = None) -> dict:
+    def daily_update(self, user_id: int, as_of_date: date = None, defer_ai: bool = False) -> dict:
+        """defer_ai (simulator): no AI call here - the notifications get their rule-based text
+        and the AI texts (task "Why", notification summary) are written afterwards in the
+        background (deferred_ai_service)."""
         if as_of_date is None:
             as_of_date = clock.today()
         print(f"\n[CoordinatorAgent] Starting daily update for user={user_id} as_of_date={as_of_date}")
@@ -76,7 +79,7 @@ class CoordinatorAgent:
 
         # Plan tasks follow the re-planned week right away (also on a simulator click):
         # move / deactivate / reactivate, create missing ones for today and tomorrow.
-        plan_tasks = self._sync_plan_tasks(user_id, as_of_date)
+        plan_tasks = self._sync_plan_tasks(user_id, as_of_date, explain=not defer_ai)
 
         if change == enums_.ChangeStatus.NO_CHANGE:
             result = execution_responses.ExecutionResponse.success("Risk assessment completed — no change")
@@ -91,7 +94,7 @@ class CoordinatorAgent:
             elif change == enums_.ChangeStatus.IMPACT_TASKS:
                 self.update_planner(user_id, tag="impact_tasks", as_of_date=as_of_date)
             notification_tag = "weekly" if change == enums_.ChangeStatus.IMPACT_PLAN else "daily"
-            self.send_change_notifications(user_id, tag=notification_tag)
+            self.send_change_notifications(user_id, tag=notification_tag, with_ai=not defer_ai)
             self.dashboard_refresh(user_id)
             result = execution_responses.ExecutionResponse.success("Daily update completed") if risk_status == enums_.Status.SUCCESS else execution_responses.ExecutionResponse.failure("Daily update failed")
 
@@ -185,9 +188,10 @@ class CoordinatorAgent:
             return execution_responses.ExecutionResponse.success("Notification sent")
         return execution_responses.ExecutionResponse.failure("Notification dispatch failed")
 
-    def send_change_notifications(self, user_id: int, tag: str) -> dict:
-        """Collects change data first, then creates both the alert and change_summary popup in one Ollama call."""
-        status = self.notification_agent.generate_change_notifications(user_id, tag=tag)
+    def send_change_notifications(self, user_id: int, tag: str, with_ai: bool = True) -> dict:
+        """Collects change data first, then creates both the alert and the change_summary pop-up
+        with one AI text (with_ai=False: the rule-based text; the AI text follows later)."""
+        status = self.notification_agent.generate_change_notifications(user_id, tag=tag, with_ai=with_ai)
         if status == enums_.Status.SUCCESS:
             return execution_responses.ExecutionResponse.success("Change notifications sent")
         return execution_responses.ExecutionResponse.failure("Change notification dispatch failed")

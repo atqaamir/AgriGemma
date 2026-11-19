@@ -20,6 +20,7 @@ from app.utils import clock
 logger = logging.getLogger(__name__)
 
 TIMEOUT_S = 8.0     # the run never waits longer than this for the explanations
+BACKGROUND_TIMEOUT_S = 30.0   # in the background (simulator): the primary, then the fallback model
 MAX_BATCH = 10      # tasks per AI call
 PLAN_TASK_CATEGORY = "plan"
 DROPPED = ""        # explanation dropped by the date guard: not retried (None = not tried yet)
@@ -129,13 +130,13 @@ def _call_ai(prompt: str, facts: list[dict]) -> str:
     return ai_model_service.fast_complete_direct(prompt)
 
 
-def _call_with_limit(prompt: str, facts: list[dict]) -> str | None:
+def _call_with_limit(prompt: str, facts: list[dict], timeout: float = TIMEOUT_S) -> str | None:
     pool = ThreadPoolExecutor(max_workers=1)
     future = pool.submit(_call_ai, prompt, facts)
     try:
-        return future.result(timeout=TIMEOUT_S)
+        return future.result(timeout=timeout)
     except _Timeout:
-        logger.warning("Plan task explanations: no AI answer within %.0f s — left empty", TIMEOUT_S)
+        logger.warning("Plan task explanations: no AI answer within %.0f s — left empty", timeout)
     except Exception as exc:
         logger.warning("Plan task explanations: AI call failed (%s) — left empty", exc)
     finally:
@@ -156,9 +157,11 @@ def _parse(raw: str | None) -> dict:
     return {str(k): v for k, v in data.items() if isinstance(v, str)} if isinstance(data, dict) else {}
 
 
-def explain(user_id: int, changed_tasks: list) -> dict:
+def explain(user_id: int, changed_tasks: list, write_guard=None) -> dict:
     """Explain the changed plan tasks (+ pending ones still without an explanation) in one
-    AI call. Returns {"called": bool, "explained": [ids], "dropped": [ids], "failed": [ids]}."""
+    AI call. Returns {"called": bool, "explained": [ids], "dropped": [ids], "failed": [ids]}.
+    write_guard (background runs, deferred_ai_service.current_write): a context manager that
+    yields False when a newer simulator run started - the answers are then dropped."""
     from app.services.domain_service.user_service import UserService
 
     result = {"called": False, "explained": [], "dropped": [], "failed": []}
@@ -180,7 +183,8 @@ def explain(user_id: int, changed_tasks: list) -> dict:
     region = UserService.get_user_location(user_id)
     facts = [task_facts(t, index, region) for t in batch]
     result["called"] = True
-    answers = _parse(_call_with_limit(build_prompt(facts), facts))
+    answers = _parse(_call_with_limit(build_prompt(facts), facts,
+                                      BACKGROUND_TIMEOUT_S if write_guard is not None else TIMEOUT_S))
     from app.utils import ai_text_guard
     try:
         scope = ai_text_guard.user_scope(user_id)
@@ -204,6 +208,14 @@ def explain(user_id: int, changed_tasks: list) -> dict:
         else:
             t.ai_explanation = text
             result["explained"].append(t.id)
-    db.session.commit()
+    if write_guard is not None:
+        with write_guard() as current:
+            if not current:
+                db.session.rollback()
+                logger.info("Plan task explanations for user=%s: a newer run started - dropped", user_id)
+                return {**result, "stale": True}
+            db.session.commit()
+    else:
+        db.session.commit()
     logger.info("Plan task explanations for user=%s: %s", user_id, result)
     return result

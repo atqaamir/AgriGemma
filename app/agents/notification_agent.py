@@ -7,5 +7,5 @@ class NotificationAgent:
     def generate_notifications(self, user_id, tag):
         return self.notification_service.generate_notifications(user_id, tag=tag)
 
-    def generate_change_notifications(self, user_id, tag):
-        return self.notification_service.generate_change_notifications(user_id, tag=tag)
+    def generate_change_notifications(self, user_id, tag, with_ai=True):
+        return self.notification_service.generate_change_notifications(user_id, tag=tag, with_ai=with_ai)

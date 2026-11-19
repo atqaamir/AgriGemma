@@ -135,6 +135,10 @@ with app.app_context():
     check("soil moisture >60 % (seed bed after ≥20 mm rain)" in sowing_text, f"reason: {sowing_text[:90]}…")
     check(not any("Dry week" in (a.get("adjustment") or "") for a in plan()["Maize"]["climate_adjustments_made"]),
           "no 'Dry week' with 145 mm of rain (R2)")
+    from app.services import deferred_ai_service as deferred
+    check(deferred.wait(1, 30), "background AI texts finished")      # 'Why' texts follow the response
+    from app.extensions import db
+    db.session.expire_all()
     sm = Task.query.filter(Task.user_id == 1, Task.title.like("Sow Maize%"), Task.is_active.is_(True)).all()
     check(len(sm) == 1 and sm[0].due_date.isoformat() == "2027-05-10" and sm[0].ai_explanation,
           f"Sow Maize task moved to 10 May, with a 'Why' explanation ({sow_maize_tasks()})")
