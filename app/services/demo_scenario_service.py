@@ -21,7 +21,8 @@ DEFAULT = TYPICAL
 # Day offset from today → (avg temp °C, humidity %, rainfall mm, sunlight h, wind km/h, notes)
 SCENARIOS = {
     TYPICAL: {
-        "label": "Expected change: typical early-May weather",
+        "label": "Typical May weather",
+        "full_name": "Expected change: typical early-May weather",
         "banner": None,
         "days": {
             # Early-May western disturbance (common in Punjab): dust storm, then light showers.
@@ -34,7 +35,8 @@ SCENARIOS = {
                  "and fertilization move with it. Maize stays on 6 May."),
     },
     HEAVY_RAIN: {
-        "label": "Unexpected change: heavy rain, unusual for early May",
+        "label": "Unusual heavy rain",
+        "full_name": "Unexpected change: heavy rain, unusual for early May",
         "banner": "Simulated scenario: unusual heavy rain for early May",
         "days": {
             # Thunderstorms: heavy rain, very humid, little sun, a few degrees cooler.
@@ -53,7 +55,8 @@ _active = {}   # user_id -> scenario key
 
 
 def options() -> list:
-    return [{"key": k, "label": s["label"], "info": s["info"]} for k, s in SCENARIOS.items()]
+    """Dropdown entries: short label; the info icon shows the full name + description."""
+    return [{"key": k, "label": s["label"], "info": f"{s['full_name']}. {s['info']}"} for k, s in SCENARIOS.items()]
 
 
 def active(user_id: int):

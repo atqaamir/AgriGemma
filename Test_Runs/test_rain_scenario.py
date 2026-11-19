@@ -66,8 +66,8 @@ with app.app_context():
     check(start_tasks == [("2027-05-06", True)], f"Sow Maize task for tomorrow ({start_tasks})")
     check(fvn.build(1) is None and scenarios.active(1) is None, "no forecast change: no chatbot block, no scenario")
     page = html()
-    check('id="weatherScenarioSelect"' in page and "Expected change: typical early-May weather" in page
-          and "Unexpected change: heavy rain, unusual for early May" in page and 'id="resetDemoBtn"' in page,
+    check('id="weatherScenarioSelect"' in page and ">Typical May weather</option>" in page
+          and ">Unusual heavy rain</option>" in page and "Unexpected change: heavy rain, unusual for early May" in page and 'id="resetDemoBtn"' in page,
           "simulator card: scenario dropdown + Reset demo button")
     check(BANNER not in page.split('id="demoScenarioBannerText">')[1][:80], "no scenario banner")
 
