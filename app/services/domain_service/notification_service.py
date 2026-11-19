@@ -261,52 +261,14 @@ class NotificationService:
             )
             print(f"[change_notifications] collected tasks={len(task_summaries)} plan={len(plan_summaries)}")
 
-            # 2. Build prompt context
+            # 2. Facts (no AI) → one direct AI call, checked by the AI text guard; the
+            #    rule-based text if the AI gives nothing usable.
+            from app.services import change_notification_text as cnt
             farmer  = context.get("farmer_name", "Farmer")
             current = weather.get("current", {})
-            temp     = current.get("temp") or current.get("temperature_c", "unknown")
-            rainfall = current.get("rainfall_mm") or current.get("precipitation_mm", 0) or 0
-            crops    = context.get("farm", {}).get("active_crops_data", [])
-            fields   = ", ".join(
-                c.get("field_name") or c.get("name", "") for c in crops[:3]
-                if c.get("field_name") or c.get("name")
-            ) or "the active fields"
-
-            tasks_block = "\n".join(
-                f"- {t['title']}{' (' + t['field'] + ')' if t.get('field') else ''}: {', '.join(t['changes'])}"
-                for t in task_summaries
-            ) or "No individual task changes."
-            plan_block = "\n".join(
-                f"- [{adj['factor']}] {adj['reasoning']} → {adj['adjustment']}"
-                for p in plan_summaries for adj in p["adjustments"]
-            ) or "No weekly plan adjustments."
-
-            # 3. ONE Ollama call — covers both the alert detail and the change_summary AI text
-            ai_summary = ""
-            try:
-                from app.services.ai_model_service.ai_model_service import fast_complete
-                if tag == "daily":
-                    prompt = (
-                        f"You are a farm advisor talking directly to {farmer}. "
-                        f"Weather today: {temp}°C, {rainfall:.0f}mm rainfall on {fields}. "
-                        f"Task changes: {tasks_block}\n"
-                        f"Plan adjustments: {plan_block}\n"
-                        f"Write 2-3 friendly sentences explaining what changed and what to prioritise today. "
-                        f"No bullet points. Be warm and direct."
-                    )
-                else:
-                    prompt = (
-                        f"You are a farm advisor talking directly to {farmer}. "
-                        f"Weather today: {temp}°C, {rainfall:.0f}mm rainfall on {fields}. "
-                        f"Plan adjustments for the coming days: {plan_block}\n"
-                        f"Write 2-3 friendly sentences explaining why the week ahead looks different "
-                        f"and what to roughly expect. Keep it warm — today is still fine. "
-                        f"No bullet points."
-                    )
-                ai_summary = fast_complete(prompt)
-                print(f"[change_notifications] AI done — {len(ai_summary)} chars")
-            except Exception as exc:
-                logger.warning("generate_change_notifications: AI call failed — %s", exc)
+            facts = cnt.facts(user_id, task_summaries, farmer)
+            ai_summary, source = cnt.ai_text(user_id, facts)
+            print(f"[change_notifications] summary from {source} — {len(ai_summary)} chars")
 
             # 4. Create alert notification (daily → ALERT, weekly → WARNING)
             if tag == "daily":
@@ -437,6 +399,21 @@ class NotificationService:
         return alerts
 
     # ── Private helpers ────────────────────────────────────────────────────
+
+    @staticmethod
+    def _guarded(text: str, fallback: str, context: dict, label: str) -> str:
+        """The AI text if the AI text guard accepts it (no leaked draft, no crop the user doesn't
+        have, no 'you must'), else the rule-based fallback."""
+        from app.utils import ai_text_guard
+        uid = (context or {}).get("user_id")
+        if uid is not None:
+            bad = ai_text_guard.check_for_user(text, uid, label)
+        else:
+            bad = ai_text_guard.problem(text)
+            if bad:
+                logger.warning("AI text guard: %s rejected – %s: %r", label, bad, (text or "")[:200])
+        return fallback if bad else text
+
 
     def _detect_from_context(self, context: dict) -> list:
         """Alert detection driven by the rule base — thresholds come from rulebook tables, not magic numbers."""
@@ -707,6 +684,8 @@ class NotificationService:
             ai_summary = fast_complete(prompt)
         except Exception as exc:
             logger.warning("change_summary: AI summary failed — %s", exc)
+        rule = f"{tasks_block} {plan_block}".strip()
+        ai_summary = NotificationService._guarded(ai_summary, rule, context, "change summary")
 
         # ── Return structured JSON — frontend renders as a report card ────
         import json
@@ -867,18 +846,20 @@ class NotificationService:
                     f"Don't use bullet points. Write like you're texting a friend who farms."
                 )
 
-            return fast_complete(prompt)
+            text = fast_complete(prompt)
+            fallback = NotificationService._plan_change_fallback(tag)
+            return NotificationService._guarded(text, fallback, context, f"{tag} plan-change explanation")
         except Exception as exc:
             logger.warning("NotificationService: plan change AI explanation failed — %s", exc)
-            if tag == "weekly":
-                return (
-                    "The weather's shifted a bit, so we've tweaked your plan for the next few days. "
-                    "Nothing major — today is still on track, just expect a few small changes coming up."
-                )
-            return (
-                "The weather today means a few of your tasks look a bit different. "
-                "Take a quick look at your updated list and tackle the most time-sensitive ones first."
-            )
+            return NotificationService._plan_change_fallback(tag)
+
+    @staticmethod
+    def _plan_change_fallback(tag: str) -> str:
+        if tag == "weekly":
+            return ("The forecast changed, so the plan for the next few days was adjusted. "
+                    "Check the weekly plan for what moved.")
+        return ("The weather today changed some of your tasks. "
+                "Take a look at your updated list and start with the most urgent ones.")
 
     @staticmethod
     def _generate_ai_explanation(alerts: list, context: dict) -> str:
@@ -888,11 +869,16 @@ class NotificationService:
                 build_alert_explanation_prompt,
             )
             prompt = build_alert_explanation_prompt(alerts, context)
-            return fast_complete(prompt)
+            return NotificationService._guarded(fast_complete(prompt), NotificationService._alert_fallback(alerts),
+                                                context, "alert explanation")
         except Exception as exc:
             logger.warning("AlertService: AI explanation failed — %s", exc)
-            high = [a for a in alerts if a.get("level") == "high"]
-            if high:
-                return f"Urgent: {high[0]['message']}. Check your fields as soon as possible."
-            return f"{len(alerts)} alert(s) on your farm require attention today."
+            return NotificationService._alert_fallback(alerts)
+
+    @staticmethod
+    def _alert_fallback(alerts: list) -> str:
+        high = [a for a in alerts if a.get("level") == "high"]
+        if high:
+            return f"Urgent: {high[0]['message']}. Check your fields as soon as possible."
+        return f"{len(alerts)} alert(s) on your farm require attention today."
 

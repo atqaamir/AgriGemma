@@ -34,13 +34,21 @@ class TaskIntelligenceService:
                     "rules": context.get("rules", ""),
                 },
             )
-            return TaskIntelligenceService._clean_text(_fast_complete(prompt))
+            text = TaskIntelligenceService._clean_text(_fast_complete(prompt))
+            from app.utils import ai_text_guard
+            if task.user_id is not None and ai_text_guard.check_for_user(text, task.user_id, "task explanation"):
+                return TaskIntelligenceService._fallback(task)
+            return text
         except Exception as exc:
             logger.warning("AI task explanation failed for task %s: %s", getattr(task, "id", None), exc)
-            return (
-                task.description
-                or f"This task is important because of current farm conditions affecting {task.field.name if task.field else 'your farm'}."
-            )
+            return TaskIntelligenceService._fallback(task)
+
+    @staticmethod
+    def _fallback(task) -> str:
+        return (
+            task.description
+            or f"This task is important because of current farm conditions affecting {task.field.name if task.field else 'your farm'}."
+        )
 
     # ── Private helpers ───────────────────────────────────────────────────────
 

@@ -302,7 +302,8 @@ def generate(user_id: int) -> dict:
         logger.warning("Farm report user=%s: basic summary (%s)", user_id, error)
         data, is_fallback = basic_summary(signals, season, changes), True
     else:
-        data, is_fallback = validate(answer, signals, season, changes, bare, all_bare), False
+        with val.crop_scope(user_id):
+            data, is_fallback = validate(answer, signals, season, changes, bare, all_bare), False
     data.update({"changes": {**change_info, "lines": changes}, "season": season, "basic_summary": is_fallback,
                  "error": error, "raw_answer": (raw or "")[:4000], "prompt_chars": len(prompt)})
     try:

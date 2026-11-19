@@ -263,7 +263,8 @@ def generate(user_id: int) -> dict:
         logger.warning("Task insights user=%s: basic summary (%s)", user_id, error)
         data, is_fallback = basic_summary(signals, cands, today, error), True
     else:
-        data, is_fallback = validate(answer, signals, cands, bare, today), False
+        with val.crop_scope(user_id):
+            data, is_fallback = validate(answer, signals, cands, bare, today), False
     data.update({"basic_summary": is_fallback, "error": error, "raw_answer": (raw or "")[:4000],
                  "prompt_chars": len(prompt)})
     try:

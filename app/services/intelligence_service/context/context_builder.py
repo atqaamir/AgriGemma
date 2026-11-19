@@ -160,7 +160,7 @@ def build_notification_context(user_id: int) -> dict:
     farm.active_crops_data / farm.active_fields_data) and build_alerts_batch_explanation_prompt()
     (expects farmer_name, weather, rules).
     """
-    ctx: dict = {}
+    ctx: dict = {"user_id": user_id}      # the AI text guard checks crops per user
 
     ctx["farmer_name"] = _safe("farmer_name", _fetch_farmer_name, user_id)
     ctx["weather"]     = _safe("weather", _fetch_weather, user_id) or {}

@@ -4,7 +4,8 @@ One batched AI call per user and run (fast provider, JSON) for the plan tasks th
 created, moved or reactivated, plus up to MAX_BATCH pending plan tasks that still have no
 explanation (self-healing after a timeout). The model only gets rule facts (event, crop,
 field, due date, the plan's adjustment text, extra/regular session, forecast values) and
-writes 1–2 sentences. An explanation that names another date than the due date is dropped.
+writes 1–2 sentences. An explanation that names another date than the due date, or that the
+AI text guard rejects (leaked draft, a crop the user doesn't have), is dropped.
 """
 import json
 import logging
@@ -180,11 +181,21 @@ def explain(user_id: int, changed_tasks: list) -> dict:
     facts = [task_facts(t, index, region) for t in batch]
     result["called"] = True
     answers = _parse(_call_with_limit(build_prompt(facts), facts))
+    from app.utils import ai_text_guard
+    try:
+        scope = ai_text_guard.user_scope(user_id)
+    except Exception:
+        scope = {}
     for t in batch:
         text = (answers.get(str(t.id)) or "").strip()
         if not text:
             t.ai_explanation = None                      # not answered: retried next run
             result["failed"].append(t.id)
+        elif ai_text_guard.problem(text, **scope):
+            logger.warning("Plan task %s: explanation rejected (%s) — dropped: %r",
+                           t.id, ai_text_guard.problem(text, **scope), text[:160])
+            t.ai_explanation = DROPPED
+            result["dropped"].append(t.id)
         elif mentions_other_date(text, t.due_date):
             logger.warning("Plan task %s: explanation names another date than %s — dropped: %r",
                            t.id, t.due_date, text[:160])

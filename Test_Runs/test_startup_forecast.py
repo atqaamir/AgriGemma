@@ -33,6 +33,18 @@ for name in ("complete", "stream_complete", "fast_complete", "fast_complete_json
             COUNT["ai"].append(_name)
             return _orig(*a, **k)
         setattr(ai_model_service, name, wrapped)
+# The change-notification text skips the model with the placeholder provider (rule-based
+# text instead), so count its AI step too.
+from app.services import change_notification_text as _cnt  # noqa: E402
+_orig_cnt_ai = _cnt._call_ai
+
+
+def _count_cnt(*a, **k):
+    COUNT["ai"].append("change_notification_text")
+    return _orig_cnt_ai(*a, **k)
+
+
+_cnt._call_ai = _count_cnt
 _orig_notify = WeeklyPlannerService._notify_sowing_decision
 
 

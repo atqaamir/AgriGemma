@@ -5,11 +5,15 @@ An insight is dropped (with a logged reason) when it:
   - names a date that is not in the dates of the signals it cites (shared date guard);
   - breaks the style rules: "I understand" / "I know", "must" / "you must", or claims to have changed
     the plan itself ("I've moved…", "I have created…") – the AI recommends, it never decides;
-  - talks about leaves / stems / wilting on a bare field (nothing sown there).
+  - talks about leaves / stems / wilting on a bare field (nothing sown there);
+  - is a leaked model draft, or (inside crop_scope) names a crop the user doesn't have
+    (app.utils.ai_text_guard).
 """
 from __future__ import annotations
 
 import re
+import threading
+from contextlib import contextmanager
 from datetime import date
 
 from app.utils.date_guard import dates_outside
@@ -39,10 +43,36 @@ def evidence_ids(raw) -> list[str]:
     return out
 
 
+_scope = threading.local()
+
+
+@contextmanager
+def crop_scope(user_id: int):
+    """While active, style_problem() also rejects crops the user doesn't have (ai_text_guard)."""
+    from app.utils import ai_text_guard
+    try:
+        _scope.value = ai_text_guard.user_scope(user_id)
+    except Exception:
+        _scope.value = None
+    try:
+        yield
+    finally:
+        _scope.value = None
+
+
 def style_problem(text: str) -> str | None:
+    from app.utils import ai_text_guard
     for pat, label in _STYLE:
         if pat.search(text or ""):
             return label
+    problem = ai_text_guard.draft_problem(text)          # leaked model drafts
+    if problem:
+        return problem
+    scope = getattr(_scope, "value", None)
+    if scope:
+        return ai_text_guard.crop_problem(text, scope["allowed_crops"],
+                                          set(scope["known_crops"]) | set(ai_text_guard._EXTRA_CROPS),
+                                          scope["field_names"], scope.get("not_feasible_crops", ()))
     return None
 
 

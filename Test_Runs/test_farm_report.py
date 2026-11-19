@@ -105,7 +105,8 @@ with app.app_context():
     reasons = {x["item"].get("title"): x["reason"] for x in d["dropped"] if isinstance(x["item"], dict)}
     check(reasons.get("Bad id", "").startswith("unknown evidence") and
           reasons.get("Wrong date", "").startswith("date not in its evidence") and
-          "bare field" in reasons.get("Leaves", ""), f"dropped: {reasons}")
+          ("bare field" in reasons.get("Leaves", "") or "does not grow (rice)" in reasons.get("Leaves", "")),
+          f"dropped: {reasons}")
     check(d["insights"][0]["based_on"] == ["Rice not feasible"], f"based on: {d['insights'][0]['based_on']}")
 
     print("\n-- basic summary (no AI result)")
