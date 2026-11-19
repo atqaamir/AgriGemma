@@ -432,7 +432,7 @@ class ChatbotService:
             logger.info("[CHATBOT] ③ AI (%dms)", (time.time() - t3) * 1000)
         except Exception as exc:
             logger.warning("[CHATBOT] ③ AI failed (%dms): %s", (time.time() - t3) * 1000, exc)
-            bot_response = ChatbotService._build_fallback_response(user_message, context)
+            bot_response = ChatbotService._build_fallback_response(user_message, context, user_id)
             is_fallback  = True
 
         logger.info("[CHATBOT] ✓ Total: %dms", (time.time() - t_start) * 1000)
@@ -708,7 +708,7 @@ class ChatbotService:
                 elapsed3 = round((time.time() - t3) * 1000)
                 logger.warning("[CHATBOT-STREAM] ③ AI failed (%dms): %s", elapsed3, exc)
                 if not bot_response:
-                    bot_response = ChatbotService._build_fallback_response(user_message, context)
+                    bot_response = ChatbotService._build_fallback_response(user_message, context, user_id)
                     is_fallback  = True
                     yield sse("token", {"text": bot_response})
 
@@ -762,92 +762,8 @@ class ChatbotService:
         return first_message[:47] + "..." if len(first_message) > 50 else first_message
 
     @staticmethod
-    def _build_fallback_response(user_message: str, context: dict) -> str:
-        """Rule-based response when AI is unavailable. Uses intent context."""
-        m      = user_message.lower()
-        fields = context.get("fields") or []
-        tasks  = context.get("tasks") or {}
-        crops  = context.get("crops") or []
-        farmer = context.get("farmer_name") or "there"
-
-        # Irrigation
-        if any(w in m for w in ("water", "irrigat", "moisture", "dry")):
-            dry_fields = [f for f in fields if (f.get("moisture_level") or 100) < 30]
-            if dry_fields:
-                f = dry_fields[0]
-                return (
-                    f"{farmer}, {f['name']} has critically low soil moisture "
-                    f"({f.get('moisture_level', '?')}%). Irrigate that field today — "
-                    "moisture below 30% causes crop stress and reduced yield."
-                )
-            return (
-                f"{farmer}, monitor soil moisture and irrigate when it drops below 30%. "
-                "Check your scheduled irrigation tasks for timing details."
-            )
-
-        # Disease / pest
-        if any(w in m for w in ("disease", "sick", "pest", "insect", "fungus")):
-            sick = [f for f in fields if (f.get("health_status") or "").lower() in ("poor", "alert", "critical")]
-            if sick:
-                return (
-                    f"{farmer}, {sick[0]['name']} shows {sick[0]['health_status']} health status. "
-                    "Scout that field today for visible symptoms. "
-                    "Early detection prevents spread to other fields."
-                )
-            return (
-                f"{farmer}, scout your fields regularly. Look for yellowing, spots, or unusual wilting. "
-                "If you see symptoms, note the affected area and crop stage before applying treatment."
-            )
-
-        # Tasks
-        if any(w in m for w in ("task", "todo", "what should", "urgent", "overdue")):
-            pending = tasks.get("pending_count") or 0
-            overdue = tasks.get("overdue_count") or 0
-            if overdue:
-                return (
-                    f"{farmer}, you have {overdue} overdue task(s) that need immediate attention. "
-                    f"Open your task list and address those first before they impact your crops."
-                )
-            return (
-                f"{farmer}, you have {pending} pending tasks. "
-                "Start with the highest-priority ones and check if any are approaching their due date."
-            )
-
-        # Weather
-        if any(w in m for w in ("weather", "rain", "heat", "temperature", "forecast")):
-            weather = context.get("weather") or {}
-            current = (weather.get("current") or {})
-            temp = current.get("temp") or current.get("temperature_c") or "?"
-            if weather.get("heatwave_risk"):
-                return (
-                    f"{farmer}, there is an active heatwave risk ({temp}°C). "
-                    "Increase irrigation frequency and avoid fertilizing during peak heat hours."
-                )
-            if weather.get("rain_expected"):
-                return (
-                    f"{farmer}, rain is expected soon. "
-                    "Hold off on irrigation and delay any pending soil work until after rainfall."
-                )
-            return (
-                f"{farmer}, current temperature is {temp}°C. "
-                "Keep monitoring the forecast and adjust irrigation and field work accordingly."
-            )
-
-        # Planting / harvest
-        if any(w in m for w in ("plant", "sow", "harvest", "ripen", "ready")):
-            crop_names = ", ".join(c.get("name", "?") for c in crops[:3])
-            if crop_names:
-                return (
-                    f"{farmer}, your active crops are {crop_names}. "
-                    "Check your seasonal plan for sowing and harvest windows, "
-                    "and make sure soil preparation is complete before planting."
-                )
-            return (
-                f"{farmer}, choose crops suited to your soil type and current season. "
-                "Check the seasonal calendar for optimal sowing windows in your region."
-            )
-
-        return (
-            f"{farmer}, I'm here to help with irrigation, crop health, weather, pests, "
-            "fertilization, and task management. What would you like to know?"
-        )
+    def _build_fallback_response(user_message: str, context: dict, user_id: int = 1) -> str:
+        """Rule-based answer when no AI model answers: from the plan, the forecast-vs-normal
+        block and the tasks (fallback_answer.py)."""
+        from app.services.intelligence_service.chatbot_service import fallback_answer
+        return fallback_answer.build(user_id, user_message, context)

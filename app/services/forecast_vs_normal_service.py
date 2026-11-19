@@ -79,6 +79,7 @@ def build(user_id: int, today=None) -> dict | None:
         "normal": {"max_c": normal["avg_max_temp_c"], "min_c": normal["avg_min_temp_c"], "mean_c": normal_mean,
                    "rain_mm": normal["avg_rainfall_mm"], "rain_days": normal["avg_rain_days"],
                    "condition": normal["condition"]},
+        "rain_by_day": {f.date.isoformat(): f.rainfall_mm or 0 for f in fcs},
         "forecast": {"rain_mm": week_rain, "rain_days": rain_days, "avg_temp_c": week_temp,
                      "first": fcs[0].date.isoformat(), "last": fcs[-1].date.isoformat()},
         "changed_days": [{"date": f.date.isoformat(), "forecast": _day_values(f), "baseline": _day_values(b),

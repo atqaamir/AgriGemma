@@ -243,6 +243,12 @@ The following assumptions define the current scope and operational boundaries of
 - Web search only for general questions that are not about the farm (e.g. a seed price), with a 3 s limit.
 - The last 6 messages of the conversation are passed as history.
 - An unusable AI answer (empty, a template, an echo) is retried once; then a rule-based answer is shown.
+- **Rule-based answer** (both models down; `fallback_answer.py`, no AI): sowing questions get, per crop, the sowing
+  status and date from the plan – a moved sowing as from → to with its reason (the plan's adjustment text, or in the
+  heavy-rain scenario the rain days, amounts and the waterlogging rule); task questions get today's and tomorrow's
+  tasks in priority order; anything else gets "I can't reach the AI right now; here's what your plan says." with the
+  forecast verdict, sowing status and tasks. Not Feasible crops are named as such, never as active. Every answer
+  ends with "The plan re-checks the forecast every morning; the decision is yours."
 - **Forecast change vs. the app's climate normal** (`forecast_vs_normal_service`, no AI): when the forecast differs
   from the baseline weather, every question gets a block with the changed days (forecast vs. expected before), the
   7-day forecast against the app's normal for the month (region climate profile), a verdict, today's plan changes
