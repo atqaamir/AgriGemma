@@ -555,11 +555,14 @@
   }
 
   /* ── Change Popup ─────────────────────────────────────────────────────── */
+  /* A corner toast, not a modal: only the card takes clicks, the page around it stays usable
+     (chat input, buttons). Top right on wide screens, across the top on a phone. */
+  #changeAlertsContainer { pointer-events: none; }
   .notif-change-popup {
+    pointer-events: auto;
     position: fixed;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
+    top: 76px;
+    right: 16px;
     background: #1a0a0a;
     border: 2px solid #ff3b3b;
     border-radius: 14px;
@@ -567,14 +570,16 @@
     box-shadow: 0 0 0 4px rgba(255, 59, 59, 0.2), 0 16px 48px rgba(0, 0, 0, 0.6);
     z-index: 3000;
     width: calc(100% - 32px);
-    max-width: 440px;
+    max-width: 380px;
+    max-height: calc(100vh - 160px);
+    overflow-y: auto;
     animation: changeAlarmIn 0.25s cubic-bezier(0.22, 0.68, 0, 1.2) both,
                changeAlarmPulse 2s ease-in-out 0.25s infinite;
   }
 
   @keyframes changeAlarmIn {
-    from { opacity: 0; transform: translate(-50%, -50%) scale(0.9); }
-    to   { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+    from { opacity: 0; transform: translateY(-8px); }
+    to   { opacity: 1; transform: translateY(0); }
   }
 
   @keyframes changeAlarmPulse {
@@ -907,6 +912,23 @@
   let changeActive    = false;
   let shownChangeIds  = new Set(); // prevents re-queuing after shift() removes from queue
 
+  // Change pop-ups already shown in this browser: each change pops up once, also across page
+  // loads. Storage can be unavailable (private mode, blocked site data): then only this page
+  // remembers, and dismissing still marks the notification read on the server.
+  const SEEN_KEY = `agri_change_popups_seen_${USER_ID}`;
+  function loadSeen() {
+    try { return new Set(JSON.parse(localStorage.getItem(SEEN_KEY) || '[]')); }
+    catch (_) { return new Set(); }
+  }
+  function rememberSeen(id) {
+    shownChangeIds.add(id);
+    try {
+      const ids = [...loadSeen(), id].slice(-50);
+      localStorage.setItem(SEEN_KEY, JSON.stringify([...new Set(ids)]));
+    } catch (_) {}
+  }
+  loadSeen().forEach(id => shownChangeIds.add(id));
+
   // ── DOM refs ──────────────────────────────────────────────────────────────
   function $id(id) { return document.getElementById(id); }
 
@@ -1225,14 +1247,19 @@
 
   // ── Change popups ─────────────────────────────────────────────────────────
   function processChangePopups() {
+    // Only the newest unread change pops up; older unread ones are marked read without a
+    // pop-up (they stay in the bell list). Each change pops up once (rememberSeen).
     const incoming = notifications.filter(n => n.notification_type === 'change' && !n.is_read && !shownChangeIds.has(n.id));
-    incoming.forEach(n => {
-      shownChangeIds.add(n.id);
-      changeQueue.push(n);
-    });
-    if (incoming.length > 0) {
-      document.dispatchEvent(new CustomEvent('farmDataUpdated'));
+    if (!incoming.length) return;
+    const newest = incoming[0];                       // notifications are sorted newest first
+    incoming.slice(1).forEach(n => { rememberSeen(n.id); markAsRead(n.id); });
+    if (changeActive) {                               // a newer change replaces the one on screen
+      document.querySelectorAll('.notif-change-popup').forEach(el => el.remove());
+      changeActive = false;
     }
+    changeQueue = [newest];
+    rememberSeen(newest.id);
+    document.dispatchEvent(new CustomEvent('farmDataUpdated'));
     showNextChangePopup();
   }
 
@@ -1246,6 +1273,8 @@
 
     const el = document.createElement('div');
     el.className = 'notif-change-popup';
+    el.setAttribute('role', 'status');
+    el.dataset.id = n.id;
     el.innerHTML = `
       <div class="notif-change-badge">🚨 Alert — Action Required</div>
       <div class="notif-change-header">
