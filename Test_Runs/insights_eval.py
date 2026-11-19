@@ -108,6 +108,8 @@ def main():
         from app.utils import clock
 
         today = clock.today()
+        from app.services import demo_scenario_service
+        demo_scenario_service.apply(1, "typical")   # scenario 1: 7–8 May western disturbance
         CoordinatorAgent().daily_update(user_id=1, as_of_date=today)
         model = ai_model_service.fast_provider_name()
         print(f"\nInsights eval — user 1 on {today} — {model}")

@@ -52,6 +52,8 @@ with app.app_context():
           "new table created; old dashboard_summary / task_intelligence_summary still there (no DROP)")
     check(AiInsightReport.query.count() == 0, "reseed leaves no reports")
 
+    from app.services import demo_scenario_service
+    demo_scenario_service.apply(1, "typical")   # scenario 1: 7–8 May western disturbance
     CoordinatorAgent().daily_update(user_id=uid, as_of_date=today)
     signals = sig.build_signals(uid)
     row = reports.save(uid, "task_insights", {"insights": []}, signals, is_fallback=True)

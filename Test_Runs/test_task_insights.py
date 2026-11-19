@@ -40,6 +40,8 @@ with app.app_context():
     from app.utils import clock
 
     today = clock.today()
+    from app.services import demo_scenario_service
+    demo_scenario_service.apply(1, "typical")   # scenario 1: 7–8 May western disturbance
     CoordinatorAgent().daily_update(user_id=1, as_of_date=today)
     snap = sig.collect(1, today)
     signals = sig.build_from(snap)

@@ -53,6 +53,8 @@ def main():
 
     with run.app.app_context():
         # 5 May: plan with Maize sowing 6 May and Cotton moved to 9 May (7–8 May unsuitable)
+        from app.services import demo_scenario_service
+        demo_scenario_service.apply(1, "typical")   # scenario 1: 7–8 May western disturbance
         CoordinatorAgent().daily_update(user_id=1, as_of_date=clock.today())
         sow_cotton = TaskGenerationService.generate_plan_tasks(1, date(2027, 5, 9))["created"]
         maize = Task.query.filter(Task.title.like("Sow Maize%")).first()

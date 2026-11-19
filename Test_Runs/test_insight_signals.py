@@ -46,6 +46,8 @@ with app.app_context():
 
     today = clock.today()
     print(f"\n-- user 1 on {today}")
+    from app.services import demo_scenario_service
+    demo_scenario_service.apply(1, "typical")   # scenario 1: 7–8 May western disturbance
     CoordinatorAgent().daily_update(user_id=1, as_of_date=today)
     signals = sig.build_signals(1)
     for s in signals:

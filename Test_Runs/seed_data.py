@@ -548,18 +548,13 @@ def seed_demo_weather(start: date) -> None:
     # Punjab: early-May western disturbance (days 3–4). Sindh: extreme heat. KP: flood risk. Islamabad: heatwave.
 
     HARSH_FORECAST_REGIONS = {
+        # Punjab (user 1): starting state = no forecast change. The forecast equals the
+        # baseline (calm, hot and dry early May), so the plan is as planned (maize 6 May,
+        # cotton 7 May). The Weather Change Simulator's scenarios write the changes
+        # (app/services/demo_scenario_service.py): the typical western disturbance on
+        # 7–8 May, or unusual heavy rain on 6–8 May.
         "Punjab, Pakistan": [
-            # Same as the baseline, except a western disturbance on days 3–4 (common in
-            # early May): dust storm and thundershowers, cooler and cloudy. Bands change to
-            # temperature 20–30, humidity 40–70, sunlight 4–8 → IMPACT_PLAN; Cotton's sowing
-            # rules reject both days (temperature 20–30 °C, sunlight 4–8 h).
-            (31.8, 31, 0.0, 10.2, 12, "Hot and dry; as expected."),
-            (32.2, 30, 0.0, 10.3, 13, "Hot and sunny; as expected."),
-            (27.5, 58, 8.0,  5.5, 38, "Western disturbance: dust storm, then thundershowers."),
-            (28.0, 55, 4.0,  6.0, 24, "Unsettled; scattered showers and cloud."),
-            (32.5, 33, 0.0, 10.2, 14, "Clearing; hot and sunny again."),
-            (33.2, 28, 0.0, 10.5, 12, "Hot and dry."),
-            (33.5, 27, 0.0, 10.6, 11, "Hot and dry."),
+            (t, h, r, s, w, "As expected for the season.") for (t, h, r, s, w, _) in NORMAL_REGIONS["Punjab, Pakistan"]
         ],
         "Sindh, Pakistan": [
             # Extreme heat — well above 38°C, severe desiccation and crop failure risk

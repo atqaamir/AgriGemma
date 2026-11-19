@@ -17,14 +17,20 @@ def check(cond, label):
         FAILED.append(label)
 
 
-from run import app  # noqa: E402  bootstrap(): reseed + startup forecast (cotton 7 → 9 May)
+from run import app  # noqa: E402  bootstrap(): reseed + startup forecast (calm: cotton 7 May)
 
 with app.app_context():
     from app.extensions import db
     from app.models.seasonal_plan import SeasonalPlan
 
     client = app.test_client()
-    print("\n-- user 1 on 5 May 2027 (after the startup forecast)")
+    print("\n-- user 1 at startup: as planned")
+    d0 = client.get("/mytasks/1/upcoming-harvest").get_json()
+    check({c["crop"]: (c["harvest"], c["moved"]) for c in d0["crops"]} ==
+          {"Maize": ("2027-10-06", False), "Cotton": ("2027-10-07", False)}, f"Maize 6 Oct, Cotton 7 Oct: {d0}")
+    r = client.post("/mytasks/1/run-weather-simulator", json={"scenario": "typical"})
+    check(r.status_code == 200, f"scenario 1 ran ({r.status_code})")
+    print("\n-- user 1 on 5 May 2027 (after scenario 1)")
     data = client.get("/mytasks/1/upcoming-harvest").get_json()
     crops = {c["crop"]: c for c in data["crops"]}
     print("    ", data)

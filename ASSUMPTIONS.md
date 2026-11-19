@@ -93,8 +93,21 @@ The following assumptions define the current scope and operational boundaries of
 - **Rabi crops** (wheat, chickpea) are a data addition for later: crop and rulebook values validated by an agronomist.
 - The demo represents a farmer **planning to sow this week**, not a crop already in the ground.
   - Seeded sowing dates are set relative to today (today to today + 2), so they always fall inside the simulator's week.
-  - The demo weather is realistic for early May in Punjab (hot, dry, long sunshine) with a two-day western
-    disturbance that the rules reject for Cotton sowing. Nothing in it is hand-picked for a crop.
+  - The demo weather is realistic for early May in Punjab (hot, dry, long sunshine). Nothing in it is hand-picked
+    for a crop.
+  - **Starting state** (fresh start and "Reset demo"): user 1's forecast equals the baseline, so there is no
+    forecast change and the plan is as planned (maize 6 May, cotton 7 May); today's and tomorrow's tasks exist.
+  - **Weather Change Simulator scenarios** (dropdown; `app/services/demo_scenario_service.py`). Each writes the full
+    7-day forecast for user 1's region (baseline + its days) and runs the complete daily update right away (plan,
+    task sync with moves/cancellations, "Why" explanations, notifications, stale banner on insights), as if the
+    forecast changed during the day after the 7 PM tasks existed. All changes come from the rules:
+    - *Expected change: typical early-May weather* – a western disturbance on 7–8 May (27.5–28 °C, 8 and 4 mm,
+      5.5–6 h sun). Cotton moves 7 → 9 May (temperature 20–30 °C, sunlight 4–8 h), with harvest, irrigation start
+      and fertilization; maize stays on 6 May. No task moves (plan tasks exist for today and tomorrow only).
+    - *Unexpected change: heavy rain, unusual for early May* – thunderstorms with 38, 62 and 45 mm on 6–8 May
+      (86–92 % humidity, 1.5–3 h sun, 25.5–27 °C). Waterlogged seed bed (heavy-rain rule above): maize 6 → 10 May,
+      cotton 7 → 10 May, with cascades; the Sow Maize task moves to 10 May. A banner shows while it is active.
+  - The active scenario is kept in memory (one gunicorn worker); a restart reseeds, so it starts with none.
 - The whole seasonal plan uses the growth stage **Sowing**, and so do user 1's crop records.
   - A crop has no planting date until its sowing task is completed; the completion sets the planting date (and the
     harvest date from the crop duration), un-completing clears it. Until then the pages show

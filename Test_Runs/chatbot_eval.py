@@ -176,6 +176,8 @@ def main():
 
     rows = []
     with run.app.app_context():
+        from app.services import demo_scenario_service
+        demo_scenario_service.apply(1, "typical")   # scenario 1: 7–8 May western disturbance
         CoordinatorAgent().daily_update(user_id=1, as_of_date=clock.today())
         provider = ai_model_service.get_provider().name
         print(f"chatbot eval '{args.label}': demo date {clock.today()}, provider {provider}, pause {args.pause}s")

@@ -90,6 +90,12 @@ def create_app():
         return {"demo_admin_enabled": demo_flags.admin_enabled()}
 
     @app.context_processor
+    def inject_demo_scenario():
+        from app.services import demo_scenario_service as scenarios
+        return {"demo_scenarios": scenarios.options(), "demo_scenario_active": scenarios.active(1),
+                "demo_scenario_banner": scenarios.banner(1)}
+
+    @app.context_processor
     def inject_chat_provider():
         return {"chat_provider": _chat_provider_kind()}
 

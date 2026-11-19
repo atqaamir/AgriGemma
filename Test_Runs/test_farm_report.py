@@ -31,6 +31,8 @@ with app.app_context():
     from app.utils import clock
 
     today = clock.today()
+    from app.services import demo_scenario_service
+    demo_scenario_service.apply(1, "typical")   # scenario 1: 7–8 May western disturbance
     CoordinatorAgent().daily_update(user_id=1, as_of_date=today)
     signals = sig.build_signals(1)
     nf = next(s["id"] for s in signals if s["key"].startswith("plan:not_feasible"))

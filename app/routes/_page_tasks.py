@@ -231,6 +231,10 @@ def run_weather_simulator(user_id):
         resp = jsonify({"error": f"Simulator just ran – try again in {wait} s", "retry_after": wait})
         resp.headers["Retry-After"] = str(wait)
         return resp, 429
+    from app.services import demo_scenario_service as scenarios
+    key = (request.get_json(silent=True) or {}).get("scenario") or scenarios.DEFAULT
+    if key not in scenarios.SCENARIOS:
+        return jsonify({"error": f"Unknown scenario: {key}"}), 400
     try:
         from app.repositories.weather_repository import WeatherRepository
         from app.services.domain_service.user_service import UserService
@@ -243,11 +247,16 @@ def run_weather_simulator(user_id):
         if location and not WeatherRepository.get_by_region_and_date(location, today):
             seed_demo_weather(start=today)
 
-        # daily_update rolls the weekly plan to today..today+6 itself.
+        # The scenario writes the 7-day forecast (baseline + its days); the full daily
+        # update (rolls the plan to today..today+6) then reacts to it through the rules.
+        scenarios.apply(user_id, key)
         result = _coordinator.daily_update(user_id=user_id, as_of_date=today)
 
         return jsonify({
             "message": f"Simulation complete — {result.get('message', 'done')}",
+            "scenario": key,
+            "scenario_label": scenarios.SCENARIOS[key]["label"],
+            "banner": scenarios.banner(user_id),
             "change_status": result.get("change_status"),
             "execution_status": result.get("execution_status"),
         }), 200

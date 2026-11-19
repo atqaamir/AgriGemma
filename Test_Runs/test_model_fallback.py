@@ -139,6 +139,8 @@ try:
         from app.services import insight_signals_service as sig
         from app.utils import clock
 
+        from app.services import demo_scenario_service
+        demo_scenario_service.apply(1, "typical")   # scenario 1: 7–8 May western disturbance
         CoordinatorAgent().daily_update(user_id=1, as_of_date=clock.today())
         snap = sig.collect(1, clock.today())
         signals, cands = sig.build_from(snap), ti.candidates(snap)

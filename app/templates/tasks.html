@@ -238,6 +238,24 @@
         <div class="rounded-xl p-8 flex flex-col justify-between group overflow-hidden relative" style="background-color: rgba(74, 124, 89, 0.70);">
           <div class="relative z-10 space-y-4 flex flex-col items-center text-center h-full">
             <h3 class="text-xl font-bold text-white">Simulate Weather-resilient task changes here</h3>
+            <div class="w-full max-w-md flex flex-col gap-2 text-left">
+              <label for="weatherScenarioSelect" class="text-xs font-semibold text-white/90">Forecast change to simulate</label>
+              <div class="flex items-center gap-2">
+                <select id="weatherScenarioSelect" onchange="updateScenarioInfo()"
+                  class="flex-1 min-w-0 rounded-full border-0 bg-white px-4 py-2 text-sm font-semibold text-[#2d4a35] shadow-sm focus:ring-2 focus:ring-white">
+                  {% for s in demo_scenarios %}
+                  <option value="{{ s.key }}" {{ 'selected' if s.key == (demo_scenario_active or 'typical') else '' }}>{{ s.label }}</option>
+                  {% endfor %}
+                </select>
+                <button type="button" id="scenarioInfoBtn" onclick="toggleScenarioInfo()" aria-expanded="false" aria-controls="scenarioInfo"
+                  title="What this scenario changes"
+                  class="shrink-0 w-9 h-9 rounded-full bg-white/20 border border-white/70 text-white inline-flex items-center justify-center hover:bg-white hover:text-[#4a7c59] transition-colors">
+                  <span class="material-symbols-outlined text-lg" aria-hidden="true">info</span>
+                  <span class="sr-only">What this scenario changes</span>
+                </button>
+              </div>
+              <p id="scenarioInfo" class="hidden text-xs leading-relaxed rounded-xl bg-white/15 p-3 text-white"></p>
+            </div>
             <div class="flex-1 flex items-center justify-center py-4 gap-3 flex-wrap">
               <button
                 id="weatherSimBtn"
@@ -256,7 +274,7 @@
               </button>
               {% endif %}
             </div>
-            <p class="text-xs text-white/80 font-medium">Applies the forecast for the next 7 days to your weekly plan: sowing moves to the first suitable day in its window, and your tasks follow the plan.</p>
+            <p class="text-xs text-white/80 font-medium">Writes the chosen forecast for the next 7 days and runs the daily update at once: sowing moves to the first suitable day in its window, and your tasks follow the plan.</p>
           </div>
           <div class="absolute -right-4 -bottom-4 opacity-10 group-hover:scale-110 transition-transform">
             <span class="material-symbols-outlined text-[120px] text-white">wb_sunny</span>
@@ -270,14 +288,49 @@
       </div>
 
       <script>
+        const SCENARIO_INFO = {{ demo_scenarios | tojson }}.reduce((m, s) => (m[s.key] = s.info, m), {});
+
+        function updateScenarioInfo() {
+          const sel = document.getElementById('weatherScenarioSelect');
+          const info = document.getElementById('scenarioInfo');
+          if (sel && info) info.textContent = SCENARIO_INFO[sel.value] || '';
+        }
+
+        function toggleScenarioInfo() {
+          const info = document.getElementById('scenarioInfo');
+          const btn = document.getElementById('scenarioInfoBtn');
+          if (!info || !btn) return;
+          updateScenarioInfo();
+          const open = info.classList.toggle('hidden') === false;
+          btn.setAttribute('aria-expanded', String(open));
+        }
+
+        function setScenarioBanner(text) {
+          const banner = document.getElementById('demoScenarioBanner');
+          const label = document.getElementById('demoScenarioBannerText');
+          if (!banner || !label) return;
+          label.textContent = text || '';
+          banner.classList.toggle('hidden', !text);
+          banner.classList.toggle('flex', !!text);
+        }
+
         async function runWeatherSimulator() {
           const btn = document.getElementById('weatherSimBtn');
+          const sel = document.getElementById('weatherScenarioSelect');
           btn.disabled = true;
           btn.innerHTML = '<span class="material-symbols-outlined text-base animate-spin">progress_activity</span> Running…';
           try {
-            const res = await fetch(`/mytasks/${USER_ID}/run-weather-simulator`, { method: 'POST' });
+            const res = await fetch(`/mytasks/${USER_ID}/run-weather-simulator`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ scenario: sel ? sel.value : 'typical' }),
+            });
             const data = await res.json().catch(() => ({}));
             showSimToast(res.ok ? (data.message || 'Simulation complete!') : (data.error || 'Simulation failed.'), res.ok);
+            if (res.ok) {
+              setScenarioBanner(data.banner);
+              setTimeout(() => location.reload(), 1500);   // plan, tasks, insights banner follow the update
+            }
           } catch (e) {
             showSimToast('Could not reach server.', false);
           } finally {

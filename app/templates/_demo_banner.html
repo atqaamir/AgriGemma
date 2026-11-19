@@ -6,3 +6,9 @@
   Demo date: {{ demo_today.day }} {{ demo_today.strftime('%B %Y') }} ({{ demo_season }} season)
 </div>
 {% endif %}
+{# Simulated weather scenario (Weather Change Simulator): only for the unusual scenario #}
+<div id="demoScenarioBanner" role="status"
+  class="w-full px-6 py-1.5 text-center text-sm font-semibold bg-[#dbeafe] text-[#1e3a8a] dark:bg-[#1e2a44] dark:text-[#bfdbfe] border-b border-[#bfdbfe] dark:border-[#2c3e63] items-center justify-center gap-1.5 {{ 'flex' if demo_scenario_banner else 'hidden' }}">
+  <span class="material-symbols-outlined text-base" aria-hidden="true">thunderstorm</span>
+  <span id="demoScenarioBannerText">{{ demo_scenario_banner or '' }}</span>
+</div>
