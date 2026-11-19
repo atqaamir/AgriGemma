@@ -1,7 +1,8 @@
 """Text of the change notifications (alert detail + change-summary pop-up) after a re-plan.
 
   facts (no AI: plan, forecast vs. normal, task changes)
-    → rule_text(facts): always available, shown when the AI text is missing or rejected
+       with the forecast verdict (typical / unusual vs. the app's normal) and how to write it
+  → rule_text(facts): always available, shown when the AI text is missing or rejected
     → ai_text(user_id, facts): one fast_complete_direct call (minimal thinking, temperature 0.1),
       checked by ai_text_guard (leaked drafts, crops the user doesn't have, tone, dates).
 """
@@ -108,11 +109,24 @@ _SYSTEM = (
 )
 
 
+GUIDANCE = {
+    "unusual": ("The forecast is UNUSUAL for the season. Start by saying that this much rain is unusual for "
+                "early May, then what moved and why. Calm and factual: do not call the day beautiful, lovely or "
+                "perfect, do not say that everything looks good or that there is nothing to worry about."),
+    "typical": ("The forecast change is within the usual range for early May. Do not call it unusual; say "
+                "what moved and why."),
+}
+
+
 def build_prompt(f: dict) -> str:
     from app.services.intelligence_service.chatbot_service.prompts._prompt_chatbot_service import _SYSTEM_SEP
     lines = [f"Farmer: {f['farmer']}", f"Today: {f['today']}"]
+    if f.get("verdict"):
+        lines.append(f"Forecast verdict: {f['verdict']}")
     if f.get("weather_line"):
         lines.append(f"Weather: {f['weather_line']}")
+    if f.get("verdict") in GUIDANCE:
+        lines.append(f"How to write it: {GUIDANCE[f['verdict']]}")
     if f.get("sowing"):
         lines.append("Sowing:\n" + "\n".join(f"- {s}" for s in f["sowing"]))
     if f.get("other_changes"):

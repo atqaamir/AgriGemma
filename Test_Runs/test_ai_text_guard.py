@@ -108,9 +108,11 @@ with app.app_context():
         check(not any(f.lower() in text.lower() for f in other_fields), f"#{n.id}: no other user's field")
     check(Notification.query.filter(Notification.user_id.in_((2, 3))).count() == 0, "users 2 and 3: none")
 
+    PROMPTS = []
+
     def run(scenario, ai_answer):
         reset_demo()
-        cnt._call_ai = lambda prompt: ai_answer
+        cnt._call_ai = lambda prompt: (PROMPTS.append(prompt), ai_answer)[1]
         before = Notification.query.order_by(Notification.id.desc()).first()
         start = before.id if before else 0
         scenarios.apply(1, scenario)
@@ -130,6 +132,9 @@ with app.app_context():
           and summary.endswith(CLOSING), "pop-up summary: rule-based text (cotton 7 → 9 May, closing line)")
     check(summary and "within the usual range for early May" in summary, "rule text: typical for the season")
     check(alert == summary, "alert detail: the same rule-based text")
+    p = PROMPTS[-1]
+    check("Forecast verdict: typical" in p and "within the usual range for early May" in p
+          and "this much rain is unusual" not in p, "prompt facts: verdict typical + its guidance")
 
     print("\n-- typical weather, the AI returns a good text")
     summary, alert = run("typical", GOOD_TYPICAL)
@@ -143,6 +148,12 @@ with app.app_context():
     check(summary and "unusual for May" in summary and "sowing moved from 6 May to 10 May" in summary
           and "sowing moved from 7 May to 10 May" in summary, "rule text: unusual rain + maize/cotton to 10 May")
     check(alert == summary, "alert detail: the same rule-based text")
+    p = PROMPTS[-1]
+    check("Forecast verdict: unusual" in p and "this much rain is unusual for early May" in p
+          and "do not call the day beautiful" in p and "145 mm of rain in 7 days" in p,
+          "prompt facts: verdict unusual, the rain against the normal, no-cheerful guidance")
+    check("Maize (Punjab Wheat Belt): sowing moved from 6 May to 10 May" in p
+          and "Cotton (The Reservoir): sowing moved from 7 May to 10 May" in p, "prompt facts: what moved")
 
     print("\n-- the AI is down (None): rule-based text")
     summary, _ = run("heavy_rain", None)
