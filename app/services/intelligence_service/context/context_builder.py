@@ -193,6 +193,8 @@ def build_chatbot_context(user_id: int, intent_result: IntentResult) -> dict:
     ctx["intent"]      = intent_result.primary.value
     # The farm's plan (dates, sowing status, Not Feasible crops) for every question.
     ctx["plan"]        = _safe("plan", _fetch_plan, user_id) or {}
+    # Forecast change vs. the app's climate normal (typical / unusual), for every question.
+    ctx["forecast_vs_normal"] = _safe("forecast_vs_normal", _fetch_forecast_vs_normal, user_id)
 
     if spec.needs_weather:
         weather = _safe("weather", _fetch_weather, user_id) or {}
@@ -406,6 +408,11 @@ def _fetch_tasks(today: date, type_filter: frozenset[str], user_id: int) -> dict
             for t in pending
         ],
     }
+
+
+def _fetch_forecast_vs_normal(user_id: int):
+    from app.services import forecast_vs_normal_service
+    return forecast_vs_normal_service.build(user_id)
 
 
 def _fetch_plan(user_id: int) -> dict:

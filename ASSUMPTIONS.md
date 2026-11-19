@@ -243,6 +243,16 @@ The following assumptions define the current scope and operational boundaries of
 - Web search only for general questions that are not about the farm (e.g. a seed price), with a 3 s limit.
 - The last 6 messages of the conversation are passed as history.
 - An unusable AI answer (empty, a template, an echo) is retried once; then a rule-based answer is shown.
+- **Forecast change vs. the app's climate normal** (`forecast_vs_normal_service`, no AI): when the forecast differs
+  from the baseline weather, every question gets a block with the changed days (forecast vs. expected before), the
+  7-day forecast against the app's normal for the month (region climate profile), a verdict, today's plan changes
+  with the rule reasons (rulebook reasoning texts of the factors that made the skipped sowing days unsuitable) and
+  today's task moves/cancellations. Verdict (placeholder thresholds): **unusual** when the 7-day rain is more than
+  2× the month's normal rain and at least 20 mm, or the average temperature is 7 °C or more from the month's normal
+  mean; otherwise **typical for the season**. Prompt rules: explain from the forecast, the normal and the rule reasons;
+  say typical or unusual and compare "with the app's normal for <month>"; "less predictable" is allowed, but no
+  statistics or climate-change figures that are not in the data; the farmer decides, the plan re-checks the forecast
+  every morning. The climate profiles are approximate monthly values in the app, not an official climatology.
 - Evaluation: `Test_Runs/chatbot_eval.py` (28 questions incl. 3 Roman Urdu, expected facts and "must not say" checks).
 
 ---

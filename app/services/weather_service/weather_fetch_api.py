@@ -145,6 +145,9 @@ _MONTH_NAMES = [
 def _match_location(location: str) -> str:
     """Return the best-matching climate profile key, defaulting to 'lahore'."""
     key = location.lower().strip()
+    for profile_key, profile in _CLIMATE_PROFILES.items():   # exact region name first ("Punjab, Pakistan")
+        if profile["region"].lower() == key:
+            return profile_key
     for profile_key in _CLIMATE_PROFILES:
         if profile_key in key or key in profile_key:
             return profile_key

@@ -26,12 +26,18 @@ CHATBOT_SYSTEM = (
     "8. Describe scores in plain words (low / moderate / high, dry / adequate / wet) instead of raw numbers, "
     "and do not repeat the same number in every reply.\n"
     "9. If the farmer mentions a task that is not in their task list, say it is not on their list and name "
-    "the closest matching task from the list."
+    "the closest matching task from the list.\n"
+    "10. When an [UNUSUAL WEATHER] or [FORECAST CHANGE] block is present, explain a change from the forecast "
+    "values, the app's normal for the month and the rule reasons in that block. Say whether the weather is "
+    "typical for the season or unusual, as the block's verdict says, and compare 'with the app's normal for "
+    "<month>'. You may say weather patterns are becoming less predictable, but never give statistics, "
+    "percentages or climate-change figures that are not in the farm data. Never suggest sowing on a day the "
+    "block lists as unsuitable. The decision stays with the farmer: the plan re-checks the forecast every morning."
 )
 
 # Appended to CHATBOT_SYSTEM when the UI language is Urdu
 _URDU_ADDENDUM = (
-    "\n10. The farmer is using the Urdu interface. YOU MUST reply ENTIRELY in Urdu (اردو). "
+    "\n11. The farmer is using the Urdu interface. YOU MUST reply ENTIRELY in Urdu (اردو). "
     "Use plain, simple Urdu suitable for a Pakistani farmer. Field names, crop names, and "
     "numerical values may remain as given in the farm data, but every explanation, suggestion, "
     "and sentence MUST be written in Urdu script. Do not mix in English sentences."

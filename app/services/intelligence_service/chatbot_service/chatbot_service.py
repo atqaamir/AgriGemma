@@ -218,6 +218,12 @@ def _format_farmer_context(
     if plan_txt:
         parts.append(plan_txt)
 
+    # Forecast change vs. the app's normal for the month (typical / unusual), right after the plan.
+    from app.services import forecast_vs_normal_service
+    fvn_txt = forecast_vs_normal_service.block(context.get("forecast_vs_normal"))
+    if fvn_txt:
+        parts.append(fvn_txt)
+
     # Weather signals first — highest priority for Gemma
     harvest_soon = any((c.get("growth_stage") or "").lower() == "harvesting" for c in crops)
     wx_signals = weather_signals(weather, fields, harvest_soon=harvest_soon)
@@ -278,6 +284,7 @@ def _format_farmer_context(
 
     result = "\n\n".join(p for p in parts if p)
     budget = 4_000 if intent_result.primary in (FarmIntent.TASK, FarmIntent.GENERAL) else BUDGET_CHATBOT_CONTEXT
+    budget += len(fvn_txt)   # the forecast-change block never pushes the rest of the farm data out
     return truncate(result, budget)
 
 
