@@ -172,6 +172,16 @@ QUESTIONS = [
 SCENARIO_OF = {37: "heavy_rain", 38: "heavy_rain", 39: "heavy_rain", 40: "heavy_rain"}
 
 
+def invented_heat(answer, context=""):
+    """A temperature >= 36 °C in the answer that is not in the farm data. Temperatures that appear in
+    the context as a rule band ("30–40 °C") or a value ("max 40 °C") are not invented."""
+    for m in re.finditer(INVENTED_HEAT, answer, re.IGNORECASE):
+        num = re.match(r"\d+(?:\.\d)?", m.group(0)).group(0)
+        if not context or not re.search(rf"(?<![\d.]){re.escape(num)}\s*°\s*C", context, re.IGNORECASE):
+            return True
+    return False
+
+
 def _hits(patterns, text):
     return [p for p in patterns if re.search(p, text, re.IGNORECASE | re.MULTILINE)]
 
@@ -188,7 +198,7 @@ def score(qid, answer, context=""):
         "facts_ok": sum(bool(_hits(g, answer)) for g in facts),
         "facts_in_context": sum(bool(_hits(g, context)) for g in facts) if context else None,
         "wrong_advice": wrong,
-        "invented_heat": bool(re.search(INVENTED_HEAT, answer, re.IGNORECASE)),
+        "invented_heat": invented_heat(answer, context),
     }
 
 
@@ -239,6 +249,9 @@ def main():
             conv = cs.ChatbotService.get_or_create_conversation(1, conv)
             conv_of[qid] = conv
             captured.clear()
+            prov = ai_model_service.get_provider()
+            if hasattr(prov, "_tl"):
+                prov._tl.model = None            # forget the previous call's answering model
             t0 = time.time()
             final, stages, error = {}, [], None
             for chunk in cs.ChatbotService._stream_pipeline(1, conv, question, "en"):
@@ -257,6 +270,11 @@ def main():
             context = captured.get("context", "")
             meta = final.get("metadata") or {}
             got_intent = (final.get("intents") or ["?"])[0]
+            answered = ai_model_service.answered_model()
+            attempts = ai_model_service.chat_attempts()
+            answered_by = ("rule-based answer (no AI)" if meta.get("is_fallback") else
+                           f"{answered} (fallback model)" if answered and answered == getattr(prov, "_fallback", None)
+                           else answered or meta.get("model"))
             sc = score(qid, answer, context)
             wrong = sc["wrong_advice"]
             web = [s for s in stages if s.get("stage", "").startswith(("searching_web", "web"))]
@@ -265,7 +283,8 @@ def main():
                 "intent_ok": got_intent in intents, "facts_total": len(facts), "facts_ok": sc["facts_ok"],
                 "facts_in_context": sc["facts_in_context"] or 0, "wrong_advice": wrong,
                 "invented_heat": sc["invented_heat"], "web_search": bool(web),
-                "fallback": bool(meta.get("is_fallback")), "model": meta.get("model"),
+                "fallback": bool(meta.get("is_fallback")), "model": meta.get("model"), "answered_by": answered_by,
+                "attempts": attempts,
                 "total_ms": final.get("total_ms") or round(wall * 1000), "stage_ms": meta.get("stage_ms"),
                 "stages": [(s.get("stage"), s.get("elapsed_ms")) for s in stages],
                 "context_chars": len(context), "context": context, "answer": answer, "error": error,
@@ -274,8 +293,11 @@ def main():
             print(f"[{qid:2}] {'✓' if row['intent_ok'] else '✗'} intent {got_intent:13} facts {row['facts_ok']}/{row['facts_total']} "
                   f"(ctx {row['facts_in_context']}/{row['facts_total']})  {'WRONG ' + str(wrong) if wrong else ''}"
                   f"{' web' if row['web_search'] else ''}{' FALLBACK' if row['fallback'] else ''}"
-                  f"  {row['total_ms'] / 1000:.1f}s  {question}")
+                  f"  {row['total_ms'] / 1000:.1f}s  [{answered_by}]  {question}")
             print(f"       → {(answer if qid >= 36 else answer[:220]).replace(chr(10), ' ')}")
+            if qid >= 36:
+                print("       attempts: " + ("; ".join(f"{a['model']} {a['mode']} {a['outcome']} {a['ms'] / 1000:.1f}s"
+                                                     for a in attempts) or "none recorded"))
             if args.pause and qid != QUESTIONS[-1][0]:
                 time.sleep(args.pause)
 

@@ -102,6 +102,11 @@ with app.app_context():
     check(data["verdict"] == "typical" and "typical for the season" in text
           and "app's normal for May" in text and "8 mm rain on 2 days" in text, "chatbot block: typical for the season")
     check("temperature 20–30 °C" in text and "sunlight 4–8 h" in text, "chatbot block: the cotton rules")
+    check("within the usual range for early May" in text and "than normal' " not in text.split("Verdict")[0]
+          and "If the farmer doubts" not in text and text.rstrip().endswith(
+              "The plan re-checks the forecast every morning; the decision stays with the farmer."),
+          "typical block: 'within the usual range for early May', closing line, no doubt guidance")
+    check("Unsuitable on 7–8 May because: temperature 20–30 °C" in text, "label 'Unsuitable on 7–8 May because:'")
 
     print("\n-- simulator cooldown (30 s)")
     r = client.post("/mytasks/1/run-weather-simulator", json={"scenario": "heavy_rain"})
@@ -142,6 +147,14 @@ with app.app_context():
     check("Waterlogged seed-beds" in text and "Sow Maize – Punjab Wheat Belt: moved from 2027-05-06 to 2027-05-10"
           in text, "chatbot block: rule reasons + task move")
     check("on record" not in text.lower(), "no invented claims from seed notes in the block")
+    check("Unsuitable on 6–9 May because: soil moisture >60 % (seed bed after ≥20 mm rain)" in text,
+          "label 'Unsuitable on 6–9 May because:' (maize)")
+    doubt = next((l for l in text.splitlines() if l.startswith("- If the farmer doubts")), "")
+    check(all(x in doubt for x in ("unusual for May", "forecast for their area", "app's normal for May",
+                                   "forecasts can be wrong", "re-checks the forecast every morning",
+                                   "moves sowing back earlier if the rain does not come", "seed rot",
+                                   "the decision is the farmer's")), f"doubt guidance in the block: {doubt[:80]}…")
+    check(text.rstrip().endswith("the decision stays with the farmer."), "closing line")
     ctx_prompt = __import__("app.services.intelligence_service.chatbot_service.prompts._prompt_chatbot_service",
                             fromlist=["CHATBOT_SYSTEM"]).CHATBOT_SYSTEM
     check("re-checks the forecast every morning" in ctx_prompt and "statistics" in ctx_prompt, "prompt rule 10")

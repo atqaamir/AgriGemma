@@ -147,7 +147,7 @@ def _sowing_rules(entry, field, first, new_date) -> list:
                     rule = lookups[f](entry.crop_name_id, stage, bands[f])
                     seen[key] = {"rule": label, "reasoning": getattr(rule, "reasoning", "") or "", "days": []}
                     rules.append(seen[key])
-                seen[key]["days"].append(_fmt(day))
+                seen[key]["days"].append(day.isoformat())
         day += timedelta(days=1)
     return rules
 
@@ -171,27 +171,57 @@ def _task_changes(user_id: int, today) -> list:
     return out
 
 
+def _day_range(isos: list) -> str:
+    """["2027-05-06", …, "2027-05-09"] → "6–9 May"; gaps → "6 May, 8 May"."""
+    from datetime import date
+    days = sorted(date.fromisoformat(x) for x in isos)
+    if not days:
+        return ""
+    runs, start, prev = [], days[0], days[0]
+    for d in days[1:]:
+        if (d - prev).days == 1:
+            prev = d
+            continue
+        runs.append((start, prev))
+        start = prev = d
+    runs.append((start, prev))
+    out = []
+    for a, b in runs:
+        if a == b:
+            out.append(_fmt(a))
+        elif a.month == b.month:
+            out.append(f"{a.day}–{b.day} {b.strftime('%b')}")
+        else:
+            out.append(f"{_fmt(a)}–{_fmt(b)}")
+    return ", ".join(out)
+
+
 def block(data: dict | None) -> str:
-    """Compact prompt block, or "" without a forecast change."""
+    """Compact prompt block, or "" without a forecast change. The guidance for the answer
+    (verdict wording, doubts, who decides) is part of the data, not only the system prompt."""
     if not data:
         return ""
     from datetime import date
     d = lambda iso: _fmt(date.fromisoformat(iso))
     n, f = data["normal"], data["forecast"]
-    title = "UNUSUAL WEATHER" if data["verdict"] == "unusual" else "FORECAST CHANGE (TYPICAL FOR THE SEASON)"
+    first = date.fromisoformat(f["first"])
+    period = f"{'early ' if first.day <= 10 else ''}{data['month']}"
+    unusual = data["verdict"] == "unusual"
+    title = "UNUSUAL WEATHER" if unusual else "FORECAST CHANGE (TYPICAL FOR THE SEASON)"
     lines = [f"[{title}] {data['region']}, forecast {d(f['first'])}–{d(f['last'])}"]
     for c in data["changed_days"]:
         lines.append(f"- {d(c['date'])}: {c['forecast']} (expected before: {c['baseline']})")
     lines.append(f"- 7-day forecast: {f['rain_mm']:g} mm rain on {f['rain_days']} day(s), average {_num(f['avg_temp_c'])} °C.")
     lines.append(f"- The app's normal for {data['month']}: max {n['max_c']:g} °C, min {n['min_c']:g} °C, "
                  f"{n['rain_mm']:g} mm rain on {n['rain_days']:g} days for the whole month ({n['condition']}).")
-    if data["verdict"] == "unusual":
+    if unusual:
         lines.append("- Verdict: UNUSUAL compared to the app's normal for " + data["month"] + ": "
                      + "; ".join(data["unusual_because"]) + ".")
     else:
-        lines.append(f"- Verdict: typical for the season – the forecast is close to the app's normal for "
-                     f"{data['month']}.")
-    by_crop = {}
+        lines.append(f"- Verdict: within the usual range for {period} (typical for the season, compared with the "
+                     f"app's normal for {data['month']}). Say so; do not describe it as unusual or as "
+                     f"cooler/wetter 'than normal'.")
+    by_crop, waterlogged = {}, False
     for p in data["plan_changes"]:
         by_crop.setdefault(p["crop"], []).append(p)
     for crop, items in by_crop.items():
@@ -200,7 +230,16 @@ def block(data: dict | None) -> str:
         lines.append(f"- Plan change, {crop}{f' ({field})' if field else ''}: {moves}")
         for p in items:
             for r in p["rules"]:
-                lines.append(f"  Rule on {', '.join(r['days'])}: {r['rule']} – {r['reasoning']}")
+                waterlogged = waterlogged or r["rule"].startswith("soil moisture >60")
+                lines.append(f"  Unsuitable on {_day_range(r['days'])} because: {r['rule']} – {r['reasoning']}")
     for t in data["task_changes"]:
         lines.append(f"- Task: {t}")
+    if unusual:
+        risk = ("sowing into waterlogged soil risks seed rot (rule above)" if waterlogged
+                else "the risk of sowing anyway is in the rule reasons above")
+        lines.append(f"- If the farmer doubts the forecast: acknowledge that it is unusual for {data['month']}; "
+                     f"explain that it is the forecast for their area compared with the app's normal for "
+                     f"{data['month']}; forecasts can be wrong, so the plan re-checks the forecast every morning and "
+                     f"moves sowing back earlier if the rain does not come; {risk}; the decision is the farmer's.")
+    lines.append("- The plan re-checks the forecast every morning; the decision stays with the farmer.")
     return "\n".join(lines)
