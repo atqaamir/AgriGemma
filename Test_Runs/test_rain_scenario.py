@@ -107,6 +107,10 @@ with app.app_context():
     r = client.post("/mytasks/1/run-weather-simulator", json={"scenario": "heavy_rain"})
     check(r.status_code == 429 and r.headers.get("Retry-After"), f"second run within 30 s → 429 ({r.status_code})")
     check(sow()["Maize"] == ["2027-05-06"], "nothing changed by the refused run")
+    cd = client.get("/mytasks/1/demo-cooldowns").get_json()
+    cd2 = client.get("/mytasks/1/demo-cooldowns").get_json()
+    check(1 <= cd["simulator"] <= 30 and cd["reset"] == 0 and cd2["simulator"] <= cd["simulator"],
+          f"status endpoint: simulator {cd['simulator']} s left, reset 0, read-only ({cd2})")
     r = client.post("/mytasks/1/run-weather-simulator", json={"scenario": "nope"})
     check(r.status_code == 400, f"unknown scenario → 400 ({r.status_code})")
     os.environ["SIMULATOR_COOLDOWN_SECONDS"] = "0"
@@ -160,6 +164,8 @@ with app.app_context():
           html().split('id="demoScenarioBannerText">')[1][:80], "scenario cleared, no banner, no chatbot block")
     r = client.post("/mytasks/1/reset-demo")
     check(r.status_code == 429 and r.headers.get("Retry-After"), f"second reset within 60 s → 429 ({r.status_code})")
+    cd = client.get("/mytasks/1/demo-cooldowns").get_json()
+    check(50 <= cd["reset"] <= 60, f"status endpoint: reset {cd['reset']} s left")
     check(client.post("/mytasks/1/run-refresh-data").status_code == 403, "Refresh Data stays admin-only (403)")
 
     print("\n-- scenario can be run again after the reset")

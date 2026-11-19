@@ -334,6 +334,44 @@
           banner.classList.toggle('flex', !!text);
         }
 
+        // ── Cooldown countdowns (remaining time from the server, so they survive a reload) ──
+        const SIM_LABEL = '<span class="material-symbols-outlined text-base">thunderstorm</span> Weather Change Simulator';
+        const RESET_LABEL = '<span class="material-symbols-outlined text-base">restart_alt</span> Reset demo';
+        const _countdowns = {};
+
+        function startCountdown(btnId, seconds, label) {
+          const btn = document.getElementById(btnId);
+          if (!btn) return;
+          clearInterval(_countdowns[btnId]);
+          let left = Math.ceil(Number(seconds) || 0);
+          const done = () => {
+            clearInterval(_countdowns[btnId]);
+            delete _countdowns[btnId];
+            btn.disabled = false;
+            btn.classList.remove('opacity-70', 'cursor-not-allowed');
+            btn.innerHTML = label;
+          };
+          if (left <= 0) { done(); return; }
+          const paint = () => {
+            btn.innerHTML = `<span class="material-symbols-outlined text-base">timer</span> Available again in ${left} s`;
+          };
+          btn.disabled = true;
+          btn.classList.add('opacity-70', 'cursor-not-allowed');
+          paint();
+          _countdowns[btnId] = setInterval(() => { left -= 1; left <= 0 ? done() : paint(); }, 1000);
+        }
+
+        async function refreshCooldowns() {
+          try {
+            const res = await fetch(`/mytasks/${USER_ID}/demo-cooldowns`);
+            if (!res.ok) return;
+            const cd = await res.json();
+            startCountdown('weatherSimBtn', cd.simulator, SIM_LABEL);
+            startCountdown('resetDemoBtn', cd.reset, RESET_LABEL);
+          } catch (e) { /* the server still refuses runs inside the cooldown */ }
+        }
+        document.addEventListener('DOMContentLoaded', refreshCooldowns);
+
         async function runWeatherSimulator() {
           const btn = document.getElementById('weatherSimBtn');
           const sel = document.getElementById('weatherScenarioSelect');
@@ -349,14 +387,18 @@
             showSimToast(res.ok ? (data.message || 'Simulation complete!') : (data.error || 'Simulation failed.'), res.ok);
             if (res.ok) {
               setScenarioBanner(data.banner);
+              await refreshCooldowns();
               setTimeout(() => location.reload(), 1500);   // plan, tasks, insights banner follow the update
+              return;
+            }
+            if (res.status === 429) {
+              startCountdown('weatherSimBtn', data.retry_after || res.headers.get('Retry-After'), SIM_LABEL);
+              return;
             }
           } catch (e) {
             showSimToast('Could not reach server.', false);
-          } finally {
-            btn.disabled = false;
-            btn.innerHTML = '<span class="material-symbols-outlined text-base">thunderstorm</span> Weather Change Simulator';
           }
+          startCountdown('weatherSimBtn', 0, SIM_LABEL);
         }
 
         function askResetDemo() {
@@ -382,8 +424,12 @@
             showSimToast(res.ok ? (data.message || 'Demo reset.') : (data.error || 'Reset failed.'), res.ok);
             if (res.ok) {
               setScenarioBanner(null);
+              await refreshCooldowns();
               setTimeout(() => location.reload(), 1500);
               return;
+            }
+            if (res.status === 429) {
+              startCountdown('resetDemoBtn', data.retry_after || res.headers.get('Retry-After'), RESET_LABEL);
             }
           } catch (e) {
             showSimToast('Could not reach server.', false);

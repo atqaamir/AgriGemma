@@ -54,3 +54,22 @@ def reset_wait_seconds() -> int:
             return max(1, int(RESET_COOLDOWN_SECONDS - (now - last) + 0.999))
         _last_reset[0] = now
         return 0
+
+
+def simulator_remaining(user_id: int) -> int:
+    """Seconds until the simulator may run again for this user (read-only, nothing recorded)."""
+    cooldown = simulator_cooldown_seconds()
+    with _lock:
+        last = _last_run.get(user_id)
+    if not cooldown or last is None:
+        return 0
+    return max(0, int(cooldown - (time.monotonic() - last) + 0.999))
+
+
+def reset_remaining() -> int:
+    """Seconds until "Reset demo" may run again (read-only, nothing recorded)."""
+    with _lock:
+        last = _last_reset[0]
+    if last is None:
+        return 0
+    return max(0, int(RESET_COOLDOWN_SECONDS - (time.monotonic() - last) + 0.999))

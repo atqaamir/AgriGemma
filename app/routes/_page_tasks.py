@@ -223,6 +223,15 @@ def run_refresh_data(user_id):
         return jsonify({"error": str(exc)}), 500
 
 
+@tasks_bp.route("/<int:user_id>/demo-cooldowns", methods=["GET"])
+def demo_cooldowns(user_id):
+    """Seconds left on the simulator (per user) and Reset demo (global) cooldowns, so the
+    page can show a countdown that survives a reload. Read-only."""
+    from app.utils import demo_flags
+    return jsonify({"simulator": demo_flags.simulator_remaining(user_id),
+                    "reset": demo_flags.reset_remaining()}), 200
+
+
 @tasks_bp.route("/<int:user_id>/reset-demo", methods=["POST"])
 def reset_demo(user_id):
     """Back to the fresh-start state (reseed + calm startup forecast). Allowed on the live
