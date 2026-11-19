@@ -72,16 +72,36 @@ class RuleEngine:
                 if any(RuleEngine._rule_blocks_sowing(lookup(crop_id, stage_id, band))
                        for band in RuleEngine._BANDS[factor])]
 
+    # R1 – seed bed after heavy rain (placeholders until an agronomist validates them):
+    # a day with >= SEEDBED_RAIN_MM forecast rain and the SEEDBED_DRYING_DAYS after it count
+    # as a saturated seed bed (soil moisture ">60"); the existing waterlogging rule decides.
+    SEEDBED_RAIN_MM = 20.0
+    SEEDBED_DRYING_DAYS = 1
+    SEEDBED_SATURATED_PCT = 65.0          # any value in the ">60" band
+    SEEDBED_WET_NOTE = f" (seed bed after ≥{SEEDBED_RAIN_MM:g} mm rain)"
+    # R2 – weekly rules (dry week, irrigation adjustments) use the forecast rain total.
+    WEEKLY_RAIN_TOTAL = True
+
     @staticmethod
-    def _assess_sowing_day(crop_id, stage_id, weather, field_moisture, field_ph):
+    def _seedbed_wet(location, day, weather_lookup) -> bool:
+        """True if `day` or one of the drying days before it has heavy rain."""
+        for back in range(RuleEngine.SEEDBED_DRYING_DAYS + 1):
+            w = weather_lookup(location, day - timedelta(days=back))
+            if w and (w.get("rainfall_mm") or 0) >= RuleEngine.SEEDBED_RAIN_MM:
+                return True
+        return False
+
+    @staticmethod
+    def _assess_sowing_day(crop_id, stage_id, weather, field_moisture, field_ph, seedbed_wet=False):
         """Return (blocking_factors, bands) for one day, or None without weather data.
-        A day is suitable when blocking_factors is empty (rules don't add up)."""
+        A day is suitable when blocking_factors is empty (rules don't add up).
+        seedbed_wet (R1): the seed bed counts as saturated after heavy rain."""
         if weather is None:
             return None
         blocking, bands = [], {}
         for factor, attr, lookup, _ in RuleEngine._rule_factors():
             if factor == "soil_moisture":
-                value = field_moisture
+                value = RuleEngine.SEEDBED_SATURATED_PCT if seedbed_wet else field_moisture
             elif factor == "ph_level":
                 value = field_ph
             else:
@@ -133,9 +153,10 @@ class RuleEngine:
         unsuitable, chosen = [], None
         for i in range((end - start).days + 1):
             day = start + timedelta(days=i)
+            wet = RuleEngine._seedbed_wet(location, day, weather_lookup)
             result = RuleEngine._assess_sowing_day(
                 crop_id, stage_id, weather_lookup(location, day),
-                entry.get("field_moisture"), entry.get("field_ph"))
+                entry.get("field_moisture"), entry.get("field_ph"), seedbed_wet=wet)
             if result is None:
                 unsuitable.append((day, None, ["no weather data"]))
                 continue
@@ -143,7 +164,9 @@ class RuleEngine:
             if not blocking:
                 chosen = (day, bands)
                 break
-            unsuitable.append((day, blocking, [RuleEngine._band_text(f, bands[f]) for f in blocking]))
+            unsuitable.append((day, blocking, [
+                RuleEngine._band_text(f, bands[f]) + (RuleEngine.SEEDBED_WET_NOTE if wet and f == "soil_moisture" else "")
+                for f in blocking]))
         why = "; ".join(f"{fmt(d)}: {', '.join(texts)}" for d, _, texts in unsuitable)
 
         if chosen:
@@ -1084,6 +1107,16 @@ class RuleEngine:
                 field_location, rep_date
             ) if field_location and rep_date else None
 
+            # R2: the rainfall bands are seasonal amounts, so the weekly rules (dry week,
+            # irrigation adjustments) compare the forecast total of the visible days, not
+            # one day's rain. The sowing-day check keeps per-day values (+ R1).
+            week_rain = None
+            if field_location and RuleEngine.WEEKLY_RAIN_TOTAL:
+                days = [RuleEngine.get_forecast_by_region_and_date(field_location, as_of_date + timedelta(days=i))
+                        for i in range((week_end - as_of_date).days + 1)]
+                rains = [d.get("rainfall_mm") or 0 for d in days if d]
+                week_rain = round(sum(rains), 1) if rains else None
+
             climate_adjustments = []
             if sowing_plan and sowing_plan["adjustment"]:
                 climate_adjustments.append(sowing_plan["adjustment"])
@@ -1098,6 +1131,8 @@ class RuleEngine:
                     value = field_moisture
                 elif factor == "ph_level":
                     value = field_ph
+                elif factor == "rainfall" and week_rain is not None:
+                    value = week_rain
                 elif forecast and weather_attr:
                     value = forecast.get(weather_attr)
                 else:
@@ -1130,7 +1165,8 @@ class RuleEngine:
                         action, events, factor_label,
                         window_start=max(as_of_date, week_start_date), window_end=week_end,
                         irrigation_period=RuleEngine._irrigation_period(entry, sowing_plan),
-                        rule_note=RuleEngine._band_text(factor, band),
+                        rule_note=RuleEngine._band_text(factor, band)
+                        + (" in the 7-day" if factor == "rainfall" and week_rain is not None else ""),
                     )
                     if text:
                         texts.append(text)

@@ -66,6 +66,19 @@ The following assumptions define the current scope and operational boundaries of
 | **C** | Forecast changed and impacts the weekly plan only |
 | **D** | Forecast changed and impacts both the weekly plan and daily tasks |
 
+### Heavy rain and the seed bed (placeholders until an agronomist validates them)
+
+- **Seed bed after heavy rain (R1).** The fields' soil moisture is a stored reading that rain does not change. For the
+  sowing-day check, a day with **≥ 20 mm** of forecast rain, and **one drying day** after it, count as a saturated seed
+  bed (soil moisture > 60 %). The existing waterlogging rule then decides ("Waterlogged seed-beds cause seed rot …",
+  delay sowing). The plan text says "soil moisture >60 % (seed bed after ≥20 mm rain)". 20 mm and the one drying day
+  are placeholders (`RuleEngine.SEEDBED_RAIN_MM`, `SEEDBED_DRYING_DAYS`).
+- **Rainfall rule on the weekly total (R2).** The rainfall bands (< 50 … > 300 mm) are seasonal amounts (e.g. maize
+  "ideal 100–200 mm at sowing"). The weekly rules (dry week, irrigation adjustments) therefore compare the **forecast
+  total of the visible days**, not one day's rain – still an approximation of a seasonal amount. The sowing-day check
+  keeps per-day values (plus R1), so one rainy day does not block a whole week. The baseline pass at seeding is unchanged.
+- Light showers (e.g. 8 mm and 4 mm) do not trigger R1; plans of users without heavy rain are unchanged.
+
 ---
 
 ## Demo Scenario: Pre-Sowing Decision
