@@ -223,6 +223,28 @@ def run_refresh_data(user_id):
         return jsonify({"error": str(exc)}), 500
 
 
+@tasks_bp.route("/<int:user_id>/reset-demo", methods=["POST"])
+def reset_demo(user_id):
+    """Back to the fresh-start state (reseed + calm startup forecast). Allowed on the live
+    demo (only demo data), unlike Refresh Data; one reset per 60 s for the whole app."""
+    from app.utils import demo_flags
+    wait = demo_flags.reset_wait_seconds()
+    if wait:
+        resp = jsonify({"error": f"The demo was just reset – try again in {wait} s", "retry_after": wait})
+        resp.headers["Retry-After"] = str(wait)
+        return resp, 429
+    try:
+        from app.services.demo_reset_service import reset_demo as _reset
+        _reset()
+        d = clock.today()
+        return jsonify({"message": f"Demo reset to the starting state ({d.day} {d:%B}, no forecast change)."}), 200
+    except Exception as exc:
+        from app.extensions import db
+        db.session.rollback()
+        current_app.logger.exception("reset_demo failed (requested by user %s)", user_id)
+        return jsonify({"error": str(exc)}), 500
+
+
 @tasks_bp.route("/<int:user_id>/run-weather-simulator", methods=["POST"])
 def run_weather_simulator(user_id):
     from app.utils import demo_flags

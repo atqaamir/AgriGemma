@@ -264,6 +264,26 @@
                 <span class="material-symbols-outlined text-base">thunderstorm</span>
                 Weather Change Simulator
               </button>
+              <button
+                id="resetDemoBtn"
+                type="button"
+                onclick="askResetDemo()"
+                aria-expanded="false" aria-controls="resetDemoConfirm"
+                class="px-6 py-3 rounded-full bg-white/20 border border-white text-white font-bold text-sm shadow-md hover:bg-white hover:text-[#4a7c59] hover:shadow-lg active:scale-95 transition-all inline-flex items-center gap-2">
+                <span class="material-symbols-outlined text-base">restart_alt</span>
+                Reset demo
+              </button>
+              <div id="resetDemoConfirm" role="group" aria-label="Confirm demo reset"
+                class="hidden basis-full rounded-xl bg-white p-3 text-sm text-[#2d4a35] shadow-md text-left">
+                <p class="font-semibold">Reset the demo data?</p>
+                <p class="text-xs text-[#4b5e50] mt-0.5">Back to {{ (demo_today.day ~ ' ' ~ demo_today.strftime('%B')) if demo_today else 'today' }} with no forecast change: plans, tasks, notifications, chat and reports start fresh.</p>
+                <div class="mt-2 flex gap-2 justify-end">
+                  <button type="button" onclick="cancelResetDemo()"
+                    class="px-4 py-1.5 rounded-full border border-[#4a7c59] text-[#4a7c59] font-semibold hover:bg-[#eef5f0]">Cancel</button>
+                  <button type="button" id="resetDemoConfirmBtn" onclick="runResetDemo()"
+                    class="px-4 py-1.5 rounded-full bg-[#4a7c59] text-white font-semibold hover:bg-[#3d6a4a]">Confirm reset</button>
+                </div>
+              </div>
               {% if demo_admin_enabled %}
               <button
                 id="refreshDataBtn"
@@ -337,6 +357,40 @@
             btn.disabled = false;
             btn.innerHTML = '<span class="material-symbols-outlined text-base">thunderstorm</span> Weather Change Simulator';
           }
+        }
+
+        function askResetDemo() {
+          document.getElementById('resetDemoConfirm').classList.remove('hidden');
+          document.getElementById('resetDemoBtn').setAttribute('aria-expanded', 'true');
+          document.getElementById('resetDemoConfirmBtn').focus();
+        }
+
+        function cancelResetDemo() {
+          document.getElementById('resetDemoConfirm').classList.add('hidden');
+          const btn = document.getElementById('resetDemoBtn');
+          btn.setAttribute('aria-expanded', 'false');
+          btn.focus();
+        }
+
+        async function runResetDemo() {
+          const btn = document.getElementById('resetDemoConfirmBtn');
+          btn.disabled = true;
+          btn.textContent = 'Resetting…';
+          try {
+            const res = await fetch(`/mytasks/${USER_ID}/reset-demo`, { method: 'POST' });
+            const data = await res.json().catch(() => ({}));
+            showSimToast(res.ok ? (data.message || 'Demo reset.') : (data.error || 'Reset failed.'), res.ok);
+            if (res.ok) {
+              setScenarioBanner(null);
+              setTimeout(() => location.reload(), 1500);
+              return;
+            }
+          } catch (e) {
+            showSimToast('Could not reach server.', false);
+          }
+          btn.disabled = false;
+          btn.textContent = 'Confirm reset';
+          cancelResetDemo();
         }
 
         async function runRefreshData() {

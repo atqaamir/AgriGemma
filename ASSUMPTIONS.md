@@ -289,6 +289,11 @@ The following assumptions define the current scope and operational boundaries of
 - The Weather Change Simulator stays public (it is the demo). Each run makes an AI call, so one user can run it at most
   every `SIMULATOR_COOLDOWN_SECONDS` (default 30); a click inside the cooldown gets "Simulator just ran – try again in
   N s" (HTTP 429). The cooldown is kept in memory, which works because the app runs one gunicorn worker.
+- **Reset demo** (button next to the simulator, `POST /mytasks/<id>/reset-demo`) is public too, unlike Refresh Data:
+  it puts the farm back to the fresh-start state (reseed of the demo tables + the calm startup forecast, no AI, no
+  notifications), so the scenarios can be run again. It never touches vocabulary or rulebook tables. One reset per
+  60 s for the whole app (HTTP 429 with "try again in N s"); the confirmation is in the page (no browser popup).
+  Everyone using the live demo at that moment sees the reset (one shared demo farm).
 - `GET /health` returns "ok" for an uptime ping that keeps the free Render instance awake.
 - **Keep-alive:** the free Render instance sleeps after 15 minutes without requests (the next request then waits for a
   cold start, which also reseeds the demo). The GitHub Actions workflow `.github/workflows/keep-alive.yml` pings

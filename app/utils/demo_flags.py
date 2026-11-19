@@ -6,13 +6,18 @@ DEMO_ADMIN_ENABLED (default off): Flask-Admin (/admin), the "Refresh Data" resee
 
 SIMULATOR_COOLDOWN_SECONDS (default 30): minimum time between two Weather Change
 Simulator runs per user (each run makes an AI call). 0 disables the cooldown.
+
+"Reset demo" (POST /mytasks/<id>/reset-demo) is allowed on the live demo: it only reseeds
+the demo data, at most once per 60 s for the whole app.
 """
 import os
 import threading
 import time
 
 _last_run = {}            # user_id -> time.monotonic() of the last accepted run (1 gunicorn worker)
+_last_reset = [None]      # time.monotonic() of the last accepted "Reset demo" (global: it reseeds everyone)
 _lock = threading.Lock()
+RESET_COOLDOWN_SECONDS = 60
 
 
 def admin_enabled() -> bool:
@@ -36,4 +41,16 @@ def simulator_wait_seconds(user_id: int) -> int:
         if cooldown and last is not None and now - last < cooldown:
             return max(1, int(cooldown - (now - last) + 0.999))
         _last_run[user_id] = now
+        return 0
+
+
+def reset_wait_seconds() -> int:
+    """0 = "Reset demo" may run now (the run is recorded); else seconds left to wait.
+    Works without DEMO_ADMIN_ENABLED; one reset per RESET_COOLDOWN_SECONDS for the whole app."""
+    now = time.monotonic()
+    with _lock:
+        last = _last_reset[0]
+        if last is not None and now - last < RESET_COOLDOWN_SECONDS:
+            return max(1, int(RESET_COOLDOWN_SECONDS - (now - last) + 0.999))
+        _last_reset[0] = now
         return 0
