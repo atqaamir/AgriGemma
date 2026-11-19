@@ -1,5 +1,7 @@
-"""Chatbot evaluation: 35 questions for user 1 on the demo date (32 English + 3 Roman Urdu),
-incl. a 5-question conversation from the live app (bare fields, nothing sown yet).
+"""Chatbot evaluation: 40 questions for user 1 on the demo date (37 English + 3 Roman Urdu),
+incl. a 5-question conversation from the live app (bare fields, nothing sown yet) and the two
+simulator scenarios: Q1–36 after scenario 1 (typical early-May weather), Q37–40 a conversation
+after scenario 2 (unusual heavy rain on 6–8 May; full answers printed).
 
 Runs the same streaming pipeline as the chat page (ChatbotService._stream_pipeline) and logs,
 per question: detected intent, context size, web search, time per stage, the answer, which
@@ -11,8 +13,9 @@ Usage (from the project root):
     options: --pause 6   seconds between AI calls (rate limits; default 0)
              --only 1,2  run only these question ids
 Uses the AI provider from .env (USE_PLACEHOLDER_AI=true for a free dry run). The app start
-reseeds the demo database, then the daily update runs once for user 1 (as after a simulator
-click): Maize sowing 6 May, Cotton moved to 9 May, Rice Not Feasible.
+reseeds the demo database (calm forecast), then scenario 1 + the daily update run for user 1
+(as after a simulator click): Maize sowing 6 May, Cotton moved to 9 May, Rice Not Feasible.
+Before Q37 scenario 2 + the daily update: maize and cotton sowing 10 May.
 """
 import argparse
 import json
@@ -43,6 +46,14 @@ STYLE = [r"\bI understand you", r"\bI know you", r"\byou must\b"]
 SOIL = [r"\bsoil\b", r"stubble", r"crust", r"moisture", r"seedbed"]
 # Temperatures the forecast does not have (it peaks at 33.5 °C): invented heat.
 INVENTED_HEAT = r"\b(?:3[6-9]|4\d)(?:\.\d)?\s*(?:°\s*c|°|degrees)"
+# Invented statistics (comparisons computed from the app's own data are fine, e.g. "145 mm against the app's
+# normal of 8 mm for May"). Percentages are checked separately against the context (humidity values are data).
+INVENTED_STATS = [r"\bon record\b", r"\brecord[- ](?:high|low|rain\w*|breaking)", r"\bstatistic\w*",
+                  r"\bstud(?:y|ies) show", r"\bonce in (?:a|\d+)\s+(?:years?|decades?|century)",
+                  r"\bin (?:the (?:last|past) )?\d+ years\b", r"\bclimate change\b[^.]{0,80}\d"]
+# Recommending a sowing date during the rain (6–8 May)
+SOW_IN_RAIN = [NEG + r"\b(?:sow|plant)\w*\s+(?:it\s+|the\s+|your\s+)?(?:maize\s+|cotton\s+)?(?:on|by)\s+" + day("[6-8]"),
+               r"\b(?:new|recommended|best)\s+(?:sowing\s+)?date\b[^.]{0,25}" + day("[6-8]")]
 
 # id, question, expected intent(s), facts (each group: list of regex, any may match),
 # must-not regexes (wrong advice), follow-up of question id (same conversation)
@@ -130,7 +141,35 @@ QUESTIONS = [
      [[r"erosion"], [r"(?:stress|disease)[^.]{0,40}\blow\b", r"\blow\b[^.]{0,40}(?:stress|disease)"]],
      PLANT_TERMS + STYLE + [r"(?<!not )(?<!no )\bhigh\b[^.]{0,30}\b(?:stress|disease)",
                             r"\bstress\b[^.]{0,30}\bhigh\b"], None),
+    # Scenario 1 (typical early-May weather): the forecast is close to the app's normal for May
+    (36, "Why did my cotton sowing move?", ["planting", "weather", "general"],
+     [[day(7), day(8), r"7[–-]8 may"], [r"temperature", r"sunlight", r"cloud", r"shower", r"disturbance"],
+      [r"typical", r"common", r"usual for", r"normal for", r"expected for", r"close to (?:the )?(?:app'?s )?normal"],
+      [day(9)]],
+     PLANT_TERMS + STYLE + INVENTED_STATS + [NEG + r"(?<!not )\bunusual\b"], None),
+    # Scenario 2 (unusual heavy rain on 6–8 May): one conversation
+    (37, "Why did my maize sowing move?", ["planting", "weather", "general"],
+     [[r"\b38\s*mm", r"\b62\s*mm", r"\b45\s*mm", r"\b145\s*mm", r"heavy rain"],
+      [day(6), day(7), day(8), r"6[–-]8 may"],
+      [r"waterlog", r"seed rot", r"saturat", r"soil moisture", r"flood"], [day(10)]],
+     PLANT_TERMS + STYLE + INVENTED_STATS + SOW_IN_RAIN, None),
+    (38, "But it never rains this much in May. Why should I trust this?", ["weather", "general", "planting"],
+     [[r"unusual", r"not typical", r"uncommon", r"rare", r"far (?:above|more)"],
+      [r"normal for may", r"app'?s normal", r"\b8\s*mm"],
+      [r"forecast"], [r"every morning", r"re-?check", r"daily", r"each day", r"your (?:decision|call|choice)",
+                      r"up to you", r"you decide"]],
+     PLANT_TERMS + STYLE + INVENTED_STATS + SOW_IN_RAIN, 37),
+    (39, "What happens if I sow anyway?", ["planting", "general", "weather"],
+     [[r"seed rot", r"\brot\b", r"waterlog", r"oxygen", r"damping", r"poor (?:germination|establishment|emergence)"],
+      [r"rain", r"saturat", r"waterlog", r"wet"]],
+     PLANT_TERMS + STYLE + INVENTED_STATS + SOW_IN_RAIN, 38),
+    (40, "Okay, and when should I sow now?", ["planting", "general"],
+     [[day(10)], [r"every morning", r"re-?check", r"daily", r"forecast"]],
+     PLANT_TERMS + STYLE + INVENTED_STATS + SOW_IN_RAIN, 39),
 ]
+
+# Scenario per question (default: scenario 1 "typical"); questions run in this order.
+SCENARIO_OF = {37: "heavy_rain", 38: "heavy_rain", 39: "heavy_rain", 40: "heavy_rain"}
 
 
 def _hits(patterns, text):
@@ -141,10 +180,14 @@ def score(qid, answer, context=""):
     """facts_ok, facts_in_context, wrong-advice hits, invented heat for one answer."""
     q = next(x for x in QUESTIONS if x[0] == qid)
     facts, must_not = q[3], q[4]
+    wrong = _hits(must_not, answer)
+    if qid >= 36:   # scenario questions: a percentage must come from the farm data (e.g. humidity)
+        wrong += [f"invented percentage {p}%" for p in re.findall(r"(\d+(?:\.\d+)?)\s*%", answer)
+                  if not re.search(rf"(?<![\d.]){re.escape(p)}\s*%", context or "")]
     return {
         "facts_ok": sum(bool(_hits(g, answer)) for g in facts),
         "facts_in_context": sum(bool(_hits(g, context)) for g in facts) if context else None,
-        "wrong_advice": _hits(must_not, answer),
+        "wrong_advice": wrong,
         "invented_heat": bool(re.search(INVENTED_HEAT, answer, re.IGNORECASE)),
     }
 
@@ -182,9 +225,16 @@ def main():
         provider = ai_model_service.get_provider().name
         print(f"chatbot eval '{args.label}': demo date {clock.today()}, provider {provider}, pause {args.pause}s")
         conv_of = {}
+        current = "typical"
         for qid, question, intents, facts, must_not, follow in QUESTIONS:
             if only and qid not in only:
                 continue
+            want = SCENARIO_OF.get(qid, "typical")
+            if want != current:   # switch the simulator scenario (full daily update, as in the app)
+                demo_scenario_service.apply(1, want)
+                CoordinatorAgent().daily_update(user_id=1, as_of_date=clock.today())
+                current = want
+                print(f"-- scenario: {demo_scenario_service.SCENARIOS[want]['label']}")
             conv = conv_of.get(follow) if follow else None
             conv = cs.ChatbotService.get_or_create_conversation(1, conv)
             conv_of[qid] = conv
@@ -225,7 +275,7 @@ def main():
                   f"(ctx {row['facts_in_context']}/{row['facts_total']})  {'WRONG ' + str(wrong) if wrong else ''}"
                   f"{' web' if row['web_search'] else ''}{' FALLBACK' if row['fallback'] else ''}"
                   f"  {row['total_ms'] / 1000:.1f}s  {question}")
-            print(f"       → {answer[:220].replace(chr(10), ' ')}")
+            print(f"       → {(answer if qid >= 36 else answer[:220]).replace(chr(10), ' ')}")
             if args.pause and qid != QUESTIONS[-1][0]:
                 time.sleep(args.pause)
 

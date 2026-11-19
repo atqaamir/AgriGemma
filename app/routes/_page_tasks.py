@@ -248,15 +248,15 @@ def reset_demo(user_id):
 @tasks_bp.route("/<int:user_id>/run-weather-simulator", methods=["POST"])
 def run_weather_simulator(user_id):
     from app.utils import demo_flags
+    from app.services import demo_scenario_service as scenarios
+    key = (request.get_json(silent=True) or {}).get("scenario") or scenarios.DEFAULT
+    if key not in scenarios.SCENARIOS:   # before the cooldown: a bad request does not use it up
+        return jsonify({"error": f"Unknown scenario: {key}"}), 400
     wait = demo_flags.simulator_wait_seconds(user_id)
     if wait:
         resp = jsonify({"error": f"Simulator just ran – try again in {wait} s", "retry_after": wait})
         resp.headers["Retry-After"] = str(wait)
         return resp, 429
-    from app.services import demo_scenario_service as scenarios
-    key = (request.get_json(silent=True) or {}).get("scenario") or scenarios.DEFAULT
-    if key not in scenarios.SCENARIOS:
-        return jsonify({"error": f"Unknown scenario: {key}"}), 400
     try:
         from app.repositories.weather_repository import WeatherRepository
         from app.services.domain_service.user_service import UserService
