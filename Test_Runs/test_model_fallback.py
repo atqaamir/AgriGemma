@@ -57,6 +57,7 @@ def fake_urlopen(req, timeout=None):
                                              "supportedGenerationMethods": ["generateContent"]}]}).encode())
     model = PRIMARY if f"/models/{PRIMARY}:" in url else FALLBACK
     FAKE["calls"].append(model)
+    FAKE.setdefault("timeouts", []).append(timeout)
     mode = FAKE["primary"] if model == PRIMARY else FAKE["fallback"]
     if mode == "503":
         raise urllib.error.HTTPError(url, 503, "Service Unavailable", None,
@@ -77,7 +78,7 @@ def fake_urlopen(req, timeout=None):
 
 
 def reset(primary, fallback=None, text="fallback answer"):
-    FAKE.update(primary=primary, fallback=fallback, fallback_text=text, calls=[])
+    FAKE.update(primary=primary, fallback=fallback, fallback_text=text, calls=[], timeouts=[])
 
 
 _orig_urlopen = urllib.request.urlopen
@@ -143,8 +144,18 @@ try:
     check(out == "chat from fallback" and p.chat_attempts()[0]["outcome"] == "timeout",
           f"chat: no answer token before the primary's deadline → fallback ({p.chat_attempts()})")
     del p.CHAT_PRIMARY_S
-    check(GoogleAIProvider.CHAT_PRIMARY_S + GoogleAIProvider.CHAT_FALLBACK_S <= 15,
-          "chat limits: primary + fallback ≤ 15 s")
+    reset("503", text="chat from fallback")
+    "".join(p.stream_complete_chat("hi"))
+    check(FAKE["timeouts"][0] == 8.0 and 14.0 <= FAKE["timeouts"][1] <= 15.0,
+          f"chat: primary fails fast → the fallback gets the rest of the 15 s budget ({FAKE['timeouts']})")
+    reset("503", fallback="timeout")
+    out = "".join(p.stream_complete_chat("hi"))
+    retry = p.complete_chat("hi", timeout=5)
+    check(out.startswith("The AI advisor is not available") and retry.startswith("The AI advisor is not available")
+          and FAKE["calls"] == [PRIMARY, FALLBACK],
+          f"chat: fallback timeout → no retry, rule-based answer ({FAKE['calls']})")
+    reset(None)
+    "".join(p.stream_complete_chat("hi"))        # a normal chat call (resets the no-retry flag)
     reset("503", text="retry answer")
     check(p.complete_chat("hi", timeout=4) == "retry answer" and FAKE["calls"] == [FALLBACK],
           "chat retry (unusable answer): one non-streaming call on the fallback model")

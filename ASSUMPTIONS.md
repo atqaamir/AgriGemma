@@ -255,13 +255,14 @@ The following assumptions define the current scope and operational boundaries of
   every morning. The climate profiles are approximate monthly values in the app, not an official climatology.
   The answer guidance is in the block itself (data, not only the system prompt): a typical verdict is phrased as
   "within the usual range for early May" (never "than normal"); the unusual block says how to handle doubt
-  (unusual for May; the forecast for their area vs. the app's normal; forecasts can be wrong, so the plan re-checks
-  every morning and moves sowing back earlier if the rain does not come; the risk from the rule, e.g. seed rot in
-  waterlogged soil; the decision is the farmer's); skipped days read "Unsuitable on 6–9 May because: …"; the block
+  (first: forecasts can be wrong, so the plan re-checks every morning and moves sowing back earlier if the rain does
+  not come; then: unusual for May; the forecast for their area vs. the app's normal; the risk from the rule, e.g.
+  seed rot in waterlogged soil; the decision is the farmer's); skipped days read "Unsuitable on 6–9 May because: …"; the block
   ends with "The plan re-checks the forecast every morning; the decision stays with the farmer."
 - **Chat latency limit:** a chat answer gets one Gemma attempt that must start answering within 8 s (also on a
-  503/429), then the fallback model (7 s), then the rule-based answer – about 15 s at most. The "unusable answer"
-  retry is one quick call on the fallback model, only with ≥ 4 s left. Background calls (notifications, insights,
+  503/429), then the fallback model with the rest of the 15 s budget (about 14.5 s after a fast 503, about 7 s after a
+  Gemma timeout), then the rule-based answer – about 15 s at most. The "unusable answer" retry is one quick call on
+  the fallback model, only with ≥ 4 s left and never after a fallback timeout. Background calls (notifications, insights,
   "Why" texts) keep their own limits.
 - Evaluation: `Test_Runs/chatbot_eval.py` (28 questions incl. 3 Roman Urdu, expected facts and "must not say" checks).
 

@@ -237,9 +237,9 @@ def block(data: dict | None) -> str:
     if unusual:
         risk = ("sowing into waterlogged soil risks seed rot (rule above)" if waterlogged
                 else "the risk of sowing anyway is in the rule reasons above")
-        lines.append(f"- If the farmer doubts the forecast: acknowledge that it is unusual for {data['month']}; "
-                     f"explain that it is the forecast for their area compared with the app's normal for "
-                     f"{data['month']}; forecasts can be wrong, so the plan re-checks the forecast every morning and "
-                     f"moves sowing back earlier if the rain does not come; {risk}; the decision is the farmer's.")
+        lines.append(f"- If the farmer doubts the forecast: first say that forecasts can be wrong: the plan re-checks "
+                     f"the forecast every morning and moves sowing back earlier if the rain does not come; then "
+                     f"acknowledge that it is unusual for {data['month']}; explain that it is the forecast for their "
+                     f"area compared with the app's normal for {data['month']}; {risk}; the decision is the farmer's.")
     lines.append("- The plan re-checks the forecast every morning; the decision stays with the farmer.")
     return "\n".join(lines)

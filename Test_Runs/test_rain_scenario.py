@@ -153,7 +153,9 @@ with app.app_context():
     check(all(x in doubt for x in ("unusual for May", "forecast for their area", "app's normal for May",
                                    "forecasts can be wrong", "re-checks the forecast every morning",
                                    "moves sowing back earlier if the rain does not come", "seed rot",
-                                   "the decision is the farmer's")), f"doubt guidance in the block: {doubt[:80]}…")
+                                   "the decision is the farmer's"))
+          and doubt.index("forecasts can be wrong") < doubt.index("unusual for May"),
+          f"doubt guidance in the block, 'forecasts can be wrong' first: {doubt[:90]}…")
     check(text.rstrip().endswith("the decision stays with the farmer."), "closing line")
     ctx_prompt = __import__("app.services.intelligence_service.chatbot_service.prompts._prompt_chatbot_service",
                             fromlist=["CHATBOT_SYSTEM"]).CHATBOT_SYSTEM

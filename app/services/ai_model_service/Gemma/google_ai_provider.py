@@ -319,10 +319,13 @@ class GoogleAIProvider(AIModelProvider):
 
     # ── Chat fast path (chat only; background calls keep their own limits) ──
     # One Gemma attempt that must start answering within CHAT_PRIMARY_S, then straight to the
-    # fallback model (CHAT_FALLBACK_S) – no second Gemma attempt, no 30–120 s timeouts – so a
-    # chat answer takes at most ~15 s before the rule-based answer.
+    # fallback model, which gets the rest of the CHAT_BUDGET_S (e.g. ~14.5 s after a fast 503,
+    # ~7 s after a Gemma timeout) – no second Gemma attempt, no 30–120 s timeouts, and no retry
+    # after a fallback timeout – so a chat answer takes at most ~15 s before the rule-based answer.
+    CHAT_BUDGET_S = 15.0
     CHAT_PRIMARY_S = 8.0
-    CHAT_FALLBACK_S = 7.0
+    CHAT_FALLBACK_MIN_S = 3.0
+    CHAT_MARGIN_S = 0.3
 
     def chat_attempts(self) -> list:
         """This thread's attempts in the last chat call: model, mode, outcome, ms."""
@@ -346,14 +349,18 @@ class GoogleAIProvider(AIModelProvider):
         import time
         self._tl.model = None
         self._tl.attempts = []
+        self._tl.fallback_timed_out = False
         if not self._api_key:
             yield self._placeholder(prompt)
             return
-        plan = [(self._model, self.CHAT_PRIMARY_S)]
-        if self._fallback:
-            plan.append((self._fallback, self.CHAT_FALLBACK_S))
-        for model, limit in plan:
+        start = time.monotonic()
+        plan = [self._model] + ([self._fallback] if self._fallback else [])
+        for model in plan:
             t0 = time.monotonic()
+            if model == self._model:
+                limit = self.CHAT_PRIMARY_S
+            else:   # the rest of the chat budget
+                limit = max(self.CHAT_FALLBACK_MIN_S, self.CHAT_BUDGET_S - (t0 - start) - self.CHAT_MARGIN_S)
             try:
                 yield from self._stream_api(prompt, model=model, timeout=limit, deadline=t0 + limit)
                 self._record_attempt(model, "stream", t0, "ok")
@@ -362,6 +369,8 @@ class GoogleAIProvider(AIModelProvider):
             except Exception as exc:
                 outcome = self._outcome(exc)
                 self._record_attempt(model, "stream", t0, outcome)
+                if model != self._model and outcome == "timeout":
+                    self._tl.fallback_timed_out = True
                 if getattr(self._tl, "streamed", False):     # failed mid-answer: keep what was streamed
                     self._answered(model, "chat (cut off)")
                     return
@@ -375,6 +384,8 @@ class GoogleAIProvider(AIModelProvider):
         import time
         if not hasattr(self._tl, "attempts") or self._tl.attempts is None:
             self._tl.attempts = []
+        if getattr(self._tl, "fallback_timed_out", False):
+            return self._placeholder(prompt)      # no retry after a fallback timeout (budget used up)
         model = self._fallback or self._model
         t0 = time.monotonic()
         try:
