@@ -304,6 +304,9 @@ The following assumptions define the current scope and operational boundaries of
   notifications), so the scenarios can be run again. It never touches vocabulary or rulebook tables. One reset per
   60 s for the whole app (HTTP 429 with "try again in N s"); the confirmation is in the page (no browser popup).
   Everyone using the live demo at that moment sees the reset (one shared demo farm).
+- **Rate limit after a simulator click:** the daily update itself makes several AI calls (change notifications,
+  "Why" explanations), so a chatbot question right after a click may hit Google's rate limit (HTTP 429) for Gemma.
+  `GOOGLE_AI_FALLBACK_MODEL` (set on Render) answers in that case; without it the chatbot shows its rule-based answer.
 - `GET /health` returns "ok" for an uptime ping that keeps the free Render instance awake.
 - **Keep-alive:** the free Render instance sleeps after 15 minutes without requests (the next request then waits for a
   cold start, which also reseeds the demo). The GitHub Actions workflow `.github/workflows/keep-alive.yml` pings
@@ -340,6 +343,12 @@ The system simulates realistic climate conditions for the supported regions, but
 Future versions will integrate live weather providers such as:
 - OpenWeatherMap
 - Pakistan Meteorological Department APIs
+
+**Known issue (not fixed):** the seeded *baseline* weather for users 2 (Sindh) and 3 (Islamabad) has 55–62 mm of rain
+**per day** while their forecast is a dry heatwave. That looks like monthly amounts stored as daily values. It only
+affects those users' seeded baseline (and the "expected before" values the chatbot sees for them); user 1's demo
+weather and both simulator scenarios are realistic daily values. The heavy-rain weekly-total rule (R2) is applied to
+the forecast pass only, so this baseline does not change their plans.
 
 ---
 
