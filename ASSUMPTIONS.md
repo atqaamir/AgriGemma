@@ -477,13 +477,29 @@ The following improvements and extensions are planned for future development ite
 
 ## Planning & Task Intelligence
 
-- Automatically advance crop growth stages over time.
+- Automatically advance crop growth stages over time: derive the current stage from the actual sowing date plus
+  crop-specific stage durations (rule data with a source), with farmer correction, so flowering rules apply during
+  flowering.
 - Introduce task dependency chains.
 - Model resource constraints including:
   - labour
   - water
   - equipment
+- Capacity-aware day plan: when critical tasks exceed the farmer's labour for a day, recommend specific tasks to
+  postpone, with reasons; the farmer confirms. Priorities stay unchanged (order ≠ importance).
 - Support multi-region farms with field-specific weather planning.
+- Refine the sowing-day check:
+  - hard vs. soft constraints ("avoid" / "significant delay" block; "minimal delay" is a penalty)
+  - day scores from the rule scores, with a cost for waiting
+  - field factors (pH, soil moisture) as preparation tasks instead of daily vetoes
+  - finer per-crop thresholds instead of shared bands
+- Season lifecycle: a plan ends after the last harvest; the farmer is prompted to plan the next season 4–6 weeks
+  before its sowing window (needs Rabi crops).
+- Add pre-sowing irrigation (rauni) as its own planned event, with rule data.
+- Decision needed: a "Decide" task with an AI recommendation and "sow anyway" / "skip this season" actions
+  (if not shipped by then).
+- Simplify the risk statuses (IMPACT_PLAN / IMPACT_TASKS) into one severity used for notification urgency, and run
+  the weather rules for today's non-plan tasks as a normal pipeline step.
 
 ---
 
@@ -491,7 +507,11 @@ The following improvements and extensions are planned for future development ite
 
 - Allow farmers to define custom operational rules.
 - Add automated rule-engine update workflows.
-- Migrate the intelligence layer toward a RAG (Retrieval-Augmented Generation) architecture for richer contextual agricultural reasoning.
+- Migrate the intelligence layer toward a RAG (Retrieval-Augmented Generation) architecture for richer contextual agricultural reasoning:
+  a knowledge base of validated agronomy guides with citations, replacing general web search for farming questions.
+- Record provenance per rule (source, validation status); have an agronomist validate the placeholder thresholds
+  (14-day sowing window, 20 mm saturation, one drying day).
+- Add Rabi crops (wheat, chickpea) as rule data.
 
 ---
 
@@ -499,6 +519,8 @@ The following improvements and extensions are planned for future development ite
 
 - Make the interface significantly more reactive and real-time.
 - Ensure plans, alerts, and tasks update instantly without manual refreshes.
+- Refresh task insights and the farm report lazily: regenerate once when a stale page is opened, debounced, and only
+  for meaningful changes.
 
 ---
 
@@ -521,6 +543,10 @@ The following improvements and extensions are planned for future development ite
 - Automatically register crops after sowing completion.
 - Add frontend crop management workflows.
 - Automatically refresh weather datasets periodically whenever internet connectivity is available.
+- Merge the three scheduled jobs into one idempotent pipeline, run twice a day in the farm's timezone (evening for
+  tomorrow's tasks; a pre-dawn re-check that notifies only on changes).
+- Move the scheduler out of the web process (cron service or worker); at scale, a queue with parallel per-farm workers.
+- Use one database transaction per farm update.
 
 ---
 
@@ -529,6 +555,10 @@ The following improvements and extensions are planned for future development ite
 - Improve multi-intent understanding.
 - Improve conversational context retention across messages.
 - Enhance context extraction for agricultural conversations.
+- Hybrid intent classification: keywords first, a constrained AI classifier only for unclear questions; a short core
+  summary in every context (if not shipped by then).
+- Pass each rule's agronomic reason into the "Why" explanations.
+- Collect real farmers' questions (with consent) and add them to the eval.
 
 ---
 
@@ -543,3 +573,10 @@ The following improvements and extensions are planned for future development ite
   - operational history
 
 to identify potential causes and recommend corrective actions.
+
+---
+
+## AI quality
+
+- Keep an inventory of every user-facing AI output, all routed through the shared guard.
+- Persistent data and login (today every restart reseeds the demo).
