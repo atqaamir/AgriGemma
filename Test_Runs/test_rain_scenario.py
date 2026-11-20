@@ -101,6 +101,8 @@ with app.app_context():
                                      ).order_by(Notification.id.desc()).first()
     check(warn and "nusual" not in warn.message,
           f"typical: the warning line makes no 'unusual' claim ({warn and warn.message})")
+    check(warn and warn.title in ("Heads up — your week looks a bit different", "Your tasks have changed today"),
+          f"typical: the usual alert title ({warn and warn.title})")
     data = fvn.build(1)
     text = fvn.block(data)
     check(data["verdict"] == "typical" and "typical for the season" in text
@@ -151,6 +153,8 @@ with app.app_context():
                                      ).order_by(Notification.id.desc()).first()
     check(warn and warn.message == "Unusual heavy rain is forecast for 6–8 May; sowing has moved to 10 May.",
           f"warning line from the forecast verdict ({warn and warn.message})")
+    check(warn and warn.title == "Unusual heavy rain — your plan has changed",
+          f"alert title from the forecast verdict ({warn and warn.title})")
     check(BANNER in html(), "banner on the page")
     data = fvn.build(1)
     text = fvn.block(data)

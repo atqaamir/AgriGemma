@@ -280,6 +280,8 @@ class NotificationService:
             else:
                 alert_title = "Heads up — your week looks a bit different"
                 alert_type  = NotificationType.WARNING.value
+            # An unusual forecast leads the title (normal weather keeps the titles above).
+            alert_title = self._verdict_title(facts.get("fvn")) or alert_title
 
             self.create_if_not_duplicate(
                 user_id=user_id,
@@ -710,9 +712,9 @@ class NotificationService:
         return json.dumps(report, ensure_ascii=False)
 
     @staticmethod
-    def _verdict_message(fvn: dict | None) -> str | None:
-        """One-liner from the forecast verdict when the forecast is unusual for the month, e.g.
-        "Unusual heavy rain is forecast for 6–8 May; sowing has moved to 10 May." None otherwise."""
+    def _unusual_weather(fvn: dict | None) -> tuple[str, str] | None:
+        """(what, when) for an unusual forecast, e.g. ("Unusual heavy rain", "6–8 May");
+        when is "" for an unusual temperature. None for a typical forecast or none at all."""
         if not fvn or fvn.get("verdict") != "unusual":
             return None
         from app.services.forecast_vs_normal_service import _day_range
@@ -721,14 +723,34 @@ class NotificationService:
         wet = [d for d, mm in rain.items() if (mm or 0) >= 1]
         reasons = " ".join(fvn.get("unusual_because") or [])
         if heavy and "rain" in reasons:
-            what = f"Unusual heavy rain is forecast for {_day_range(heavy)}"
-        elif wet and "rain" in reasons:
-            what = f"Unusual rain for {fvn.get('month') or 'the season'} is forecast for {_day_range(wet)}"
+            return "Unusual heavy rain", _day_range(heavy)
+        if wet and "rain" in reasons:
+            return "Unusual rain", _day_range(wet)
+        fc, normal = fvn.get("forecast") or {}, fvn.get("normal") or {}
+        t, mean = fc.get("avg_temp_c"), normal.get("mean_c")
+        return f"Unusually {'hot' if t is not None and mean is not None and t > mean else 'cool'} weather", ""
+
+    @staticmethod
+    def _verdict_title(fvn: dict | None) -> str | None:
+        """Alert title for an unusual forecast, e.g. "Unusual heavy rain — your plan has changed"."""
+        u = NotificationService._unusual_weather(fvn)
+        return f"{u[0]} — your plan has changed" if u else None
+
+    @staticmethod
+    def _verdict_message(fvn: dict | None) -> str | None:
+        """One-liner from the forecast verdict when the forecast is unusual for the month, e.g.
+        "Unusual heavy rain is forecast for 6–8 May; sowing has moved to 10 May." None otherwise."""
+        u = NotificationService._unusual_weather(fvn)
+        if not u:
+            return None
+        from app.services.forecast_vs_normal_service import _day_range
+        month = fvn.get("month") or "the season"
+        if u[0] == "Unusual heavy rain":
+            what = f"Unusual heavy rain is forecast for {u[1]}"
+        elif u[0] == "Unusual rain":
+            what = f"Unusual rain for {month} is forecast for {u[1]}"
         else:
-            fc, normal = fvn.get("forecast") or {}, fvn.get("normal") or {}
-            t, mean = fc.get("avg_temp_c"), normal.get("mean_c")
-            kind = "hot" if t is not None and mean is not None and t > mean else "cool"
-            what = f"Unusually {kind} weather is forecast for {fvn.get('month') or 'the season'}"
+            what = f"{u[0]} is forecast for {month}"
         sow = [p for p in fvn.get("plan_changes") or [] if p.get("event") == "sowing" and p.get("from")]
         if sow:
             targets = {p["to"] for p in sow}
