@@ -57,7 +57,7 @@ with app.app_context():
     def html():
         return client.get("/mytasks/").get_data(as_text=True)
 
-    BANNER = "Simulated scenario: unusual heavy rain for early May"
+    BANNER = "Simulated scenario: heavy rain (unusual for May)"
 
     print(f"\n-- starting state on {today} (forecast = baseline)")
     start_sow, start_tasks, start_notes = sow(), sow_maize_tasks(), Notification.query.count()
@@ -66,8 +66,8 @@ with app.app_context():
     check(start_tasks == [("2027-05-06", True)], f"Sow Maize task for tomorrow ({start_tasks})")
     check(fvn.build(1) is None and scenarios.active(1) is None, "no forecast change: no chatbot block, no scenario")
     page = html()
-    check('id="weatherScenarioSelect"' in page and ">Typical May weather</option>" in page
-          and ">Unusual heavy rain</option>" in page and "Unexpected change: heavy rain, unusual for early May" in page and 'id="resetDemoBtn"' in page,
+    check('id="weatherScenarioSelect"' in page and ">Light showers (normal for May)</option>" in page
+          and ">Heavy rain (unusual for May)</option>" in page and "Unexpected change: heavy rain, unusual for early May" in page and 'id="resetDemoBtn"' in page,
           "simulator card: scenario dropdown + Reset demo button")
     check(BANNER not in page.split('id="demoScenarioBannerText">')[1][:80], "no scenario banner")
 

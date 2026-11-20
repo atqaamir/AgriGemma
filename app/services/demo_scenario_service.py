@@ -21,7 +21,7 @@ DEFAULT = TYPICAL
 # Day offset from today → (avg temp °C, humidity %, rainfall mm, sunlight h, wind km/h, notes)
 SCENARIOS = {
     TYPICAL: {
-        "label": "Typical May weather",
+        "label": "Light showers (normal for May)",
         "full_name": "Expected change: typical early-May weather",
         "banner": None,
         "days": {
@@ -35,9 +35,9 @@ SCENARIOS = {
                  "and fertilization move with it. Maize stays on 6 May."),
     },
     HEAVY_RAIN: {
-        "label": "Unusual heavy rain",
+        "label": "Heavy rain (unusual for May)",
         "full_name": "Unexpected change: heavy rain, unusual for early May",
-        "banner": "Simulated scenario: unusual heavy rain for early May",
+        "banner": "Simulated scenario: heavy rain (unusual for May)",
         "days": {
             # Thunderstorms: heavy rain, very humid, little sun, a few degrees cooler.
             1: (27.0, 86, 38.0, 2.5, 22, "Thunderstorms; heavy rain."),
