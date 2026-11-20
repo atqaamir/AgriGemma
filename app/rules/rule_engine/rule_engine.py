@@ -138,6 +138,17 @@ class RuleEngine:
         crop_id, stage_id = entry["crop_id"], entry.get("growth_stage_id")
         window_text = f"Sowing window {fmt(planned)}–{fmt(window_end)} (planned date + {RuleEngine.MAX_SOWING_DELAY_DAYS} days)."
 
+        if sw.get("farmer_planned"):
+            # "Sow anyway" (decision needed / overdue): the farmer's date stands; the forecast
+            # does not re-plan it (farmer_planned override). Sowing is recorded via the task.
+            fp = date.fromisoformat(sw["farmer_planned"])
+            return {"status": "farmer_planned", "date": fp, "effective": fp, "adjustment": {
+                "factor": "sowing_window", "status": "farmer_planned",
+                "adjustment": f"Sowing on {fmt(fp)} – the farmer decided to sow anyway",
+                "reasoning": (f"{window_text} No suitable sowing day was left; the farmer decided to sow anyway "
+                              f"on {fmt(fp)}. The forecast does not move this date."),
+            }}
+
         if as_of > window_end:
             return {"status": "overdue", "date": None, "effective": effective, "adjustment": {
                 "factor": "sowing_window", "status": "overdue",
@@ -220,6 +231,7 @@ class RuleEngine:
             "end":       iso(planned_sowing + timedelta(days=RuleEngine.MAX_SOWING_DELAY_DAYS)),
             "effective": iso(eff.get("sowing")),
             "done_on":   iso(eff.get("sowing_done_on")),
+            "farmer_planned": iso(eff.get("sowing_farmer_planned")),
         }
 
     @staticmethod
@@ -622,6 +634,15 @@ class RuleEngine:
                 growth_stage_id   = seasonal_plan.growth_stage_id
                 growth_stage_obj  = rule_base_service.get_stage_by_id(growth_stage_id) if growth_stage_id else None
                 growth_stage_name = growth_stage_obj.name if growth_stage_obj else None
+
+                # Skipped by the farmer for this season: no events, no sowing window.
+                if getattr(entry, "skipped_on", None):
+                    result.append({
+                        "crop_id": entry.crop_name_id, "crop_name": crop_name, "field_location": user_location,
+                        "growth_stage_id": growth_stage_id, "growth_stage": growth_stage_name,
+                        "week_events": [], "sowing_window": None, "irrigation_period": None,
+                    })
+                    continue
 
                 # Effective dates: latest applicable override, else the seasonal date.
                 eff = PlanOverrideService.effective_dates(entry, week_start_date)

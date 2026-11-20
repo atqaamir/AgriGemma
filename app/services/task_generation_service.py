@@ -38,6 +38,7 @@ EVENT_LABEL = {"planting": "Sowing", "fertilization": "Fertilization",
 # ("decision needed") or has passed ("overdue"); the farmer decides (sync_plan_tasks).
 DECISION_TASK_TYPE = "decision"
 DECISION_STATUSES = ("decision_needed", "overdue")
+SKIPPED_TEXT = "Skipped by the farmer for this season"
 DECISION_DONE_NOTE = ("Completing this task marks the decision as made; it does not record sowing. "
                       "Record the sowing via the “Sow {crop}” task, which comes back when a suitable "
                       "sowing day appears.")
@@ -217,12 +218,14 @@ class TaskGenerationService:
             return summary
 
         plan_dates = defaultdict(set)          # (entry id, task_type) -> dates in the window
-        wentry_of, sowing_text = {}, {}
+        wentry_of, sowing_text, skipped_text = {}, {}, {}
         for wentry in plan.entries:
             entry = PlanOverrideService.match_entry(user_id, wentry.crop_id, wentry.field_id, warn=False)
             if entry is None:
                 continue
             wentry_of[entry.id] = wentry
+            if entry.skipped_on:
+                skipped_text[entry.id] = SKIPPED_TEXT
             for a in json.loads(wentry.climate_adjustments or "[]"):
                 if a.get("factor") == "sowing_window" and a.get("adjustment"):
                     sowing_text[entry.id] = a["adjustment"]
@@ -279,7 +282,8 @@ class TaskGenerationService:
                         summary["reactivated" if "is_active" in updates else "moved"].append(
                             f"#{t.id} {t.title} -> {d}")
                 else:
-                    reason = (sowing_text[entry_id] if ttype == "planting" and entry_id in sowing_text
+                    reason = (skipped_text[entry_id] if entry_id in skipped_text
+                              else sowing_text[entry_id] if ttype == "planting" and entry_id in sowing_text
                               else f"{label} no longer in the weekly plan ({fmt(as_of)}–{fmt(window_end)})")
                     for t in active:
                         if ttype != "planting" and t.due_date and t.due_date < as_of:
@@ -363,7 +367,9 @@ class TaskGenerationService:
                     continue
                 done_on = (PlanOverrideService.effective_dates(entry, as_of)["sowing_done_on"]
                            if entry is not None else None)
-                if done_on:
+                if entry is not None and entry.skipped_on:
+                    reason = SKIPPED_TEXT
+                elif done_on:
                     reason = f"Sowing recorded as done on {fmt(done_on)}"
                 elif plan_dates.get((entry_id, "planting")):
                     reason = (f"A suitable sowing day appeared: sowing on "

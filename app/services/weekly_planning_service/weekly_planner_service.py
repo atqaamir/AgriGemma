@@ -44,9 +44,13 @@ class WeeklyPlannerService:
                 plan.user_id, entry.crop_id, entry.field_id, warn=False)
             done = (PlanOverrideService.done_events(seasonal_entry, plan.week_start_date, plan.week_end_date)
                     if seasonal_entry else [])
-            # planned | window_set | no_suitable_day | overdue | done | None (no sowing window)
-            sowing_status = "done" if done else next(
+            # planned | window_set | no_suitable_day | decision_needed | overdue | farmer_planned |
+            # done | skipped | None (no sowing window)
+            skipped_on = seasonal_entry.skipped_on if seasonal_entry is not None else None
+            sowing_status = "done" if done else "skipped" if skipped_on else next(
                 (a.get("status") for a in adjustments if a.get("factor") == "sowing_window"), None)
+            farmer_planned = (PlanOverrideService.effective_dates(seasonal_entry, plan.week_start_date)
+                              ["sowing_farmer_planned"] if seasonal_entry is not None and not done else None)
 
             entries_output.append({
                 "sowing_status":            sowing_status,
@@ -59,6 +63,9 @@ class WeeklyPlannerService:
                 "original_events":          original_events,
                 "week_events":              events,
                 "done_events":              done,
+                "seasonal_entry_id":        seasonal_entry.id if seasonal_entry is not None else None,
+                "skipped_on":               skipped_on.isoformat() if skipped_on else None,
+                "farmer_planned":           farmer_planned.isoformat() if farmer_planned else None,
             })
 
         return {
@@ -260,6 +267,8 @@ class WeeklyPlannerService:
             original_events = json.loads(entry.original_events) if entry.original_events else []
             # Sowing window: planned (seasonal) sowing date + effective dates as of today
             seasonal_entry = PlanOverrideService.match_entry(user_id, entry.crop_id, entry.field_id, warn=False)
+            if seasonal_entry is not None and seasonal_entry.skipped_on:
+                continue            # skipped by the farmer: no forecast re-plan, no events
             planned_sowing = (datetime.strptime(seasonal_entry.sowing, "%m/%d/%Y").date()
                               if seasonal_entry and seasonal_entry.sowing else None)
             eff = PlanOverrideService.effective_dates(seasonal_entry, as_of_date) if seasonal_entry else None

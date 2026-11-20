@@ -8,6 +8,10 @@ event of a seasonal plan entry:
                      including dates cascaded from a sowing delay.
 - farmer_completed : the farmer marked the task done (actual sowing date),
                      including dates cascaded from the actual sowing date.
+- farmer_planned   : the farmer decided to "sow anyway" on a date (decision needed /
+                     overdue), including cascaded dates. It wins over forecast_shift (the
+                     daily re-plan never moves it) and loses to farmer_completed. Undo
+                     deletes these rows.
 
 Effective date of an event = latest applicable override, otherwise the seasonal date.
 `as_of_date` is the day whose decision produced the override (daily update date or
@@ -24,6 +28,7 @@ class PlanEventOverride(db.Model):
     EVENT_TYPES = ("sowing", "fertilization", "harvesting", "irrigation_start")
     SOURCE_FORECAST = "forecast_shift"
     SOURCE_FARMER = "farmer_completed"
+    SOURCE_FARMER_PLANNED = "farmer_planned"
 
     id                     = db.Column(db.Integer, primary_key=True)
     seasonal_plan_entry_id = db.Column(db.Integer, db.ForeignKey("seasonal_plan_entry.id"), nullable=False, index=True)

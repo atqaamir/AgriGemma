@@ -25,6 +25,7 @@ ADDED_COLUMNS = [
     ("task", "completed_at"),
     ("task", "seasonal_plan_entry_id"),
     ("task", "changed_on"),
+    ("seasonal_plan_entry", "skipped_on"),
 ]
 
 

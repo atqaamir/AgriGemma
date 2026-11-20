@@ -304,3 +304,40 @@ def run_weather_simulator(user_id):
     except Exception as exc:
         current_app.logger.exception("weather_simulator failed for user %s", user_id)
         return jsonify({"error": str(exc)}), 500
+
+# ── Decision needed: the farmer's answer (stage 2) ─────────────────────────────────────
+def _decision_action(user_id, action):
+    """Run a decision action, then the AI texts in the background (as after a simulator run)."""
+    from app.models.notification import Notification
+    from app.services import decision_actions_service as decisions
+    from app.services import deferred_ai_service as deferred
+    try:
+        last = Notification.query.order_by(Notification.id.desc()).first()
+        first_id = (last.id + 1) if last else 1
+        with deferred.foreground(user_id) as run:
+            result = action()
+        deferred.start(current_app._get_current_object(), user_id, run, first_id)
+        return jsonify(result), 200
+    except decisions.DecisionError as exc:
+        return jsonify({"error": str(exc)}), 409
+    except Exception as exc:
+        current_app.logger.exception("decision action failed for user %s", user_id)
+        return jsonify({"error": str(exc)}), 500
+
+
+@tasks_bp.route("/<int:user_id>/decision/<int:task_id>/sow-anyway", methods=["POST"])
+def decision_sow_anyway(user_id, task_id):
+    from app.services import decision_actions_service as decisions
+    return _decision_action(user_id, lambda: decisions.sow_anyway(user_id, task_id))
+
+
+@tasks_bp.route("/<int:user_id>/decision/<int:task_id>/skip-season", methods=["POST"])
+def decision_skip_season(user_id, task_id):
+    from app.services import decision_actions_service as decisions
+    return _decision_action(user_id, lambda: decisions.skip_season(user_id, task_id))
+
+
+@tasks_bp.route("/<int:user_id>/seasonal-entry/<int:entry_id>/undo-decision", methods=["POST"])
+def decision_undo(user_id, entry_id):
+    from app.services import decision_actions_service as decisions
+    return _decision_action(user_id, lambda: decisions.undo(user_id, entry_id))

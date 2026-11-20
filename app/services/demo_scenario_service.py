@@ -113,11 +113,20 @@ def clear(user_id: int = None) -> None:
 
 
 def _restore_plan(user_id: int) -> None:
-    """Undo a previous scenario's plan change and put back the seeded notes it removed."""
+    """Undo a previous scenario's plan change and put back the seeded notes it removed. A
+    farmer decision on the changed crop ("sow anyway" / "skip this season") belonged to the
+    simulated plan, so it is removed too."""
     from app.models.notification import Notification
+    from app.models.plan_event_override import PlanEventOverride
+    from app.models.seasonal_plan import SeasonalPlanEntry
     from app.services.seasonal_planner_service import SeasonalPlannerService
     for entry_id, sowing in _plan_changes.pop(user_id, []):
         SeasonalPlannerService.update_entry(entry_id, {"sowing": sowing})
+        PlanEventOverride.query.filter_by(seasonal_plan_entry_id=entry_id,
+                                          source=PlanEventOverride.SOURCE_FARMER_PLANNED).delete()
+        entry = SeasonalPlanEntry.query.get(entry_id)
+        if entry is not None:
+            entry.skipped_on = None
     for note in _removed_notes.pop(user_id, []):
         db.session.add(Notification(**note))
     db.session.commit()

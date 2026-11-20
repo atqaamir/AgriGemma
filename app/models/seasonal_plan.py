@@ -43,6 +43,9 @@ class SeasonalPlanEntry(db.Model):
     fertilization_date    = db.Column(db.String(20), nullable=True)   # "MM/DD/YYYY"
     adjustments_to_make   = db.Column(db.Text,       nullable=True)   # JSON-serialised list
     feasibility           = db.Column(db.String(20), nullable=True)   # "Ideal", "Conditional", "Not Feasible"
+    # The farmer skipped this crop for the season ("decision needed" → Skip this season):
+    # no plan events or tasks while set; undone from the weekly plan page (None again).
+    skipped_on            = db.Column(db.Date,       nullable=True)
 
     plan          = db.relationship("SeasonalPlan", back_populates="entries")
     crop_name_rel = db.relationship("CropNames",    lazy="joined", foreign_keys=[crop_name_id])

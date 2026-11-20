@@ -37,14 +37,26 @@ class PlanOverrideService:
         """Effective one-time event dates of a seasonal entry when planning for `as_of`.
 
         Returns {"sowing", "fertilization", "harvesting", "irrigation_start": date|None,
-                 "sowing_done_on": date|None}. A farmer_completed sowing always wins:
-        sowing is done and cannot be shifted by the forecast.
+                 "sowing_done_on": date|None, "sowing_farmer_planned": date|None}.
+        A farmer_completed sowing always wins: sowing is done and cannot be shifted by the
+        forecast. A farmer_planned date ("sow anyway") wins over every forecast_shift of its
+        event (unless that event has a farmer_completed row).
         """
         eff = {t: _parse(getattr(entry, col)) for t, col in SEASONAL_COLUMNS.items()}
+        completed_types = set()
         for o in PlanEventOverrideRepository.get_applicable(entry.id, as_of):
             eff[o.event_type] = o.actual_date
+            if o.source == PlanEventOverride.SOURCE_FARMER:
+                completed_types.add(o.event_type)
         farmer = PlanEventOverrideRepository.get_farmer_sowing(entry.id, as_of)
         eff["sowing_done_on"] = farmer.actual_date if farmer else None
+        eff["sowing_farmer_planned"] = None
+        if not farmer:
+            for o in PlanEventOverrideRepository.get_farmer_planned(entry.id, as_of):
+                if o.event_type not in completed_types:
+                    eff[o.event_type] = o.actual_date
+                    if o.event_type == "sowing":
+                        eff["sowing_farmer_planned"] = o.actual_date
         if farmer:
             eff["sowing"] = farmer.actual_date
         return eff
