@@ -107,6 +107,14 @@ The following assumptions define the current scope and operational boundaries of
     - *Heavy rain (unusual for May)* (unexpected change: heavy rain, unusual for early May) – thunderstorms with 38, 62 and 45 mm on 6–8 May
       (86–92 % humidity, 1.5–3 h sun, 25.5–27 °C). Waterlogged seed bed (heavy-rain rule above): maize 6 → 10 May,
       cotton 7 → 10 May, with cascades; the Sow Maize task moves to 10 May. A banner shows while it is active.
+    - *Sowing window running out* – **changes the plan as well as the forecast** (said in the ⓘ text and the
+      banner): cotton's planned sowing date becomes 24 April (not sown), so its window 24 Apr–8 May ends inside the
+      forecast. The forecast: a slow western disturbance on 5–8 May (cloud, 2–6 mm showers, 27–28.5 °C, 4.5–6.5 h
+      sun; within the usual range for May), hot and sunny again from 9 May. The unchanged rules leave no suitable
+      day in the window (temperature 20–30 °C, sunlight 4–8 h) → "decision needed" and a "Decide: Cotton sowing"
+      task. Maize stays on 6 May. The seeded "Sowing week ahead" note is removed (it would no longer be true).
+      Running another scenario restores cotton's date (7 May), the note and removes a farmer decision made on the
+      simulated plan; Reset demo reseeds everything.
   - The active scenario is kept in memory (one gunicorn worker); a restart reseeds, so it starts with none.
 - The whole seasonal plan uses the growth stage **Sowing**, and so do user 1's crop records.
   - A crop has no planting date until its sowing task is completed; the completion sets the planting date (and the
@@ -167,6 +175,34 @@ The following assumptions define the current scope and operational boundaries of
   sow anyway with precautions, switch to a short-duration variety, switch crop, or skip the season. The system does
   not choose. **One notification per crop** (decision needed or overdue, whichever comes first) is sent **on the day it
   happens**, also on days without a plan impact.
+- **Decision task:** while a crop is "decision needed" or overdue, the plan task sync keeps one task
+  "Decide: <crop> sowing – <field>" (critical, due today, category plan, type `decision`) next to the deactivated
+  "Sow" task. Its description gives the window, the unsuitable days with the rules' reasons, the options and what
+  completing it means (the decision is made; the sowing is still recorded via the sowing task). It closes, with the
+  reason in its history, when a suitable day appears ("Sow" task back) or sowing is recorded as done; it is reopened
+  rather than duplicated, and not re-created once the farmer has completed it.
+- **AI recommendation** (`decision_recommendation_service.py`): the code collects the facts – window, unsuitable
+  days, forecast by day with the rules' sowing check, verdict, sowing-to-harvest days from the plan, the first
+  suitable day after the window and the harvest date it gives, the four options. One batched AI call (minimal
+  thinking) recommends one option with a 2–3 sentence reason; the behaviour guidance is in the facts block. Shown as
+  "Recommendation – the decision is yours" on the task's detail view and after the decision notification's text.
+  - Checked before it is shown: the shared AI-text guard (drafts, crops, tone, dates only from the facts), a known
+    option, 2–3 sentences, **every number must appear in the facts**, no agronomic claim words (yield, pests,
+    germination, fertiliser, …) or variety names that are not in the facts.
+  - No answer or a rejected answer: no recommendation – the options only ("No AI recommendation – choose one of the
+    options"). After a simulator run it is written in the background; at the daily update in the same step.
+- **The farmer's answer** (buttons on the decision task, in-page confirmation, no browser dialogs):
+  - *Sow anyway*: `farmer_planned` overrides (sowing tomorrow + cascaded harvest, irrigation start, fertilization).
+    They win over every `forecast_shift` (the daily re-plan never moves the date) and lose to `farmer_completed`;
+    no rule changes. The sync then creates "Sow <crop>" due tomorrow, with a note when this is against the AI
+    recommendation; completing it records the actual sowing date as usual.
+  - *Skip this season*: `seasonal_plan_entry.skipped_on` (nullable column, added at startup like the other added
+    columns) – no plan events or tasks for the crop; the weekly plan shows "Skipped by the farmer".
+  - Both close (complete) the decision task with the reason in its history. **Undo** on the weekly plan page removes
+    the `farmer_planned` overrides / clears `skipped_on` and reopens the decision task; refused once sowing is
+    recorded as done.
+  - "Switch to a short-duration variety" and "switch crop" stay text options in the recommendation (no seed or crop
+    change is modelled).
 - **The daily update always applies the forecast to the weekly plan** (sowing window, actual dates) and then syncs the
   plan tasks (below). Their only AI call is one batched explanation call when plan tasks were created, moved or
   reactivated (0 calls when nothing changed); their only notification is the sowing decision above. Other
@@ -496,8 +532,6 @@ The following improvements and extensions are planned for future development ite
 - Season lifecycle: a plan ends after the last harvest; the farmer is prompted to plan the next season 4–6 weeks
   before its sowing window (needs Rabi crops).
 - Add pre-sowing irrigation (rauni) as its own planned event, with rule data.
-- Decision needed: a "Decide" task with an AI recommendation and "sow anyway" / "skip this season" actions
-  (if not shipped by then).
 - Simplify the risk statuses (IMPACT_PLAN / IMPACT_TASKS) into one severity used for notification urgency, and run
   the weather rules for today's non-plan tasks as a normal pipeline step.
 
