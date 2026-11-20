@@ -915,15 +915,18 @@
   // Change pop-ups already shown in this browser: each change pops up once, also across page
   // loads. Storage can be unavailable (private mode, blocked site data): then only this page
   // remembers, and dismissing still marks the notification read on the server.
-  const SEEN_KEY = `agri_change_popups_seen_${USER_ID}`;
+  // Remembered as "id@created_at", not the bare id: a reseed (restart / Reset demo) restarts
+  // the ids at 1, so a new change can reuse an old id; its created_at is new.
+  const SEEN_KEY = `agri_change_popups_seen2_${USER_ID}`;
+  const seenKey = n => `${n.id}@${n.created_at}`;
   function loadSeen() {
     try { return new Set(JSON.parse(localStorage.getItem(SEEN_KEY) || '[]')); }
     catch (_) { return new Set(); }
   }
-  function rememberSeen(id) {
-    shownChangeIds.add(id);
+  function rememberSeen(key) {
+    shownChangeIds.add(key);
     try {
-      const ids = [...loadSeen(), id].slice(-50);
+      const ids = [...loadSeen(), key].slice(-50);
       localStorage.setItem(SEEN_KEY, JSON.stringify([...new Set(ids)]));
     } catch (_) {}
   }
@@ -944,10 +947,10 @@
       const fetched = (data.notifications || []).sort(
         (a, b) => new Date(b.created_at) - new Date(a.created_at)
       );
-      const localReadIds = new Set(notifications.filter(n => n.is_read).map(n => n.id));
+      const localReadIds = new Set(notifications.filter(n => n.is_read).map(seenKey));
       notifications = fetched.map(n => ({
         ...n,
-        is_read: n.is_read || localReadIds.has(n.id),
+        is_read: n.is_read || localReadIds.has(seenKey(n)),
       }));
       updateBadge();
       renderDropdown();
@@ -1249,16 +1252,16 @@
   function processChangePopups() {
     // Only the newest unread change pops up; older unread ones are marked read without a
     // pop-up (they stay in the bell list). Each change pops up once (rememberSeen).
-    const incoming = notifications.filter(n => n.notification_type === 'change' && !n.is_read && !shownChangeIds.has(n.id));
+    const incoming = notifications.filter(n => n.notification_type === 'change' && !n.is_read && !shownChangeIds.has(seenKey(n)));
     if (!incoming.length) return;
     const newest = incoming[0];                       // notifications are sorted newest first
-    incoming.slice(1).forEach(n => { rememberSeen(n.id); markAsRead(n.id); });
+    incoming.slice(1).forEach(n => { rememberSeen(seenKey(n)); markAsRead(n.id); });
     if (changeActive) {                               // a newer change replaces the one on screen
       document.querySelectorAll('.notif-change-popup').forEach(el => el.remove());
       changeActive = false;
     }
     changeQueue = [newest];
-    rememberSeen(newest.id);
+    rememberSeen(seenKey(newest));
     document.dispatchEvent(new CustomEvent('farmDataUpdated'));
     showNextChangePopup();
   }
