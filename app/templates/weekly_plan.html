@@ -143,6 +143,13 @@
               <div class="text-left">
                 <p class="font-headline font-bold text-on-surface">{{ crop.crop_name or '—' }}</p>
                 <p class="text-xs text-on-surface-variant">Stage: {{ crop.growth_stage or '—' }}</p>
+                {% if crop.skipped_on %}
+                <p class="text-xs font-semibold text-error mt-0.5">Skipped by the farmer</p>
+                {% elif crop.farmer_planned %}
+                <p class="text-xs font-semibold text-primary mt-0.5">Sow anyway – your decision</p>
+                {% elif crop.sowing_status in ('decision_needed', 'overdue') %}
+                <p class="text-xs font-semibold text-error mt-0.5">Decision needed</p>
+                {% endif %}
               </div>
             </div>
           </button>
@@ -156,6 +163,22 @@
   <!-- Timeline panel -->
   <section class="space-y-4">
     <h3 class="font-headline text-lg font-bold text-on-surface" id="panel-header">Select a crop above</h3>
+    <div id="decision-state" class="hidden rounded-xl p-4 border border-primary/25 bg-surface-container-low space-y-3">
+      <p class="text-[10px] uppercase tracking-widest text-primary font-bold">Your decision</p>
+      <p id="decision-state-text" class="text-sm text-on-surface leading-relaxed"></p>
+      <button type="button" id="decision-undo-btn"
+        class="px-4 py-2 rounded-full border border-outline text-on-surface text-sm font-semibold hover:bg-surface-container">Undo</button>
+      <div id="decision-undo-confirm" class="hidden space-y-3" role="group" aria-label="Confirm undo">
+        <p id="decision-undo-text" class="text-sm text-on-surface leading-relaxed"></p>
+        <div class="flex flex-wrap gap-2">
+          <button type="button" id="decision-undo-confirm-btn"
+            class="px-4 py-2 rounded-full bg-primary text-on-primary text-sm font-semibold hover:opacity-90">Confirm undo</button>
+          <button type="button" id="decision-undo-cancel-btn"
+            class="px-4 py-2 rounded-full border border-outline text-on-surface text-sm font-semibold hover:bg-surface-container">Cancel</button>
+        </div>
+      </div>
+      <p id="decision-undo-result" class="hidden text-sm font-medium" role="status"></p>
+    </div>
     <div id="timeline-panel" class="hidden max-h-[420px] overflow-y-auto pr-2">
       <div class="bg-surface-container-lowest p-6 rounded-xl space-y-6 shadow-sm" id="timeline-items"></div>
     </div>
@@ -189,6 +212,7 @@
 
 <script>
 const PLAN  = JSON.parse(document.getElementById('plan-data').textContent);
+const USER_ID = {{ user_id }};
 const CROPS = (PLAN && PLAN.entries) ? PLAN.entries : [];
 
 const TODAY = new Date('{{ today_str }}');
@@ -255,6 +279,7 @@ function selectCrop(el, index) {
 
   header.textContent = `Timeline for ${crop.crop_name}`;
   timeline.classList.remove('hidden');
+  renderDecisionState(crop);
 
   const events = crop.week_events || [];
   if (!events.length) {
@@ -276,7 +301,72 @@ function selectCrop(el, index) {
     items.map((it, i) => buildTimelineItem(it.label, it.title, it.desc, i === curIdx, i === items.length - 1)).join('');
 }
 
+// "Skip this season" / "Sow anyway" (decision needed): shown with an in-page Undo.
+let DECISION_CROP = null;
+const fmtDay = iso => new Date(iso + 'T00:00:00').toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
+
+function renderDecisionState(crop) {
+  const box = document.getElementById('decision-state');
+  DECISION_CROP = (crop.skipped_on || crop.farmer_planned) && crop.seasonal_entry_id ? crop : null;
+  box.classList.toggle('hidden', !DECISION_CROP);
+  document.getElementById('decision-undo-confirm').classList.add('hidden');
+  document.getElementById('decision-undo-result').classList.add('hidden');
+  document.getElementById('decision-undo-btn').classList.remove('hidden');
+  if (!DECISION_CROP) return;
+  document.getElementById('decision-state-text').textContent = crop.skipped_on
+    ? `Skipped by the farmer for this season (on ${fmtDay(crop.skipped_on)}). No sowing, irrigation or harvest is planned for ${crop.crop_name}.`
+    : `Sow anyway – you decided to sow ${crop.crop_name} on ${fmtDay(crop.farmer_planned)}. The forecast does not move this date.`;
+}
+
+function askUndo() {
+  if (!DECISION_CROP) return;
+  const c = DECISION_CROP;
+  document.getElementById('decision-undo-text').textContent = c.skipped_on
+    ? `Undo skipping ${c.crop_name}? The plan schedules it again and the decision task comes back on your list.`
+    : `Undo “sow anyway” for ${c.crop_name}? The sowing date goes back to the plan's own check and the decision task comes back on your list.`;
+  document.getElementById('decision-undo-btn').classList.add('hidden');
+  document.getElementById('decision-undo-confirm').classList.remove('hidden');
+  document.getElementById('decision-undo-confirm-btn').focus();
+}
+
+function cancelUndo() {
+  document.getElementById('decision-undo-confirm').classList.add('hidden');
+  document.getElementById('decision-undo-btn').classList.remove('hidden');
+}
+
+async function confirmUndo() {
+  if (!DECISION_CROP) return;
+  const btn = document.getElementById('decision-undo-confirm-btn');
+  const res = document.getElementById('decision-undo-result');
+  btn.disabled = true;
+  try {
+    const r = await fetch(`/mytasks/${USER_ID}/seasonal-entry/${DECISION_CROP.seasonal_entry_id}/undo-decision`, { method: 'POST' });
+    const body = await r.json().catch(() => ({}));
+    document.getElementById('decision-undo-confirm').classList.add('hidden');
+    res.classList.remove('hidden');
+    if (r.ok) {
+      res.className = 'text-sm font-medium text-primary';
+      res.textContent = `Undone (${body.undone}). The decision task is back on your list.`;
+      setTimeout(() => window.location.reload(), 1400);
+    } else {
+      res.className = 'text-sm font-medium text-error';
+      res.textContent = body.error || 'That did not work – please try again.';
+      document.getElementById('decision-undo-btn').classList.remove('hidden');
+    }
+  } catch (_) {
+    res.classList.remove('hidden');
+    res.className = 'text-sm font-medium text-error';
+    res.textContent = 'No connection – please try again.';
+    document.getElementById('decision-undo-btn').classList.remove('hidden');
+  } finally {
+    btn.disabled = false;
+  }
+}
+
 window.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('decision-undo-btn').addEventListener('click', askUndo);
+  document.getElementById('decision-undo-cancel-btn').addEventListener('click', cancelUndo);
+  document.getElementById('decision-undo-confirm-btn').addEventListener('click', confirmUndo);
   const firstCard = document.querySelector('.crop-card');
   if (firstCard) firstCard.click();
 });

@@ -1,0 +1,124 @@
+{# The farmer's answer to a "Decide: <crop> sowing" task: "Sow anyway" / "Skip this season" with an
+   in-page confirmation (no browser dialogs). Included in the task detail modal of the tasks, crops
+   and fields pages; the modal's JS calls renderDecisionActions(task). Needs USER_ID. #}
+<div id="decisionActions" class="hidden rounded-xl p-4 border border-primary/25 bg-surface-container-low space-y-3">
+  <p class="text-[10px] uppercase tracking-widest text-primary font-bold">Your decision</p>
+  <div id="decisionButtons" class="flex flex-wrap gap-2">
+    <button type="button" id="decisionSowBtn"
+      class="px-4 py-2 rounded-full bg-primary text-on-primary text-sm font-semibold hover:opacity-90">Sow anyway</button>
+    <button type="button" id="decisionSkipBtn"
+      class="px-4 py-2 rounded-full border border-outline text-on-surface text-sm font-semibold hover:bg-surface-container">Skip this season</button>
+  </div>
+  <div id="decisionConfirm" class="hidden space-y-3" role="group" aria-label="Confirm your decision">
+    <p id="decisionConfirmText" class="text-sm text-on-surface leading-relaxed"></p>
+    <div class="flex flex-wrap gap-2">
+      <button type="button" id="decisionConfirmBtn"
+        class="px-4 py-2 rounded-full bg-primary text-on-primary text-sm font-semibold hover:opacity-90">Confirm</button>
+      <button type="button" id="decisionCancelBtn"
+        class="px-4 py-2 rounded-full border border-outline text-on-surface text-sm font-semibold hover:bg-surface-container">Cancel</button>
+    </div>
+  </div>
+  <p id="decisionResult" class="hidden text-sm font-medium" role="status"></p>
+  <p class="text-xs text-on-surface-variant leading-relaxed">A short-duration variety or another crop: see the
+    recommendation and the options above – plan it with your seed supplier, then record the sowing via the sowing task.</p>
+</div>
+<script>
+(() => {
+  const OPTION_LABELS = {
+    'Sow anyway with precautions': 'sow anyway with precautions',
+    'Switch to a short-duration variety': 'switch to a short-duration variety',
+    'Switch crop': 'switch crop',
+    'Skip the season': 'skip the season',
+  };
+  let current = null, pending = null;
+  const $ = id => document.getElementById(id);
+  const fmt = d => d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
+
+  function recommended(task) {
+    const text = task.ai_explanation || '';
+    const label = Object.keys(OPTION_LABELS).find(l => text.startsWith(l + '.'));
+    return label ? OPTION_LABELS[label] : null;
+  }
+
+  function reset() {
+    pending = null;
+    $('decisionConfirm').classList.add('hidden');
+    $('decisionButtons').classList.remove('hidden');
+    $('decisionResult').classList.add('hidden');
+  }
+
+  window.renderDecisionActions = function (task) {
+    const box = $('decisionActions');
+    if (!box) return;
+    const open = task && task.task_type === 'decision' && !task.completed && task.is_active !== false;
+    box.classList.toggle('hidden', !open);
+    current = open ? task : null;
+    reset();
+  };
+
+  function ask(kind) {
+    if (!current) return;
+    const crop = current.crop_name || 'this crop';
+    const base = current.due_date ? new Date(current.due_date + 'T00:00:00') : new Date();
+    const tomorrow = new Date(base); tomorrow.setDate(base.getDate() + 1);
+    const rec = recommended(current);
+    let text;
+    if (kind === 'sow') {
+      text = `Sow ${crop} anyway, tomorrow (${fmt(tomorrow)})? A “Sow ${crop}” task due tomorrow is added; ` +
+             `completing it records the sowing date. The forecast will not move this date.`;
+      if (rec && rec !== 'sow anyway with precautions') text += ` This is against the AI recommendation (${rec}).`;
+    } else {
+      text = `Skip ${crop} for this season? The plan stops scheduling ${crop} (no more sowing, irrigation or ` +
+             `harvest tasks). You can undo this on the weekly plan page.`;
+      if (rec && rec !== 'skip the season') text += ` This is against the AI recommendation (${rec}).`;
+    }
+    pending = kind;
+    $('decisionConfirmText').textContent = text;
+    $('decisionButtons').classList.add('hidden');
+    $('decisionConfirm').classList.remove('hidden');
+    $('decisionResult').classList.add('hidden');
+    $('decisionConfirmBtn').focus();
+  }
+
+  async function confirm() {
+    if (!current || !pending) return;
+    const btn = $('decisionConfirmBtn');
+    btn.disabled = true;
+    const path = pending === 'sow' ? 'sow-anyway' : 'skip-season';
+    const res = $('decisionResult');
+    try {
+      const r = await fetch(`/mytasks/${USER_ID}/decision/${current.id}/${path}`, { method: 'POST' });
+      const body = await r.json().catch(() => ({}));
+      $('decisionConfirm').classList.add('hidden');
+      res.classList.remove('hidden');
+      if (r.ok) {
+        res.className = 'text-sm font-medium text-primary';
+        res.textContent = pending === 'sow'
+          ? `Decided: sow ${body.crop || ''} anyway on ${fmt(new Date(body.date + 'T00:00:00'))}. The sowing task is on your list.`
+          : `Decided: ${body.crop || 'the crop'} is skipped for this season.`;
+        setTimeout(() => window.location.reload(), 1400);
+      } else {
+        res.className = 'text-sm font-medium text-error';
+        res.textContent = body.error || 'That did not work – please try again.';
+        $('decisionButtons').classList.remove('hidden');
+      }
+    } catch (_) {
+      res.classList.remove('hidden');
+      res.className = 'text-sm font-medium text-error';
+      res.textContent = 'No connection – please try again.';
+      $('decisionButtons').classList.remove('hidden');
+    } finally {
+      btn.disabled = false;
+      pending = null;
+    }
+  }
+
+  document.addEventListener('DOMContentLoaded', () => {
+    if (!$('decisionActions')) return;
+    $('decisionSowBtn').addEventListener('click', () => ask('sow'));
+    $('decisionSkipBtn').addEventListener('click', () => ask('skip'));
+    $('decisionCancelBtn').addEventListener('click', reset);
+    $('decisionConfirmBtn').addEventListener('click', confirm);
+  });
+})();
+</script>

@@ -14,5 +14,6 @@ def weekly_plan_page(user_id):
     return render_template(
         "weekly_plan.html",
         plan=plan,
+        user_id=user_id,
         today_str=clock.today().isoformat(),
     )

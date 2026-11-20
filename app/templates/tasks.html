@@ -517,6 +517,7 @@
           <span class="text-[10px] uppercase tracking-widest text-on-surface-variant block mb-2">Description</span>
           <p id="taskDetailDesc" class="text-sm text-on-surface leading-relaxed"></p>
         </div>
+        {% include "_decision_actions.html" %}
         <div id="taskDetailNotesBlock" class="bg-surface-container rounded-xl p-4 hidden">
           <span class="text-[10px] uppercase tracking-widest text-on-surface-variant block mb-2">Notes</span>
           <p id="taskDetailNotes" class="text-sm text-on-surface leading-relaxed"></p>
@@ -1433,6 +1434,7 @@
       const whyText = task.ai_explanation || (isDecision ? (task.ai_explanation === '' ? 'No AI recommendation – choose one of the options in the description.' : 'The recommendation is being prepared – the options are in the description.') : '');
       document.getElementById('taskDetailWhyLabel').textContent = isDecision ? 'Recommendation – the decision is yours' : 'Why this task';
       if (whyText) { document.getElementById('taskDetailWhy').textContent = whyText; whyBlock.classList.remove('hidden'); } else { whyBlock.classList.add('hidden'); }
+      if (window.renderDecisionActions) renderDecisionActions(task);
       const descBlock = document.getElementById('taskDetailDescBlock');
       if (task.description) { document.getElementById('taskDetailDesc').textContent = task.description; descBlock.classList.remove('hidden'); }
       else descBlock.classList.add('hidden');
