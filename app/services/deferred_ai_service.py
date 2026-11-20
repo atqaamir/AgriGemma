@@ -95,7 +95,8 @@ def _work(app, user_id: int, run: int, first_notification_id: int) -> None:
         with app.app_context():
             from app.extensions import db
             t0 = time.monotonic()
-            for name, job in (("task explanations", _explain_tasks), ("change notification", _fill_notifications)):
+            for name, job in (("task explanations", _explain_tasks), ("decision recommendation", _recommend),
+                              ("change notification", _fill_notifications)):
                 try:
                     job(user_id, run, first_notification_id)
                 except Exception:
@@ -112,6 +113,12 @@ def _explain_tasks(user_id: int, run: int, _first_id: int) -> None:
     logger.info("Deferred AI user=%s run=%s: task explanations %s", user_id, run, result)
 
 
+def _recommend(user_id: int, run: int, _first_id: int) -> None:
+    from app.services import decision_recommendation_service as decisions
+    result = decisions.recommend(user_id, write_guard=lambda: current_write(user_id, run))
+    logger.info("Deferred AI user=%s run=%s: decision recommendation %s", user_id, run, result)
+
+
 def _fill_notifications(user_id: int, run: int, first_id: int) -> None:
     from app.extensions import db
     from app.models.notification import Notification
@@ -120,7 +127,10 @@ def _fill_notifications(user_id: int, run: int, first_id: int) -> None:
     from app.services.intelligence_service.context.context_builder import build_notification_context
 
     notes = (Notification.query.filter(Notification.user_id == user_id, Notification.id >= first_id,
-                                       Notification.notification_type.in_(("change", "alert", "warning")))
+                                       Notification.notification_type.in_(("change", "alert", "warning")),
+                                       # sowing decisions keep their own text (+ recommendation)
+                                       db.or_(Notification.entity_type.is_(None),
+                                              Notification.entity_type != "seasonal_plan_entry"))
              .order_by(Notification.id).all())
     if not notes:
         return

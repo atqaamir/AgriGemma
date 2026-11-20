@@ -510,7 +510,7 @@
           </div>
         </div>
         <div id="taskDetailWhyBlock" class="bg-primary/5 rounded-xl p-4 hidden">
-          <p class="text-[10px] uppercase tracking-widest text-primary font-bold mb-1">Why this task</p>
+          <p id="taskDetailWhyLabel" class="text-[10px] uppercase tracking-widest text-primary font-bold mb-1">Why this task</p>
           <p id="taskDetailWhy" class="text-sm text-on-surface leading-relaxed"></p>
         </div>
         <div id="taskDetailDescBlock" class="bg-surface-container rounded-xl p-4 hidden">
@@ -1200,7 +1200,7 @@
             <div>
               <h4 class="font-bold text-on-surface text-sm line-clamp-2 leading-tight">${escapeHtml(getDynTranslation(task.title) || 'Untitled')}</h4>
               <p class="text-[10px] text-on-surface-variant font-medium ${cancelled ? 'line-clamp-2' : 'truncate'} mt-0.5">${escapeHtml(cancelled ? (task.cancel_reason || 'Cancelled') : getTaskSubtitle(task))}</p>
-              ${task.ai_explanation ? `<span class="inline-flex items-center gap-0.5 mt-1 px-1.5 py-0.5 rounded-full bg-primary/10 text-primary text-[9px] font-bold uppercase tracking-wide" title="${escapeHtml(task.ai_explanation)}"><span class="material-symbols-outlined" style="font-size:11px">psychology</span>Why</span>` : ''}
+              ${task.ai_explanation ? `<span class="inline-flex items-center gap-0.5 mt-1 px-1.5 py-0.5 rounded-full bg-primary/10 text-primary text-[9px] font-bold uppercase tracking-wide" title="${escapeHtml(task.ai_explanation)}"><span class="material-symbols-outlined" style="font-size:11px">psychology</span>${task.task_type === 'decision' ? 'Recommendation' : 'Why'}</span>` : ''}
               ${task.due_date ? `<p class="text-[10px] text-outline mt-0.5">${formatDate(task.due_date)}</p>` : ''}
             </div>
 
@@ -1428,7 +1428,11 @@
       document.getElementById('taskDetailCategory').textContent = task.task_category ? capitalize(task.task_category) : '—';
 
       const whyBlock = document.getElementById('taskDetailWhyBlock');
-      if (task.ai_explanation) { document.getElementById('taskDetailWhy').textContent = task.ai_explanation; whyBlock.classList.remove('hidden'); } else { whyBlock.classList.add('hidden'); }
+      // Decision tasks: the AI recommendation (the farmer decides); none yet / none usable → say so.
+      const isDecision = task.task_type === 'decision';
+      const whyText = task.ai_explanation || (isDecision ? (task.ai_explanation === '' ? 'No AI recommendation – choose one of the options in the description.' : 'The recommendation is being prepared – the options are in the description.') : '');
+      document.getElementById('taskDetailWhyLabel').textContent = isDecision ? 'Recommendation – the decision is yours' : 'Why this task';
+      if (whyText) { document.getElementById('taskDetailWhy').textContent = whyText; whyBlock.classList.remove('hidden'); } else { whyBlock.classList.add('hidden'); }
       const descBlock = document.getElementById('taskDetailDescBlock');
       if (task.description) { document.getElementById('taskDetailDesc').textContent = task.description; descBlock.classList.remove('hidden'); }
       else descBlock.classList.add('hidden');

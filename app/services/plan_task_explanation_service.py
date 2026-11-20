@@ -23,6 +23,7 @@ TIMEOUT_S = 8.0     # the run never waits longer than this for the explanations
 BACKGROUND_TIMEOUT_S = 30.0   # in the background (simulator): the primary, then the fallback model
 MAX_BATCH = 10      # tasks per AI call
 PLAN_TASK_CATEGORY = "plan"
+DECISION_TASK_TYPE = "decision"   # task_generation_service.DECISION_TASK_TYPE (no import cycle)
 DROPPED = ""        # explanation dropped by the date guard: not retried (None = not tried yet)
 
 from app.utils.date_guard import DATE_PATTERNS as _DATE_PATTERNS, dates_in  # noqa: F401  (shared guard)
@@ -167,12 +168,15 @@ def explain(user_id: int, changed_tasks: list, write_guard=None) -> dict:
     result = {"called": False, "explained": [], "dropped": [], "failed": []}
     ids, batch = set(), []
     for t in changed_tasks:
-        if t is not None and t.id not in ids and t.task_category == PLAN_TASK_CATEGORY and t.is_pending:
+        if (t is not None and t.id not in ids and t.task_category == PLAN_TASK_CATEGORY and t.is_pending
+                and t.task_type != DECISION_TASK_TYPE):
             batch.append(t)
             ids.add(t.id)
     missing = (Task.query.filter(Task.user_id == user_id, Task.task_category == PLAN_TASK_CATEGORY,
                                  Task.completed.is_(False), Task.is_active.is_(True),
-                                 Task.ai_explanation.is_(None))
+                                 Task.ai_explanation.is_(None),
+                                 # decision tasks get a recommendation instead (decision_recommendation_service)
+                                 db.or_(Task.task_type.is_(None), Task.task_type != DECISION_TASK_TYPE))
                .order_by(Task.due_date, Task.id).all())
     batch += [t for t in missing if t.id not in ids]
     batch = batch[:MAX_BATCH]

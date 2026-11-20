@@ -34,6 +34,13 @@ ONE_TIME_TASK_TYPES = ("planting", "fertilization", "harvesting")
 # is CREATED (matched by entry, type and date) — irrigation tasks are never "moved".
 EVENT_LABEL = {"planting": "Sowing", "fertilization": "Fertilization",
                "harvesting": "Harvest", "irrigation": "Irrigation"}
+# "Decide: <crop> sowing" task while the sowing window has no suitable day left
+# ("decision needed") or has passed ("overdue"); the farmer decides (sync_plan_tasks).
+DECISION_TASK_TYPE = "decision"
+DECISION_STATUSES = ("decision_needed", "overdue")
+DECISION_DONE_NOTE = ("Completing this task marks the decision as made; it does not record sowing. "
+                      "Record the sowing via the “Sow {crop}” task, which comes back when a suitable "
+                      "sowing day appears.")
 
 
 def rule_shift_reason(entry, etype: str, day: date) -> str | None:
@@ -230,6 +237,8 @@ class TaskGenerationService:
                  .order_by(Task.id).all())
         groups = defaultdict(list)
         for t in tasks:
+            if t.task_type == DECISION_TASK_TYPE:
+                continue                        # decision tasks: _sync_decision_tasks below
             groups[(t.seasonal_plan_entry_id, t.task_type)].append(t)
 
         fmt = lambda d: f"{d.day} {d.strftime('%b')}"
@@ -297,17 +306,121 @@ class TaskGenerationService:
                         summary["reactivated"].append(f"#{t.id} {t.title} ({t.due_date})")
                         changed.append(t)
 
+        summary["decisions"] = TaskGenerationService._sync_decision_tasks(user_id, as_of, plan, plan_dates)
+
         for day in (as_of, as_of + timedelta(days=1)):
             new = TaskGenerationService.generate_plan_tasks(user_id, day)["created"]
             summary["created"] += [f"#{t.id} {t.title} ({t.due_date})" for t in new]
             changed += new
         if explain:
             from app.services import plan_task_explanation_service as explanations
+            from app.services import decision_recommendation_service as decisions
             summary["explanations"] = explanations.explain(user_id, changed)
+            summary["recommendations"] = decisions.recommend(user_id)
         else:   # app startup / simulator (explained in the background): no AI call here
             summary["explanations"] = {"called": False, "skipped": "no AI in this step"}
         logger.info("Plan task sync for user=%s as_of=%s: %s", user_id, as_of, summary)
         return summary
+
+    @staticmethod
+    def _sync_decision_tasks(user_id: int, as_of: date, plan, plan_dates: dict) -> dict:
+        """One "Decide: <crop> sowing – <field>" task per seasonal entry whose sowing status is
+        decision needed / overdue (critical, due today, category plan; the "Sow" task is
+        deactivated by the sync as before). Fixed texts, no AI (the recommendation is written
+        by decision_recommendation_service).
+        - still needed: kept due today (moved to today on a later day), description refreshed;
+          a closed one is reactivated; never re-created once the farmer completed it.
+        - no longer needed (a suitable day appeared, sowing recorded as done, entry gone):
+          closed (deactivated) with the reason in its history.
+        Returns {"created", "moved", "reactivated", "closed"} (task labels)."""
+        out = {"created": [], "moved": [], "reactivated": [], "closed": []}
+        fmt = lambda d: f"{d.day} {d.strftime('%b')}"
+        info = {}                                   # entry id -> (wentry, entry, adjustment)
+        for wentry in plan.entries:
+            entry = PlanOverrideService.match_entry(user_id, wentry.crop_id, wentry.field_id, warn=False)
+            if entry is None or entry.feasibility == "Not Feasible":
+                continue
+            adj = next((a for a in json.loads(wentry.climate_adjustments or "[]")
+                        if a.get("factor") == "sowing_window"), None)
+            info[entry.id] = (wentry, entry, adj)
+
+        by_entry = defaultdict(list)
+        for t in (Task.query.filter(Task.user_id == user_id, Task.task_type == DECISION_TASK_TYPE,
+                                    Task.seasonal_plan_entry_id.isnot(None)).order_by(Task.id).all()):
+            by_entry[t.seasonal_plan_entry_id].append(t)
+
+        def change(kind, old, new, reason):
+            return {"change_type": kind, "original_value": old, "new_value": new, "reason": reason}
+
+        for entry_id in sorted(set(info) | set(by_entry)):
+            wentry, entry, adj = info.get(entry_id, (None, None, None))
+            tasks = by_entry.get(entry_id, [])
+            open_ = [t for t in tasks if t.is_active and not t.completed]
+            needed = bool(adj and adj.get("status") in DECISION_STATUSES)
+
+            if not needed:
+                if not open_:
+                    continue
+                done_on = (PlanOverrideService.effective_dates(entry, as_of)["sowing_done_on"]
+                           if entry is not None else None)
+                if done_on:
+                    reason = f"Sowing recorded as done on {fmt(done_on)}"
+                elif plan_dates.get((entry_id, "planting")):
+                    reason = (f"A suitable sowing day appeared: sowing on "
+                              f"{fmt(min(plan_dates[(entry_id, 'planting')]))}")
+                else:
+                    reason = "Decision no longer needed" + (
+                        f": {adj['adjustment']}" if adj and adj.get("adjustment") else "")
+                for t in open_:
+                    TaskService.record_changes(t, [change("is_active", True, False, reason)], {"is_active": False})
+                    out["closed"].append(f"#{t.id} {t.title}: {reason}")
+                continue
+
+            if any(t.completed for t in tasks):
+                continue                            # the farmer has decided: not asked again
+            crop_obj = rule_base_service.get_crop_by_id(wentry.crop_id)
+            crop_name = crop_obj.name if crop_obj else f"Crop {wentry.crop_id}"
+            crop = PlanOverrideService.active_crop_for_entry(entry, user_id)
+            field = crop.field if crop else None
+            title = f"Decide: {crop_name} sowing" + (f" – {field.name}" if field else "")
+            description = " ".join(x for x in (f"{adj['adjustment']}.", adj.get("reasoning") or "",
+                                               DECISION_DONE_NOTE.format(crop=crop_name)) if x)
+            reason = f"{adj['adjustment']} ({crop_name})"
+            if open_:
+                t = open_[0]
+                # A new day or new facts: the recommendation is written again (ai_explanation None).
+                if t.due_date != as_of:
+                    TaskService.record_changes(t, [change(
+                        "due_date", t.due_date.isoformat() if t.due_date else None, as_of.isoformat(),
+                        f"Still open: {reason}")], {"due_date": as_of, "description": description,
+                                                    "ai_explanation": None})
+                    out["moved"].append(f"#{t.id} {t.title} -> {as_of}")
+                elif t.description != description:
+                    t.description = description
+                    t.ai_explanation = None
+            elif tasks:
+                t = tasks[-1]
+                TaskService.record_changes(t, [change("is_active", False, True, reason)],
+                                           {"is_active": True, "due_date": as_of, "description": description,
+                                            "ai_explanation": None})
+                out["reactivated"].append(f"#{t.id} {t.title}")
+            else:
+                t = TaskService.create_task({
+                    "title":                  title,
+                    "priority":               "critical",
+                    "task_type":              DECISION_TASK_TYPE,
+                    "task_category":          PLAN_TASK_CATEGORY,
+                    "due_date":               as_of,
+                    "description":            description,
+                    "crop_id":                crop.id if crop else None,
+                    "field_id":               field.id if field else None,
+                    "user_id":                user_id,
+                    "seasonal_plan_entry_id": entry.id,
+                })
+                out["created"].append(f"#{t.id} {t.title}")
+        if any(out.values()):
+            logger.info("Decision tasks for user=%s as_of=%s: %s", user_id, as_of, out)
+        return out
 
     @staticmethod
     def _plan_description(wentry, etype, crop_name, field, day, event=None, entry=None) -> str:
