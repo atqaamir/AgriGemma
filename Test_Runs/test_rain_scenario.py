@@ -97,6 +97,10 @@ with app.app_context():
         f"cotton cascades: harvest 9 Oct, irrigation start 19 May, fertilization 3 Jun ({ov})")
     check(sow_maize_tasks() == [("2027-05-06", True)], "no task move (Sow Maize stays on 6 May)")
     check(Notification.query.count() > start_notes, "change notification")
+    warn = Notification.query.filter(Notification.user_id == 1, Notification.notification_type.in_(("alert", "warning"))
+                                     ).order_by(Notification.id.desc()).first()
+    check(warn and "nusual" not in warn.message,
+          f"typical: the warning line makes no 'unusual' claim ({warn and warn.message})")
     data = fvn.build(1)
     text = fvn.block(data)
     check(data["verdict"] == "typical" and "typical for the season" in text
@@ -143,6 +147,10 @@ with app.app_context():
     check(len(sm) == 1 and sm[0].due_date.isoformat() == "2027-05-10" and sm[0].ai_explanation,
           f"Sow Maize task moved to 10 May, with a 'Why' explanation ({sow_maize_tasks()})")
     check(Notification.query.count() > notes_before, "change notification")
+    warn = Notification.query.filter(Notification.user_id == 1, Notification.notification_type.in_(("alert", "warning"))
+                                     ).order_by(Notification.id.desc()).first()
+    check(warn and warn.message == "Unusual heavy rain is forecast for 6–8 May; sowing has moved to 10 May.",
+          f"warning line from the forecast verdict ({warn and warn.message})")
     check(BANNER in html(), "banner on the page")
     data = fvn.build(1)
     text = fvn.block(data)

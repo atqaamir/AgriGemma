@@ -284,7 +284,7 @@ class NotificationService:
             self.create_if_not_duplicate(
                 user_id=user_id,
                 title=alert_title,
-                message=self._build_short_message(tag, weather),
+                message=self._build_short_message(tag, weather, facts.get("fvn")),
                 notification_type=alert_type,
                 detail=ai_summary,
             )
@@ -710,8 +710,42 @@ class NotificationService:
         return json.dumps(report, ensure_ascii=False)
 
     @staticmethod
-    def _build_short_message(tag: str, weather: dict) -> str:
-        """Build a dynamic one-liner from live weather data for the dropdown message."""
+    def _verdict_message(fvn: dict | None) -> str | None:
+        """One-liner from the forecast verdict when the forecast is unusual for the month, e.g.
+        "Unusual heavy rain is forecast for 6–8 May; sowing has moved to 10 May." None otherwise."""
+        if not fvn or fvn.get("verdict") != "unusual":
+            return None
+        from app.services.forecast_vs_normal_service import _day_range
+        rain = fvn.get("rain_by_day") or {}
+        heavy = [d for d, mm in rain.items() if (mm or 0) >= 20]
+        wet = [d for d, mm in rain.items() if (mm or 0) >= 1]
+        reasons = " ".join(fvn.get("unusual_because") or [])
+        if heavy and "rain" in reasons:
+            what = f"Unusual heavy rain is forecast for {_day_range(heavy)}"
+        elif wet and "rain" in reasons:
+            what = f"Unusual rain for {fvn.get('month') or 'the season'} is forecast for {_day_range(wet)}"
+        else:
+            fc, normal = fvn.get("forecast") or {}, fvn.get("normal") or {}
+            t, mean = fc.get("avg_temp_c"), normal.get("mean_c")
+            kind = "hot" if t is not None and mean is not None and t > mean else "cool"
+            what = f"Unusually {kind} weather is forecast for {fvn.get('month') or 'the season'}"
+        sow = [p for p in fvn.get("plan_changes") or [] if p.get("event") == "sowing" and p.get("from")]
+        if sow:
+            targets = {p["to"] for p in sow}
+            to = f" to {_day_range(list(targets))}" if len(targets) == 1 else ""
+            return f"{what}; sowing has moved{to}."
+        if fvn.get("plan_changes") or fvn.get("task_changes"):
+            return f"{what}; your plan has changed."
+        return f"{what}."
+
+    @staticmethod
+    def _build_short_message(tag: str, weather: dict, fvn: dict | None = None) -> str:
+        """Build a dynamic one-liner from live weather data for the dropdown message.
+        For weekly/daily changes with an unusual forecast, the forecast verdict leads."""
+        if tag in ("weekly", "daily"):
+            verdict_line = NotificationService._verdict_message(fvn)
+            if verdict_line:
+                return verdict_line
         def _to_float(val):
             try:
                 return float(val) if val is not None else None
