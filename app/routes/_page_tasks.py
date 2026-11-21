@@ -335,6 +335,17 @@ def _decision_action(user_id, action):
         return jsonify({"error": str(exc)}), 500
 
 
+@tasks_bp.route("/<int:user_id>/decision/<int:task_id>/recommendation", methods=["POST"])
+def decision_recommendation(user_id, task_id):
+    """Opened Decide task without a recommendation: one AI call (debounced per task)."""
+    from app.services import decision_recommendation_service as decisions
+    try:
+        return jsonify(decisions.recommend_on_open(user_id, task_id)), 200
+    except Exception as exc:
+        current_app.logger.exception("lazy recommendation failed for task %s", task_id)
+        return jsonify({"status": "failed", "text": None, "error": str(exc)}), 200
+
+
 @tasks_bp.route("/<int:user_id>/decision/<int:task_id>/sow-anyway-date", methods=["GET"])
 def decision_sow_anyway_date(user_id, task_id):
     """The date "Sow anyway" would use (for the confirmation text). No AI call."""

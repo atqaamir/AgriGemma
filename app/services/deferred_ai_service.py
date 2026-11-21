@@ -96,7 +96,8 @@ def _work(app, user_id: int, run: int, first_notification_id: int) -> None:
             from app.extensions import db
             t0 = time.monotonic()
             for name, job in (("task explanations", _explain_tasks), ("decision recommendation", _recommend),
-                              ("change notification", _fill_notifications)):
+                              ("change notification", _fill_notifications),
+                              ("decision recommendation retry", _recommend_retry)):
                 try:
                     job(user_id, run, first_notification_id)
                 except Exception:
@@ -117,6 +118,31 @@ def _recommend(user_id: int, run: int, _first_id: int) -> None:
     from app.services import decision_recommendation_service as decisions
     result = decisions.recommend(user_id, write_guard=lambda: current_write(user_id, run))
     logger.info("Deferred AI user=%s run=%s: decision recommendation %s", user_id, run, result)
+
+
+RECOMMEND_RETRY_DELAY_S = 20.0
+
+
+def _recommend_retry(user_id: int, run: int, _first_id: int) -> None:
+    """The recommendation failed (AI unavailable on the primary and the fallback model): wait
+    ~20 s and try once more – unless a newer simulator run / Reset made this run stale."""
+    from app.services import decision_recommendation_service as decisions
+    if not any(t.ai_explanation is None for t in decisions.open_decision_tasks(user_id)):
+        return
+    deadline = time.monotonic() + RECOMMEND_RETRY_DELAY_S
+    while time.monotonic() < deadline:
+        if not is_current(user_id, run):
+            logger.info("Deferred AI user=%s run=%s: stale – recommendation retry skipped", user_id, run)
+            return
+        time.sleep(min(1.0, max(0.0, deadline - time.monotonic())))
+    db_session_reset()
+    result = decisions.recommend(user_id, write_guard=lambda: current_write(user_id, run))
+    logger.info("Deferred AI user=%s run=%s: decision recommendation retry %s", user_id, run, result)
+
+
+def db_session_reset() -> None:
+    from app.extensions import db
+    db.session.expire_all()
 
 
 def _fill_notifications(user_id: int, run: int, first_id: int) -> None:

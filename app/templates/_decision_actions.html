@@ -54,7 +54,25 @@
     box.classList.toggle('hidden', !open);
     current = open ? task : null;
     reset();
+    if (open && !task.ai_explanation) lazyRecommend(task);
   };
+
+  // No recommendation stored (e.g. the AI was unavailable): ask once now (the server debounces).
+  async function lazyRecommend(task) {
+    const why = $('taskDetailWhy');
+    try {
+      const r = await fetch(`/mytasks/${USER_ID}/decision/${task.id}/recommendation`, { method: 'POST' });
+      const body = r.ok ? await r.json() : {};
+      if (current !== task || !why) return;            // the user opened another task meanwhile
+      if (body.text) {
+        task.ai_explanation = body.text;
+        why.textContent = body.text;
+        $('taskDetailWhyBlock') && $('taskDetailWhyBlock').classList.remove('hidden');
+      } else if (body.status !== 'in_progress') {
+        why.textContent = 'No AI recommendation right now – choose one of the options in the description.';
+      }
+    } catch (_) {}
+  }
 
   async function ask(kind) {
     if (!current) return;

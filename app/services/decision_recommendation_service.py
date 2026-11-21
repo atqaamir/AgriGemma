@@ -293,18 +293,72 @@ def _call_ai(prompt: str, timeout: float = CALL_TIMEOUT_S) -> str | None:
     return ai_model_service.fast_complete_direct(prompt, max_tokens=MAX_TOKENS, timeout=timeout, temperature=0.1)
 
 
+def _no_model() -> bool:
+    """True for the placeholder provider (no model to ask)."""
+    from app.services.ai_model_service import ai_model_service
+    provider = ai_model_service._fast_provider or ai_model_service.get_provider()
+    return provider.name.startswith("Placeholder")
+
+
+# ── Lazy retry when the Decide task's details are opened (one call, debounced) ─────────
+LAZY_MIN_INTERVAL_S = 60.0
+_lazy_lock = __import__("threading").Lock()
+_lazy_running: set = set()
+_lazy_last: dict = {}            # task id -> monotonic time of the last attempt
+
+
+def recommend_on_open(user_id: int, task_id: int) -> dict:
+    """The Decide task's details were opened and it has no recommendation: one AI call for it,
+    at most one at a time per task and one per LAZY_MIN_INTERVAL_S. Returns
+    {"status": "stored" | "recommended" | "failed" | "in_progress" | "debounced" | "not_open",
+     "text": str | None}."""
+    import time
+    t = next((x for x in open_decision_tasks(user_id) if x.id == task_id), None)
+    if t is None:
+        return {"status": "not_open", "text": None}
+    if t.ai_explanation:
+        return {"status": "stored", "text": t.ai_explanation}
+    with _lazy_lock:
+        if task_id in _lazy_running:
+            return {"status": "in_progress", "text": None}
+        last = _lazy_last.get(task_id)
+        if last is not None and time.monotonic() - last < LAZY_MIN_INTERVAL_S:
+            return {"status": "debounced", "text": None}
+        _lazy_running.add(task_id)
+        _lazy_last[task_id] = time.monotonic()
+    try:
+        result = recommend(user_id, task_ids={task_id}, include_dropped=True)
+    finally:
+        with _lazy_lock:
+            _lazy_running.discard(task_id)
+    db.session.expire_all()
+    t = Task.query.get(task_id)
+    ok = task_id in result["recommended"]
+    logger.info("Decision recommendation on open, task %s: %s", task_id, "recommended" if ok else result)
+    return {"status": "recommended" if ok else "failed", "text": t.ai_explanation if ok else None}
+
+
 def open_decision_tasks(user_id: int) -> list:
     return (Task.query.filter(Task.user_id == user_id, Task.task_type == DECISION_TASK_TYPE,
                               Task.is_active.is_(True), Task.completed.is_(False))
             .order_by(Task.id).all())
 
 
-def recommend(user_id: int, write_guard=None, only_missing: bool = True) -> dict:
+def recommend(user_id: int, write_guard=None, only_missing: bool = True, task_ids=None,
+              include_dropped: bool = False) -> dict:
     """Recommend for the user's open decision tasks without a recommendation yet (one AI call).
-    Returns {"called", "recommended": [ids], "rejected": {id: reason}, "failed": [ids]}.
+    Returns {"called", "recommended": [ids], "rejected": {id: reason}, "failed": [ids], "no_model": bool}.
+    - The AI is unavailable (HTTP 503/429/timeout on the primary AND the fallback model, an error,
+      no usable answer): "failed" – ai_explanation stays None, so the deferred retry and the lazy
+      retry (task details opened) try again; the notification shows the options meanwhile.
+    - Rejected by the checks, or no model at all (placeholder provider): DROPPED ("") – the options.
+    only_missing: tasks without a recommendation (None; also "" with include_dropped).
+    task_ids: only these decision tasks.
     write_guard: as plan_task_explanation_service.explain (background runs drop stale answers)."""
-    result = {"called": False, "recommended": [], "rejected": {}, "failed": []}
-    tasks = [t for t in open_decision_tasks(user_id) if not only_missing or t.ai_explanation is None]
+    result = {"called": False, "recommended": [], "rejected": {}, "failed": [], "no_model": False}
+    tasks = [t for t in open_decision_tasks(user_id)
+             if (task_ids is None or t.id in task_ids)
+             and (not only_missing or t.ai_explanation is None or (include_dropped and t.ai_explanation == DROPPED))]
     facts = {}
     for t in tasks:
         f = facts_for_task(t)
@@ -314,19 +368,24 @@ def recommend(user_id: int, write_guard=None, only_missing: bool = True) -> dict
         return result
     result["called"] = True
     timeout = BACKGROUND_TIMEOUT_S if write_guard is not None else CALL_TIMEOUT_S
+    unavailable = False
     try:
         raw = _call_ai(build_prompt(list(facts.values())), timeout)
+        result["no_model"] = raw is None and _no_model()
     except Exception as exc:
-        logger.warning("Decision recommendation for user=%s: AI call failed (%s)", user_id, exc)
-        raw = None
+        logger.warning("Decision recommendation for user=%s: AI call failed (%s) – retried later", user_id, exc)
+        raw, unavailable = None, True
     from app.utils.ai_json import parse_json_object
     answers = parse_json_object(raw) or {}
-    texts = {}
+    texts, notes = {}, {}
     for tid, f in facts.items():
         a = answers.get(str(tid))
         if a is None:
             result["failed"].append(tid)
-            texts[tid] = DROPPED
+            if result["no_model"] and not unavailable:
+                texts[tid] = DROPPED                     # no model: the options, nothing to retry
+            else:
+                texts[tid], notes[tid] = None, DROPPED   # AI unavailable / no usable answer: retried
             continue
         p = problem(a, f, user_id)
         if p:
@@ -341,7 +400,7 @@ def recommend(user_id: int, write_guard=None, only_missing: bool = True) -> dict
         for t in tasks:
             if t.id in texts:
                 t.ai_explanation = texts[t.id]
-                _update_notification(t, texts[t.id])
+                _update_notification(t, texts[t.id] if texts[t.id] is not None else notes.get(t.id, DROPPED))
     if write_guard is not None:
         with write_guard() as current:
             if not current:

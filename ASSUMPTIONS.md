@@ -199,6 +199,10 @@ The following assumptions define the current scope and operational boundaries of
     germination, fertiliser, …) or variety names that are not in the facts.
   - No answer or a rejected answer: no recommendation – the options only ("No AI recommendation – choose one of the
     options"). After a simulator run it is written in the background; at the daily update in the same step.
+  - AI unavailable (HTTP 503/429 or a timeout on the primary model is retried on `GOOGLE_AI_FALLBACK_MODEL`; both
+    failing): the recommendation is left open, not marked final. The background run retries once about 20 s later
+    (skipped when a newer run or Reset started), and opening the Decide task's details asks again (one call at a
+    time per task, at most once a minute). A rejected answer and the placeholder provider stay "options only".
 - **The farmer's answer** (buttons on the decision task, in-page confirmation, no browser dialogs):
   - *Sow anyway*: `farmer_planned` overrides (sowing on the first suitable day in the forecast – the same fact the
     recommendation gets, e.g. 9 May – or tomorrow when the forecast has none, said in the confirmation; + cascaded
