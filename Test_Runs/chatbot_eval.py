@@ -175,10 +175,17 @@ QUESTIONS = [
     (46, "kab bijai karun?", ["planting"], [], [], None),
     (47, "is it gonna be scorching this week", ["weather"], [], [], None),
     (48, "zameen ki nami kaisi hai?", ["soil", "irrigation"], [], [], None),
+    # Scenario 3 (sowing window running out): the bot must know the open decision.
+    (49, "What should I do about my cotton?", ["task", "planting", "general"],
+     [[r"decision needed", r"\bdecid", r"\bdecision\b"],
+      [r"recommend"],
+      [r"decision is yours", r"your decision", r"you decide", r"up to you", r"your (?:call|choice)",
+       r"(?:the )?decision (?:is|rests|stays) with you", r"choice is yours"]],
+     [r"\bcancel"], None),
 ]
 
 # Scenario per question (default: scenario 1 "typical"); questions run in this order.
-SCENARIO_OF = {37: "heavy_rain", 38: "heavy_rain", 39: "heavy_rain", 40: "heavy_rain"}
+SCENARIO_OF = {37: "heavy_rain", 38: "heavy_rain", 39: "heavy_rain", 40: "heavy_rain", 49: "window_running_out"}
 
 
 def invented_heat(answer, context=""):

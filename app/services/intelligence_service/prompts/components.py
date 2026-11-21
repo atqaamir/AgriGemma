@@ -95,6 +95,25 @@ def plan_block(plan: dict) -> str:
     return "\n".join(lines)
 
 
+def decision_block(decisions: list) -> str:
+    """Open sowing decisions: the farmer decides; sowing is on hold, not cancelled."""
+    if not decisions:
+        return ""
+    lines = ["[SOWING DECISION NEEDED — the farmer decides; answer from this block]"]
+    for d in decisions:
+        where = f" ({d['field']})" if d.get("field") else ""
+        state = ("the sowing window has passed without sowing" if d["status"] == "overdue"
+                 else "no suitable sowing day is left in the sowing window")
+        lines.append(f"  {d['crop']}{where}: {state} ({d['window']}). Sowing is ON HOLD until the farmer decides – "
+                     f"it is not cancelled. Open task today: “{d['task']}”.")
+        lines.append(f"  Options: {d['options']}.")
+        lines.append(f"  Recommendation (shown to the farmer, labelled 'the decision is yours'): {d['recommendation']}"
+                     if d.get("recommendation") else "  No AI recommendation yet – present the options.")
+    lines.append("  Say that the decision is the farmer's and that they can answer the Decide task (Sow anyway / "
+                 "Skip this season). Never call the sowing or a task 'cancelled'.")
+    return "\n".join(lines)
+
+
 def weather_signals(weather: dict, fields: list, harvest_soon: bool = True) -> str:
     """
     Actionable signals derived from the forecast.

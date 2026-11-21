@@ -38,9 +38,9 @@ with app.app_context():
     from app.services.intelligence_service.intent.intent_classifier import FarmIntent, IntentResult, classify
 
     Q = eval_questions()
-    old = [q for q in Q if q[0] <= 40]
-    new = [q for q in Q if q[0] > 40]
-    check(len(old) == 40 and len(new) == 8, f"40 existing + 8 new eval questions ({len(old)}, {len(new)})")
+    old = [q for q in Q if q[0] <= 40 or q[0] > 48]   # keyword questions (incl. 49: scenario 3 decision)
+    new = [q for q in Q if 41 <= q[0] <= 48]          # the 8 keyword misses
+    check(len(old) == 41 and len(new) == 8, f"41 keyword questions + 8 keyword misses ({len(old)}, {len(new)})")
 
     calls = []
     orig_ask = hy._ask_ai
@@ -59,8 +59,8 @@ with app.app_context():
         kw = classify(text)
         if r != kw or r.primary.value not in intents:
             check(False, f"[{qid}] {text!r}: {r.primary.value} (keywords {kw.primary.value})")
-    check(not calls and hy.stats()["calls"] == 0, f"0 AI calls for the 40 ({len(calls)})")
-    check(all(classify(q[1]).primary.value in q[2] for q in old), "all 40 keep an expected intent")
+    check(not calls and hy.stats()["calls"] == 0, f"0 AI calls for the 41 ({len(calls)})")
+    check(all(classify(q[1]).primary.value in q[2] for q in old), "all 41 keep an expected intent")
 
     print("\n-- the 8 keyword misses: one AI call each, its label is used")
     for qid, text, intents, *_ in new:

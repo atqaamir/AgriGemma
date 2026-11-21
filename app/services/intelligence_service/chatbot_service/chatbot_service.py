@@ -231,6 +231,11 @@ def _format_farmer_context(
     plan_txt = plan_block(context.get("plan") or {})
     if plan_txt:
         parts.append(plan_txt)
+    # Open sowing decisions right after the plan, so the budget cut never drops them.
+    from app.services.intelligence_service.prompts.components import decision_block
+    dec_txt = decision_block(context.get("decisions") or [])
+    if dec_txt:
+        parts.append(dec_txt)
 
     # Forecast change vs. the app's normal for the month (typical / unusual), right after the plan.
     from app.services import forecast_vs_normal_service

@@ -176,7 +176,17 @@ def _task_changes(user_id: int, today) -> list:
             if ct == "due_date":
                 out.append(f"{t.title}: moved from {ov} to {nv}")
             elif ct == "is_active":
-                out.append(f"{t.title}: {'cancelled' if not nv else 'back on the list'}")
+                reason = ch.get("reason") or ""
+                if nv:
+                    out.append(f"{t.title}: back on the list")
+                elif "decision needed" in reason.lower() or "sowing overdue" in reason.lower():
+                    out.append(f"{t.title}: on hold – sowing decision needed (see the “Decide” task)")
+                elif "skipped by the farmer" in reason.lower():
+                    out.append(f"{t.title}: not scheduled – skipped by the farmer")
+                elif t.task_type == "decision":
+                    out.append(f"{t.title}: closed – {reason}")
+                else:
+                    out.append(f"{t.title}: cancelled")
     return out
 
 

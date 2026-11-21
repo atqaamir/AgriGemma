@@ -128,12 +128,40 @@ def task_lines(user_id: int, today: date) -> list:
     return lines
 
 
+def decision_lines(user_id: int) -> list:
+    """Open sowing decisions: status, the Decide task, the options, the stored recommendation."""
+    from app.services.intelligence_service.context.context_builder import fetch_decisions
+    out = []
+    for d in fetch_decisions(user_id):
+        where = f" ({d['field']})" if d.get("field") else ""
+        state = ("the sowing window has passed without sowing" if d["status"] == "overdue"
+                 else "no suitable sowing day is left in the sowing window")
+        out.append(f"- {d['crop']}{where}: decision needed – {state} ({d['window']}); sowing is on hold until you "
+                   f"decide. Open task: “{d['task']}”.")
+        out.append(f"  Options: {d['options']}.")
+        if d.get("recommendation"):
+            out.append(f"  Recommendation – the decision is yours: {d['recommendation']}")
+    return out
+
+
 def build(user_id: int, message: str, context: dict) -> str:
     m = (message or "").lower()
     intent = context.get("intent")
     plan = context.get("plan") or {}
     fvn = context.get("forecast_vs_normal")
     today = clock.today()
+
+    # An open sowing decision about a crop the question names (or a planting / task question) comes first.
+    decisions = decision_lines(user_id)
+    crops = {c["crop"].lower() for c in plan.get("crops") or []}
+    if decisions and (intent in ("planting", "task") or any(c in m for c in crops)
+                      or any(w in m for w in _PLANT_WORDS)):
+        head = [NO_AI, "Sowing decision:"] if intent not in ("planting", "task") else ["Sowing decision:"]
+        rest = []
+        if intent == "task" or any(w in m for w in _TASK_WORDS):
+            lines = task_lines(user_id, today)
+            rest = (["Your tasks for today and tomorrow, most urgent first:"] + lines) if lines else []
+        return "\n".join(head + decisions + rest + [CLOSING])
 
     if intent == "planting" or any(w in m for w in _PLANT_WORDS):
         lines = sowing_lines(plan, fvn)

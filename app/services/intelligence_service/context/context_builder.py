@@ -193,6 +193,11 @@ def build_chatbot_context(user_id: int, intent_result: IntentResult) -> dict:
     ctx["intent"]      = intent_result.primary.value
     # Core summary for every question: scenario, sowing status per crop, today's/tomorrow's tasks.
     ctx["core"]        = _safe("core", _fetch_core, user_id) or ""
+    # Open sowing decisions (decision needed / overdue): status, the "Decide" task, the options
+    # and the stored recommendation – for planting, task and general questions.
+    if intent_result.primary in (FarmIntent.PLANTING, FarmIntent.TASK, FarmIntent.GENERAL) or \
+            any(i in (FarmIntent.PLANTING, FarmIntent.TASK) for i in intent_result.secondary):
+        ctx["decisions"] = _safe("decisions", fetch_decisions, user_id) or []
     # The farm's plan (dates, sowing status, Not Feasible crops) for every question.
     ctx["plan"]        = _safe("plan", _fetch_plan, user_id) or {}
     # Forecast change vs. the app's climate normal (typical / unusual), for every question.
@@ -461,6 +466,15 @@ def _fetch_plan(user_id: int) -> dict:
         notes = [a["adjustment"] for a in adj
                  if a.get("factor") != "sowing_window" and "irrigation" in (a.get("adjustment") or "").lower()
                  and not a["adjustment"].startswith("[Monitor]")][:1]
+        if entry.skipped_on or w.get("sowing_status") in ("decision_needed", "overdue"):
+            # No sowing scheduled: irrigation, fertilization and harvest dates do not apply yet.
+            crops.append({"crop": name, "field": field, "sown_on": None, "sowing": None,
+                          "sowing_note": ("Skipped by the farmer for this season" if entry.skipped_on else
+                                          (sowing_note or "decision needed") +
+                                          " – no sowing, irrigation, fertilization or harvest dates until the "
+                                          "farmer decides"),
+                          "irrigation_start": None, "fertilization": None, "harvest": None, "notes": []})
+            continue
         crops.append({
             "crop": name, "field": field,
             "sown_on": fmt(eff["sowing_done_on"]),
@@ -546,6 +560,7 @@ def _fetch_core(user_id: int) -> str:
     except Exception:
         pass
     sowing = []
+    decisions = fetch_decisions(user_id)
     plan = SeasonalPlan.query.filter_by(user_id=user_id, currently_active=True).first()
     for entry in (plan.entries if plan else []):
         name = entry.crop_name_rel.name if entry.crop_name_rel else f"Crop {entry.crop_name_id}"
@@ -558,6 +573,9 @@ def _fetch_core(user_id: int) -> str:
         label = _SOWING_LABEL.get(status)
         if label and "{d}" in label:
             label = label.format(d=fmt(day)) if day else label.split(" {d}")[0]
+        if status in ("decision_needed", "overdue"):
+            rec = next((recommended_option(d["recommendation"]) for d in decisions if d["crop"] == name), None)
+            label += f" (open Decide task{'; recommended: ' + rec if rec else ''}; the farmer decides)"
         sowing.append(f"{name} {label or 'no sowing this week'}")
 
     rank = {"critical": 0, "high": 1, "medium": 2, "low": 3}
@@ -585,3 +603,38 @@ def _fetch_core(user_id: int) -> str:
         parts.append(part)
     out = head + "".join(parts) + tail
     return out[:CORE_MAX_CHARS]
+
+# ── Open sowing decisions (decision needed / overdue) ─────────────────────────────────
+def fetch_decisions(user_id: int) -> list:
+    """One dict per open "Decide: <crop> sowing" task: crop, field, status, window, task title,
+    the options and the stored AI recommendation (None if there is none). No AI call."""
+    from datetime import datetime as _dt, timedelta
+    from app.models.seasonal_plan import SeasonalPlanEntry
+    from app.models.task import Task
+    from app.rules.rule_engine.rule_engine import RuleEngine
+    fmt = lambda d: f"{d.day} {d.strftime('%b')}"
+    out = []
+    tasks = (Task.query.filter(Task.user_id == user_id, Task.task_type == "decision", Task.is_active.is_(True),
+                               Task.completed.is_(False)).order_by(Task.id).all())
+    for t in tasks:
+        entry = SeasonalPlanEntry.query.get(t.seasonal_plan_entry_id) if t.seasonal_plan_entry_id else None
+        if entry is None or not entry.sowing:
+            continue
+        planned = _dt.strptime(entry.sowing, "%m/%d/%Y").date()
+        end = planned + timedelta(days=RuleEngine.MAX_SOWING_DELAY_DAYS)
+        out.append({
+            "crop": entry.crop_name_rel.name if entry.crop_name_rel else f"Crop {entry.crop_name_id}",
+            "field": t.field.name if t.field else None,
+            "status": "overdue" if clock.today() > end else "decision_needed",
+            "window": f"{fmt(planned)}–{fmt(end)}",
+            "task": t.title,
+            "options": RuleEngine.SOWING_OVERDUE_OPTIONS,
+            "recommendation": t.ai_explanation or None,
+        })
+    return out
+
+
+def recommended_option(text: str | None) -> str | None:
+    """'sow anyway with precautions' from a stored recommendation text."""
+    from app.services.decision_recommendation_service import OPTIONS
+    return next((v.lower() for v in OPTIONS.values() if (text or "").startswith(v + ".")), None)
