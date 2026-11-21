@@ -177,10 +177,18 @@ def facts_for_task(task: Task, today: date | None = None) -> dict | None:
         "unsuitable": [_fmt(d) for d in unsuitable], "days": days, "verdict": verdict,
         "duration": f"{duration} days from sowing to harvest (seasonal plan)" if duration else None,
         "first_ok": first_line, "harvest_if_first_ok": harvest_line, "options": option_facts,
+        "first_ok_date": first_ok,
         "allowed_dates": sorted(allowed),
     }
     f["text"] = _facts_text(f)
     return f
+
+
+def first_suitable_day(task: Task, today: date | None = None) -> date | None:
+    """The first suitable sowing day in the forecast after the window (the 'sow anyway' fact of
+    the recommendation), or None when the forecast has none."""
+    f = facts_for_task(task, today)
+    return f.get("first_ok_date") if f else None
 
 
 def _facts_text(f: dict) -> str:

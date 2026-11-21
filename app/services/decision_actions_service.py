@@ -69,13 +69,28 @@ def recommended_option(task: Task) -> str | None:
     return next((k for k, label in OPTIONS.items() if text.startswith(label + ".")), None)
 
 
+def sow_anyway_date(user_id: int, task_id: int) -> dict:
+    """The date "Sow anyway" uses: the first suitable sowing day in the forecast (the same fact the
+    recommendation is given), else tomorrow. {"date": iso, "first_suitable": bool}."""
+    from app.services.decision_recommendation_service import first_suitable_day
+    task, _ = _open_decision_task(user_id, task_id)
+    today = clock.today()
+    first = first_suitable_day(task, today)
+    if first and first > today:
+        return {"date": first.isoformat(), "first_suitable": True}
+    # No suitable day in the forecast (or only today, too late for a new task): tomorrow.
+    return {"date": (today + timedelta(days=1)).isoformat(), "first_suitable": False}
+
+
 def sow_anyway(user_id: int, task_id: int) -> dict:
+    from datetime import date as _date
     from app.repositories.plan_event_override_repository import PlanEventOverrideRepository
     from app.services.decision_recommendation_service import OPTIONS
     from app.services.plan_override_service import CASCADE_FROM_SOWING, PlanOverrideService
     task, entry = _open_decision_task(user_id, task_id)
     today = clock.today()
-    day = today + timedelta(days=1)
+    when = sow_anyway_date(user_id, task_id)
+    day = _date.fromisoformat(when["date"])
     eff = PlanOverrideService.effective_dates(entry, today)
     if eff["sowing_done_on"]:
         raise DecisionError(f"Sowing is already recorded as done on {_fmt(eff['sowing_done_on'])}")
@@ -107,16 +122,41 @@ def sow_anyway(user_id: int, task_id: int) -> dict:
     sow = (Task.query.filter(Task.user_id == user_id, Task.seasonal_plan_entry_id == entry.id,
                              Task.task_type == "planting", Task.completed.is_(False), Task.is_active.is_(True))
            .order_by(Task.id.desc()).first())
+    if sow is None:
+        # The sync creates plan tasks for today and tomorrow only; the farmer's date may be later.
+        from app.services.domain_service.task_service import TaskService
+        from app.services.task_generation_service import TaskGenerationService
+        field = task.field
+        reactivate = (Task.query.filter(Task.user_id == user_id, Task.seasonal_plan_entry_id == entry.id,
+                                        Task.task_type == "planting", Task.completed.is_(False))
+                      .order_by(Task.id.desc()).first())
+        if reactivate is not None:
+            _record(reactivate, [{"change_type": "is_active", "original_value": False, "new_value": True,
+                                  "reason": f"Decided: sow anyway on {_fmt(day)}"}],
+                    {"is_active": True, "due_date": day, "ai_explanation": None})
+            sow = reactivate
+        else:
+            sow = TaskService.create_task({
+                "title": f"Sow {crop}" + (f" \u2013 {field.name}" if field else ""), "priority": "high",
+                "task_type": "planting", "task_category": "plan", "due_date": day,
+                "description": f"From the weekly plan: sowing of {crop}" + (f" on {field.name}" if field else "")
+                               + f" on {day.day} {day.strftime('%b %Y')}. Sowing on {_fmt(day)} – the farmer "
+                                 f"decided to sow anyway.",
+                "crop_id": task.crop_id, "field_id": field.id if field else None, "user_id": user_id,
+                "seasonal_plan_entry_id": entry.id})
     if sow is not None:
-        note = f"Sow anyway: the farmer decided to sow {crop} on {_fmt(day)} (no suitable day left in the window)."
+        why = ("the first suitable sowing day in the forecast" if when["first_suitable"]
+               else "no suitable sowing day in the forecast, so tomorrow")
+        note = (f"Sow anyway: the farmer decided to sow {crop} on {_fmt(day)} ({why}; "
+                f"no suitable day left in the window).")
         if against:
             note += f" This is against the AI recommendation ({OPTIONS[rec].lower()})."
         sow.notes = note if not sow.notes else f"{sow.notes}\n{note}"
         db.session.commit()
     logger.info("Decision task %s: sow anyway on %s (entry %s, against recommendation: %s, sow task %s)",
                 task.id, day, entry.id, against, sow.id if sow else None)
-    return {"decision": "sow_anyway", "date": day.isoformat(), "sow_task_id": sow.id if sow else None,
-            "against_recommendation": against, "crop": crop}
+    return {"decision": "sow_anyway", "date": day.isoformat(), "first_suitable": when["first_suitable"],
+            "sow_task_id": sow.id if sow else None, "against_recommendation": against, "crop": crop}
 
 
 def skip_season(user_id: int, task_id: int) -> dict:

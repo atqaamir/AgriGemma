@@ -85,7 +85,7 @@ with app.app_context():
     deferred.wait(1, 30)
     c = core()
     print("   " + c)
-    check("Cotton sow anyway 6 May (farmer)" in c and "Sow Cotton – The Reservoir (high)" in c, "sow anyway + its task")
+    check("Cotton sow anyway 9 May (farmer)" in c, "sow anyway on the first suitable day (9 May)")
     from app.models.seasonal_plan import SeasonalPlan
     entry = next(e for e in SeasonalPlan.query.filter_by(user_id=1, currently_active=True).first().entries
                  if e.crop_name_rel.name == "Cotton")

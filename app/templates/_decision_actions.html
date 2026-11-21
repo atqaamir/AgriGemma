@@ -56,16 +56,29 @@
     reset();
   };
 
-  function ask(kind) {
+  async function ask(kind) {
     if (!current) return;
     const crop = current.crop_name || 'this crop';
-    const base = current.due_date ? new Date(current.due_date + 'T00:00:00') : new Date();
-    const tomorrow = new Date(base); tomorrow.setDate(base.getDate() + 1);
     const rec = recommended(current);
     let text;
     if (kind === 'sow') {
-      text = `Sow ${crop} anyway, tomorrow (${fmt(tomorrow)})? A “Sow ${crop}” task due tomorrow is added; ` +
-             `completing it records the sowing date. The forecast will not move this date.`;
+      // The date: the first suitable sowing day in the forecast (as in the recommendation), else tomorrow.
+      let when = null;
+      try {
+        const r = await fetch(`/mytasks/${USER_ID}/decision/${current.id}/sow-anyway-date`);
+        if (r.ok) when = await r.json();
+      } catch (_) {}
+      if (!when) {
+        const base = current.due_date ? new Date(current.due_date + 'T00:00:00') : new Date();
+        base.setDate(base.getDate() + 1);
+        when = { date: base.toISOString().slice(0, 10), first_suitable: false };
+      }
+      const day = fmt(new Date(when.date + 'T00:00:00'));
+      text = when.first_suitable
+        ? `Sow ${crop} on ${day}, the first suitable day? `
+        : `No suitable sowing day in the forecast – sow ${crop} tomorrow (${day})? `;
+      text += `A “Sow ${crop}” task for ${day} is added; completing it records the sowing date. ` +
+              `The forecast will not move this date.`;
       if (rec && rec !== 'sow anyway with precautions') text += ` This is against the AI recommendation (${rec}).`;
     } else {
       text = `Skip ${crop} for this season? The plan stops scheduling ${crop} (no more sowing, irrigation or ` +
@@ -94,7 +107,7 @@
       if (r.ok) {
         res.className = 'text-sm font-medium text-primary';
         res.textContent = pending === 'sow'
-          ? `Decided: sow ${body.crop || ''} anyway on ${fmt(new Date(body.date + 'T00:00:00'))}. The sowing task is on your list.`
+          ? `Decided: sow ${body.crop || ''} on ${fmt(new Date(body.date + 'T00:00:00'))}. The sowing task is on your list.`
           : `Decided: ${body.crop || 'the crop'} is skipped for this season.`;
         setTimeout(() => window.location.reload(), 1400);
       } else {

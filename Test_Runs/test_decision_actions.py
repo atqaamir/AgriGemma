@@ -40,6 +40,7 @@ with app.app_context():
     client = app.test_client()
     today = clock.today()
     tomorrow = today + timedelta(days=1)
+    first_ok = today + timedelta(days=4)          # 9 May: the first suitable day in scenario 3
     S3 = scenarios.WINDOW_RUNNING_OUT
     REC_SKIP = ("Skip the season. The sowing window ends on 8 May and every day left in it is unsuitable. "
                 "The first suitable day, 9 May, is after the window.")
@@ -88,28 +89,29 @@ with app.app_context():
     db.session.commit()
     r = post(f"/mytasks/1/decision/{d.id}/sow-anyway")
     body = r.get_json() or {}
-    check(r.status_code == 200 and body.get("date") == tomorrow.isoformat(), f"HTTP {r.status_code} {body}")
+    check(r.status_code == 200 and body.get("date") == first_ok.isoformat() and body.get("first_suitable") is True,
+          f"HTTP {r.status_code}: the first suitable day {body}")
     check(body.get("against_recommendation") is True, "reported as against the recommendation")
     d = decision_task()
     hist = json.loads(d.task_changes or "[]")
-    check(d.completed and hist[-1]["reason"] == "Decided: sow anyway on 6 May", "decision task closed (completed)")
-    check(cotton_plan()["sowing_status"] == "farmer_planned" and sowing_days() == ["2027-05-06"],
-          f"weekly plan: cotton sowing 6 May by the farmer ({cotton_plan()['sowing_status']}, {sowing_days()})")
+    check(d.completed and hist[-1]["reason"] == "Decided: sow anyway on 9 May", "decision task closed (completed)")
+    check(cotton_plan()["sowing_status"] == "farmer_planned" and sowing_days() == ["2027-05-09"],
+          f"weekly plan: cotton sowing 9 May by the farmer ({cotton_plan()['sowing_status']}, {sowing_days()})")
     sow = sow_cotton()
-    check(len(sow) == 1 and sow[0].due_date == tomorrow and sow[0].task_category == "plan",
-          f"Sow Cotton plan task due tomorrow ({[(t.title, t.due_date) for t in sow]})")
+    check(len(sow) == 1 and sow[0].due_date == first_ok and sow[0].task_category == "plan",
+          f"Sow Cotton plan task due 9 May ({[(t.title, t.due_date) for t in sow]})")
     check(sow and "against the AI recommendation (skip the season)" in (sow[0].notes or ""),
           f"note: against the recommendation ({sow[0].notes if sow else None!r})")
     rows = PlanEventOverride.query.filter_by(seasonal_plan_entry_id=cotton_entry().id, source="farmer_planned").all()
     check(sorted(r.event_type for r in rows) == ["fertilization", "harvesting", "irrigation_start", "sowing"],
           f"farmer_planned overrides: sowing + cascades {sorted(r.event_type for r in rows)}")
     harvest = next(r for r in rows if r.event_type == "harvesting")
-    check(harvest.actual_date.isoformat() == "2027-10-06", f"harvest moves with it (24 Sep → {harvest.actual_date})")
+    check(harvest.actual_date.isoformat() == "2027-10-09", f"harvest moves with it (24 Sep → {harvest.actual_date})")
 
     print("   … the daily re-plan does not move it (the forecast still has no suitable day before 9 May)")
     CoordinatorAgent().daily_update(user_id=1, as_of_date=today, defer_ai=True)
-    check(sowing_days() == ["2027-05-06"] and cotton_plan()["sowing_status"] == "farmer_planned",
-          f"still 6 May after the daily update {sowing_days()}")
+    check(sowing_days() == ["2027-05-09"] and cotton_plan()["sowing_status"] == "farmer_planned",
+          f"still 9 May after the daily update {sowing_days()}")
     check(not decision_task().is_active or decision_task().completed, "no decision task reopened")
     check(len(sow_cotton()) == 1, "still one Sow Cotton task")
 
