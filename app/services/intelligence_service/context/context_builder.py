@@ -191,6 +191,8 @@ def build_chatbot_context(user_id: int, intent_result: IntentResult) -> dict:
 
     ctx["farmer_name"] = _safe("farmer_name", _fetch_farmer_name, user_id)
     ctx["intent"]      = intent_result.primary.value
+    # Core summary for every question: scenario, sowing status per crop, today's/tomorrow's tasks.
+    ctx["core"]        = _safe("core", _fetch_core, user_id) or ""
     # The farm's plan (dates, sowing status, Not Feasible crops) for every question.
     ctx["plan"]        = _safe("plan", _fetch_plan, user_id) or {}
     # Forecast change vs. the app's climate normal (typical / unusual), for every question.
@@ -513,3 +515,73 @@ def _fetch_seasonal(user_id: int) -> dict:
             for e in entries
         ],
     }
+
+# ── Core summary (every chatbot context) ───────────────────────────────────────────────
+CORE_MAX_CHARS = 400
+_SOWING_LABEL = {
+    "planned": "sowing {d}", "window_set": "sowing moved to {d}", "farmer_planned": "sow anyway {d} (farmer)",
+    "no_suitable_day": "no suitable sowing day in the forecast", "decision_needed": "decision needed",
+    "overdue": "sowing overdue, decision needed", "done": "sown", "skipped": "skipped by the farmer",
+}
+
+
+def _fetch_core(user_id: int) -> str:
+    """One short block for every question (<= CORE_MAX_CHARS): the active scenario, the sowing
+    status per crop (incl. decision needed / overdue / Not Feasible / skipped) and today's and
+    tomorrow's pending tasks. Fixed text from the DB, no AI."""
+    from datetime import timedelta
+    from app.models.seasonal_plan import SeasonalPlan
+    from app.repositories.task_repository import TaskRepository
+    from app.services import demo_scenario_service
+    from app.services.weekly_planning_service.weekly_planner_service import WeeklyPlannerService
+
+    today = clock.today()
+    fmt = lambda iso: (lambda d: f"{d.day} {d.strftime('%b')}")(date.fromisoformat(iso))
+    key = demo_scenario_service.active(user_id)
+    scenario = demo_scenario_service.SCENARIOS[key]["label"] if key else "none"
+
+    weekly = {}
+    try:
+        weekly = {e["crop_name"]: e for e in WeeklyPlannerService.show_active_plan(user_id).get("entries", [])}
+    except Exception:
+        pass
+    sowing = []
+    plan = SeasonalPlan.query.filter_by(user_id=user_id, currently_active=True).first()
+    for entry in (plan.entries if plan else []):
+        name = entry.crop_name_rel.name if entry.crop_name_rel else f"Crop {entry.crop_name_id}"
+        if entry.feasibility == "Not Feasible":
+            sowing.append(f"{name} not feasible")
+            continue
+        w = weekly.get(name) or {}
+        status = "skipped" if entry.skipped_on else w.get("sowing_status")
+        day = next((x["date"] for x in w.get("week_events", []) if x.get("event_type") == "sowing"), None)
+        label = _SOWING_LABEL.get(status)
+        if label and "{d}" in label:
+            label = label.format(d=fmt(day)) if day else label.split(" {d}")[0]
+        sowing.append(f"{name} {label or 'no sowing this week'}")
+
+    rank = {"critical": 0, "high": 1, "medium": 2, "low": 3}
+    short = lambda title: title if len(title) <= 45 else title[:44].rstrip() + "…"
+    tasks = {today: [], today + timedelta(days=1): []}
+    overdue = 0
+    for t in sorted(TaskRepository.get_pending(user_id), key=lambda t: (rank.get(t.priority, 4), t.id)):
+        if t.due_date in tasks:
+            tasks[t.due_date].append(f"{short(t.title)} ({t.priority})" if t.priority in ("critical", "high")
+                                     else short(t.title))
+        elif t.due_date and t.due_date < today:
+            overdue += 1
+
+    head = f"CORE: scenario {scenario}. Sowing: {'; '.join(sowing) or 'no plan'}."
+    tail = f" Overdue: {overdue}." if overdue else ""
+    share = (CORE_MAX_CHARS - len(head) - len(tail)) // 2      # today and tomorrow get the same room
+    parts = []
+    for label, d in (("Today", today), ("Tomorrow", today + timedelta(days=1))):
+        items, room = tasks[d], share + (share - len(parts[0]) if parts else 0)   # tomorrow gets today's leftover
+        part = f" {label}: " + (", ".join(items) if items else "no tasks") + "."
+        while items and len(part) > room:
+            items = items[:-1]
+            more = len(tasks[d]) - len(items)
+            part = f" {label}: " + (", ".join(items) + f" +{more} more" if items else f"{more} tasks") + "."
+        parts.append(part)
+    out = head + "".join(parts) + tail
+    return out[:CORE_MAX_CHARS]

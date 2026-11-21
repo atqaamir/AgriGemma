@@ -222,6 +222,9 @@ def _format_farmer_context(
     climate     = context.get("climate") or {}
 
     parts = [f"Farmer: {farmer_name}"]
+    # Core summary first (<= ~400 chars): always survives the budget cut.
+    if context.get("core"):
+        parts.append(context["core"])
 
     # The plan first: dates and Not Feasible crops must survive the budget cut.
     plan_txt = plan_block(context.get("plan") or {})
