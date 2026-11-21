@@ -186,6 +186,13 @@ The following assumptions define the current scope and operational boundaries of
   suitable day after the window and the harvest date it gives, the four options. One batched AI call (minimal
   thinking) recommends one option with a 2–3 sentence reason; the behaviour guidance is in the facts block. Shown as
   "Recommendation – the decision is yours" on the task's detail view and after the decision notification's text.
+  - Per-option facts, only from app data: *sow anyway* – the first suitable day, days after the window end, the
+    harvest date it gives and whether it falls within the crop type's harvest months (`crop_type_timeline` in the
+    rule base); *short-duration variety* – "needs different seed; the app has no variety data, so the effect on
+    harvest is not modelled"; *switch crop* – "needs a new seasonal plan entry; not modelled"; *skip this season* –
+    "no <crop> this season on <field>". Guidance: prefer the option the facts support most directly; the original
+    planned harvest date is not a target unless the facts say why; no claimed effect for options that are not
+    modelled. Scenario 3 with the fallback model: "sow anyway" (9 May, harvest about 9 Oct, within Sep–Oct).
   - Checked before it is shown: the shared AI-text guard (drafts, crops, tone, dates only from the facts), a known
     option, 2–3 sentences, **every number must appear in the facts**, no agronomic claim words (yield, pests,
     germination, fertiliser, …) or variety names that are not in the facts.
@@ -275,7 +282,19 @@ The following assumptions define the current scope and operational boundaries of
 - The chatbot answers from the farm's own data: every question gets the plan (today's date, each crop's field,
   sowing date and reason, irrigation start, fertilization and harvest dates, Not Feasible crops) and the same 7-day
   forecast the weekly plan uses. The plan's dates are authoritative.
-- Intents are found by whole-word keywords (English and some Roman Urdu); no AI call for that.
+- **Core summary** in every chatbot context (`context_builder._fetch_core`, ≤ 400 characters, no AI): the active
+  scenario, the sowing status per crop (planned / moved / sow anyway / decision needed / overdue / sown / skipped /
+  not feasible) and today's and tomorrow's pending tasks, highest priority first ("+N more" when cut). It comes
+  right after the farmer's name, so the budget cut never drops it; the context budgets are unchanged.
+- **Hybrid intent** (`hybrid_intent.py`): whole-word keywords first (English and some Roman Urdu). Explicit general
+  questions (health, price, risk, problem, spray, inspection, plan change, …) and short follow-ups ("And maize?")
+  count as a keyword match. Only when nothing matched, or the keyword result is uncertain (confidence < 0.5), one
+  `complete_intent` call on the fast provider picks one of the 10 labels (temperature 0, minimal thinking, a 3 s
+  deadline for the primary and the fallback model together); an invalid label, an error or a timeout gives GENERAL.
+  No embeddings. The 40 existing eval questions never trigger it; 8 eval questions the keywords miss (paraphrases,
+  typos, Roman Urdu) do. Real run (fallback model set): 4 of 8 recovered in each of two runs – every label the
+  model returned was right; the misses were 503s / timeouts inside the 3 s; added latency only on those questions
+  (mean about 2 s, at most 3.1 s).
 - Web search only for general questions that are not about the farm (e.g. a seed price), with a 3 s limit.
 - The last 6 messages of the conversation are passed as history.
 - An unusable AI answer (empty, a template, an echo) is retried once; then a rule-based answer is shown.
@@ -341,6 +360,12 @@ The following assumptions define the current scope and operational boundaries of
 - Evaluation: `Test_Runs/insights_eval.py` (real AI, demo date: 3× task insights, 1× farm report, the four expected
   links, dropped items, "must not say" checks, latency); placeholder tests `Test_Runs/test_insight_signals.py`,
   `test_insight_reports.py`, `test_task_insights.py`, `test_farm_report.py`.
+- **"Recommended order"** (sort option on the to-do list): today's and tomorrow's tasks in the order of the stored
+  task insights when they are fresh, each with its one-line reason; when the farm has changed since (or there are no
+  insights) the rule-based order – due date (overdue counts as today), then priority – with the rules' reasons. The
+  other tasks follow by due date and priority. No AI call; priorities are never changed.
+- **Browser storage** (theme, language, the chat's active conversation, the change pop-ups seen): every access is in
+  try/catch, so a browser that blocks site data still gets working pages (the choices are just not remembered).
 
 ---
 
@@ -589,8 +614,6 @@ The following improvements and extensions are planned for future development ite
 - Improve multi-intent understanding.
 - Improve conversational context retention across messages.
 - Enhance context extraction for agricultural conversations.
-- Hybrid intent classification: keywords first, a constrained AI classifier only for unclear questions; a short core
-  summary in every context (if not shipped by then).
 - Pass each rule's agronomic reason into the "Why" explanations.
 - Collect real farmers' questions (with consent) and add them to the eval.
 
