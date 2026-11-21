@@ -41,7 +41,10 @@ CALL_TIMEOUT_S = 12
 BACKGROUND_TIMEOUT_S = 30.0
 
 GUIDANCE = (
-    "Recommend exactly ONE option per decision, by its key. Give the reason in 2–3 plain sentences "
+    "Recommend exactly ONE option per decision, by its key. Prefer the option that the facts support most "
+    "directly (see 'Options – what the app knows'). Do not treat the original planned harvest date as a target "
+    "unless the facts say why. For an option marked 'not modelled', the app has no facts about its effect: do not "
+    "claim an effect for it. Give the reason in 2–3 plain sentences "
     "addressed to the farmer. Use only the facts above: the dates, numbers and reasons given there. "
     "Do not add agronomic claims that are not in the facts (no yields, losses, prices, pests, diseases, "
     "germination, seed rates, fertiliser or variety names), and do not name other crops. "
@@ -133,8 +136,28 @@ def facts_for_task(task: Task, today: date | None = None) -> dict | None:
     first_line = (f"First suitable sowing day in the forecast: {_fmt(first_ok)} "
                   f"({(first_ok - window_end).days} day(s) after the window ends)"
                   if first_ok else f"No suitable sowing day in the forecast (up to {_fmt(last_fc)})")
-    harvest_line = (f"Harvest if sown on {_fmt(first_ok)}: about {_fmt(first_ok + timedelta(days=duration))} "
-                    f"(planned harvest {_fmt(harvest)})" if first_ok and duration else None)
+    new_harvest = first_ok + timedelta(days=duration) if first_ok and duration else None
+    harvest_line = (f"Harvest if sown on {_fmt(first_ok)}: about {_fmt(new_harvest)}" if new_harvest else None)
+    months = harvest_months(crop)                       # (crop type name, [month numbers]) or None
+    field_name = field.name if field else "this field"
+    if first_ok:
+        sow = (f"first suitable sowing day in the forecast: {_fmt(first_ok)}, "
+               f"{(first_ok - window_end).days} day(s) after the window ends")
+        if new_harvest:
+            sow += f"; harvest about {_fmt(new_harvest)}"
+            if months:
+                inside = new_harvest.month in months[1]
+                sow += (f", {'within' if inside else 'outside'} the harvest months of {months[0]} crops in the "
+                        f"rule base ({_month_range(months[1])})")
+    else:
+        sow = (f"no suitable sowing day in the forecast up to {_fmt(last_fc)}; sowing on an unsuitable day goes "
+               f"against the sowing rules for {crop}")
+    option_facts = {
+        "sow_anyway": sow,
+        "short_duration": "needs different seed; the app has no variety data, so the effect on harvest is not modelled",
+        "switch_crop": "needs a new seasonal plan entry; not modelled",
+        "skip_season": f"no {crop} this season on {field_name}",
+    }
     try:
         from app.services import forecast_vs_normal_service as fvn
         data = fvn.build(task.user_id, today)
@@ -153,7 +176,7 @@ def facts_for_task(task: Task, today: date | None = None) -> dict | None:
                                          f"{RuleEngine.MAX_SOWING_DELAY_DAYS} days)",
         "unsuitable": [_fmt(d) for d in unsuitable], "days": days, "verdict": verdict,
         "duration": f"{duration} days from sowing to harvest (seasonal plan)" if duration else None,
-        "first_ok": first_line, "harvest_if_first_ok": harvest_line,
+        "first_ok": first_line, "harvest_if_first_ok": harvest_line, "options": option_facts,
         "allowed_dates": sorted(allowed),
     }
     f["text"] = _facts_text(f)
@@ -174,7 +197,33 @@ def _facts_text(f: dict) -> str:
     lines.append(f"- {f['first_ok']}")
     if f["harvest_if_first_ok"]:
         lines.append(f"- {f['harvest_if_first_ok']}")
+    lines.append("- Options – what the app knows:")
+    lines += [f"  - {k} ({OPTIONS[k].lower()}): {v}" for k, v in f["options"].items()]
     return "\n".join(lines)
+
+
+def harvest_months(crop: str):
+    """(crop type name, harvest month numbers) from the rule base (crop_type_timeline), or None."""
+    try:
+        from app.rules.vocabulary.crop_type import CropType
+        from app.services.rule_base_service import rule_base_service
+        type_id = rule_base_service.get_crop_type_by_crop(crop)
+        tl = rule_base_service.get_timeline_by_crop_type(type_id) if type_id else None
+        if tl is None:
+            return None
+        a, b = tl.harvest_start_month, tl.harvest_end_month
+        months = list(range(a, b + 1)) if a <= b else list(range(a, 13)) + list(range(1, b + 1))
+        ct = CropType.query.get(type_id)
+        return (ct.name if ct else "this crop type"), months
+    except Exception:
+        logger.exception("harvest months for %s", crop)
+        return None
+
+
+def _month_range(months: list) -> str:
+    import calendar
+    names = [calendar.month_abbr[m] for m in months]
+    return names[0] if len(names) == 1 else f"{names[0]}–{names[-1]}"
 
 
 def build_prompt(facts: list[dict]) -> str:

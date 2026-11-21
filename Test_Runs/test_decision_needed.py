@@ -134,8 +134,18 @@ with app.app_context():
     for part in ("Sowing window: 24 Apr–8 May", "Unsuitable days left in the window: 5 May, 6 May, 7 May, 8 May",
                  "153 days from sowing to harvest", "First suitable sowing day in the forecast: 9 May",
                  "Harvest if sown on 9 May: about 9 Oct", "sow_anyway", "skip_season",
-                 "Do not add agronomic claims", "Forecast compared with the season: typical for May"):
+                 "Do not add agronomic claims", "Forecast compared with the season: typical for May",
+                 "sow_anyway (sow anyway with precautions): first suitable sowing day in the forecast: 9 May, "
+                 "1 day(s) after the window ends; harvest about 9 Oct, within the harvest months of Kharif crops "
+                 "in the rule base (Sep–Oct)",
+                 "short_duration (switch to a short-duration variety): needs different seed; the app has no "
+                 "variety data, so the effect on harvest is not modelled",
+                 "switch_crop (switch crop): needs a new seasonal plan entry; not modelled",
+                 "skip_season (skip the season): no Cotton this season on The Reservoir",
+                 "Prefer the option that the facts support most directly",
+                 "Do not treat the original planned harvest date as a target"):
         check(part in prompt, f"facts block: {part!r}")
+    check("planned harvest 24 Sep" not in prompt, "facts block: no planned-harvest anchor")
 
     rejects = {
         "draft": ("sow_anyway", "* User: farmer\n* Constraints: 2-3 sentences. Sow on 9 May."),
