@@ -17,8 +17,9 @@ The following assumptions define the current scope and operational boundaries of
 ## Farmer Behaviour
 
 - The farmer always completes all assigned tasks.
-- The farmer always follows the generated plan and never rejects a proposed change.
-  - *Farmer approval workflows are intentionally bypassed in the current implementation.*
+- The farmer follows the generated plan; weather-driven changes are applied without asking for approval.
+  - The exception is a sowing window that runs out: then the farmer decides (Sow anyway / Skip, both can be undone).
+    General approval workflows for other changes are not implemented.
 
 ---
 
@@ -498,7 +499,7 @@ The following improvements and extensions are planned for future development ite
 ## Planning & Intelligence
 
 - Allow farmers to regenerate weekly plans based on unfinished tasks.
-- Support advancing tasks earlier when weather conditions require it.
+- Support advancing tasks earlier when weather conditions require it (sowing already can, within its window).
 - Allow farmers to:
   - reject
   - negotiate
