@@ -199,10 +199,12 @@ The following assumptions define the current scope and operational boundaries of
   - No answer or a rejected answer: no recommendation – the options only ("No AI recommendation – choose one of the
     options"). After a simulator run it is written in the background; at the daily update in the same step.
 - **The farmer's answer** (buttons on the decision task, in-page confirmation, no browser dialogs):
-  - *Sow anyway*: `farmer_planned` overrides (sowing tomorrow + cascaded harvest, irrigation start, fertilization).
-    They win over every `forecast_shift` (the daily re-plan never moves the date) and lose to `farmer_completed`;
-    no rule changes. The sync then creates "Sow <crop>" due tomorrow, with a note when this is against the AI
-    recommendation; completing it records the actual sowing date as usual.
+  - *Sow anyway*: `farmer_planned` overrides (sowing on the first suitable day in the forecast – the same fact the
+    recommendation gets, e.g. 9 May – or tomorrow when the forecast has none, said in the confirmation; + cascaded
+    harvest, irrigation start, fertilization). They win over every `forecast_shift` (the daily re-plan never moves
+    the date) and lose to `farmer_completed`; no rule changes. "Sow <crop>" is created for that date, with a note
+    when this is against the AI recommendation; completing it records the actual sowing date as usual.
+  - The harvest card shows "<crop>: sowing decision pending" / "skipped this season" instead of a harvest date.
   - *Skip this season*: `seasonal_plan_entry.skipped_on` (nullable column, added at startup like the other added
     columns) – no plan events or tasks for the crop; the weekly plan shows "Skipped by the farmer".
   - Both close (complete) the decision task with the reason in its history. **Undo** on the weekly plan page removes
@@ -282,6 +284,10 @@ The following assumptions define the current scope and operational boundaries of
 - The chatbot answers from the farm's own data: every question gets the plan (today's date, each crop's field,
   sowing date and reason, irrigation start, fertilization and harvest dates, Not Feasible crops) and the same 7-day
   forecast the weekly plan uses. The plan's dates are authoritative.
+- **Open sowing decisions in the chat**: planting, task and general questions get a "SOWING DECISION NEEDED" block
+  (window, the open Decide task, the options, the stored recommendation, "the farmer decides; sowing is on hold, not
+  cancelled"); the plan line gives no event dates for such a crop; the forecast block's task changes say "on hold –
+  sowing decision needed" for a Sow task put on hold; the rule-based answer starts with the decision.
 - **Core summary** in every chatbot context (`context_builder._fetch_core`, ≤ 400 characters, no AI): the active
   scenario, the sowing status per crop (planned / moved / sow anyway / decision needed / overdue / sown / skipped /
   not feasible) and today's and tomorrow's pending tasks, highest priority first ("+N more" when cut). It comes
