@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <script>/* Browser storage can throw (private mode, blocked site data): every access goes through these. */function __lsGet(k){try{return localStorage.getItem(k)}catch(e){return null}}function __lsSet(k,v){try{localStorage.setItem(k,v)}catch(e){}}function __lsDel(k){try{localStorage.removeItem(k)}catch(e){}}</script>
   <meta charset="utf-8"/>
   <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
   <title>Notifications — Smart Farming</title>
@@ -36,7 +37,7 @@
 
   <script>
     (function () {
-      const t = localStorage.getItem('theme') || 'light';
+      const t = __lsGet('theme') || 'light';
       if (t === 'dark') document.documentElement.classList.add('dark');
     })();
   </script>
@@ -534,7 +535,7 @@
 
     function toggleTheme() {
       const dark = document.documentElement.classList.toggle('dark');
-      localStorage.setItem('theme', dark ? 'dark' : 'light');
+      __lsSet('theme', dark ? 'dark' : 'light');
     }
 
     document.addEventListener('DOMContentLoaded', loadPage);

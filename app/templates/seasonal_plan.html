@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <script>/* Browser storage can throw (private mode, blocked site data): every access goes through these. */function __lsGet(k){try{return localStorage.getItem(k)}catch(e){return null}}function __lsSet(k,v){try{localStorage.setItem(k,v)}catch(e){}}function __lsDel(k){try{localStorage.removeItem(k)}catch(e){}}</script>
   <meta charset="utf-8"/>
   <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
   <title>Seasonal Planning</title>
@@ -85,7 +86,7 @@
     .hide-scrollbar::-webkit-scrollbar { display: none; }
     .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
   </style>
-  <script>(function(){if(localStorage.getItem('theme')==='dark')document.documentElement.classList.add('dark')})();</script>
+  <script>(function(){if(__lsGet('theme')==='dark')document.documentElement.classList.add('dark')})();</script>
 </head>
 
 <body class="bg-surface dark:bg-[#1c1c17] text-on-surface dark:text-[#e5e2da] min-h-screen pb-32">
@@ -344,7 +345,7 @@ function selectCrop(el, index) {
       aiText.textContent      = explanationCache[crop.crop];
     } else {
       const storageKey      = `sp_explained_${USER_ID}_${crop.crop}`;
-      const alreadyReloaded = localStorage.getItem(storageKey);
+      const alreadyReloaded = __lsGet(storageKey);
       reasoningEl.textContent = 'Generating explanation…';
       aiText.textContent      = '';
       fetch(`/${USER_ID}/seasonal-plan-reasoning/${encodeURIComponent(crop.crop)}`)
@@ -354,7 +355,7 @@ function selectCrop(el, index) {
           explanationCache[crop.crop] = text;
           reasoningEl.textContent = text;
           aiText.textContent      = text;
-          if (!alreadyReloaded) { localStorage.setItem(storageKey, '1'); location.reload(); }
+          if (!alreadyReloaded) { __lsSet(storageKey, '1'); location.reload(); }
         })
         .catch(() => {
           reasoningEl.textContent = 'Could not load explanation.';

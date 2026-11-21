@@ -469,7 +469,7 @@
   };
 
   // ── Core state ────────────────────────────────────────────────────────────
-  var _lang = localStorage.getItem('lang') || 'en';
+  var _lang = (function () { try { return localStorage.getItem('lang'); } catch (e) { return null; } })() || 'en';
 
   function t(key) {
     return (T[_lang] && T[_lang][key]) || (T.en[key]) || key;
@@ -504,7 +504,7 @@
   async function setLanguage(lang) {
     if (lang !== 'en' && lang !== 'ur') return;
     _lang = lang;
-    localStorage.setItem('lang', lang);
+    try { localStorage.setItem('lang', lang); } catch (e) {}
     applyRTL();
     applyTranslations();
     updateLangToggle();
@@ -582,7 +582,7 @@
         var data = await res.json();
         Object.assign(lc, data.translations || {});
         cache[_lang] = lc;
-        localStorage.setItem(_DYN_KEY, JSON.stringify(cache));
+        try { localStorage.setItem(_DYN_KEY, JSON.stringify(cache)); } catch (e) {}
       }
       return lc;
     } catch (e) {

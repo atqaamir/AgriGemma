@@ -284,7 +284,7 @@
 if (typeof window.toggleTheme === 'undefined') {
   window.toggleTheme = function () {
     const dark = document.documentElement.classList.toggle('dark');
-    localStorage.setItem('theme', dark ? 'dark' : 'light');
+    __lsSet('theme', dark ? 'dark' : 'light');
   };
 }
 </script>
