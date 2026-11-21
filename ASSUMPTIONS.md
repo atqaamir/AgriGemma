@@ -554,6 +554,10 @@ The following improvements and extensions are planned for future development ite
   - day scores from the rule scores, with a cost for waiting
   - field factors (pH, soil moisture) as preparation tasks instead of daily vetoes
   - finer per-crop thresholds instead of shared bands
+- Generalise the sowing window into an event window for every one-time event: fertilization (first day without
+  heavy rain that day or the next, so fertilizer isn't washed away) and harvest (first dry day around maturity),
+  with window lengths from validated rule data and "decision needed" when a window runs out. Today fertilization
+  and harvest still use "delay by N days" rules, which can add up and never move earlier.
 - Season lifecycle: a plan ends after the last harvest; the farmer is prompted to plan the next season 4–6 weeks
   before its sowing window (needs Rabi crops).
 - Add pre-sowing irrigation (rauni) as its own planned event, with rule data.
