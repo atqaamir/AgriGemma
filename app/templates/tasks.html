@@ -2065,11 +2065,15 @@
         const fmt = iso => new Date(iso + 'T00:00').toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
         const a = new Date(data.earliest + 'T00:00'), b = new Date(data.latest + 'T00:00');
         let window_;
-        if (data.earliest === data.latest) window_ = fmt(data.earliest);
+        if (!data.earliest) window_ = 'none yet';
+        else if (data.earliest === data.latest) window_ = fmt(data.earliest);
         else if (a.getMonth() === b.getMonth()) window_ = `${a.getDate()}–${fmt(data.latest)}`;
         else window_ = `${fmt(data.earliest)} – ${fmt(data.latest)}`;
         document.getElementById('harvest-window').textContent = `Planned window: ${window_}`;
-        document.getElementById('harvest-crops').innerHTML = crops.map(c => `
+        // Decision needed / overdue / skipped: no harvest date, say why instead.
+        const STATUS_TEXT = { decision_pending: 'sowing decision pending', skipped: 'skipped this season' };
+        document.getElementById('harvest-crops').innerHTML = crops.map(c => c.status ? `
+          <li><span class="font-semibold">${escapeHtml(c.crop)}</span>: ${escapeHtml(STATUS_TEXT[c.status] || c.status)}${c.field ? ` <span class="text-on-surface-variant">· ${escapeHtml(c.field)}</span>` : ''}</li>` : `
           <li><span class="font-semibold">${escapeHtml(c.crop)}</span> ${escapeHtml(fmt(c.harvest))}${c.field ? ` <span class="text-on-surface-variant">· ${escapeHtml(c.field)}</span>` : ''}${c.moved && c.planned ? ` <span class="text-on-surface-variant text-xs">(moved from ${escapeHtml(fmt(c.planned))})</span>` : ''}</li>`).join('');
         document.getElementById('harvest-schedule-link').href = `/${USER_ID}/seasonal-plan-page`;
         card.style.display = '';

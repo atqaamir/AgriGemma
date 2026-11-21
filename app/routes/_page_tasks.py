@@ -95,9 +95,10 @@ def get_upcoming_harvest(user_id):
     """Effective harvest dates from the plan (Upcoming Harvest card). Empty list → card hidden."""
     from app.services.plan_override_service import PlanOverrideService
     crops = PlanOverrideService.upcoming_harvests(user_id)
+    dated = [c["harvest"] for c in crops if c["harvest"]]      # decision pending / skipped: no date
     return jsonify({"crops": crops,
-                    "earliest": crops[0]["harvest"] if crops else None,
-                    "latest": crops[-1]["harvest"] if crops else None}), 200
+                    "earliest": dated[0] if dated else None,
+                    "latest": dated[-1] if dated else None}), 200
 
 
 # ── Task collection ───────────────────────────────────────────────────────────

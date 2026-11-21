@@ -290,15 +290,32 @@ class PlanOverrideService:
     @staticmethod
     def upcoming_harvests(user_id: int, today: date | None = None) -> list[dict]:
         """Effective harvest date (overrides applied) of each feasible crop in the user's active
-        seasonal plan that is still ahead, earliest first: {crop, field, harvest, planned, moved}."""
+        seasonal plan that is still ahead, earliest first: {crop, field, harvest, planned, moved, status}.
+        A crop whose sowing is decision needed / overdue (status "decision_pending") or skipped by the
+        farmer (status "skipped") has no harvest date (harvest None) and comes last."""
         from datetime import timedelta
         from app.models.seasonal_plan import SeasonalPlan
         from app.utils import clock
         today = today or clock.today()
         plan = SeasonalPlan.query.filter_by(user_id=user_id, currently_active=True).first()
+        weekly = {}
+        try:
+            from app.services.weekly_planning_service.weekly_planner_service import WeeklyPlannerService
+            weekly = {e["crop_name"]: e.get("sowing_status")
+                      for e in WeeklyPlannerService.show_active_plan(user_id).get("entries", [])}
+        except Exception:
+            logger.exception("upcoming harvests: weekly plan status for user %s", user_id)
         out = []
         for entry in (plan.entries if plan else []):
             if entry.feasibility == "Not Feasible":
+                continue
+            name = entry.crop_name_rel.name if entry.crop_name_rel else f"Crop {entry.crop_name_id}"
+            status = ("skipped" if entry.skipped_on
+                      else "decision_pending" if weekly.get(name) in ("decision_needed", "overdue") else None)
+            if status:
+                crop = PlanOverrideService.active_crop_for_entry(entry, user_id)
+                out.append({"crop": name, "field": crop.field.name if crop and crop.field else None,
+                            "harvest": None, "planned": None, "moved": False, "status": status})
                 continue
             eff = PlanOverrideService.effective_dates(entry, today + timedelta(days=1))   # as-of rule
             harvest, planned = eff.get("harvesting"), _parse(entry.harvesting)
@@ -308,8 +325,8 @@ class PlanOverrideService:
             out.append({"crop": entry.crop_name_rel.name if entry.crop_name_rel else f"Crop {entry.crop_name_id}",
                         "field": crop.field.name if crop and crop.field else None,
                         "harvest": harvest.isoformat(), "planned": planned.isoformat() if planned else None,
-                        "moved": bool(planned and planned != harvest)})
-        return sorted(out, key=lambda x: x["harvest"])
+                        "moved": bool(planned and planned != harvest), "status": None})
+        return sorted(out, key=lambda x: (x["harvest"] is None, x["harvest"] or ""))
 
     @staticmethod
     def planned_sowing_label(crop):
