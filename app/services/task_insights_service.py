@@ -140,15 +140,38 @@ def _call_with_limit(prompt: str, signals: list, cands: list) -> tuple[str | Non
 
 # ── Validation ─────────────────────────────────────────────────────────────────
 
+def _event_label(e: dict) -> str:
+    """'Sow Maize' – how a plan event's own task is titled."""
+    return f"{sig.EVENT_VERB.get(e['event'], e['event'])} {e['crop']}"
+
+
+def _is_own_event(t: dict, e: dict) -> bool:
+    """The task IS the plan event's task (e.g. "Sow Maize – Punjab Wheat Belt" for sowing maize)."""
+    return (t.get("title") or "").lower().startswith(_event_label(e).lower())
+
+
 def _rule_reason(t: dict, today, signals: list) -> str:
     when = "overdue" if t["due"] < today else sig.rel(t["due"], today)
     reason = f"{t['priority'].capitalize()} priority, due {when}"
-    linked = next((s for s in signals if t["id"] in s["sources"]["tasks"] and s["kind"] in ("deadline", "dependency")
-                   and s["sources"]["plan_events"]), None)
-    if linked:
-        e = linked["sources"]["plan_events"][0]
-        reason += f" – before {sig.EVENT_VERB.get(e['event'], e['event'])} {e['crop']} {sig.fmt(date.fromisoformat(e['date']))}"
+    own = None
+    for s in signals:
+        if t["id"] not in s["sources"]["tasks"] or s["kind"] not in ("deadline", "dependency"):
+            continue
+        for e in s["sources"]["plan_events"]:
+            if _is_own_event(t, e):          # never "Sow Maize – before Sow Maize 6 May"
+                own = own or e
+                continue
+            return reason + f" – before {_event_label(e)} {sig.fmt(date.fromisoformat(e['date']))}."
+    if own:
+        noun = sig.EVENT_NOUN.get(own["event"], own["event"])
+        return reason + f" – the planned {noun} date ({sig.fmt(date.fromisoformat(own['date']))})."
     return reason + "."
+
+
+def self_referencing(reason: str, title: str) -> bool:
+    """A reason that points to the task itself ("before Sow Maize …" on "Sow Maize – …")."""
+    head = (title or "").split(" – ")[0].split(" — ")[0].strip().lower()
+    return bool(head) and f"before {head}" in (reason or "").lower()
 
 
 def validate(answer: dict, signals: list, cands: list, bare_fields: set, today) -> dict:
@@ -293,8 +316,18 @@ def recommended_order(user_id: int) -> dict:
     p = reports.payload(user_id, KIND)
     if p and not p["stale"] and p["data"].get("priority_order"):
         default = "rule" if p["is_fallback"] else "ai"
-        order = [{"task_id": x["task_id"], "reason": x.get("reason") or "", "source": x.get("source") or default}
-                 for x in p["data"]["priority_order"]]
+        order = [{"task_id": x["task_id"], "reason": x.get("reason") or "", "source": x.get("source") or default,
+                  "title": x.get("title") or ""} for x in p["data"]["priority_order"]]
+        if any(self_referencing(o["reason"], o["title"]) for o in order):
+            # A stored reason that points to the task itself is replaced by the rule reason.
+            snapshot = sig.collect(user_id, today)
+            signals = sig.build_from(snapshot)
+            by_id = {t["id"]: t for t in snapshot["tasks"]}
+            for o in order:
+                if self_referencing(o["reason"], o["title"]) and o["task_id"] in by_id:
+                    o["reason"], o["source"] = _rule_reason(by_id[o["task_id"]], today, signals), "rule"
+        for o in order:
+            o.pop("title", None)
         return {"source": "insights", "stale": False, "generated_at": p["generated_at"], "order": order}
     snapshot = sig.collect(user_id, today)
     signals = sig.build_from(snapshot)
