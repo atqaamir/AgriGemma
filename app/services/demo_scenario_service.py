@@ -55,7 +55,7 @@ SCENARIOS = {
     },
     WINDOW_RUNNING_OUT: {
         "label": "Sowing window running out",
-        "full_name": "Simulated plan change + forecast: cotton's sowing window running out",
+        "full_name": "Forecast + simulated plan change",
         "banner": "Simulated scenario: cotton planned for 24 April, not sown – sowing window running out",
         # Plan change (simulated): this crop's planned sowing date = today + offset (5 May - 11 = 24 Apr);
         # irrigation start, fertilization and harvest move with it (seasonal plan cascade).
@@ -68,14 +68,10 @@ SCENARIOS = {
             2: (27.5, 64, 5.0, 5.5, 24, "Cloudy; scattered showers."),
             3: (28.5, 58, 2.0, 6.5, 20, "Clearing slowly."),
         },
-        "info": ("Not only the forecast: this scenario also changes the plan – cotton's planned sowing date "
-                 "becomes 24 April (not sown), so its sowing window is 24 April–8 May. The forecast: a slow "
-                 "western disturbance with cloud, a few showers (2–6 mm), 27–28.5 °C and 4.5–6.5 h of sun on "
-                 "5–8 May – within the usual range for May; hot and sunny again from 9 May. Result from the "
-                 "rules: no day left in cotton's window is suitable (temperature 20–30 °C, sunlight 4–8 h), so "
-                 "the plan asks for a decision – a “Decide: Cotton sowing” task with an AI recommendation; the "
-                 "decision is the farmer's. Maize stays on 6 May. Another scenario or Reset demo puts cotton "
-                 "back on 7 May."),
+        "info": ("Also changes the plan: cotton planned for 24 April (not sown), window 24 Apr–8 May. "
+                 "Cloudy, cooler 5–8 May (normal for May) leaves no suitable sowing day, so the rules ask for a "
+                 "decision: a “Decide: Cotton sowing” task with an AI recommendation. Maize stays on 6 May. "
+                 "Another scenario or Reset puts cotton back on 7 May."),
     },
 }
 

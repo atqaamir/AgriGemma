@@ -79,7 +79,7 @@ with app.app_context():
     check(keys == ["typical", "heavy_rain", S3], f"three scenarios {keys}")
     s3 = next(o for o in scenarios.options() if o["key"] == S3)
     check(s3["label"] == "Sowing window running out", "short label")
-    check("also changes the plan" in s3["info"] and "24 April (not sown)" in s3["info"],
+    check("also changes the plan" in s3["info"].lower() and "24 April (not sown)" in s3["info"],
           "info text says the plan date changes too (24 April, not sown)")
     check(not decision_tasks(), "no decision task")
     check(cotton_entry().sowing == "05/07/2027", "cotton planned 7 May")
