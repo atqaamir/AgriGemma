@@ -805,13 +805,17 @@
       <form id="sortForm" class="p-6 space-y-4" onsubmit="applySorting(event)">
         <div>
           <label class="text-[10px] uppercase tracking-widest text-on-surface-variant block mb-1">Sort By</label>
-          <select name="sort_field"
+          <select name="sort_field" onchange="toggleSortHint()"
             class="w-full bg-surface-container rounded-lg px-4 py-3 text-sm text-on-surface outline-none focus:ring-2 focus:ring-primary">
+            <option value="recommended">Recommended order</option>
             <option value="priority">Priority</option>
             <option value="due_date">Due Date</option>
             <option value="title">Title</option>
             <option value="task_type">Task Type</option>
           </select>
+          <p id="sortRecommendedHint" class="hidden text-xs text-on-surface-variant mt-2 leading-relaxed">
+            Today's and tomorrow's tasks in the order the task insights recommend (or, when they are out of date,
+            by due date and priority), each with a one-line reason. Priorities stay as they are.</p>
         </div>
         <div>
           <label class="text-[10px] uppercase tracking-widest text-on-surface-variant block mb-1">Sort Order</label>
@@ -1082,6 +1086,7 @@
         if (!res.ok) throw new Error('Failed');
         const data = await res.json();
         cachedPendingTasks = Array.isArray(data.task_cards) ? data.task_cards : [];
+        if (sortState.field === 'recommended') await loadRecommendedOrder();
         updateSubtitle();
         renderFilteredPendingTasks();
       } catch (e) {
@@ -1101,6 +1106,11 @@
         el.textContent = pending.length === 0
           ? t('tasks.all_done')
           : `${pending.length} pending${dueToday > 0 ? ` • ${dueToday} due today` : ''}`;
+        if (sortState.field === 'recommended' && RECO) {
+          el.textContent += RECO.source === 'insights'
+            ? ' • Recommended order (task insights)'
+            : ` • Recommended order (rule-based${RECO.stale ? ': the task insights are out of date' : ''})`;
+        }
       }
     }
 
@@ -1124,7 +1134,19 @@
         );
       }
 
-      if (sortState.field) {
+      if (sortState.field === 'recommended') {
+        // Recommended order first (today/tomorrow), then the rest by due date and priority.
+        const pr = { critical: 0, high: 1, medium: 2, low: 3 };
+        const rest = (a, b) => String(a.due_date || '9999').localeCompare(String(b.due_date || '9999'))
+          || (pr[a.priority] ?? 4) - (pr[b.priority] ?? 4) || a.id - b.id;
+        result.sort((a, b) => {
+          const ia = recoIndex(a), ib = recoIndex(b);
+          if (ia >= 0 && ib >= 0) return ia - ib;
+          if (ia >= 0) return -1;
+          if (ib >= 0) return 1;
+          return rest(a, b);
+        });
+      } else if (sortState.field) {
         const priorityOrder = { critical: 0, high: 1, medium: 2, low: 3 };
         result.sort((a, b) => {
           let aVal = a[sortState.field] ?? '';
@@ -1201,6 +1223,7 @@
             <div>
               <h4 class="font-bold text-on-surface text-sm line-clamp-2 leading-tight">${escapeHtml(getDynTranslation(task.title) || 'Untitled')}</h4>
               <p class="text-[10px] text-on-surface-variant font-medium ${cancelled ? 'line-clamp-2' : 'truncate'} mt-0.5">${escapeHtml(cancelled ? (task.cancel_reason || 'Cancelled') : getTaskSubtitle(task))}</p>
+              ${sortState.field === 'recommended' && recoReason(task) ? `<p class="task-reco-reason text-[10px] text-primary font-medium mt-1 leading-snug line-clamp-3">${recoIndex(task) + 1}. ${escapeHtml(recoReason(task))}</p>` : ''}
               ${task.ai_explanation ? `<span class="inline-flex items-center gap-0.5 mt-1 px-1.5 py-0.5 rounded-full bg-primary/10 text-primary text-[9px] font-bold uppercase tracking-wide" title="${escapeHtml(task.ai_explanation)}"><span class="material-symbols-outlined" style="font-size:11px">psychology</span>${task.task_type === 'decision' ? 'Recommendation' : 'Why'}</span>` : ''}
               ${task.due_date ? `<p class="text-[10px] text-outline mt-0.5">${formatDate(task.due_date)}</p>` : ''}
             </div>
@@ -1707,8 +1730,30 @@
     }
 
     // ── Sort Modal ─────────────────────────────────────────────────────────────
+    // ── Recommended order (stored task insights when fresh, else the rules; no AI call) ──
+    let RECO = null;
+    function recoIndex(task) {
+      if (!RECO) return -1;
+      return RECO.order.findIndex(o => o.task_id === task.id);
+    }
+    function recoReason(task) {
+      const i = recoIndex(task);
+      return i >= 0 ? RECO.order[i].reason : '';
+    }
+    async function loadRecommendedOrder() {
+      try {
+        const r = await fetch(`/mytasks/recommended-order?user_id=${USER_ID}`);
+        RECO = r.ok ? await r.json() : null;
+      } catch (_) { RECO = null; }
+    }
+    function toggleSortHint() {
+      const f = document.getElementById('sortForm');
+      document.getElementById('sortRecommendedHint').classList.toggle('hidden', f.sort_field.value !== 'recommended');
+    }
+
     function openSortModal() {
       document.getElementById('sortForm').sort_field.value = sortState.field;
+      toggleSortHint();
       document.getElementById('sortForm').sort_order.value = sortState.order;
       document.getElementById('bottomNav').classList.add('hidden');
       document.getElementById('sortModal').classList.remove('hidden');
@@ -1719,12 +1764,15 @@
       document.getElementById('bottomNav').classList.remove('hidden');
     }
 
-    function applySorting(event) {
+    async function applySorting(event) {
       event.preventDefault();
       const form = event.target;
       sortState.field = form.sort_field.value;
       sortState.order = form.sort_order.value;
       closeSortModal();
+      if (sortState.field === 'recommended') {
+        await loadRecommendedOrder();
+      }
       if (isViewingAll) { allTasksPage = 1; renderFilteredAllTasks(); }
       else renderFilteredPendingTasks();
     }

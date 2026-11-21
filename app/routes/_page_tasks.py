@@ -55,6 +55,15 @@ def get_task_insights():
     return jsonify({"report": data, "generating": running}), 200
 
 
+@tasks_bp.route("/recommended-order", methods=["GET"])
+def get_recommended_order():
+    """The to-do list's "Recommended order": stored task insights when fresh, else the rules.
+    No AI call."""
+    from app.services import task_insights_service
+    user_id = request.args.get("user_id", USER_ID, type=int)
+    return jsonify(task_insights_service.recommended_order(user_id)), 200
+
+
 @tasks_bp.route("/insights/generate", methods=["POST"])
 def generate_task_insights():
     """Run the one AI call in the background (navigation doesn't cancel it); poll GET /insights."""

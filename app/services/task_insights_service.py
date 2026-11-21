@@ -278,3 +278,26 @@ def generate(user_id: int) -> dict:
     logger.info("Task insights user=%s: %s, %d ms, %d insights, %d dropped", user_id,
                 "basic summary" if is_fallback else "AI", latency_ms, len(data["insights"]), len(data["dropped"]))
     return reports.payload(user_id, KIND)
+
+
+# ── Recommended order for the to-do list (no AI call) ──────────────────────────────
+
+def recommended_order(user_id: int) -> dict:
+    """Today's and tomorrow's tasks in the recommended order, each with a one-line reason.
+    From the stored task insights when they are fresh (the farm has not changed since);
+    otherwise the rule-based order (due date – overdue counts as today –, then priority) with
+    the rules' reasons. Never calls the AI. Priorities are not changed.
+    Returns {"source": "insights" | "rules", "stale": bool, "generated_at": str | None,
+             "order": [{"task_id", "reason", "source"}]}."""
+    today = clock.today()
+    p = reports.payload(user_id, KIND)
+    if p and not p["stale"] and p["data"].get("priority_order"):
+        default = "rule" if p["is_fallback"] else "ai"
+        order = [{"task_id": x["task_id"], "reason": x.get("reason") or "", "source": x.get("source") or default}
+                 for x in p["data"]["priority_order"]]
+        return {"source": "insights", "stale": False, "generated_at": p["generated_at"], "order": order}
+    snapshot = sig.collect(user_id, today)
+    signals = sig.build_from(snapshot)
+    order = [{"task_id": t["id"], "reason": _rule_reason(t, today, signals), "source": "rule"}
+             for t in candidates(snapshot)]
+    return {"source": "rules", "stale": bool(p and p["stale"]), "generated_at": None, "order": order}
