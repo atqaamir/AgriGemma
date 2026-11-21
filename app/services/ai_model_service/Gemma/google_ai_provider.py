@@ -204,35 +204,54 @@ class GoogleAIProvider(AIModelProvider):
 
     # ── Public interface ───────────────────────────────────────────────────
 
-    def complete_intent(self, message: str, valid_intents: tuple[str, ...]) -> set[str]:
-        """Lightweight AI call to classify a message into intent tags."""
+    def complete_intent(self, message: str, valid_intents: tuple[str, ...], timeout: float = 3.0) -> str | None:
+        """One intent label for a farmer message (hybrid intent classifier). Thinking level
+        minimal, temperature 0; `timeout` is the deadline for the primary model and, on an
+        error, the fallback model together. Returns the raw label (the caller validates it)
+        or None on error / timeout."""
+        import time
         if not self._api_key:
-            return set()
-        intents_list = ", ".join(valid_intents)
+            return None
+        deadline = time.monotonic() + timeout
         prompt = (
-            f"Classify this farmer message into one or more of these intents: {intents_list}.\n"
+            "Classify the farmer's message (English, Roman Urdu, typos possible) into exactly ONE of these "
+            f"labels: {', '.join(valid_intents)}.\n"
             f"Message: \"{message}\"\n"
-            f"Reply ONLY with a comma-separated list of matching intents. "
-            f"If none match, reply with: general"
+            "Reply with the label only."
         )
-        try:
-            payload = json.dumps({
-                "contents": [{"role": "user", "parts": [{"text": prompt}]}],
-                "generationConfig": {"temperature": 0.1, "maxOutputTokens": 40},
-            }).encode("utf-8")
-            url = f"{_BASE}/models/{self._model}:generateContent?key={self._api_key}"
-            req = urllib.request.Request(
-                url, data=payload, headers={"Content-Type": "application/json"}, method="POST",
-            )
-            with urllib.request.urlopen(req, timeout=20) as resp:
+        body = json.dumps({
+            "contents": [{"role": "user", "parts": [{"text": prompt}]}],
+            "generationConfig": {"temperature": 0.0, "maxOutputTokens": 8,
+                                 "thinkingConfig": {"thinkingLevel": "minimal"}},
+        }).encode("utf-8")
+
+        def once(model: str) -> str:
+            left = deadline - time.monotonic()
+            if left <= 0.2:
+                raise TimeoutError("intent deadline reached")
+            url = f"{_BASE}/models/{model}:generateContent?key={self._api_key}"
+            req = urllib.request.Request(url, data=body, headers={"Content-Type": "application/json"}, method="POST")
+            with urllib.request.urlopen(req, timeout=left) as resp:
                 data = json.loads(resp.read())
             parts = data["candidates"][0]["content"]["parts"]
-            text = "".join(p.get("text", "") for p in parts if not p.get("thought")).strip().lower()
-            detected = {t.strip() for t in text.split(",") if t.strip() in valid_intents}
-            return detected or {"general"}
+            return "".join(p.get("text", "") for p in parts if not p.get("thought")).strip().lower()
+
+        self._tl.model = None
+        try:
+            try:
+                text = once(self._model)
+                self._answered(self._model, "intent")
+            except Exception as exc:
+                fallback = self._fallback_for(exc)
+                if not fallback:
+                    raise
+                self._log_fallback("intent", exc, fallback)
+                text = once(fallback)
+                self._answered(fallback, "intent")
+            return text.strip(" .`'\"\n")
         except Exception as exc:
             logger.warning("Google AI intent detection failed: %s", exc)
-            return set()
+            return None
 
     def complete_json(self, prompt: str) -> str:
         """Request a JSON-mode response. Used by fast_complete_json() for intelligence tasks."""

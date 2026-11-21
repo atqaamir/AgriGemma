@@ -162,6 +162,23 @@ def _matches(keyword: str, text: str) -> bool:
     return bool(pat.search(text))
 
 
+# Explicit GENERAL signals, checked only when no intent keyword matched: crop health,
+# prices, risks, problems, sprays, inspections, plan changes, "what happens".
+_GENERAL_SIGNALS: tuple[str, ...] = (
+    "health*", "unhealthy", "price*", "cost*", "problem*", "risk*", "wrong", "spray*", "fungicide*",
+    "pesticide*", "emergency", "inspection*", "happen*", "plan", "plans", "trust",
+)
+_FOLLOW_UP_WORDS = frozenset({"it", "that", "this", "them", "those", "these"})
+
+
+def _is_general(text: str) -> bool:
+    """A general farm question or a short follow-up ("And maize?", "why should i do it?")."""
+    if any(_matches(kw, text) for kw in _GENERAL_SIGNALS):
+        return True
+    words = re.findall(r"[a-z']+", text)
+    return 0 < len(words) <= 5 and (words[0] == "and" or bool(_FOLLOW_UP_WORDS & set(words)))
+
+
 def classify(message: str) -> IntentResult:
     """
     Classify a farmer message into primary + up to 2 secondary intents.
@@ -184,6 +201,10 @@ def classify(message: str) -> IntentResult:
             scores[intent] = scores.get(intent, 0.0) + hit
 
     if not scores:
+        # A clear general question or a short follow-up is a keyword match too (confidence 1.0):
+        # the hybrid classifier asks the AI only when nothing matched (confidence 0.0).
+        if _is_general(text):
+            return IntentResult(primary=FarmIntent.GENERAL, secondary=[], confidence=1.0, method="keyword")
         return IntentResult(
             primary=FarmIntent.GENERAL,
             secondary=[],

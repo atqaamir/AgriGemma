@@ -38,6 +38,7 @@ from app.services.intelligence_service.intent.intent_classifier import (
     IntentResult,
     classify,
 )
+from app.services.intelligence_service.intent.hybrid_intent import classify_hybrid
 from app.services.intelligence_service.context.context_builder import build_chatbot_context
 from app.services.intelligence_service.context.token_budget import (
     BUDGET_CHATBOT_CONTEXT,
@@ -389,7 +390,7 @@ class ChatbotService:
 
         # Stage 1 — intent
         t1 = time.time()
-        intent_result = classify(user_message)
+        intent_result = classify_hybrid(user_message)
         logger.info("[CHATBOT] ① Intent (%s, %dms): primary=%s secondary=%s conf=%.2f",
                     intent_result.method,
                     (time.time() - t1) * 1000,
@@ -591,7 +592,7 @@ class ChatbotService:
             # ── Stage 1: intent ───────────────────────────────────────────────
             yield stage_sse("analyzing", "Analysing your question...")
             t1 = time.time()
-            intent_result = classify(user_message)
+            intent_result = classify_hybrid(user_message)
             elapsed1 = round((time.time() - t1) * 1000)
             logger.info("[CHATBOT-STREAM] ① Intent (%dms): primary=%s secondary=%s",
                         elapsed1, intent_result.primary.value,

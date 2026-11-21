@@ -166,6 +166,15 @@ QUESTIONS = [
     (40, "Okay, and when should I sow now?", ["planting", "general"],
      [[day(10)], [r"every morning", r"re-?check", r"daily", r"forecast"]],
      PLANT_TERMS + STYLE + INVENTED_STATS + SOW_IN_RAIN, 39),
+    # Keyword misses (paraphrases, typos, Roman Urdu): the hybrid intent asks the AI for these.
+    (41, "When do I put the cotton seeds in the ground?", ["planting"], [[day(9)]], [], None),
+    (42, "should i give the maize some water tmrw", ["irrigation"], [], [], None),
+    (43, "fertlizer kab dalna hai?", ["fertilization"], [], [], None),
+    (44, "kapas ki chunai kab karni hai?", ["harvest"], [], [], None),
+    (45, "wat do i hav to do 2day", ["task"], [], [], None),
+    (46, "kab bijai karun?", ["planting"], [], [], None),
+    (47, "is it gonna be scorching this week", ["weather"], [], [], None),
+    (48, "zameen ki nami kaisi hai?", ["soil", "irrigation"], [], [], None),
 ]
 
 # Scenario per question (default: scenario 1 "typical"); questions run in this order.
