@@ -283,12 +283,11 @@ class NotificationService:
             # An unusual forecast leads the title (normal weather keeps the titles above).
             alert_title = self._verdict_title(facts.get("fvn")) or alert_title
 
-            self.create_if_not_duplicate(
-                user_id=user_id,
-                title=alert_title,
-                message=self._build_short_message(tag, weather, facts.get("fvn")),
-                notification_type=alert_type,
-                detail=ai_summary,
+            # Every run that changes the plan is a new change event: always created (no 30-min
+            # duplicate check – re-running the same scenario must notify and pop up again).
+            self.create(
+                user_id, alert_title, self._build_short_message(tag, weather, facts.get("fvn")),
+                alert_type, ai_summary,
             )
             print(f"[change_notifications] alert notification created for user={user_id}")
 
@@ -313,13 +312,10 @@ class NotificationService:
                 "ai_summary_source": "ai" if source == "ai" else "rules",
             }
 
-            notif = self.create_if_not_duplicate(
-                user_id=user_id,
-                title=self._build_change_summary_title(task_summaries, plan_summaries),
-                message=self._build_change_summary_message(task_summaries, plan_summaries),
-                notification_type=NotificationType.CHANGE.value,
-                detail=json.dumps(report, ensure_ascii=False),
-                within_minutes=60,
+            notif = self.create(
+                user_id, self._build_change_summary_title(task_summaries, plan_summaries),
+                self._build_change_summary_message(task_summaries, plan_summaries),
+                NotificationType.CHANGE.value, json.dumps(report, ensure_ascii=False),
             )
             print(f"[change_notifications] change_summary created: id={getattr(notif, 'id', None)}")
             logger.info("generate_change_notifications: both notifications created for user %d", user_id)
